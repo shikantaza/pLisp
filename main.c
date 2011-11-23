@@ -308,6 +308,8 @@ void print_expression(expression_t *e)
 
 void repl()
 {
+  yyparse();
+
   if(debug_mode)
   {
     if(g_expr->type == SYMBOL)
@@ -316,14 +318,25 @@ void repl()
       {
 	fprintf(stdout, "Exiting debug mode.\n");
 	debug_mode = false;
+	return;
       }
       else if(!strcmp(g_expr->atom_value, "STEP"))
       {
 	//do nothing; debug_mode will take care of the stepping
+	return;
       }
       else if(!strcmp(g_expr->atom_value, "ABORT"))
       {
 	abort_debug = true;
+	return;
+      }
+      else if(!strcmp(g_expr->atom_value,"QUIT") ||
+	      !strcmp(g_expr->atom_value,"EXIT") ||
+	      !strcmp(g_expr->atom_value,"Q"))
+      {
+	fprintf(stdout, "Bye.\n");
+	cleanup();
+	exit(0);
       }
       else
       {
@@ -339,7 +352,9 @@ void repl()
 	  print_object(cdr(res));
 
 	prompt();
-	yyparse();
+	//yyparse();
+	repl();
+	return;
       }
     }
     else if(g_expr->type == LIST && 
@@ -348,13 +363,15 @@ void repl()
     {
       print_object(evaluate_expression(g_expr, debug_env));
       prompt();
-      yyparse();      
+      //yyparse();      
+      return;
     }
     else
     {
       fprintf(stdout, "Only forms allowed in debug mode are SET forms and atoms\n");
       prompt();
-      yyparse();
+      //yyparse();
+      return;
     }
     return;
   } //end of if(debug_mode)
@@ -380,10 +397,12 @@ void repl()
       fprintf(stdout, "Unable to open file \"%s\"\n", g_expr->elements[1]->atom_value);
       yyin = next_yyin;
       prompt();
-      yyparse();
+      //yyparse();
+      return;
     }
     else
-      yyparse();
+      //yyparse();
+      return;
   }
   else
   {
@@ -422,7 +441,8 @@ void repl()
     if(yyin == stdin)
       prompt();
 
-    yyparse();
+    //yyparse();
+    return;
   }
 }
 
@@ -489,7 +509,11 @@ int main(int argc, char **argv)
   }
   //yyin = stdin;
 
-  yyparse();
+  //yyparse();
+  while(1)
+  {
+    repl();
+  }
 
   cleanup(); //don't think this ever gets called
 
@@ -1380,7 +1404,8 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	}
 	else if(!strcmp(val, BREAK))
 	{
-	  enter_debug_mode(env_list);
+	  if(!debug_mode)
+	    enter_debug_mode(env_list);
 	  ret = NIL;
 	}
 	else if(!strcmp(val, LOAD_FOREIGN_LIBRARY))
@@ -1441,7 +1466,8 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
     }
 
     prompt();
-    yyparse();    
+    //yyparse();
+    repl();
 
   }
 
@@ -2650,10 +2676,12 @@ void print_string(OBJECT_PTR string_object)
 void enter_debug_mode(OBJECT_PTR env)
 {
   fprintf(stdout, "Entering debug mode.");
+
   debug_mode = true;
   debug_env = env;
   prompt();
-  yyparse();
+  //yyparse();
+  repl();
 }
 
 BOOLEAN is_string_object(OBJECT_PTR obj)

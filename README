@@ -1,14 +1,14 @@
 Features currently supported:
 
 1. Basic operators like CAR, CDR, and other language primitives (cf. Paul Graham's 'Roots of Lisp')
-2. Other operators and utility functions written in Lisp itself (there is a rudimentary library at present)
-3. Error handling in the form of an (error "...") operator
+2. Other operators and utility functions written in pLisp itself (there is a rudimentary library at present)
+3. Error handling in the form of an '(error "...")' operator
 4. Garbage collection
 5. A somewhat buggy foreign function interface
 6. Ability to store and load images (aka serialization)
 7. Macros
 8. A rudimentary debugger (step, break, resume, abort)
-9. A package systm
+9. A package system
 
 TODO list:
 
@@ -17,3 +17,5 @@ TODO list:
 3. Graphical development environment
 4. Compiler
 5. Continuations and other implementatins of other 'cool' research ideas
+
+pLisp uses tpl (http://tpl.sourceforge.net/) for serialization and libffi (http://sourceware.org/libffi/) for the foreign function interface.

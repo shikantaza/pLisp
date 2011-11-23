@@ -59,6 +59,8 @@
       (+ 1 (length (cdr lst)))))
 
 (defun last (lst)
+  (print lst)
+  (break)
   (if (eq (length lst) 1)
       (car lst)
       (last (cdr lst))))
@@ -111,12 +113,7 @@
 	       ,body)
 	     (dolist (,(car spec) (cdr ,(cadr spec))) ,body))))
 
-#|
-test comment
-|#
-
 (defmacro while (condition &rest body)
-;test comment
   `(if ,condition
        (progn ,@body
 	      (while ,condition (progn ,@body)))
@@ -156,7 +153,14 @@ test comment
 (defmacro nconc (lst1 lst2)
   `(set ,lst1 (append ,lst1 ,lst2)))
 
-(create-package "statistics")
+
+(defvar first 'car)
+
+(defvar rest 'cdr)
+
+(defvar setq 'set)
+
+#|(create-package "statistics")
 
 (in-package "statistics")
 
@@ -165,6 +169,7 @@ test comment
     (dolist (x lst)
       (set sum (+ sum x)))
     (/ sum (length lst))))
+|#
 
 (create-package "user")
 

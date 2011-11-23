@@ -55,7 +55,7 @@ expression:
       if(parens == 0)
       {
 	g_expr = $$;
-	repl();
+	//repl();
 	return;
       }
     }
@@ -64,7 +64,7 @@ expression:
       if(parens == 0)
       {
 	g_expr = $$;
-	repl();
+	//repl();
 	return;
       }
     };
