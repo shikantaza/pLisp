@@ -135,6 +135,11 @@
 #define PRINTENV              "PRINTENV"
 #define CURRENTENV            "CURRENTENV"
 
+//making IF and WHILE primitive operators
+//to improve performance
+#define IF                    "IF"
+#define WHILE                 "WHILE"
+
 typedef unsigned int RAW_PTR;
 typedef unsigned int OBJECT_PTR;
 
@@ -313,3 +318,11 @@ int get_free_memory();
 int get_size_of_tree(struct node *);
 
 OBJECT_PTR shallow_copy(OBJECT_PTR);
+
+OBJECT_PTR eval_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR eval_while(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+
+#ifndef DEBUG_MEMORY
+inline
+#endif
+void set_heap(RAW_PTR, OBJECT_PTR);

@@ -2,7 +2,7 @@
 
 OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o
 
-CC	= gcc
+CC	= gcc -DDEBUG_MEMORY
 CFLAGS	= -g -I/usr/local/lib/libffi-3.0.10/include -L/usr/local/lib
 
 all:	plisp

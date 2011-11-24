@@ -16,10 +16,6 @@
 (defun null (x)
   (eq x '()))
 
-(defmacro if (condition then else)
-  `(cond (,condition ,then)
-	 ('t ,else)))
-
 (defun and (x y)
   (if x (if y 't nil) nil))
 
@@ -35,12 +31,19 @@
       (cons (car x) (append (cdr x) y))))
 
 (defun pair (x y)
+  (print x) (print y)
   (cond ((or (and (atom x) (not (atom y))) (and (not (atom x)) (atom y)))            (error "Arguments mismatch"))
 	((not (eq (length x) (length y)))  (error "Length of two lists not equal"))
 	('t (if (and (null x) (null y))
 		nil
 		(cons (list (car x) (car y))
 		      (pair (cdr x) (cdr y)))))))
+
+(defun pair (x y)
+  (if (and (null x) (null y))
+      nil
+      (cons (list (car x) (car y))
+	    (pair (cdr x) (cdr y)))))
 
 (defun assoc (x y)
   (if (eq (caar y) x)
@@ -59,9 +62,7 @@
       (+ 1 (length (cdr lst)))))
 
 (defun last (lst)
-  (print lst)
-  (break)
-  (if (eq (length lst) 1)
+   (if (null (cdr lst))
       (car lst)
       (last (cdr lst))))
 
@@ -70,14 +71,16 @@
       nil
       (cons (car lst) (remove-last (cdr lst)))))
 
-(defun sublist (str start &optional len)
+(defun sublist (lst start &optional len)
   (let ((res nil)
 	(s start)
-	(end (+ start (- (if (null len) (length str) len) start))))
+	(end (+ start (- (if (null len) 
+			     (length lst) 
+			     len)
+			 start))))
     (while (< s end)
-      (progn
-	(set res (append res (list (nth s str))))
-	(set s (+ s 1))))
+       (nconc res (list (nth s lst)))
+       (incf s))
     res))
 
 (defun butlast (lst &optional (n 1))
@@ -113,12 +116,6 @@
 	       ,body)
 	     (dolist (,(car spec) (cdr ,(cadr spec))) ,body))))
 
-(defmacro while (condition &rest body)
-  `(if ,condition
-       (progn ,@body
-	      (while ,condition (progn ,@body)))
-       nil))
-
 (defun nth (n lst)
   (if (eq n 0)
       (car lst)
@@ -139,10 +136,14 @@
   `(set ,var (+ ,var 1)))
 
 (defmacro for (spec &rest body)
-  `(let ((,(nth 0 spec) ,(nth 1 spec)))
-     (while ,(nth 2 spec)
-       ,@body
-       ,(nth 3 spec))))
+  (let ((var (nth 0 spec))
+	(init-form (nth 1 spec))
+	(condition (nth 2 spec))
+	(step-form (nth 3 spec)))
+    `(let ((,var ,init-form))
+       (while ,condition
+	 ,@body
+	 ,step-form))))
 
 (defun mapcan (f lst1 lst2)
   (if (or (null lst1) (null lst2))
