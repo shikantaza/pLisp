@@ -9,7 +9,7 @@
 #define CHARACTER 5
 #define FLOAT 6
 
-#define HEAP_SIZE 1048576
+#define HEAP_SIZE 65536
 #define null -1  //not using NULL because 0 is a valid entry in our heap
 
 #define NOT_FOUND -1
@@ -56,6 +56,7 @@
 #define IS_MACRO_OBJECT(x)          (x & BIT_MASK) == MACRO_TAG
 #define IS_ARRAY_OBJECT(x)          (x & BIT_MASK) == ARRAY_TAG
 
+/*
 #define CAAR(x) car(car(x))
 #define CDAR(x) cdr(car(x))
 #define CADR(x) car(cdr(x))
@@ -68,6 +69,7 @@
 #define CADDDR(x) car(cdr(cdr(cdr(x))))
 #define CADDAR(x) car(cdr(cdr(car(x))))
 #define CADADR(x) car(cdr(car(cdr(x))))
+*/
 
 #define QUOT                 "QUOTE"
 #define CONS                 "CONS"
@@ -300,13 +302,12 @@ void print_string(OBJECT_PTR);
 void initialize_free_list();
 void initialize_heap();
 
-RAW_PTR get_last_segment();
 void dealloc(RAW_PTR);
 
 struct node *create_node(OBJECT_PTR);
 void insert_node(struct node **, struct node *);
 void remove_node(struct node **, OBJECT_PTR);
-void destroy(struct node *);
+void destroy(struct node **);
 void print_tree(struct node *);
 BOOLEAN is_set_empty(struct node *);
 
@@ -326,3 +327,13 @@ OBJECT_PTR eval_while(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 inline
 #endif
 void set_heap(RAW_PTR, OBJECT_PTR);
+
+BOOLEAN is_valid_object(OBJECT_PTR);
+
+#ifndef DEBUG_MEMORY
+inline
+#endif
+OBJECT_PTR get_heap(RAW_PTR);
+
+void test_memory();
+void test_bst();

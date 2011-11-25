@@ -18,8 +18,6 @@ char **strings = NULL;
 
 OBJECT_PTR init_env_list;
 
-//RAW_PTR heap_ptr = 0;
-//RAW_PTR *heap = NULL;
 extern RAW_PTR *heap;
 
 unsigned int current_package;
@@ -66,6 +64,19 @@ int nof_dl_handles = 0;
 void **dl_handles = NULL;
 
 extern struct node *white;
+
+inline OBJECT_PTR CAAR(x)   { return car(car(x)); }
+inline OBJECT_PTR CDAR(x)   { return cdr(car(x)); }
+inline OBJECT_PTR CADR(x)   { return car(cdr(x)); }
+inline OBJECT_PTR CDDR(x)   { return cdr(cdr(x)); }
+inline OBJECT_PTR CDDAR(x)  { return cdr(cdr(car(x))); }
+inline OBJECT_PTR CAADR(x)  { return car(car(cdr(x))); }
+inline OBJECT_PTR CADAR(x)  { return car(cdr(car(x))); }
+inline OBJECT_PTR CADDR(x)  { return car(cdr(cdr(x))); }
+inline OBJECT_PTR CDDDR(x)  { return cdr(cdr(cdr(x))); }
+inline OBJECT_PTR CADDDR(x) { return car(cdr(cdr(cdr(x)))); }
+inline OBJECT_PTR CADDAR(x) { return car(cdr(cdr(car(x)))); }
+inline OBJECT_PTR CADADR(x) { return car(cdr(car(cdr(x)))); }
 
 void initialize()
 {
@@ -352,7 +363,7 @@ void repl()
 	  print_object(cdr(res));
 
 	prompt();
-	//yyparse();
+
 	repl();
 	return;
       }
@@ -363,14 +374,14 @@ void repl()
     {
       print_object(evaluate_expression(g_expr, debug_env));
       prompt();
-      //yyparse();      
+
       return;
     }
     else
     {
       fprintf(stdout, "Only forms allowed in debug mode are SET forms and atoms\n");
       prompt();
-      //yyparse();
+
       return;
     }
     return;
@@ -397,11 +408,10 @@ void repl()
       fprintf(stdout, "Unable to open file \"%s\"\n", g_expr->elements[1]->atom_value);
       yyin = next_yyin;
       prompt();
-      //yyparse();
+
       return;
     }
     else
-      //yyparse();
       return;
   }
   else
@@ -441,7 +451,6 @@ void repl()
     if(yyin == stdin)
       prompt();
 
-    //yyparse();
     return;
   }
 }
@@ -486,7 +495,6 @@ void cleanup()
 void welcome()
 {
   fprintf(stdout, "Welcome to PLISP. Type 'quit' to exit.");
-  //prompt();
 }
 
 int main(int argc, char **argv)
@@ -499,17 +507,16 @@ int main(int argc, char **argv)
 
   welcome();
   
-  yyin = fopen("plisp.lisp", "r");
+  /* yyin = fopen("plisp.lisp", "r"); */
 
-  if(!yyin)
-  {
-    fprintf(stderr, "Unable to open file plisp.lisp; exiting\n");
-    cleanup();
-    exit(1);
-  }
-  //yyin = stdin;
+  /* if(!yyin) */
+  /* { */
+  /*   fprintf(stderr, "Unable to open file plisp.lisp; exiting\n"); */
+  /*   cleanup(); */
+  /*   exit(1); */
+  /* } */
+  yyin = stdin;
 
-  //yyparse();
   while(1)
   {
     repl();
@@ -576,40 +583,12 @@ OBJECT_PTR evaluate_expression(expression_t *e, OBJECT_PTR env_list)
   return ret;
 }
 
-/*
-RAW_PTR object_alloc(int size)
-{
-  log_function_entry("object_alloc");
-
-  void *temp = realloc(heap, (heap_ptr + size) * sizeof(RAW_PTR));
-
-  if(temp != NULL)
-    heap = temp;
-  else
-  {
-    fprintf(stderr, "object_alloc(): out of memory");
-    cleanup();
-    exit(1);
-  }
-
-  RAW_PTR old_heap_ptr = heap_ptr;
-
-  heap_ptr += size;
-
-  log_function_exit("object_alloc");
-
-  return old_heap_ptr;
-}
-*/
-
 OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
 {
   log_function_entry("cons");
 
   RAW_PTR ptr = object_alloc(2);
 
-  //heap[ptr] = car;
-  //heap[ptr+1] = cdr;  
   set_heap(ptr, car);
   set_heap(ptr+1, cdr);
 
@@ -694,9 +673,9 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
 {
   log_function_entry("car");
 
-  //assert(IS_CONS_OBJECT(cons_obj));
+  assert(IS_CONS_OBJECT(cons_obj));
 
-  OBJECT_PTR ret = heap[cons_obj >> CONS_SHIFT];
+  OBJECT_PTR ret = get_heap(cons_obj >> CONS_SHIFT);
 
   log_function_exit("car");
 
@@ -710,7 +689,7 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
 
   assert(IS_CONS_OBJECT(cons_obj));
 
-  OBJECT_PTR ret = heap[(cons_obj >> CONS_SHIFT) + 1];
+  OBJECT_PTR ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
 
   log_function_exit("cdr");
 
@@ -899,23 +878,6 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	  execution_stack = cons(form, NIL);
 	else
 	  execution_stack = cons(form, execution_stack);
-
-	/*
-
-	OBJECT_PTR fn_obj = eval(car_obj, env_list);
-
-	if(!IS_FN_OBJECT(fn_obj))
-	{
-	  sprintf(err_buf, "Form does not begin with an operator");
-	  raise_error();
-	  ret = NIL;
-	}
-	else
-	{
-	  OBJECT_PTR args = cdr(form);
-	  ret = invoke_function(fn_obj, args, env_list);
-	}
-	*/
 
 	OBJECT_PTR f = cons(eval(car_obj, env_list), cdr(form));
 
@@ -1247,14 +1209,12 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	else if(!strcmp(val, SETCAR))
 	{
 	  OBJECT_PTR obj = eval(CADDR(form), env_list);
-	  //heap[eval(CADR(form), env_list) >> CONS_SHIFT] = obj;
 	  set_heap(eval(CADR(form), env_list) >> CONS_SHIFT, obj);
 	  ret = obj;
 	}
 	else if(!strcmp(val, SETCDR))
 	{
 	  OBJECT_PTR obj = eval(CADDR(form), env_list);
-	  //heap[(eval(CADR(form), env_list) >> CONS_SHIFT) + 1] = obj;
 	  set_heap((eval(CADR(form), env_list) >> CONS_SHIFT) + 1, obj);
 	  ret = obj;
 	}
@@ -1339,14 +1299,11 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	      if(new_list == NIL)
 		new_list = cons(obj, NIL);
 	      else
-		//heap[(last_cell(new_list) >> CONS_SHIFT) + 1] = cons(obj, NIL);
 		set_heap((last_cell(new_list) >> CONS_SHIFT) + 1, cons(obj, NIL));
-		//new_list = cons(new_list, cons(cons(QUOTE, car(rest)),NIL));
 
 	      rest = cdr(rest);
 	    }
 
-	    //heap[(f >> CONS_SHIFT) + 1] = new_list;
 	    set_heap((f >> CONS_SHIFT) + 1, new_list);
 
 	    ret = eval(f, env_list);
@@ -1364,7 +1321,7 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	else if(!strcmp(val, SUB_ARRAY))
 	  ret = eval_sub_array(CADR(form), CADDR(form), CADDDR(form), env_list);
 	else if(!strcmp(val, ARRAY_LENGTH))
-	  ret = heap[eval(CADR(form), env_list) >> ARRAY_SHIFT];
+	  ret = get_heap(eval(CADR(form), env_list) >> ARRAY_SHIFT);
 	else if(!strcmp(val, PRINT_STRING))
 	  ret = eval_print_string(CADR(form), env_list);
 	else if(!strcmp(val, LABELS))
@@ -1476,9 +1433,8 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
     }
 
     prompt();
-    //yyparse();
-    repl();
 
+    repl();
   }
 
   log_function_exit("eval");
@@ -1490,11 +1446,6 @@ OBJECT_PTR create_function_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT
 {
   RAW_PTR ptr = object_alloc(3);
 
-  /*
-  heap[ptr] = equal(env_list, init_env_list) ? NIL : env_list;
-  heap[ptr + 1] = params;
-  heap[ptr + 2] = body;
-  */
   set_heap(ptr, equal(env_list, init_env_list) ? NIL : env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
@@ -1502,12 +1453,6 @@ OBJECT_PTR create_function_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT
   insert_node(&white, create_node((ptr << FN_SHIFT) + FN_TAG));
   
   return (ptr << FN_SHIFT) + FN_TAG;
-
-  /*
-  OBJECT_PTR ret = cons(equal(env_list, init_env_list) ? NIL : env_list, cons(params, body));
-
-  return ((ret >> CONS_SHIFT) << FN_SHIFT) + FN_TAG;
-  */
 }
 
 OBJECT_PTR clone_object(OBJECT_PTR obj)
@@ -1551,20 +1496,17 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
 OBJECT_PTR get_env_list(OBJECT_PTR fn_obj)
 {
-  //return car(fn_obj);
-  return heap[fn_obj >> FN_SHIFT];
+  return get_heap(fn_obj >> FN_SHIFT);
 }
 
 OBJECT_PTR get_params_object(OBJECT_PTR fn_obj)
 {
-  //return CADR(fn_obj);
-  return heap[(fn_obj >> FN_SHIFT) + 1];
+  return get_heap((fn_obj >> FN_SHIFT) + 1);
 }
 
 OBJECT_PTR get_body_object(OBJECT_PTR fn_obj)
 {
-  //return CDDR(fn_obj);
-  return heap[(fn_obj >> FN_SHIFT) + 2];
+  return get_heap((fn_obj >> FN_SHIFT) + 2);
 }
 
 void print_function_object(OBJECT_PTR fn_obj)
@@ -1664,7 +1606,6 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     {
       if(equal(CAAR(rest2),symbol_obj))
       {
-	//heap[(car(rest2) >> CONS_SHIFT) + 1] = val;
 	set_heap((car(rest2) >> CONS_SHIFT) + 1, val);
 	return symbol_obj;
       }
@@ -1685,14 +1626,12 @@ void add_to_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT_PTR v
   //a dummy variable  when they are created
   if(car(env_list) == NIL) 
   {
-    //heap[env_list >> CONS_SHIFT] = cons(cons(symbol_obj, val), NIL);
     set_heap(env_list >> CONS_SHIFT, cons(cons(symbol_obj, val), NIL));
     return;
   }
   else 
   {
     OBJECT_PTR rest = car(env_list);
-    //OBJECT_PTR prev = rest;
 
     while(rest != NIL)
     {
@@ -1701,19 +1640,14 @@ void add_to_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT_PTR v
       //the new value
       if(equal(CAAR(rest),symbol_obj))
       {
-	//heap[(car(rest) >> CONS_SHIFT) + 1] = val;
 	set_heap((car(rest) >> CONS_SHIFT) + 1, val);
 	return;
       }
-
-      //prev = rest;
 
       rest = cdr(rest);
     }
 
     //symbol does not exist in the environment
-    //heap[(prev >> CONS_SHIFT) +1] = cons(cons(symbol_obj, val), NIL);
-    //heap[(last_cell(car(env_list)) >> CONS_SHIFT) + 1] = cons(cons(symbol_obj, val), NIL);
     set_heap((last_cell(car(env_list)) >> CONS_SHIFT) + 1, cons(cons(symbol_obj, val), NIL));
   }
 }
@@ -1884,7 +1818,6 @@ OBJECT_PTR invoke_macro(OBJECT_PTR macro_obj, OBJECT_PTR args, OBJECT_PTR exec_e
 
     if(!strcmp(param_name, "&REST"))
     {
-      //add_to_environment(extended_env_list, CADR(rest_params), eval_and_build_list(rest_args, exec_env));
       add_to_environment(extended_env_list, CADR(rest_params), rest_args);
       break;
     }
@@ -1909,11 +1842,6 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
 {
   RAW_PTR ptr = object_alloc(3);
 
-  /*
-  heap[ptr] = equal(env_list, init_env_list) ? NIL : env_list;
-  heap[ptr + 1] = params;
-  heap[ptr + 2] = body;
-  */
   set_heap(ptr, equal(env_list, init_env_list) ? NIL : env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
@@ -1921,31 +1849,31 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
   insert_node(&white, create_node((ptr << MACRO_SHIFT) + MACRO_TAG));
   
   return (ptr << MACRO_SHIFT) + MACRO_TAG;
-
-  /*
-  OBJECT_PTR ret = cons(equal(env_list, init_env_list) ? NIL : env_list, cons(params, body));
-
-  return ((ret >> MACRO_SHIFT) << MACRO_SHIFT) + MACRO_TAG;
-  */
 }
 
 void print_macro_object(OBJECT_PTR macro_obj)
 {
   fprintf(stdout, "#<MACRO #x%08x> ", macro_obj);
-#ifdef DEBUG
+  //#ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
   print_object(get_params_object(macro_obj));
   fprintf(stdout,"\nBODY: ");
   print_object(get_body_object(macro_obj));
-#endif
+  //#endif
 }
 
 OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
 {
+
+  assert(is_valid_object(form));
+  assert(is_valid_object(env_list));
+
   if(is_atom(form))
     return form;
 
   OBJECT_PTR car_obj = car(form);
+
+  assert(is_valid_object(car_obj));
 
   if(IS_SYMBOL_OBJECT(car_obj))
   {
@@ -1955,21 +1883,6 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
     if(!strcmp(buf, COMMA))
     {
       OBJECT_PTR sym = CADR(form);
-
-      /*
-      OBJECT_PTR res = get_symbol_value(sym, env_list);
-      
-
-      if(car(res) == NIL)
-      {
-	char buf[SYMBOL_STRING_SIZE];
-	print_symbol(sym, buf);
-	fprintf(stdout, "Symbol not bound: %s\n", buf);
-	return NIL;
-      }
-      else
-	return cdr(res);
-      */
 
       return eval(sym, env_list);
     }
@@ -2001,27 +1914,11 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
 
 	if(!strcmp(buf, COMMA_AT))
         {
-
-	  /*
-	  ret = get_symbol_value(CADAR(rest), env_list);
-
-	  if(car(ret) == NIL)
-	  {
-	    char buf[SYMBOL_STRING_SIZE];
-	    print_symbol(CADAR(rest), buf);
-	    fprintf(stdout, "Symbol not bound: %s\n", buf);
-	    obj = NIL;
-	  }
-	  else
-	    obj = cdr(ret);
-	  */
-
 	  obj = eval(CADAR(rest), env_list);
 
 	  if(result == NIL)
 	    result = obj;
 	  else
-	    //heap[(last_cell(result) >> CONS_SHIFT) + 1] = obj;
 	    set_heap((last_cell(result) >> CONS_SHIFT) + 1, obj);
 	}
 	else
@@ -2031,7 +1928,6 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
 	  if(result == NIL)
 	    result = cons(obj, NIL);
 	  else
-	    //heap[(last_cell(result) >> CONS_SHIFT) + 1] = cons(obj, NIL);
 	    set_heap((last_cell(result) >> CONS_SHIFT) + 1, cons(obj, NIL));
 	}
       }
@@ -2042,7 +1938,6 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
 	if(result == NIL)
 	  result = cons(obj, NIL);
 	else
-	  //heap[(last_cell(result) >> CONS_SHIFT) + 1] = cons(obj, NIL);
 	  set_heap((last_cell(result) >> CONS_SHIFT) + 1, cons(obj, NIL));
       }
       rest = cdr(rest);
@@ -2291,8 +2186,11 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
   int package_index = ptr >> (SYMBOL_BITS + SYMBOL_SHIFT);
   int symbol_index =  (ptr >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
-  assert(package_index >= 0 && package_index < nof_packages);
-  assert(symbol_index >= 0 && symbol_index < packages[package_index].nof_symbols);
+  if(package_index < 0 || package_index >= nof_packages)
+    assert(false);
+
+  if(symbol_index < 0 || symbol_index >= packages[package_index].nof_symbols)
+    assert(false);
 
   if(package_index != 0)
     sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]);
@@ -2483,7 +2381,7 @@ float get_float_value(OBJECT_PTR obj)
   assert(IS_FLOAT_OBJECT(obj));
 
   union float_and_uint fi;
-  fi.i = heap[obj >> FLOAT_SHIFT]; 
+  fi.i = get_heap(obj >> FLOAT_SHIFT); 
 
   float ret;
 
@@ -2503,7 +2401,6 @@ OBJECT_PTR convert_float_to_object(float v)
   
   RAW_PTR ptr = object_alloc(1);
 
-  //heap[ptr] = fi.i;
   set_heap(ptr, fi.i);
 
   insert_node(&white, create_node((ptr << FLOAT_SHIFT) + FLOAT_TAG));
@@ -2529,7 +2426,6 @@ OBJECT_PTR eval_string(OBJECT_PTR literal, OBJECT_PTR env_list)
 
   RAW_PTR raw_ptr = object_alloc(len + 1);
 
-  //heap[raw_ptr] = convert_int_to_object(len);
   set_heap(raw_ptr, convert_int_to_object(len));
 
   insert_node(&white, create_node((raw_ptr << ARRAY_SHIFT) + ARRAY_TAG));
@@ -2538,7 +2434,6 @@ OBJECT_PTR eval_string(OBJECT_PTR literal, OBJECT_PTR env_list)
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
-    //heap[raw_ptr + i] = (*ptr << CHAR_SHIFT) + CHAR_TAG;
     set_heap(raw_ptr + i, (*ptr << CHAR_SHIFT) + CHAR_TAG);
     i++;
   }
@@ -2559,7 +2454,6 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size_form, OBJECT_PTR default_form, OBJECT
 
   RAW_PTR ptr = object_alloc(sz+1);
 
-  //heap[ptr] = size;
   set_heap(ptr, size);
 
   insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
@@ -2569,7 +2463,6 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size_form, OBJECT_PTR default_form, OBJECT
   int i;
 
   for(i=0; i< sz; i++)
-    //heap[ptr + i + 1] = default_value;
     set_heap(ptr + i + 1, default_value);
 
   log_function_exit("eval_make_array");
@@ -2589,7 +2482,7 @@ OBJECT_PTR eval_array_get(OBJECT_PTR form, OBJECT_PTR env_list)
 
   log_function_exit("eval_array_get");
 
-  return heap[(array_obj >> ARRAY_SHIFT) + get_int_value(idx) + 1];
+  return get_heap((array_obj >> ARRAY_SHIFT) + get_int_value(idx) + 1);
 }
 
 OBJECT_PTR eval_array_set(OBJECT_PTR form, OBJECT_PTR env_list)
@@ -2604,7 +2497,6 @@ OBJECT_PTR eval_array_set(OBJECT_PTR form, OBJECT_PTR env_list)
 
   OBJECT_PTR val = eval(CADDR(form), env_list);
 
-  //heap[(array_obj >> ARRAY_SHIFT) + get_int_value(idx) + 1] = val;
   set_heap((array_obj >> ARRAY_SHIFT) + get_int_value(idx) + 1, val);
 
   log_function_exit("eval_array_set");
@@ -2619,13 +2511,13 @@ void print_array_object(OBJECT_PTR array)
 
   fprintf(stdout, "[");
 
-  int length = get_int_value(heap[array >> ARRAY_SHIFT]);
+  int length = get_int_value(get_heap(array >> ARRAY_SHIFT));
 
   int i;
 
   for(i=0; i< length; i++)
   {
-    print_object(heap[(array >> ARRAY_SHIFT) + i + 1]);
+    print_object(get_heap((array >> ARRAY_SHIFT) + i + 1));
     fprintf(stdout, " ");
   }
 
@@ -2662,7 +2554,6 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array_form, OBJECT_PTR start_form, OBJECT_P
 
   RAW_PTR ptr = object_alloc(len + 1);
 
-  //heap[ptr] = convert_int_to_object(len);
   set_heap(ptr, convert_int_to_object(len));
 
   insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
@@ -2670,8 +2561,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array_form, OBJECT_PTR start_form, OBJECT_P
   int i;
 
   for(i=1; i<=len; i++)
-    //heap[ptr+i] = heap[orig_ptr + st + i];
-    set_heap(ptr+i, heap[orig_ptr + st + i]);
+    set_heap(ptr+i, get_heap(orig_ptr + st + i));
 
   ret = (ptr << ARRAY_SHIFT) + ARRAY_TAG;
 
@@ -2702,14 +2592,14 @@ void print_string(OBJECT_PTR string_object)
 
   RAW_PTR ptr = string_object >> ARRAY_SHIFT;
 
-  int len = get_int_value(heap[ptr]);
+  int len = get_int_value(get_heap(ptr));
 
   int i;
 
   fprintf(stdout, "\"");
 
   for(i=1; i<=len; i++)
-    fprintf(stdout, "%c", heap[ptr + i] >> CHAR_SHIFT);
+    fprintf(stdout, "%c", get_heap(ptr + i) >> CHAR_SHIFT);
 
   fprintf(stdout, "\"");
 }
@@ -2721,7 +2611,7 @@ void enter_debug_mode(OBJECT_PTR env)
   debug_mode = true;
   debug_env = env;
   prompt();
-  //yyparse();
+
   repl();
 }
 
@@ -2732,13 +2622,13 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
 
   RAW_PTR ptr = obj >> ARRAY_SHIFT;
 
-  int len = get_int_value(heap[ptr]);
+  int len = get_int_value(get_heap(ptr));
 
   int i;
 
   for(i=1; i<=len; i++)
   {
-    if(!(IS_CHAR_OBJECT(heap[ptr+i])))
+    if(!(IS_CHAR_OBJECT(get_heap(ptr+i))))
       return false;
   }
 
@@ -2751,14 +2641,14 @@ char *get_string(OBJECT_PTR string_object)
 
   RAW_PTR ptr = string_object >> ARRAY_SHIFT;
 
-  int len = get_int_value(heap[ptr]);
+  int len = get_int_value(get_heap(ptr));
 
   char *ret = (char *)malloc(len * sizeof(char));
 
   int i;
 
   for(i=1; i<=len; i++)
-    ret[i-1] = heap[ptr + i] >> CHAR_SHIFT;
+    ret[i-1] = get_heap(ptr + i) >> CHAR_SHIFT;
 
   ret[len] = '\0';
 
@@ -2786,8 +2676,7 @@ OBJECT_PTR shallow_copy(OBJECT_PTR obj)
 
   int tag = obj & BIT_MASK ;
 
-  //heap[ptr] = heap[obj >> CONS_SHIFT];
-  set_heap(ptr, heap[obj >> CONS_SHIFT]);
+  set_heap(ptr, get_heap(obj >> CONS_SHIFT));
 
   insert_node(&white, create_node((ptr << CONS_SHIFT) + tag));
 
@@ -2825,15 +2714,45 @@ inline
 #endif
 void set_heap(RAW_PTR index, OBJECT_PTR val)
 {
-  assert(IS_CONS_OBJECT(val)           ||
-	 IS_FN_OBJECT(val)             ||
-         IS_MACRO_OBJECT(val)          ||
-	 IS_ARRAY_OBJECT(val)          ||
-	 IS_SYMBOL_OBJECT(val)         ||
-	 IS_INTEGER_OBJECT(val)        ||
-	 IS_STRING_LITERAL_OBJECT(val) ||
-	 IS_CHAR_OBJECT(val)           ||
-	 IS_FLOAT_OBJECT(val));
+  if(!is_valid_object(val))
+    assert(false);
 
   heap[index] = val;
+}
+
+BOOLEAN is_valid_object(OBJECT_PTR obj)
+{
+
+  if(IS_SYMBOL_OBJECT(obj))
+  {
+    int package_index = obj >> (SYMBOL_BITS + SYMBOL_SHIFT);
+    int symbol_index =  (obj >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+
+    return package_index >= 0 && 
+           package_index < nof_packages &&
+           symbol_index >= 0 &&
+           symbol_index < packages[package_index].nof_symbols;
+  }
+
+  return IS_CONS_OBJECT(obj)           ||
+         IS_FN_OBJECT(obj)             ||
+         IS_MACRO_OBJECT(obj)          ||
+         IS_ARRAY_OBJECT(obj)          ||
+         IS_INTEGER_OBJECT(obj)        ||
+         IS_STRING_LITERAL_OBJECT(obj) ||
+         IS_CHAR_OBJECT(obj)           ||
+         IS_FLOAT_OBJECT(obj);
+}
+
+#ifndef DEBUG_MEMORY
+inline
+#endif
+OBJECT_PTR get_heap(RAW_PTR ptr)
+{
+  OBJECT_PTR ret = heap[ptr];
+
+  if(!is_valid_object(ret))
+    assert(false);
+
+  return ret;
 }

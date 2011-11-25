@@ -74,13 +74,12 @@
 (defun sublist (lst start &optional len)
   (let ((res nil)
 	(s start)
-	(end (+ start (- (if (null len) 
-			     (length lst) 
-			     len)
-			 start))))
+	(end (if (null len) 
+		 (length lst) 
+		 (+ start len))))
     (while (< s end)
-       (nconc res (list (nth s lst)))
-       (incf s))
+      (nconc res (list (nth s lst)))
+      (incf s))
     res))
 
 (defun butlast (lst &optional (n 1))
@@ -110,11 +109,13 @@
 	    (range (+ start incr) end incr))))
 
 (defmacro dolist (spec body)
-  `(if (null ,(cadr spec))
-      nil
-      (progn (let ((,(car spec) (car ,(cadr spec))))
-	       ,body)
-	     (dolist (,(car spec) (cdr ,(cadr spec))) ,body))))
+  (let ((elem (car spec))
+	(lst (car (cdr spec))))
+    `(if (eq ,lst nil)
+	 nil
+	 (progn (let ((,elem (car ,lst)))
+		  ,body)
+		(dolist (,elem (cdr ,lst)) ,body)))))
 
 (defun nth (n lst)
   (if (eq n 0)
