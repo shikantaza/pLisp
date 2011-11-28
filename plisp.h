@@ -9,7 +9,7 @@
 #define CHARACTER 5
 #define FLOAT 6
 
-#define HEAP_SIZE 65536
+#define HEAP_SIZE 1048576
 #define null -1  //not using NULL because 0 is a valid entry in our heap
 
 #define NOT_FOUND -1
@@ -317,8 +317,6 @@ void build_grey_set();
 
 int get_free_memory();
 int get_size_of_tree(struct node *);
-
-OBJECT_PTR shallow_copy(OBJECT_PTR);
 
 OBJECT_PTR eval_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR eval_while(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);

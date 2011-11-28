@@ -446,7 +446,7 @@ void repl()
 
     reset_exception_mechanism();
 
-    gc();
+    //gc();
 
     if(yyin == stdin)
       prompt();
@@ -507,15 +507,15 @@ int main(int argc, char **argv)
 
   welcome();
   
-  /* yyin = fopen("plisp.lisp", "r"); */
+  yyin = fopen("plisp.lisp", "r");
 
-  /* if(!yyin) */
-  /* { */
-  /*   fprintf(stderr, "Unable to open file plisp.lisp; exiting\n"); */
-  /*   cleanup(); */
-  /*   exit(1); */
-  /* } */
-  yyin = stdin;
+  if(!yyin)
+  {
+    fprintf(stderr, "Unable to open file plisp.lisp; exiting\n");
+    cleanup();
+    exit(1);
+  }
+  //yyin = stdin;
 
   while(1)
   {
@@ -564,6 +564,8 @@ void print_object(OBJECT_PTR obj_ptr)
     else
       print_array_object(obj_ptr);
   }
+  else
+    assert(false);
 
   log_function_exit("print_object");
 }
@@ -673,7 +675,12 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
 {
   log_function_entry("car");
 
-  assert(IS_CONS_OBJECT(cons_obj));
+  if(!(IS_CONS_OBJECT(cons_obj)))
+  {
+    sprintf(err_buf, "Argument to CAR not a CONS object");
+    raise_error();
+    return NIL;
+  }
 
   OBJECT_PTR ret = get_heap(cons_obj >> CONS_SHIFT);
 
@@ -687,7 +694,12 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
 {
   log_function_entry("cdr");
 
-  assert(IS_CONS_OBJECT(cons_obj));
+  if(!(IS_CONS_OBJECT(cons_obj)))
+  {
+    sprintf(err_buf, "Argument to CDR not a CONS object");
+    raise_error();
+    return NIL;
+  }
 
   OBJECT_PTR ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
 
@@ -1480,8 +1492,22 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       ret = create_macro_object(clone_object(get_env_list(obj)),
 				clone_object(get_params_object(obj)), 
 				clone_object(get_body_object(obj)));
-    //TODO: handle array objects
+    else if(IS_ARRAY_OBJECT(obj))
+    {
+      RAW_PTR ptr = obj >> ARRAY_SHIFT;
+      int len = get_int_value(get_heap(ptr));
 
+      RAW_PTR new_ptr = object_alloc(len+1);
+      
+      set_heap(new_ptr, get_heap(ptr));
+
+      int i;
+
+      for(i=1; i<=len; i++)
+	set_heap(new_ptr + i, clone_object(get_heap(ptr + i)));
+
+      ret = (new_ptr << ARRAY_SHIFT) + ARRAY_TAG;
+    }
   }
 
   log_function_exit("clone_object");
@@ -1522,7 +1548,12 @@ void print_function_object(OBJECT_PTR fn_obj)
 
 int length(OBJECT_PTR cons_obj)
 {
-  assert(IS_CONS_OBJECT(cons_obj));
+  if(!(IS_CONS_OBJECT(cons_obj)))
+  {
+    sprintf(err_buf, "Argument to LENGTH not a CONS object");
+    raise_error();
+    return 0;
+  }
 
   OBJECT_PTR rest = cons_obj;
 
@@ -1854,12 +1885,12 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
 void print_macro_object(OBJECT_PTR macro_obj)
 {
   fprintf(stdout, "#<MACRO #x%08x> ", macro_obj);
-  //#ifdef DEBUG
+#ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
   print_object(get_params_object(macro_obj));
   fprintf(stdout,"\nBODY: ");
   print_object(get_body_object(macro_obj));
-  //#endif
+#endif
 }
 
 OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
@@ -2342,7 +2373,12 @@ int get_int_value(OBJECT_PTR obj)
 {
   log_function_entry("get_int_value");
 
-  assert(IS_INTEGER_OBJECT(obj));
+  if(!(IS_INTEGER_OBJECT(obj)))
+  {
+    sprintf(err_buf, "Integer expected");
+    raise_error();
+    return NIL;
+  }
 
   int ret;
 
@@ -2381,7 +2417,10 @@ float get_float_value(OBJECT_PTR obj)
   assert(IS_FLOAT_OBJECT(obj));
 
   union float_and_uint fi;
-  fi.i = get_heap(obj >> FLOAT_SHIFT); 
+
+  //get_heap() will fail (is_valid_object(), actually)
+  //fi.i = get_heap(obj >> FLOAT_SHIFT); 
+  fi.i = heap[obj >> FLOAT_SHIFT];
 
   float ret;
 
@@ -2401,7 +2440,10 @@ OBJECT_PTR convert_float_to_object(float v)
   
   RAW_PTR ptr = object_alloc(1);
 
-  set_heap(ptr, fi.i);
+  //set_heap() will fail if the last
+  //four bits of the float object are not 0111 (i.e. FLOAT_TAG)
+  //set_heap(ptr, fi.i);
+  heap[ptr] = fi.i;
 
   insert_node(&white, create_node((ptr << FLOAT_SHIFT) + FLOAT_TAG));
 
@@ -2428,8 +2470,6 @@ OBJECT_PTR eval_string(OBJECT_PTR literal, OBJECT_PTR env_list)
 
   set_heap(raw_ptr, convert_int_to_object(len));
 
-  insert_node(&white, create_node((raw_ptr << ARRAY_SHIFT) + ARRAY_TAG));
-
   int i=1;
 
   for(ptr=str_val;*ptr;ptr++) 
@@ -2437,6 +2477,8 @@ OBJECT_PTR eval_string(OBJECT_PTR literal, OBJECT_PTR env_list)
     set_heap(raw_ptr + i, (*ptr << CHAR_SHIFT) + CHAR_TAG);
     i++;
   }
+
+  insert_node(&white, create_node((raw_ptr << ARRAY_SHIFT) + ARRAY_TAG));
 
   log_function_exit("eval_string");
 
@@ -2456,14 +2498,14 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size_form, OBJECT_PTR default_form, OBJECT
 
   set_heap(ptr, size);
 
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
-
   OBJECT_PTR default_value = default_form == NIL ? NIL : eval(default_form, env_list);
 
   int i;
 
   for(i=0; i< sz; i++)
     set_heap(ptr + i + 1, default_value);
+
+  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
 
   log_function_exit("eval_make_array");
 
@@ -2534,17 +2576,49 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array_form, OBJECT_PTR start_form, OBJECT_P
   log_function_entry("eval_sub_array");
 
   OBJECT_PTR array = eval(array_form, env_list);
-  assert(IS_ARRAY_OBJECT(array));
+  if(!(IS_ARRAY_OBJECT(array)))
+  {
+    sprintf(err_buf, "First argument to SUB-ARRAY not an ARRAY object");
+    raise_error();
+    return NIL;
+  }
 
   OBJECT_PTR start = eval(start_form, env_list);
-  assert(IS_INTEGER_OBJECT(start));
+  if(!(IS_INTEGER_OBJECT(start)))
+  {
+    sprintf(err_buf, "Second argument to SUB-ARRAY not an integer");
+    raise_error();
+    return NIL;
+  }
+
+  if(!(get_int_value(start) >= 0))
+  {
+    sprintf(err_buf, "Second argument to SUB-ARRAY should be not be negative");
+    raise_error();
+    return NIL;
+  }
 
   OBJECT_PTR length = eval(length_form, env_list);
-  assert(IS_INTEGER_OBJECT(length));
+  if(!(IS_INTEGER_OBJECT(length)))
+  {
+    sprintf(err_buf, "Third argument to SUB-ARRAY not an integer");
+    raise_error();
+    return NIL;
+  }
 
-  assert(get_int_value(start) >= 0);
+  if(!(get_int_value(length) >= 0))
+  {
+    sprintf(err_buf, "Third argument to SUB-ARRAY should be not be negative");
+    raise_error();
+    return NIL;
+  }
 
-  //TODO: check that start + length is within the array bounds
+  if((start + get_int_value(length)) > get_int_value(get_heap(array >> ARRAY_SHIFT)))
+  {
+    sprintf(err_buf, "Range (start, length) for SUB-ARRAY out of bounds of the array");
+    raise_error();
+    return NIL;
+  }
 
   OBJECT_PTR ret;
   int st = get_int_value(start);
@@ -2556,12 +2630,12 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array_form, OBJECT_PTR start_form, OBJECT_P
 
   set_heap(ptr, convert_int_to_object(len));
 
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
-
   int i;
 
   for(i=1; i<=len; i++)
     set_heap(ptr+i, get_heap(orig_ptr + st + i));
+
+  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
 
   ret = (ptr << ARRAY_SHIFT) + ARRAY_TAG;
 
@@ -2667,22 +2741,6 @@ void initialize_heap()
   }
 }
 
-
-//the assumption is that all object types
-//have the same shift (CONS_SHIFT)
-OBJECT_PTR shallow_copy(OBJECT_PTR obj)
-{
-  RAW_PTR ptr = object_alloc(1);
-
-  int tag = obj & BIT_MASK ;
-
-  set_heap(ptr, get_heap(obj >> CONS_SHIFT));
-
-  insert_node(&white, create_node((ptr << CONS_SHIFT) + tag));
-
-  return (ptr << CONS_SHIFT) + tag;
-}
-
 OBJECT_PTR eval_if(OBJECT_PTR cond_form, OBJECT_PTR then_form, OBJECT_PTR else_form, OBJECT_PTR env_list)
 {
   if(eval(cond_form, env_list) == TRUE)
@@ -2752,7 +2810,10 @@ OBJECT_PTR get_heap(RAW_PTR ptr)
   OBJECT_PTR ret = heap[ptr];
 
   if(!is_valid_object(ret))
+  {
+    printf("%d %d\n", ptr, ret);
     assert(false);
+  }
 
   return ret;
 }

@@ -108,14 +108,25 @@
       (cons start
 	    (range (+ start incr) end incr))))
 
-(defmacro dolist (spec body)
+(defmacro dolistold (spec &rest body)
   (let ((elem (car spec))
 	(lst (car (cdr spec))))
+    (print lst)
     `(if (eq ,lst nil)
 	 nil
 	 (progn (let ((,elem (car ,lst)))
-		  ,body)
-		(dolist (,elem (cdr ,lst)) ,body)))))
+		  ,@body)
+		(dolistold (,elem (cdr ,lst)) ,@body)))))
+
+(defmacro dolist (spec &rest body)
+  (let ((elem (car spec))
+	(lst (cadr spec)))
+    `(let ((rest ,lst))
+       (while (not (null rest))
+	 (let ((e (car rest)))
+ 	   (let ((,elem e))
+	     ,@body
+	     (set rest (cdr rest))))))))
 
 (defun nth (n lst)
   (if (eq n 0)
@@ -140,11 +151,13 @@
   (let ((var (nth 0 spec))
 	(init-form (nth 1 spec))
 	(condition (nth 2 spec))
-	(step-form (nth 3 spec)))
+	(step-form (nth 3 spec))
+	(ret-form  (nth 4 spec)))
     `(let ((,var ,init-form))
        (while ,condition
 	 ,@body
-	 ,step-form))))
+	 ,step-form)
+       ,ret-form)))
 
 (defun mapcan (f lst1 lst2)
   (if (or (null lst1) (null lst2))

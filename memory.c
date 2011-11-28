@@ -27,6 +27,8 @@ void initialize_free_list()
 //to the required size)
 RAW_PTR object_alloc(int size)
 {
+  assert(size > 0 && size <= HEAP_SIZE);
+
   RAW_PTR it = free_list;
   RAW_PTR prev = null;
 
@@ -34,7 +36,11 @@ RAW_PTR object_alloc(int size)
 
   while(it != null)
   {
-    if(heap[it] >= (size + 4))
+    //if a segment would have less than four words
+    //after allocating the required space,
+    //it is not considered as it will not have
+    //any usable space after the allocation
+    if((heap[it] - (size + 1)) >= 3)
     {
       //the current segment will not have any
       //usable space after the allocation, 
@@ -43,13 +49,14 @@ RAW_PTR object_alloc(int size)
       //[we allocate the entire segment
       //though the caller will not (and should not)
       //use the additional memory]
-      if(heap[it] == (size + 4))
+      if((heap[it] - (size + 1)) == 3)
       {
 	//point the previous segment's 'next' to
 	//the current segment's 'next
 	//(i.e., remove the current segment
 	//from the free list)
-	heap[prev] = heap[it + 1]; 
+	if(prev != null)
+	  heap[prev] = heap[it + 1]; 
 
 	return it + 1;
       }
@@ -78,14 +85,6 @@ RAW_PTR object_alloc(int size)
 
 	ret = it + heap[it] + 1;
 
-	//insert the segment into the 'white' set.
-	//all objects are initially placed in the white set;
-	//during GC objects that should not freed are
-	//moved to the grey and, subsequently, the black sets
-
-	//this is now done after the call to object_alloc in the calling function
-	//insert_node(&white, create_node(ret << FN_SHIFT));
-
 	//return the address of the new segment
 	return ret;
       }
@@ -101,6 +100,12 @@ RAW_PTR object_alloc(int size)
 
 void dealloc(RAW_PTR ptr)
 {
+  assert(ptr >= 0 && ptr < HEAP_SIZE);
+
+  assert(is_valid_object(heap[ptr]));
+
+  assert(heap[last_segment +1] == null);
+
   //make the current last segment's 'next' (so to speak) 
   //field point to one address above the deallocated segment 
   heap[last_segment + 1] = ptr - 1;
@@ -109,7 +114,7 @@ void dealloc(RAW_PTR ptr)
 
   //set the length field of the newly added segment
   //(is this required, since the length was already set?)
-  heap[heap[last_segment]] = heap[ptr - 1];
+  //heap[heap[last_segment]] = heap[ptr - 1];
 
   last_segment = ptr - 1;
 
@@ -257,7 +262,8 @@ void print_tree(struct node *n)
   if(n->left != NULL)
     print_tree(n->left);
 
-  fprintf(stdout, "%d\n", n->key);
+  //fprintf(stdout, "%d\n", n->key);
+  print_object(n->key); printf("\n");
 
   if(n->right != NULL)
     print_tree(n->right);
@@ -269,7 +275,7 @@ void gc()
   destroy(&black);
   destroy(&grey);
 
-  //init_env_list is stored in the grey set initially
+  //only init_env_list is stored in the grey set initially
   build_grey_set();
 
   while(!is_set_empty(grey))
@@ -350,10 +356,11 @@ void gc()
   while(!is_set_empty(white))
   {
     white_obj = white;
-    //if(!value_exists(black, white_obj->key))
+    if(!value_exists(black, white_obj->key))
       dealloc(white_obj->key >> CONS_SHIFT);
     remove_node(&white, white_obj->key);
   }
+
 
   destroy(&black);
   destroy(&grey);
