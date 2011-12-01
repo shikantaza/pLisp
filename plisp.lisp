@@ -120,13 +120,12 @@
 
 (defmacro dolist (spec &rest body)
   (let ((elem (car spec))
-	(lst (cadr spec)))
+	(lst (car (cdr spec))))
     `(let ((rest ,lst))
-       (while (not (null rest))
-	 (let ((e (car rest)))
- 	   (let ((,elem e))
-	     ,@body
-	     (set rest (cdr rest))))))))
+       (while (not (eq rest '()))
+	 (let ((,elem (car rest)))
+	   ,@body
+	   (set rest (cdr rest)))))))
 
 (defun nth (n lst)
   (if (eq n 0)

@@ -137,6 +137,9 @@ void insert_node(struct node **r, struct node *n)
   if(!is_valid_object(n->key))
     assert(false);
 
+  if(!is_dynamic_memory_object(n->key))
+    assert(false);
+
   if(*r == NULL)
     *r = n;
   else
@@ -153,8 +156,8 @@ void remove_node(struct node **r, OBJECT_PTR value)
 {
   struct node *root;
 
-  if(!is_valid_object(value))
-    assert(false);
+  //if(!is_valid_object(value))
+  //  assert(false);
 
   if(*r == NULL)
     return;
@@ -206,7 +209,7 @@ void remove_node(struct node **r, OBJECT_PTR value)
 	root->key = it->key;
 	
 	if(parent == root)
-	  parent->right = NULL;
+	  parent->right = it->right;
 	else
 	  parent->left = NULL;
 
@@ -229,7 +232,7 @@ void remove_node(struct node **r, OBJECT_PTR value)
 	root->key = it->key;
 	
 	if(parent == root)
-	  parent->left = NULL;
+	  parent->left = it->left;
 	else
 	  parent->right = NULL;
 
@@ -262,8 +265,8 @@ void print_tree(struct node *n)
   if(n->left != NULL)
     print_tree(n->left);
 
-  //fprintf(stdout, "%d\n", n->key);
-  print_object(n->key); printf("\n");
+  fprintf(stdout, "%d\n", n->key);
+  //print_object(n->key); printf("\n");
 
   if(n->right != NULL)
     print_tree(n->right);
@@ -284,8 +287,15 @@ void gc()
     //picking the root for convenience
     OBJECT_PTR obj = grey->key;
 
+
+    //print_object(obj); printf("\n");
+
     insert_node(&black, create_node(obj));
+    //printf("Size before removal: %d\n", get_size_of_tree(grey));
+    //printf("removing from grey set: ");
+    //print_object(obj);
     remove_node(&grey, obj);
+    //printf("\nSize after removal: %d\n", get_size_of_tree(grey));
 
     if(IS_CONS_OBJECT(obj))
     {
@@ -299,7 +309,10 @@ void gc()
       OBJECT_PTR cdr_obj = cdr(obj);
       if(is_dynamic_memory_object(cdr_obj))
       {
+	//print_object(cdr_obj);printf("\n");
+	//printf("%d\n", get_size_of_tree(grey));
 	insert_node(&grey, create_node(cdr_obj));
+	//printf("%d\n", get_size_of_tree(grey));
 	remove_node(&white, cdr_obj);
       }
     }
@@ -344,23 +357,26 @@ void gc()
 	}
       }
     }
+
+    //printf("----\n");
+    //print_tree(grey);
+    //printf("----\n");
+
+
     //though float objects are also allocated 
     //on the heap, they don't reference other objects
     //and hence just freeing them is sufficient
 
   } //end of while(!is_set_empty(grey))
 
-  struct node *white_obj;
-
   //free all the objects in the white set
   while(!is_set_empty(white))
   {
-    white_obj = white;
+    struct node *white_obj = white;
     if(!value_exists(black, white_obj->key))
       dealloc(white_obj->key >> CONS_SHIFT);
     remove_node(&white, white_obj->key);
   }
-
 
   destroy(&black);
   destroy(&grey);
@@ -377,11 +393,11 @@ BOOLEAN is_set_empty(struct node *set)
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 {
-  return IS_CONS_OBJECT(obj)  ||
-         IS_ARRAY_OBJECT(obj) ||
-         IS_FLOAT_OBJECT(obj) ||
-         IS_FN_OBJECT(obj)    ||
-         IS_MACRO_OBJECT(obj);
+   return IS_CONS_OBJECT(obj)  ||
+          IS_ARRAY_OBJECT(obj) ||
+          IS_FLOAT_OBJECT(obj) ||
+          IS_FN_OBJECT(obj)    ||
+          IS_MACRO_OBJECT(obj);
 }
 
 void build_grey_set()
@@ -461,6 +477,8 @@ void test_bst()
 
   grey = NULL;
 
+  //test 1
+
   /* int i; */
   /* int a[1000]; */
 
@@ -482,31 +500,58 @@ void test_bst()
   /* if(is_set_empty(grey)) */
   /*   printf("set is empty\n"); */
 
-  insert_node(&grey, create_node(10));
-  insert_node(&grey, create_node(5));
-  insert_node(&grey, create_node(20));
-  insert_node(&grey, create_node(3));
-  insert_node(&grey, create_node(8));
-  insert_node(&grey, create_node(15));
+  //end of test 1
+
+  //test 2
+
+  /* insert_node(&grey, create_node(10)); */
+  /* insert_node(&grey, create_node(5)); */
+  /* insert_node(&grey, create_node(20)); */
+  /* insert_node(&grey, create_node(3)); */
+  /* insert_node(&grey, create_node(8)); */
+  /* insert_node(&grey, create_node(15)); */
+  /* insert_node(&grey, create_node(40)); */
+  /* insert_node(&grey, create_node(13)); */
+  /* insert_node(&grey, create_node(18)); */
+
+  /* print_tree(grey); */
+
+  /* remove_node(&grey, 15); */
+
+  /* if(value_exists(grey, 10)) */
+  /*    printf("10 exists in the tree\n"); */
+  /* else */
+  /*   printf("Failure: 10 does not exist in the tree\n"); */
+
+  /* if(!value_exists(grey, 15)) */
+  /*    printf("15 does not exist in the tree\n"); */
+  /* else */
+  /*   printf("Failure: 15 exists not exist in the tree\n"); */
+
+  /* print_tree(grey); */
+
+  //end of test 2
+
+  //test 3
+  insert_node(&grey, create_node(100));
+  insert_node(&grey, create_node(80));
+  insert_node(&grey, create_node(60));
   insert_node(&grey, create_node(40));
-  insert_node(&grey, create_node(13));
-  insert_node(&grey, create_node(18));
+  insert_node(&grey, create_node(120));
+  insert_node(&grey, create_node(110));
+  insert_node(&grey, create_node(130));
+  insert_node(&grey, create_node(90));
+  insert_node(&grey, create_node(95));
 
   print_tree(grey);
+  printf("----%d------\n", get_size_of_tree(grey));
 
-  remove_node(&grey, 15);
-
-  if(value_exists(grey, 10))
-     printf("10 exists in the tree\n");
-  else
-    printf("Failure: 10 does not exist in the tree\n");
-
-  if(!value_exists(grey, 15))
-     printf("15 does not exist in the tree\n");
-  else
-    printf("Failure: 15 exists not exist in the tree\n");
+  remove_node(&grey, 80);
 
   print_tree(grey);
+  printf("----%d------\n", get_size_of_tree(grey));
+
+  //end of test 3
 
   destroy(&grey);
 

@@ -16,6 +16,9 @@ extern char **strings;
 
 extern RAW_PTR *heap;
 
+extern RAW_PTR free_list;
+extern RAW_PTR last_segment;
+
 jmp_buf env;
 extern tpl_hook_t tpl_hook;
 
@@ -27,6 +30,8 @@ void create_image(char *file_name)
     -----------------------------
     char           **strings
     OBJECT_PTR     init_env_list
+    RAW_PTR        free_list
+    RAW_PTR        last_segment
     RAW_PTR        *heap
     unsigned int   current_package
     int            gen_sym_count
@@ -44,9 +49,11 @@ void create_image(char *file_name)
 
   char *sym;
 
-  tpl_node *tn = tpl_map("A(s)uA(u)uiA(S(si)A(s))", 
+  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))", 
 			 &str, 
 			 &init_env_list,
+			 &free_list,
+			 &last_segment,
 			 &val,
 			 &current_package,
 			 &gen_sym_count,
@@ -121,9 +128,11 @@ void load_from_image(char *file_name)
     exit(1);
   }
 
-  tpl_node *tn = tpl_map("A(s)uA(u)uiA(S(si)A(s))", 
+  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))", 
 			 &str, 
 			 &init_env_list,
+			 &free_list,
+			 &last_segment,
 			 &val,
 			 &current_package,
 			 &gen_sym_count,

@@ -446,7 +446,7 @@ void repl()
 
     reset_exception_mechanism();
 
-    //gc();
+    gc();
 
     if(yyin == stdin)
       prompt();
@@ -515,7 +515,6 @@ int main(int argc, char **argv)
     cleanup();
     exit(1);
   }
-  //yyin = stdin;
 
   while(1)
   {
@@ -899,6 +898,11 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
       {
 	OBJECT_PTR args = cdr(form);
 	ret = invoke_function(car_obj, args, env_list);
+      }
+      else if(IS_MACRO_OBJECT(car_obj))
+      {
+	OBJECT_PTR args = cdr(form);
+	ret = invoke_macro(car_obj, args, env_list, true);
       }
       else if(IS_SYMBOL_OBJECT(car_obj))
       {
@@ -1505,6 +1509,8 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
       for(i=1; i<=len; i++)
 	set_heap(new_ptr + i, clone_object(get_heap(ptr + i)));
+
+      insert_node(&white, create_node((new_ptr << ARRAY_SHIFT) + ARRAY_TAG));
 
       ret = (new_ptr << ARRAY_SHIFT) + ARRAY_TAG;
     }
@@ -2807,6 +2813,9 @@ inline
 #endif
 OBJECT_PTR get_heap(RAW_PTR ptr)
 {
+  if(ptr == null)
+    assert(false);
+
   OBJECT_PTR ret = heap[ptr];
 
   if(!is_valid_object(ret))
