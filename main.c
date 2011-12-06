@@ -494,7 +494,7 @@ void cleanup()
 
 void welcome()
 {
-  fprintf(stdout, "Welcome to PLISP. Type 'quit' to exit.");
+  fprintf(stdout, "Welcome to pLISP. Type 'quit' to exit.");
 }
 
 int main(int argc, char **argv)
@@ -674,14 +674,21 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
 {
   log_function_entry("car");
 
-  if(!(IS_CONS_OBJECT(cons_obj)))
-  {
-    sprintf(err_buf, "Argument to CAR not a CONS object");
-    raise_error();
-    return NIL;
-  }
+  OBJECT_PTR ret;
 
-  OBJECT_PTR ret = get_heap(cons_obj >> CONS_SHIFT);
+  if(cons_obj == NIL)
+    ret = NIL;
+  else
+  {
+    if(!(IS_CONS_OBJECT(cons_obj)))
+    {
+      sprintf(err_buf, "Argument to CAR not a CONS object");
+      raise_error();
+      return NIL;
+    }
+
+    ret = get_heap(cons_obj >> CONS_SHIFT);
+  }
 
   log_function_exit("car");
 
@@ -693,14 +700,21 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
 {
   log_function_entry("cdr");
 
-  if(!(IS_CONS_OBJECT(cons_obj)))
-  {
-    sprintf(err_buf, "Argument to CDR not a CONS object");
-    raise_error();
-    return NIL;
-  }
+  OBJECT_PTR ret;
 
-  OBJECT_PTR ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
+  if(cons_obj == NIL)
+    ret = NIL;
+  else
+  {
+    if(!(IS_CONS_OBJECT(cons_obj)))
+      {
+	sprintf(err_buf, "Argument to CDR not a CONS object");
+	raise_error();
+	return NIL;
+      }
+
+    ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
+  }
 
   log_function_exit("cdr");
 
@@ -923,7 +937,7 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	else if(!strcmp(val,CAR))
 	{
 	  OBJECT_PTR obj = eval(CADR(form), env_list);
-	  if(!(IS_CONS_OBJECT(obj)))
+	  if(obj != NIL && !(IS_CONS_OBJECT(obj)))
 	  {
 	    sprintf(err_buf, "Argument to CAR not a list");
 	    raise_error();
@@ -934,7 +948,7 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
 	else if(!strcmp(val,CDR))
 	{
 	  OBJECT_PTR obj = eval(CADR(form), env_list);
-	  if(!(IS_CONS_OBJECT(obj)))
+	  if(obj != NIL && !(IS_CONS_OBJECT(obj)))
 	  {
 	    sprintf(err_buf, "Argument to CDR not a list");
 	    raise_error();
@@ -1453,6 +1467,9 @@ OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
     repl();
   }
 
+  //TODO: if the evaluation return successfully, remove the form
+  //from the execution stack
+
   log_function_exit("eval");
 
   return ret;
@@ -1554,6 +1571,10 @@ void print_function_object(OBJECT_PTR fn_obj)
 
 int length(OBJECT_PTR cons_obj)
 {
+
+  if(cons_obj == NIL)
+    return 0;
+
   if(!(IS_CONS_OBJECT(cons_obj)))
   {
     sprintf(err_buf, "Argument to LENGTH not a CONS object");
@@ -2749,7 +2770,7 @@ void initialize_heap()
 
 OBJECT_PTR eval_if(OBJECT_PTR cond_form, OBJECT_PTR then_form, OBJECT_PTR else_form, OBJECT_PTR env_list)
 {
-  if(eval(cond_form, env_list) == TRUE)
+  if(eval(cond_form, env_list) != NIL)
     return eval(then_form, env_list);
   else
     return eval(else_form, env_list);
@@ -2759,7 +2780,7 @@ OBJECT_PTR eval_while(OBJECT_PTR cond_form, OBJECT_PTR body_form, OBJECT_PTR env
 {
   OBJECT_PTR val;
 
-  while(eval(cond_form, env_list) == TRUE)
+  while(eval(cond_form, env_list) != NIL)
   {
     OBJECT_PTR rest = body_form;
 

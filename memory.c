@@ -102,7 +102,9 @@ void dealloc(RAW_PTR ptr)
 {
   assert(ptr >= 0 && ptr < HEAP_SIZE);
 
-  assert(is_valid_object(heap[ptr]));
+  //to avoid float objects being incorrectly flagged
+  //if(!is_valid_object(heap[ptr]))
+  //  assert(false);
 
   assert(heap[last_segment +1] == null);
 
@@ -156,8 +158,8 @@ void remove_node(struct node **r, OBJECT_PTR value)
 {
   struct node *root;
 
-  //if(!is_valid_object(value))
-  //  assert(false);
+  if(!is_valid_object(value))
+    assert(false);
 
   if(*r == NULL)
     return;
@@ -265,8 +267,8 @@ void print_tree(struct node *n)
   if(n->left != NULL)
     print_tree(n->left);
 
-  fprintf(stdout, "%d\n", n->key);
-  //print_object(n->key); printf("\n");
+  //fprintf(stdout, "%d\n", n->key);
+  print_object(n->key); printf("\n");
 
   if(n->right != NULL)
     print_tree(n->right);
@@ -281,12 +283,15 @@ void gc()
   //only init_env_list is stored in the grey set initially
   build_grey_set();
 
+  //printf("initial\n");
+  //print_tree(grey);
+  //printf("----------\n");
+
   while(!is_set_empty(grey))
   {
     //we can pick any grey object,
     //picking the root for convenience
     OBJECT_PTR obj = grey->key;
-
 
     //print_object(obj); printf("\n");
 
@@ -343,13 +348,13 @@ void gc()
     {
       RAW_PTR ptr = obj >> ARRAY_SHIFT;
 
-      int len = get_int_value(heap[ptr]);
+      int len = get_int_value(get_heap(ptr));
 
       int i;
 
       for(i=1; i<=len; i++)
       {
-	OBJECT_PTR array_elem = heap[ptr + i];
+	OBJECT_PTR array_elem = get_heap(ptr + i);
 	if(is_dynamic_memory_object(array_elem))
 	{
 	  insert_node(&grey, create_node(array_elem));
@@ -358,16 +363,23 @@ void gc()
       }
     }
 
-    //printf("----\n");
+    //printf("grey:\n");
     //print_tree(grey);
     //printf("----\n");
-
 
     //though float objects are also allocated 
     //on the heap, they don't reference other objects
     //and hence just freeing them is sufficient
 
   } //end of while(!is_set_empty(grey))
+
+  //printf("black:\n");
+  //print_tree(black);
+  //printf("---------------\n");
+
+  //printf("white:\n");
+  //print_tree(white);
+  //printf("---------------\n");
 
   //free all the objects in the white set
   while(!is_set_empty(white))
@@ -546,7 +558,7 @@ void test_bst()
   print_tree(grey);
   printf("----%d------\n", get_size_of_tree(grey));
 
-  remove_node(&grey, 80);
+  remove_node(&grey, 120);
 
   print_tree(grey);
   printf("----%d------\n", get_size_of_tree(grey));
