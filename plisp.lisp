@@ -1,3 +1,9 @@
+(define defun (macro (name vars &rest body)
+                     `(define ,name (lambda ,vars ,@body))))
+
+(define defmacro (macro (name vars &rest body)
+                        `(define ,name (macro ,vars ,@body))))
+
 (defun cadr (lst)
   (car (cdr lst)))
 
@@ -31,19 +37,23 @@
       (cons (car x) (append (cdr x) y))))
 
 (defun pair (x y)
-  (print x) (print y)
-  (cond ((or (and (atom x) (not (atom y))) (and (not (atom x)) (atom y)))            (error "Arguments mismatch"))
-	((not (eq (length x) (length y)))  (error "Length of two lists not equal"))
-	('t (if (and (null x) (null y))
-		nil
-		(cons (list (car x) (car y))
-		      (pair (cdr x) (cdr y)))))))
-
-(defun pair (x y)
   (if (and (null x) (null y))
       nil
       (cons (list (car x) (car y))
 	    (pair (cdr x) (cdr y)))))
+
+(defmacro while (condition &rest body)
+  `(((lambda (f) (set f (lambda ()
+                          (if ,condition
+                              (progn ,@body (f)))))) '())))
+
+(defun map (f lst)
+  (if (null lst)
+      nil
+    (cons (f (car lst)) (map f (cdr lst)))))
+
+(defmacro let (specs &rest body)
+  `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
 
 (defun assoc (x y)
   (if (eq (caar y) x)
@@ -59,7 +69,7 @@
 (defun length (lst)
   (if (null lst)
       0
-      (+ 1 (length (cdr lst)))))
+    (+ 1 (length (cdr lst)))))
 
 (defun last (lst)
    (if (null (cdr lst))
@@ -143,8 +153,6 @@
 (defun string-get (str pos)
   (array-get str pos))
 
-(defvar substring 'sub-array)
-
 (defmacro incf (var)
   `(set ,var (+ ,var 1)))
 
@@ -180,27 +188,26 @@
 
 (defun mapcar (f &rest lists)  
   (let ((min-length (min (mapcar-internal length lists)))
-	(result nil))
-    (for (i 0 (< i min-length) (incf i) result)
-	 (set result (append result (list (apply f (mapcar-internal (curry nth i) lists))))))))
+	(result nil)
+	(i 0))
+    (while (< i min-length)
+      (set result (append result (list (apply f (mapcar-internal (curry nth i) lists)))))
+      (incf i))
+    result))
 
 (defun mapcan (f &rest lists)  
-  (let ((result nil))
-    (dolist (x (mapcar f lists))
-      (dolist (y x)
-	(set result (append result y))))
+  (let ((min-length (min (mapcar-internal length lists)))
+	(result nil)
+	(i 0))
+    (while (< i min-length)
+      (set result (append result (apply f (mapcar-internal (curry nth i) lists))))
+      (incf i))
     result))
 
 (defmacro nconc (lst1 lst2)
   `(set ,lst1 (append ,lst1 ,lst2)))
 
-(defvar first 'car)
-
-(defvar rest 'cdr)
-
-(defvar setq 'set)
-
-(defun remove (e lst &optional (count 1))
+(defun remove (e lst count)
   (if (null lst)
       nil
       (if (neq e (car lst))
@@ -216,20 +223,40 @@
 	  (car lst)
 	  (find-if predicate (cdr lst)))))
 
-(defun find (e lst)
-  (find-if (lambda (x) (eq x e)) lst))
+(defun find (e lst predicate)
+  (find-if (lambda (x) (predicate x e)) lst))
 
 (defun remove-duplicates (lst equality-test)
   (let ((result nil))
     (dolist (x lst)
       (if (not (find x result equality-test))
-	  (nconc result (list x))
+	  (set result (append result (list x)))
 	  ()))
     result))
-	  
 
+(defmacro labels (decls &rest body)
+  (let ((f (lambda (decl)
+             (cons (nth 0 decl)
+                   (list (list 'lambda
+                         (nth 1 decl)
+                         (nth 2 decl)))))))
+    `(let ,(map f decls)
+       ,@body)))
+
+(defmacro first (lst)
+  `(car ,lst))
+
+(defmacro rest (lst)
+  `(cdr ,lst))
+
+(defmacro setq (var value)
+  `(set ,var ,value))
+
+(defmacro substring (str)
+  `(sub-array ,str))
 
 (create-package "user")
 
-(in-package "user")
+(load-file "math.lisp")
+
 

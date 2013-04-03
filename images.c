@@ -5,7 +5,7 @@
 #include "plisp.h"
 #include "tpl.h"
 
-extern OBJECT_PTR init_env_list;
+extern OBJECT_PTR top_level_env;
 extern unsigned int current_package;
 extern unsigned int nof_packages;
 extern package_t *packages;
@@ -29,7 +29,7 @@ void create_image(char *file_name)
     variables that are serialized
     -----------------------------
     char           **strings
-    OBJECT_PTR     init_env_list
+    OBJECT_PTR     top_level_env
     RAW_PTR        free_list
     RAW_PTR        last_segment
     RAW_PTR        *heap
@@ -51,7 +51,7 @@ void create_image(char *file_name)
 
   tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))", 
 			 &str, 
-			 &init_env_list,
+			 &top_level_env,
 			 &free_list,
 			 &last_segment,
 			 &val,
@@ -130,7 +130,7 @@ void load_from_image(char *file_name)
 
   tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))", 
 			 &str, 
-			 &init_env_list,
+			 &top_level_env,
 			 &free_list,
 			 &last_segment,
 			 &val,

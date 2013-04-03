@@ -11,7 +11,7 @@ RAW_PTR last_segment;
 //do we need the black set at all?
 struct node *black = NULL, *white = NULL, *grey = NULL;
 
-extern OBJECT_PTR init_env_list, NIL;
+extern OBJECT_PTR top_level_env, NIL;
 
 void initialize_free_list()
 {
@@ -280,7 +280,7 @@ void gc()
   destroy(&black);
   destroy(&grey);
 
-  //only init_env_list is stored in the grey set initially
+  //only top_level_env is stored in the grey set initially
   build_grey_set();
 
   //printf("initial\n");
@@ -321,7 +321,7 @@ void gc()
 	remove_node(&white, cdr_obj);
       }
     }
-    else if(IS_FN_OBJECT(obj) || IS_MACRO_OBJECT(obj))
+    else if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
     {
       OBJECT_PTR env_obj = get_env_list(obj);
       if(is_dynamic_memory_object(env_obj))
@@ -354,13 +354,19 @@ void gc()
 
       for(i=1; i<=len; i++)
       {
-	OBJECT_PTR array_elem = get_heap(ptr + i);
-	if(is_dynamic_memory_object(array_elem))
-	{
-	  insert_node(&grey, create_node(array_elem));
-	  remove_node(&white, array_elem);
-	}
+        OBJECT_PTR array_elem = get_heap(ptr + i);
+        if(is_dynamic_memory_object(array_elem))
+        {
+          insert_node(&grey, create_node(array_elem));
+          remove_node(&white, array_elem);
+        }
       }
+    }
+    else if(IS_CONTINUATION_OBJECT(obj))
+    {
+      OBJECT_PTR stack = ((obj >> CONTINUATION_SHIFT) << CONS_SHIFT) + CONS_TAG;
+      insert_node(&grey, create_node(stack));
+      remove_node(&white, stack);
     }
 
     //printf("grey:\n");
@@ -405,18 +411,19 @@ BOOLEAN is_set_empty(struct node *set)
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 {
-   return IS_CONS_OBJECT(obj)  ||
-          IS_ARRAY_OBJECT(obj) ||
-          IS_FLOAT_OBJECT(obj) ||
-          IS_FN_OBJECT(obj)    ||
-          IS_MACRO_OBJECT(obj);
+   return IS_CONS_OBJECT(obj)    ||
+          IS_ARRAY_OBJECT(obj)   ||
+          IS_FLOAT_OBJECT(obj)   ||
+          IS_CLOSURE_OBJECT(obj) ||
+          IS_MACRO_OBJECT(obj)   ||
+          IS_CONTINUATION_OBJECT(obj);
 }
 
 void build_grey_set()
 {
 
-  insert_node(&grey, create_node(init_env_list));
-  remove_node(&white, init_env_list);
+  insert_node(&grey, create_node(top_level_env));
+  remove_node(&white, top_level_env);
 
   /*
   OBJECT_PTR rest = init_env_list;

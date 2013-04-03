@@ -16,7 +16,7 @@ extern void yyparse();
 int nof_strings = 0;
 char **strings = NULL;
 
-OBJECT_PTR init_env_list;
+OBJECT_PTR top_level_env;
 
 extern RAW_PTR *heap;
 
@@ -29,14 +29,76 @@ int gen_sym_count = 0;
 //end of variables that should
 //be serialized to implement images
 
-//standard objects
-OBJECT_PTR TRUE  =                       SYMBOL_TAG;
-OBJECT_PTR NIL   = (1 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR QUOTE = (2 << SYMBOL_SHIFT) + SYMBOL_TAG;
+//standard objects defined
+//to avoid creating them
+//each time they're needed
+OBJECT_PTR TRUE;
+OBJECT_PTR NIL;
+OBJECT_PTR QUOTE;
+OBJECT_PTR LAMBDA;
+OBJECT_PTR IF;
+OBJECT_PTR SET;
+OBJECT_PTR CALL_CC;
+OBJECT_PTR DEFINE;
+OBJECT_PTR PROGN;
+OBJECT_PTR BACKQUOTE;
+
+OBJECT_PTR CONS;
+OBJECT_PTR EQ;
+OBJECT_PTR ATOM;
+OBJECT_PTR CAR;
+OBJECT_PTR CDR;
+
+OBJECT_PTR DEFUN;
+
+OBJECT_PTR ADD;
+OBJECT_PTR SUB;
+OBJECT_PTR MULT;
+OBJECT_PTR DIV;
+
+OBJECT_PTR PRINT;
+OBJECT_PTR DEFVAR;
+OBJECT_PTR LST;
+OBJECT_PTR LISTP;
+OBJECT_PTR SYMBOL_VALUE;
+OBJECT_PTR DEFMACRO;
+
+OBJECT_PTR GT;
+OBJECT_PTR GENSYM;
+OBJECT_PTR SETCAR;
+OBJECT_PTR SETCDR;
+OBJECT_PTR ERROR;
+OBJECT_PTR CREATE_PACKAGE;
+OBJECT_PTR IN_PACKAGE;
+OBJECT_PTR COMMA;
+OBJECT_PTR COMMA_AT;
+OBJECT_PTR EXPAND_MACRO;
+
+OBJECT_PTR STRING;
+OBJECT_PTR MAKE_ARRAY;
+OBJECT_PTR ARRAY_GET;
+OBJECT_PTR ARRAY_SET;
+OBJECT_PTR SUB_ARRAY;
+OBJECT_PTR ARRAY_LENGTH;
+OBJECT_PTR PRINT_STRING;
+OBJECT_PTR LABELS;
+OBJECT_PTR CREATE_IMAGE;
+OBJECT_PTR BREAK;
+OBJECT_PTR LOAD_FOREIGN_LIBRARY;
+OBJECT_PTR CALL_FOREIGN_FUNCTION;
+OBJECT_PTR PRINTENV;
+OBJECT_PTR CURRENTENV;
+OBJECT_PTR EVAL;
+
+OBJECT_PTR RESUME;
+
+OBJECT_PTR BACKTRACE;
+
+//end of standard object definition
 
 extern FILE *yyin;
 
-#define NOF_SPECIAL_SYMBOLS 52
+#define NOF_SPECIAL_SYMBOLS 54
 
 BOOLEAN in_exception = false;
 OBJECT_PTR execution_stack;
@@ -46,14 +108,7 @@ char err_buf[500];
 
 #define CORE_PACKAGE_INDEX 0
 
-//constants defined for speed and clarity
-#define TWO_RAISED_TO_27 134217728
-#define TWO_RAISED_TO_28 268435456
-#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
-
 BOOLEAN debug_mode = false;
-OBJECT_PTR debug_env;
-BOOLEAN abort_debug = false;
 
 //used to keep track of when
 //to exit debugging mode, also
@@ -78,9 +133,44 @@ inline OBJECT_PTR CADDDR(x) { return car(cdr(cdr(cdr(x)))); }
 inline OBJECT_PTR CADDAR(x) { return car(cdr(cdr(car(x)))); }
 inline OBJECT_PTR CADADR(x) { return car(cdr(car(cdr(x)))); }
 
+inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG; }
+inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CONS_TAG; }
+inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == CLOSURE_TAG; }
+inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == INTEGER_TAG; }
+inline BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == FLOAT_TAG; }
+inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return (x & BIT_MASK) == STRING_LITERAL_TAG; }
+inline BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CHAR_TAG; }
+inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == MACRO_TAG; }
+inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == ARRAY_TAG; }
+inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return (x & BIT_MASK) == CONTINUATION_TAG; }
+
+//registers
+OBJECT_PTR reg_accumulator;
+OBJECT_PTR reg_next_expression;
+OBJECT_PTR reg_current_env;
+OBJECT_PTR reg_current_value_rib;
+OBJECT_PTR reg_current_stack;
+
+/*symbols corresponding to assembler mnemonics */
+OBJECT_PTR HALT;                  
+OBJECT_PTR REFER;
+OBJECT_PTR CONSTANT;
+OBJECT_PTR CLOSE;
+OBJECT_PTR MACRO;
+OBJECT_PTR TEST;
+OBJECT_PTR ASSIGN;         
+OBJECT_PTR CONTI;
+OBJECT_PTR NUATE;
+OBJECT_PTR FRAME;
+OBJECT_PTR ARGUMENT;
+OBJECT_PTR APPLY;
+OBJECT_PTR RETURN;
+/* end symbols corresponding to assembler mnemonics */
+
+extern void print_stack();
+
 void initialize()
 {
-
   initialize_heap();
 
   initialize_free_list();
@@ -91,14 +181,7 @@ void initialize()
 
   initialize_core_package();
 
-  //dummy object to circumvent the issue with add_to_environment
-  //choking on a NIL environment)
-  init_env_list = cons(cons(cons(get_symbol_object("DUMMY"),
-				 NIL), 
-			    NIL),
-		       NIL);
-
-  reset_exception_mechanism();
+  top_level_env = NIL;
 }
 
 int add_string(char *str)
@@ -317,144 +400,6 @@ void print_expression(expression_t *e)
   }
 }
 
-void repl()
-{
-  yyparse();
-
-  if(debug_mode)
-  {
-    if(g_expr->type == SYMBOL)
-    {
-      if(!strcmp(g_expr->atom_value, "RESUME"))
-      {
-	fprintf(stdout, "Exiting debug mode.\n");
-	debug_mode = false;
-	return;
-      }
-      else if(!strcmp(g_expr->atom_value, "STEP"))
-      {
-	//do nothing; debug_mode will take care of the stepping
-	return;
-      }
-      else if(!strcmp(g_expr->atom_value, "ABORT"))
-      {
-	abort_debug = true;
-	return;
-      }
-      else if(!strcmp(g_expr->atom_value,"QUIT") ||
-	      !strcmp(g_expr->atom_value,"EXIT") ||
-	      !strcmp(g_expr->atom_value,"Q"))
-      {
-	fprintf(stdout, "Bye.\n");
-	cleanup();
-	exit(0);
-      }
-      else
-      {
-	OBJECT_PTR sym = convert_expression_to_object(g_expr);
-	OBJECT_PTR res = get_symbol_value(sym, debug_env);
-
-	if(car(res) == NIL)
-	{
-	  fprintf(stdout, "Symbol not bound: ");
-	  print_object(sym);
-	}
-	else
-	  print_object(cdr(res));
-
-	prompt();
-
-	repl();
-	return;
-      }
-    }
-    else if(g_expr->type == LIST && 
-	  g_expr->elements[0]->type == SYMBOL &&
-	  !strcmp(g_expr->elements[0]->atom_value, "SET"))
-    {
-      print_object(evaluate_expression(g_expr, debug_env));
-      prompt();
-
-      return;
-    }
-    else
-    {
-      fprintf(stdout, "Only forms allowed in debug mode are SET forms and atoms\n");
-      prompt();
-
-      return;
-    }
-    return;
-  } //end of if(debug_mode)
-
-  if(g_expr->type == SYMBOL && ( !strcmp(g_expr->atom_value,"QUIT") ||
-				 !strcmp(g_expr->atom_value,"EXIT") ||
-				 !strcmp(g_expr->atom_value,"Q") ))
-  {
-    fprintf(stdout, "Bye.\n");
-    cleanup();
-    exit(0);
-  }
-  else if(g_expr->type == LIST && 
-	  g_expr->elements[0]->type == SYMBOL &&
-	  !strcmp(g_expr->elements[0]->atom_value, "LOAD-FILE"))
-  {
-    FILE *next_yyin = yyin;
-
-    yyin = fopen(g_expr->elements[1]->atom_value,"r");
-
-    if(yyin == NULL)
-    {
-      fprintf(stdout, "Unable to open file \"%s\"\n", g_expr->elements[1]->atom_value);
-      yyin = next_yyin;
-      prompt();
-
-      return;
-    }
-    else
-      return;
-  }
-  else
-  {
-
-#ifdef DEEP_DEBUG
-    print_expression(g_expr);
-#else
-
-    OBJECT_PTR value = evaluate_expression(g_expr, init_env_list);
-
-    if(in_exception)
-    {
-      fprintf(stdout, "Error: %s", err_buf);
-
-      print_stack_trace();
-    }
-    else if(abort_debug)
-    {
-      debug_mode = false;
-      abort_debug = false;
-    }
-    else
-    {
-      if(yyin == stdin)
-	print_object(value);
-    }
-
-#endif
-
-    delete_expression(g_expr);
-
-    reset_exception_mechanism();
-
-    gc();
-
-    if(yyin == stdin)
-      prompt();
-
-    return;
-  }
-}
-
 void prompt()
 {
   if(!debug_mode)
@@ -497,34 +442,6 @@ void welcome()
   fprintf(stdout, "Welcome to pLISP. Type 'quit' to exit.");
 }
 
-int main(int argc, char **argv)
-{
-
-  if(argc == 1)
-    initialize();
-  else
-    load_from_image(argv[1]);
-
-  welcome();
-  
-  yyin = fopen("plisp.lisp", "r");
-
-  if(!yyin)
-  {
-    fprintf(stderr, "Unable to open file plisp.lisp; exiting\n");
-    cleanup();
-    exit(1);
-  }
-
-  while(1)
-  {
-    repl();
-  }
-
-  cleanup(); //don't think this ever gets called
-
-}
-
 void print_object(OBJECT_PTR obj_ptr)
 {
   log_function_entry("print_object");
@@ -544,8 +461,10 @@ void print_object(OBJECT_PTR obj_ptr)
   }
   else if(IS_CONS_OBJECT(obj_ptr))
     print_cons_object(obj_ptr);
-  else if(IS_FN_OBJECT(obj_ptr))
-    print_function_object(obj_ptr);
+  else if(IS_CLOSURE_OBJECT(obj_ptr))
+    print_closure_object(obj_ptr);
+  else if(IS_CONTINUATION_OBJECT(obj_ptr))
+    fprintf(stdout, "#<CONTINUATION #x%08x> ", obj_ptr);
   else if(IS_MACRO_OBJECT(obj_ptr))
     print_macro_object(obj_ptr);
   else if(IS_INTEGER_OBJECT(obj_ptr))
@@ -566,22 +485,9 @@ void print_object(OBJECT_PTR obj_ptr)
   else
     assert(false);
 
+  fflush(stdout);
+
   log_function_exit("print_object");
-}
-
-OBJECT_PTR evaluate_expression(expression_t *e, OBJECT_PTR env_list)
-{
-  log_function_entry("evaluate_expression");
-
-  OBJECT_PTR obj = convert_expression_to_object(e);
-
-  root_form = obj;
-
-  OBJECT_PTR ret = eval(obj, env_list);
-
-  log_function_exit("evaluate_expression");
-
-  return ret;
 }
 
 OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
@@ -649,27 +555,6 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   return retval;
 }
 
-OBJECT_PTR build_list_object(expression_t **e, int size, int n)
-{
-  log_function_entry("build_list_object");
-
-  OBJECT_PTR ret;
-
-  if(n == (size - 1))
-    ret = cons(convert_expression_to_object(e[n]), NIL);
-  else
-    ret = cons(convert_expression_to_object(e[n]), build_list_object(e, size, n+1));
-
-#ifdef DEBUG
-  print_object(ret);
-  fprintf(stdout, "\n");
-#endif
-
-  log_function_exit("build_list_object");
-
-  return ret;
-}
-
 OBJECT_PTR car(OBJECT_PTR cons_obj)
 {
   log_function_entry("car");
@@ -683,7 +568,7 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
     if(!(IS_CONS_OBJECT(cons_obj)))
     {
       sprintf(err_buf, "Argument to CAR not a CONS object");
-      raise_error();
+      raise_error(err_buf);
       return NIL;
     }
 
@@ -708,9 +593,9 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   {
     if(!(IS_CONS_OBJECT(cons_obj)))
       {
-	sprintf(err_buf, "Argument to CDR not a CONS object");
-	raise_error();
-	return NIL;
+        sprintf(err_buf, "Argument to CDR not a CONS object");
+        raise_error(err_buf);
+        return NIL;
       }
 
     ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
@@ -732,7 +617,7 @@ void print_cons_object(OBJECT_PTR obj)
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
 
-  if((is_atom(cdr_obj) || IS_FN_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj))  && cdr_obj != NIL)
+  if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj))  && cdr_obj != NIL)
   {
     fprintf(stdout, "(");
     print_object(car_obj);
@@ -746,14 +631,14 @@ void print_cons_object(OBJECT_PTR obj)
 
     OBJECT_PTR rest = obj;
 
-    while(rest != NIL && !(is_atom(rest) || IS_FN_OBJECT(rest) || IS_MACRO_OBJECT(rest)))
+    while(rest != NIL && !(is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest)))
     {
       print_object(car(rest));
       fprintf(stdout, " ");
       rest = cdr(rest);
     }
 
-    if((is_atom(rest) || IS_FN_OBJECT(rest) || IS_MACRO_OBJECT(rest)) && rest != NIL)
+    if((is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest)) && rest != NIL)
     {
       fprintf(stdout, " . ");
       print_object(rest);
@@ -834,6 +719,8 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
 {
   BOOLEAN ret = false;
 
+  //TODO: extend this for array objects (any others?)
+
   if(obj1 == obj2)
     ret = true;
   else
@@ -846,646 +733,17 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
   return ret;
 }
 
-OBJECT_PTR eval(OBJECT_PTR form, OBJECT_PTR env_list)
-{
-
-  log_function_entry("eval");
-
-  if(abort_debug)
-  {
-    log_function_exit("eval");
-    return NIL;
-  }
-
-  if(debug_mode)
-    debug_env = env_list;
-
-  OBJECT_PTR ret;
-
-  if(in_exception)
-  {
-    log_function_exit("eval");
-    return NIL;
-  }
-
-  if(IS_SYMBOL_OBJECT(form))
-  {
-    if(form == NIL || form == TRUE || is_special_form(form))
-      ret = form;
-    else
-    {
-      OBJECT_PTR res = get_symbol_value(form, env_list);
-      if(car(res) == NIL)
-      {
-	char buf[SYMBOL_STRING_SIZE];
-	print_symbol(form, buf);
-	sprintf(err_buf, "Symbol not bound: %s", buf);
-	raise_error();
-	ret = NIL;
-      }
-      else
-	ret = cdr(res);
-    }
-  }
-  else if(IS_INTEGER_OBJECT(form) || IS_STRING_LITERAL_OBJECT(form) || IS_CHAR_OBJECT(form) || IS_FLOAT_OBJECT(form))
-      ret = form;
-  else if(IS_CONS_OBJECT(form))
-  {
-    if(form == NIL) //check for NIL incorrect here, actually; NIL is a symbol object
-      ret = NIL;
-    else
-    {
-      OBJECT_PTR car_obj = car(form);
-      if(IS_CONS_OBJECT(car_obj))
-      {
-
-	if(execution_stack == NIL)
-	  execution_stack = cons(form, NIL);
-	else
-	  execution_stack = cons(form, execution_stack);
-
-	OBJECT_PTR f = cons(eval(car_obj, env_list), cdr(form));
-
-	ret = eval(f, env_list);
-      }
-      else if(IS_FN_OBJECT(car_obj))
-      {
-	OBJECT_PTR args = cdr(form);
-	ret = invoke_function(car_obj, args, env_list);
-      }
-      else if(IS_MACRO_OBJECT(car_obj))
-      {
-	OBJECT_PTR args = cdr(form);
-	ret = invoke_macro(car_obj, args, env_list, true);
-      }
-      else if(IS_SYMBOL_OBJECT(car_obj))
-      {
-	char val[SYMBOL_STRING_SIZE];
-	print_symbol(car_obj, val);
-	if(!strcmp(val,QUOT))
-	  ret = CADR(form);
-	else if(!strcmp(val,CONS))
-	{
-	  OBJECT_PTR v1 = eval(CADR(form), env_list);
-	  OBJECT_PTR v2 = eval(CADDR(form), env_list);
-	  ret = cons(v1, v2);
-	}
-	else if(!strcmp(val,ATOM))
-	  ret = is_atom(eval(CADR(form), env_list)) ? TRUE : NIL;
-	else if(!strcmp(val,EQ))
-	  ret = equal(eval(CADR(form), env_list), eval(CADDR(form), env_list)) ? TRUE : NIL;
-	else if(!strcmp(val,CAR))
-	{
-	  OBJECT_PTR obj = eval(CADR(form), env_list);
-	  if(obj != NIL && !(IS_CONS_OBJECT(obj)))
-	  {
-	    sprintf(err_buf, "Argument to CAR not a list");
-	    raise_error();
-	    ret = NIL;
-	  }
-	  ret = car(obj);
-	}
-	else if(!strcmp(val,CDR))
-	{
-	  OBJECT_PTR obj = eval(CADR(form), env_list);
-	  if(obj != NIL && !(IS_CONS_OBJECT(obj)))
-	  {
-	    sprintf(err_buf, "Argument to CDR not a list");
-	    raise_error();
-	    ret = NIL;
-	  }
-	  return cdr(obj);
-	}
-	else if(!strcmp(val,COND))
-	{
-	  OBJECT_PTR cond_clauses = cdr(form);
-	  BOOLEAN found = false;
-	  while(cond_clauses != NIL)
-	  {
-	    if(eval(car(car(cond_clauses)), env_list) == TRUE)
-	    {
-	      ret = eval(CADR(car(cond_clauses)), env_list);
-	      found = true;
-	      break;
-	    }
-	    cond_clauses = cdr(cond_clauses);
-	  }
-	  if(!found)
-	    ret = NIL;
-	}
-	else if(!strcmp(val,LAMBDA))
-	  ret = create_function_object(env_list, CADR(form), CDDR(form));
-	else if(!strcmp(val,DEFUN))
-	{
-	  OBJECT_PTR fn_name = CADR(form);
-	  add_to_environment(env_list, fn_name, create_function_object(env_list,CADDR(form),CDDDR(form)));
-	  ret = fn_name;
-	}
-	else if(!strcmp(val,DEFMACRO))
-	{
-	  OBJECT_PTR macro_name = CADR(form);
-	  add_to_environment(env_list, macro_name, create_macro_object(env_list,CADDR(form),CADDDR(form)));
-	  ret = macro_name;
-	}
-	else if(!strcmp(val, ADD))
-	{
-	  float sum = 0;
-	  OBJECT_PTR rest = cdr(form);
-	  BOOLEAN is_float = false;
-
-	  while(rest != NIL)
-	  {
-	    OBJECT_PTR v = eval(car(rest), env_list);
-
-	    if(IS_FLOAT_OBJECT(v))
-	    {
-	      is_float = true;
-	      sum += get_float_value(v);
-	    }
-	    else
-	      sum += get_int_value(v);
-
-	    rest = cdr(rest);
-	  }
-
-	  if(is_float)
-	    ret = convert_float_to_object(sum);
-	  else
-	    ret = convert_int_to_object((int)sum);
-	}
-	else if(!strcmp(val, MULT))
-	{
-	  float sum = 1;
-	  OBJECT_PTR rest = cdr(form);
-	  BOOLEAN is_float = false;
-
-	  while(rest != NIL)
-	  {
-	    OBJECT_PTR v = eval(car(rest), env_list);
-
-	    if(IS_FLOAT_OBJECT(v))
-	    {
-	      is_float = true;
-	      sum *= get_float_value(v);
-	    }
-	    else
-	      sum *= get_int_value(v);
-
-	    rest = cdr(rest);
-	  }
-	  if(is_float)
-	    ret = convert_float_to_object(sum);
-	  else
-	    ret = convert_int_to_object((int)sum);
-	}
-	else if(!strcmp(val, SUB))
-	{
-	  OBJECT_PTR v = eval(CADR(form), env_list);
-	  float val;
-	  BOOLEAN is_float = false;
-
-	  if(IS_FLOAT_OBJECT(v))
-	  {
-	    is_float = true;
-	    val = get_float_value(v);
-	  }
-	  else
-	    val = get_int_value(v);
-
-	  OBJECT_PTR rest = CDDR(form);
-
-	  float sum = 0;
-
-	  while(rest != NIL)
-	  {
-	    OBJECT_PTR term = eval(car(rest), env_list);
-
-	    if(IS_FLOAT_OBJECT(term))
-	    {
-	      is_float = true;
-	      sum += get_float_value(term);
-	    }
-	    else
-	      sum += get_int_value(term);
-
-	    rest = cdr(rest);
-	  }
-
-	  if(is_float)
-	    ret = convert_float_to_object(val - sum);
-	  else
-	    ret = convert_int_to_object((int)(val - sum));
-	}
-	else if(!strcmp(val, DIV))
-	{
-	  OBJECT_PTR v = eval(CADR(form), env_list);
-	  float val;
-	  BOOLEAN is_float = false;
-
-	  if(IS_FLOAT_OBJECT(v))
-	  {
-	    is_float = true;
-	    val = get_float_value(v);
-	  }
-	  else
-	    val = get_int_value(v);
-
-	  OBJECT_PTR rest = CDDR(form);
-
-	  float sum = 1;
-
-	  while(rest != NIL)
-	  {
-	    OBJECT_PTR term = eval(car(rest), env_list);
-
-	    if(IS_FLOAT_OBJECT(term))
-	    {
-	      is_float = true;
-	      sum *= get_float_value(term);
-	    }
-	    else
-	      sum *= get_int_value(term);
-
-	    rest = cdr(rest);
-	  }
-
-	  if(is_float)
-	    ret = convert_float_to_object(val / sum);
-	  else
-	    ret = convert_int_to_object((int)(val / sum));
-	}
-	else if(!strcmp(val, GT))
-	{
-	  OBJECT_PTR v1 = eval(CADR(form), env_list);
-	  OBJECT_PTR v2 = eval(CADDR(form), env_list);
-
-	  float val1, val2;
-	  
-	  if(IS_FLOAT_OBJECT(v1))
-	    val1 = get_float_value(v1);
-	  else
-	    val1 = get_int_value(v1);
-
-	  if(IS_FLOAT_OBJECT(v2))
-	    val2 = get_float_value(v2);
-	  else
-	    val2 = get_int_value(v2);
-	    
-	  ret = val1 > val2 ? TRUE : NIL;
-	}
-	else if(!strcmp(val, SET))
-	{
-	  OBJECT_PTR obj = CADR(form);
-	  assert(IS_SYMBOL_OBJECT(obj));
-	  OBJECT_PTR value = eval(CADDR(form), env_list);
-	  if(update_environment(env_list, obj, value) == NIL)
-	  {
-	    char buf[SYMBOL_STRING_SIZE];
-	    print_symbol(obj, buf);
-	    sprintf(err_buf, "Symbol not bound: %s", buf);
-	    raise_error();
-	    ret = NIL;
-	  }
-	  else
-	    ret = value;
-	}
-	else if(!strcmp(val, PROGN))
-	{
-	  OBJECT_PTR rest = cdr(form);
-	  OBJECT_PTR val;
-	  while(rest != NIL)
-	  {
-	    val = eval(car(rest), env_list);
-	    rest = cdr(rest);
-	  }
-	  ret = val;
-	}
-	else if(!strcmp(val, PRINT))
-	{
-	  OBJECT_PTR obj = eval(CADR(form), env_list);
-	  print_object(obj);
-	  fprintf(stdout, "\n");
-	  ret = obj;
-	}
-	else if(!strcmp(val, DEFVAR))
-	{
-	  OBJECT_PTR obj = CADR(form);
-	  assert(IS_SYMBOL_OBJECT(obj));
-	  OBJECT_PTR value = eval(CADDR(form), env_list);
-	  add_to_environment(env_list, obj, value);
-	  ret = value;	  
-	}
-	else if(!strcmp(val, "PRINTENV"))
-	{
-	  print_object(env_list);
-	  printf("\n");
-	  ret = NIL;
-	}
-	else if(!strcmp(val, "CURRENTENV"))
-	{
-	  ret = env_list;
-	}
-	else if(!strcmp(val, LET))
-	{
-	  OBJECT_PTR decl = CADR(form);
-	  OBJECT_PTR body = CDDR(form);
-
-	  OBJECT_PTR rest_decl = decl;
-
-	  OBJECT_PTR new_env = cons(cons(get_symbol_object("DUMMY"),
-					 NIL), 
-				    NIL);
-
-	  OBJECT_PTR extended_env_list = cons(new_env, env_list);
-
-	  while(rest_decl != NIL)
-	  {
-	    add_to_environment(extended_env_list, CAAR(rest_decl), eval(CADAR(rest_decl), env_list));
-	    rest_decl = cdr(rest_decl);
-	  }
-
-	  OBJECT_PTR val;
-	  while(body != NIL)
-	  {
-	    val = eval(car(body), extended_env_list);
-	    body = cdr(body);
-	  }
-
-	  ret = val;
-	}
-	else if(!strcmp(val, LST)) //using LST because LIST has already been taken
-	  ret = eval_and_build_list(cdr(form), env_list);
-	else if(!strcmp(val, LISTP))
-	  ret = IS_CONS_OBJECT(eval(CADR(form), env_list)) ? TRUE : NIL;
-	else if(!strcmp(val, SYMBOL_VALUE))
-	{
-	  OBJECT_PTR symbol_obj = eval(CADR(form),env_list);
-	  OBJECT_PTR res = get_symbol_value(symbol_obj, env_list);
-	  if(car(res) == NIL)
-	  {
-	    char buf[SYMBOL_STRING_SIZE];
-	    print_symbol(symbol_obj, buf);
-	    sprintf(err_buf, "Symbol not bound: %s", buf);
-	    raise_error();
-	    ret = NIL;
-	  }
-	  else
-	    ret = cdr(res);
-	}
-	else if(!strcmp(val, BACKQUOTE))
-	  ret = eval_backquote(CADR(form), env_list);
-	else if(!strcmp(val, GENSYM))
-	  ret = gensym();
-	else if(!strcmp(val, SETCAR))
-	{
-	  OBJECT_PTR obj = eval(CADDR(form), env_list);
-	  set_heap(eval(CADR(form), env_list) >> CONS_SHIFT, obj);
-	  ret = obj;
-	}
-	else if(!strcmp(val, SETCDR))
-	{
-	  OBJECT_PTR obj = eval(CADDR(form), env_list);
-	  set_heap((eval(CADR(form), env_list) >> CONS_SHIFT) + 1, obj);
-	  ret = obj;
-	}
-	else if(!strcmp(val, ERROR))
-	{
-	  OBJECT_PTR msg = eval(CADR(form), env_list);
-	  sprintf(err_buf, strings[msg >> STRING_LITERAL_SHIFT]);
-	  raise_error();
-	  ret = NIL;
-	}
-	else if(!strcmp(val, CREATE_PACKAGE))
-	{
-	  OBJECT_PTR package = eval(CADR(form), env_list);
-	  create_package(convert_to_upper_case(strings[package >> STRING_LITERAL_SHIFT]));
-	  ret = package;
-	}
-	else if(!strcmp(val, IN_PACKAGE))
-	{
-	  OBJECT_PTR package = eval(CADR(form), env_list);
-	  char *package_name = convert_to_upper_case(strings[package >> STRING_LITERAL_SHIFT]);
-
-	  if(!strcmp(package_name,"CORE"))
-	  {
-	    sprintf(err_buf, "Core package cannot be updated");
-            raise_error();
-            ret = NIL;
-	  }
-          else
-	  {
-	    int index = find_package(package_name);
-	    if(index == NOT_FOUND)
-	    {
-	      sprintf(err_buf, "Package %s does not exist", package_name);
-	      raise_error();
-	      ret = NIL;
-	    }
-	    else
-	    {
-	      current_package = index;
-	      ret = NIL;
-	    }
-          }
-	}
-	else if(!strcmp(val, EXPAND_MACRO))
-	{
-	  OBJECT_PTR macro_body = eval(CADR(form), env_list);
-	  OBJECT_PTR res = get_symbol_value(car(macro_body), env_list);
-	  if(car(res) == NIL)
-	  {
-	    sprintf(err_buf, "Macro undefined: %s", get_symbol_name(car(macro_body)));
-	    raise_error();
-	    ret = NIL;
-	  }
-	  else
-	  {
-	    OBJECT_PTR obj = cdr(res);
-	    OBJECT_PTR args = cdr(macro_body);
-	    ret = invoke_macro(obj, args, env_list, false);
-	  }
-	}
-	else if(!strcmp(val, APPLY))
-	{
-	  OBJECT_PTR f = cons(eval(CADR(form), env_list), NIL);
-
-	  OBJECT_PTR param_list = eval(CADDR(form), env_list);
-
-	  if(!(IS_CONS_OBJECT(param_list)))
-	  {
-	    sprintf(err_buf, "Argument to APPLY should evaluate to a list");
-	    raise_error();
-	    ret = NIL;
-	  }
-	  else
-	  {
-	    OBJECT_PTR rest = param_list;
-	    OBJECT_PTR new_list = NIL;
-
-	    while(rest != NIL)
-	    {
-	      OBJECT_PTR obj = cons(QUOTE, cons(car(rest), NIL));
-
-	      if(new_list == NIL)
-		new_list = cons(obj, NIL);
-	      else
-		set_heap((last_cell(new_list) >> CONS_SHIFT) + 1, cons(obj, NIL));
-
-	      rest = cdr(rest);
-	    }
-
-	    set_heap((f >> CONS_SHIFT) + 1, new_list);
-
-	    ret = eval(f, env_list);
-	  }
-
-	}
-	else if(!strcmp(val, STRING))
-	  ret = eval_string(CADR(form), env_list);
-	else if(!strcmp(val, MAKE_ARRAY))
-	  ret = eval_make_array(CADR(form), CDDR(form) == NIL ? NIL : CADDR(form), env_list);
-	else if(!strcmp(val, ARRAY_GET))
-	  ret = eval_array_get(cdr(form), env_list);
-	else if(!strcmp(val, ARRAY_SET))
-	  ret = eval_array_set(cdr(form), env_list);
-	else if(!strcmp(val, SUB_ARRAY))
-	  ret = eval_sub_array(CADR(form), CADDR(form), CADDDR(form), env_list);
-	else if(!strcmp(val, ARRAY_LENGTH))
-	  ret = get_heap(eval(CADR(form), env_list) >> ARRAY_SHIFT);
-	else if(!strcmp(val, PRINT_STRING))
-	  ret = eval_print_string(CADR(form), env_list);
-	else if(!strcmp(val, LABELS))
-	{
-	  OBJECT_PTR decl = CADR(form);
-	  OBJECT_PTR body = CDDR(form);
-
-	  OBJECT_PTR rest_decl = decl;
-
-	  OBJECT_PTR new_env = cons(cons(get_symbol_object("DUMMY"),
-					 NIL), 
-				    NIL);
-
-	  OBJECT_PTR extended_env_list = cons(new_env, env_list);
-
-	  while(rest_decl != NIL)
-	  {
-	    OBJECT_PTR fn_form = car(rest_decl);
-	    OBJECT_PTR fn_name = car(fn_form);
-	    OBJECT_PTR fn_params = CADR(fn_form);
-	    OBJECT_PTR fn_body = CDDR(fn_form);
-
-	    add_to_environment(extended_env_list, 
-			       fn_name, 
-			       create_function_object(env_list, fn_params, fn_body));
-
-	    rest_decl = cdr(rest_decl);
-	  }
-
-	  OBJECT_PTR val;
-	  while(body != NIL)
-	  {
-	    val = eval(car(body), extended_env_list);
-	    body = cdr(body);
-	  }
-
-	  ret = val;
-	}
-	else if(!strcmp(val, CREATE_IMAGE))
-	{
-	  create_image(strings[eval(CADR(form),env_list) >> STRING_LITERAL_SHIFT]);
-	  ret = NIL;
-	}
-	else if(!strcmp(val, BREAK))
-	{
-	  if(!debug_mode)
-	    enter_debug_mode(env_list);
-	  ret = NIL;
-	}
-	else if(!strcmp(val, LOAD_FOREIGN_LIBRARY))
-	  ret = load_foreign_library(CADR(form), env_list);
-	else if(!strcmp(val, CALL_FOREIGN_FUNCTION))
-	  ret = call_foreign_function(CADR(form), CADDR(form), CADDDR(form), env_list);
-	else if(!strcmp(val, IF))
-	  ret = eval_if(CADR(form), CADDR(form), CADDDR(form), env_list);
-	else if(!strcmp(val, WHILE))
-	  ret = eval_while(CADR(form), CDDR(form), env_list);
-	else //it's a named function application
-	{
-	  OBJECT_PTR res = get_symbol_value(car(form), env_list);
-	  if(car(res) == NIL)
-	  {
-	    sprintf(err_buf, "Undefined function: %s", val);
-	    raise_error();
-	    ret = NIL;
-	  }
-	  else
-	  {
-	    OBJECT_PTR obj = cdr(res);
-	    OBJECT_PTR args = cdr(form);
-
-	    if(IS_FN_OBJECT(obj))
-	    {
-	      if(execution_stack == NIL)
-		execution_stack = cons(form, NIL);
-	      else
-		execution_stack = cons(form, execution_stack);
-
-	      ret = invoke_function(obj, args, env_list);
-	    }
-	    else if(IS_MACRO_OBJECT(obj))
-	      ret = invoke_macro(obj, args, env_list,true);
-	    else
-	      ret = eval(cons(obj,args), env_list);
-	  }
-	}
-      }
-    }
-  }
-
-  if(debug_mode)
-  {
-    if(abort_debug)
-    {
-      fprintf(stdout, "\nAborting debug mode.");
-      debug_mode = false;
-      return NIL;
-    }
-
-    fprintf(stdout, "Evaluating form ");
-    print_object(form);
-    fprintf(stdout, " => ");
-    print_object(ret);
-
-    if(equal(root_form, form))
-    {
-      fprintf(stdout, "\nExiting debug mode.");
-      debug_mode = false;
-    }
-
-    prompt();
-
-    repl();
-  }
-
-  //TODO: if the evaluation return successfully, remove the form
-  //from the execution stack
-
-  log_function_exit("eval");
-
-  return ret;
-}
-
-OBJECT_PTR create_function_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
+OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
 {
   RAW_PTR ptr = object_alloc(3);
 
-  set_heap(ptr, equal(env_list, init_env_list) ? NIL : env_list);
+  set_heap(ptr, env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
 
-  insert_node(&white, create_node((ptr << FN_SHIFT) + FN_TAG));
+  insert_node(&white, create_node((ptr << CLOSURE_SHIFT) + CLOSURE_TAG));
   
-  return (ptr << FN_SHIFT) + FN_TAG;
+  return (ptr << CLOSURE_SHIFT) + CLOSURE_TAG;
 }
 
 OBJECT_PTR clone_object(OBJECT_PTR obj)
@@ -1505,10 +763,10 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
   {
     if(IS_CONS_OBJECT(obj))
       ret = cons(clone_object(car(obj)), clone_object(cdr(obj)));
-    else if(IS_FN_OBJECT(obj))
-      ret = create_function_object(clone_object(get_env_list(obj)),
-				   clone_object(get_params_object(obj)), 
-				   clone_object(get_body_object(obj)));
+    else if(IS_CLOSURE_OBJECT(obj))
+      ret = create_closure_object(clone_object(get_env_list(obj)),
+                                  clone_object(get_params_object(obj)), 
+                                  clone_object(get_body_object(obj)));
     else if(IS_MACRO_OBJECT(obj))
       ret = create_macro_object(clone_object(get_env_list(obj)),
 				clone_object(get_params_object(obj)), 
@@ -1543,44 +801,49 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
   return ret;
 }
 
-OBJECT_PTR get_env_list(OBJECT_PTR fn_obj)
+OBJECT_PTR get_env_list(OBJECT_PTR obj)
 {
-  return get_heap(fn_obj >> FN_SHIFT);
+  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
+  return get_heap(obj >> (IS_CLOSURE_OBJECT(obj) ? CLOSURE_SHIFT : MACRO_SHIFT));
 }
 
-OBJECT_PTR get_params_object(OBJECT_PTR fn_obj)
+OBJECT_PTR get_params_object(OBJECT_PTR obj)
 {
-  return get_heap((fn_obj >> FN_SHIFT) + 1);
+  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
+  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? CLOSURE_SHIFT : MACRO_SHIFT)) + 1);
 }
 
-OBJECT_PTR get_body_object(OBJECT_PTR fn_obj)
+OBJECT_PTR get_body_object(OBJECT_PTR obj)
 {
-  return get_heap((fn_obj >> FN_SHIFT) + 2);
+  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
+  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? CLOSURE_SHIFT : MACRO_SHIFT)) + 2);
 }
 
-void print_function_object(OBJECT_PTR fn_obj)
+void print_closure_object(OBJECT_PTR obj)
 {
-  fprintf(stdout, "#<FUNCTION #x%08x> ", fn_obj);
+  fprintf(stdout, "#<FUNCTION #x%08x> ", obj);
+
 #ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
-  print_object(get_params_object(fn_obj));
+  print_object(get_params_object(obj));
   fprintf(stdout,"\nBODY: ");
-  print_object(get_body_object(fn_obj));
+  print_object(get_body_object(obj));
+  fprintf(stdout,"\nENV: ");
+  print_object(get_env_list(obj));
 #endif
 }
 
 int length(OBJECT_PTR cons_obj)
 {
-
   if(cons_obj == NIL)
     return 0;
 
-  if(!(IS_CONS_OBJECT(cons_obj)))
-  {
-    sprintf(err_buf, "Argument to LENGTH not a CONS object");
-    raise_error();
-    return 0;
-  }
+  /* if(!(IS_CONS_OBJECT(cons_obj))) */
+  /* { */
+  /*   sprintf(err_buf, "Argument to LENGTH not a CONS object"); */
+  /*   raise_error(err_buf); */
+  /*   return 0; */
+  /* } */
 
   OBJECT_PTR rest = cons_obj;
 
@@ -1614,6 +877,19 @@ OBJECT_PTR get_symbol_value(OBJECT_PTR symbol_obj, OBJECT_PTR env_list)
        break;
     }
     rest =  cdr(rest);
+  }
+
+  //if symbol is not found, check
+  //in the top level environment
+  if(!found)
+  {
+    OBJECT_PTR result = get_symbol_value_from_env(symbol_obj, top_level_env);
+
+    if(car(result) == TRUE)
+    {
+       ret = cons(TRUE, cdr(result));
+       found = true;
+    }
   }
 
   if(!found)
@@ -1674,22 +950,36 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     rest1 = cdr(rest1);
   }    
 
+  //check the top level environment 
+  OBJECT_PTR rest2 = top_level_env;
+
+  while(rest2 != NIL)
+  {
+    if(equal(CAAR(rest2),symbol_obj))
+    {
+      set_heap((car(rest2) >> CONS_SHIFT) + 1, val);
+      return symbol_obj;
+    }
+
+    rest2 = cdr(rest2);
+  }
+
   return NIL;
 }
 
-void add_to_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT_PTR val)
+void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
 {
-  //this will never actually be true, 
-  //since we populate all environments with
-  //a dummy variable  when they are created
-  if(car(env_list) == NIL) 
+  OBJECT_PTR rest;
+
+  if(top_level_env == NIL)
   {
-    set_heap(env_list >> CONS_SHIFT, cons(cons(symbol_obj, val), NIL));
+    top_level_env = cons(cons(symbol_obj,val), 
+                         NIL);
     return;
   }
-  else 
-  {
-    OBJECT_PTR rest = car(env_list);
+  else
+  { 
+    rest = top_level_env;
 
     while(rest != NIL)
     {
@@ -1698,141 +988,15 @@ void add_to_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT_PTR v
       //the new value
       if(equal(CAAR(rest),symbol_obj))
       {
-	set_heap((car(rest) >> CONS_SHIFT) + 1, val);
-	return;
+        set_heap((car(rest) >> CONS_SHIFT) + 1, val);
+        return;
       }
-
       rest = cdr(rest);
     }
 
     //symbol does not exist in the environment
-    set_heap((last_cell(car(env_list)) >> CONS_SHIFT) + 1, cons(cons(symbol_obj, val), NIL));
+    set_heap((last_cell(top_level_env) >> CONS_SHIFT) + 1, cons(cons(symbol_obj, val), NIL));
   }
-}
-
-OBJECT_PTR invoke_function(OBJECT_PTR fn_obj, OBJECT_PTR args, OBJECT_PTR exec_env)
-{
-  log_function_entry("invoke_function");
-
-  OBJECT_PTR env_list = get_env_list(fn_obj);
-  OBJECT_PTR params = get_params_object(fn_obj);
-  OBJECT_PTR body = get_body_object(fn_obj);
-
-  OBJECT_PTR rest_params = params;
-  OBJECT_PTR rest_args = args;
-
-  OBJECT_PTR new_env = cons(cons(get_symbol_object("DUMMY"),
-				 NIL), 
-			    NIL);
-
-  OBJECT_PTR extended_env_list = cons(new_env, (env_list == NIL) ? init_env_list : env_list);
-
-  while(rest_params != NIL)
-  {
-    int package_index = car(rest_params) >> (SYMBOL_BITS + SYMBOL_SHIFT);
-    int symbol_index =  (car(rest_params) >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
-    char *param_name = packages[package_index].symbols[symbol_index];
-
-    if(!strcmp(param_name, "&REST"))
-    {
-      add_to_environment(extended_env_list, CADR(rest_params), eval_and_build_list(rest_args, exec_env));
-      break;
-    }
-    else if(!strcmp(param_name, "&OPTIONAL"))
-    {
-      OBJECT_PTR p = cdr(rest_params);
-      OBJECT_PTR a = rest_args;
-
-      while(p != NIL)
-      {
-	if(is_atom(car(p))) //optional parameter does not have init form and supplied-p parameter
-	   add_to_environment(extended_env_list, car(p), (a == NIL) ? NIL : eval(car(a), exec_env));
-	else
-	{
-	  if(a != NIL) //optional parameter available
-	  {
-	    add_to_environment(extended_env_list, CAAR(p), eval(car(a), exec_env));
-	    if(CDDAR(p) != NIL)
-	      add_to_environment(extended_env_list, CADDAR(p), TRUE);
-	  }
-	  else
-	  {
-	    
-	    if(CDAR(p) != NIL) //an init form is available
-	    {
-	      OBJECT_PTR init_form = eval(CADAR(p), exec_env);
-	      add_to_environment(extended_env_list, CAAR(p), init_form);
-	      if(CDDAR(p) != NIL)
-		add_to_environment(extended_env_list, CADDAR(p), (init_form == NIL) ? NIL :TRUE);
-	    }
-	    else //init form not available
-	    {
-	      add_to_environment(extended_env_list, CAAR(p), NIL);
-	    }
-	  }
-	}
-
-	p = cdr(p);
-	if(a != NIL)
-	  a = cdr(a);
-      }
-      break;
-    }
-    else if(!strcmp(param_name, "&KEY"))
-    {
-      OBJECT_PTR p = cdr(rest_params);
-      OBJECT_PTR a = rest_args;
-
-      if(a == NIL || !contains_keyword_parameter(a))
-      {
-	sprintf(err_buf,"Invalid keyword parameter");
-	raise_error();
-	log_function_exit("invoke_function");
-	return NIL;
-      }
-
-      while(p != NIL)
-      {
-	OBJECT_PTR temp = get_keyword_arg(car(p), rest_args);
-
-	add_to_environment(extended_env_list, car(p), (temp == NIL) ? NIL: eval(temp, exec_env));
-
-	p = cdr(p);
-	if(a != NIL)
-	  a = CDDR(a);
-      }
-      break;
-    }
-    else
-    {
-      add_to_environment(extended_env_list, car(rest_params), eval(car(rest_args), exec_env));
-    }
-
-    rest_params = cdr(rest_params);
-    rest_args = cdr(rest_args);
-  }
-  
-  OBJECT_PTR rest = body;
-  OBJECT_PTR val;
-
-  while(rest != NIL)
-  {
-    val = eval(car(rest), extended_env_list);
-    rest = cdr(rest);
-  }
-
-  log_function_exit("invoke_function");
-
-  return val;
-}
-
-OBJECT_PTR eval_and_build_list(OBJECT_PTR lst, OBJECT_PTR env_list)
-{
-  if(lst == NIL)
-    return NIL;
-  else
-    return cons(eval(car(lst), env_list), eval_and_build_list(cdr(lst), env_list));
 }
 
 BOOLEAN is_special_form(OBJECT_PTR form)
@@ -1841,66 +1005,17 @@ BOOLEAN is_special_form(OBJECT_PTR form)
   {
     int index = form >> SYMBOL_SHIFT;
 
-    if(index >= 0 && index <= NOF_SPECIAL_SYMBOLS)
-      return true;
-    else
-      return false;
+    return (index >= 0 && index <= NOF_SPECIAL_SYMBOLS);
   }
 
   return false;
-     
-}
-
-OBJECT_PTR invoke_macro(OBJECT_PTR macro_obj, OBJECT_PTR args, OBJECT_PTR exec_env, BOOLEAN evaluate)
-{
-  OBJECT_PTR env_list = get_env_list(macro_obj);
-  OBJECT_PTR params = get_params_object(macro_obj);
-  OBJECT_PTR body = get_body_object(macro_obj);
-
-  OBJECT_PTR rest_params = params;
-  OBJECT_PTR rest_args = args;
-
-  OBJECT_PTR new_env = cons(cons(get_symbol_object("DUMMY"),
-				 NIL), 
-			    NIL);
-
-  OBJECT_PTR extended_env_list = cons(new_env, (env_list == NIL) ? init_env_list : env_list);
-
-  while(rest_params != NIL)
-  {
-
-    int package_index = car(rest_params) >> (SYMBOL_BITS + SYMBOL_SHIFT);
-    int symbol_index =  (car(rest_params) >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
-    char *param_name = packages[package_index].symbols[symbol_index];
-
-    if(!strcmp(param_name, "&REST"))
-    {
-      add_to_environment(extended_env_list, CADR(rest_params), rest_args);
-      break;
-    }
-    else
-    {
-      add_to_environment(extended_env_list, car(rest_params), car(rest_args));
-    }
-
-    rest_params = cdr(rest_params);
-    rest_args = cdr(rest_args);
-  }
-  
-  OBJECT_PTR expanded_form = eval(body, extended_env_list);
-
-  if(evaluate)
-    return eval(expanded_form, exec_env);
-  else
-    return expanded_form;
 }
 
 OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
 {
   RAW_PTR ptr = object_alloc(3);
 
-  set_heap(ptr, equal(env_list, init_env_list) ? NIL : env_list);
+  set_heap(ptr, env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
 
@@ -1920,95 +1035,6 @@ void print_macro_object(OBJECT_PTR macro_obj)
 #endif
 }
 
-OBJECT_PTR eval_backquote(OBJECT_PTR form, OBJECT_PTR env_list)
-{
-
-  assert(is_valid_object(form));
-  assert(is_valid_object(env_list));
-
-  if(is_atom(form))
-    return form;
-
-  OBJECT_PTR car_obj = car(form);
-
-  assert(is_valid_object(car_obj));
-
-  if(IS_SYMBOL_OBJECT(car_obj))
-  {
-    char buf[SYMBOL_STRING_SIZE];
-    print_symbol(car_obj, buf);
-
-    if(!strcmp(buf, COMMA))
-    {
-      OBJECT_PTR sym = CADR(form);
-
-      return eval(sym, env_list);
-    }
-  }
-
-  if(form_contains_comma_at(form))
-  {
-    //1. loop through elements in form
-    //2. if element is not comma-at, call eval_backquote on
-    //   it and append it to the result list without splicing
-    //3. if it is comma-at, get its symbol value and
-    //   splice the value to the result list
-    //4. return the result list
-
-    OBJECT_PTR result = NIL;
-
-    OBJECT_PTR rest = form;
-
-    while(rest != NIL)
-    {
-      OBJECT_PTR ret;
-      OBJECT_PTR obj;
-
-      if(IS_CONS_OBJECT(car(rest)) &&
-	 IS_SYMBOL_OBJECT(CAAR(rest)))
-      {
-	char buf[SYMBOL_STRING_SIZE];
-	print_symbol(CAAR(rest), buf);
-
-	if(!strcmp(buf, COMMA_AT))
-        {
-	  obj = eval(CADAR(rest), env_list);
-
-	  if(result == NIL)
-	    result = obj;
-	  else
-	    set_heap((last_cell(result) >> CONS_SHIFT) + 1, obj);
-	}
-	else
-	{
-	  obj = eval_backquote(car(rest), env_list);
-	  
-	  if(result == NIL)
-	    result = cons(obj, NIL);
-	  else
-	    set_heap((last_cell(result) >> CONS_SHIFT) + 1, cons(obj, NIL));
-	}
-      }
-      else
-      {
-	obj = eval_backquote(car(rest), env_list);
-
-	if(result == NIL)
-	  result = cons(obj, NIL);
-	else
-	  set_heap((last_cell(result) >> CONS_SHIFT) + 1, cons(obj, NIL));
-      }
-      rest = cdr(rest);
-    }
-
-    return result;
-  }
-
-  return cons(eval_backquote(car(form), env_list),
-	      eval_backquote(cdr(form), env_list));
-
-}
-
 BOOLEAN form_contains_comma_at(OBJECT_PTR form)
 {
   OBJECT_PTR rest = form;
@@ -2021,7 +1047,7 @@ BOOLEAN form_contains_comma_at(OBJECT_PTR form)
       char buf[SYMBOL_STRING_SIZE];
       print_symbol(CAAR(rest), buf);
 
-      if(!strcmp(buf, COMMA_AT))
+      if(CAAR(rest) == COMMA_AT)
 	return true;
     }
 
@@ -2053,39 +1079,6 @@ OBJECT_PTR gensym()
   
 }
 
-void reset_exception_mechanism()
-{
-  in_exception = false;
-  memset(err_buf,'\0',500);
-  execution_stack = NIL;
-}
-
-void print_stack_trace()
-{
-  if(execution_stack == NIL)
-    return;
-
-  int i = length(execution_stack);
-  OBJECT_PTR rest = execution_stack;
-
-  fprintf(stdout, "\nBacktrace:\n");
-
-  while(rest != NIL)
-  {
-    fprintf(stdout, "%02d: ", i);
-    print_object(car(rest));
-    fprintf(stdout, "\n");
-
-    i--;
-    rest = cdr(rest);
-  }
-}
-
-void raise_error()
-{
-  in_exception = true;
-}
-
 void create_package(char *name)
 {
   nof_packages++;
@@ -2108,7 +1101,10 @@ void create_package(char *name)
 
 void initialize_core_package()
 {
-  packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS;
+  /* There are 11 assembler mnemonics that are defined for convenience
+     in addtion to the special symbols . These mnemonics are not special,
+     i.e., it doesn't matter if the user source code uses them */
+  packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS + 12; 
   packages[CORE_PACKAGE_INDEX].symbols = (char **)malloc(packages[CORE_PACKAGE_INDEX].nof_symbols * sizeof(char *));
 
   packages[CORE_PACKAGE_INDEX].symbols[0] = strdup("T");
@@ -2117,70 +1113,206 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[1] = strdup("NIL");
   NIL = (1 << SYMBOL_SHIFT) + SYMBOL_TAG;  
 
-  packages[CORE_PACKAGE_INDEX].symbols[2] = strdup(QUOT);
+  packages[CORE_PACKAGE_INDEX].symbols[2] = strdup("QUOTE");
   QUOTE = (2 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[3] = strdup(ATOM);
-  packages[CORE_PACKAGE_INDEX].symbols[4] = strdup(EQ);
-  packages[CORE_PACKAGE_INDEX].symbols[5] = strdup(CAR);
-  packages[CORE_PACKAGE_INDEX].symbols[6] = strdup(CDR);
-  packages[CORE_PACKAGE_INDEX].symbols[7] = strdup(CONS);
-  packages[CORE_PACKAGE_INDEX].symbols[8] = strdup(COND);
+  packages[CORE_PACKAGE_INDEX].symbols[3] = strdup("ATOM");
+  ATOM = (3 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[9] = strdup(LAMBDA);
-  packages[CORE_PACKAGE_INDEX].symbols[10] = strdup(DEFUN);
-  packages[CORE_PACKAGE_INDEX].symbols[11] = strdup(SET);
-  packages[CORE_PACKAGE_INDEX].symbols[12] = strdup(ADD);
-  packages[CORE_PACKAGE_INDEX].symbols[13] = strdup(SUB);
-  packages[CORE_PACKAGE_INDEX].symbols[14] = strdup(MULT);
-  packages[CORE_PACKAGE_INDEX].symbols[15] = strdup(DIV);
-  packages[CORE_PACKAGE_INDEX].symbols[16] = strdup(PROGN);
-  packages[CORE_PACKAGE_INDEX].symbols[17] = strdup(PRINT);
-  packages[CORE_PACKAGE_INDEX].symbols[18] = strdup(DEFVAR);
-  packages[CORE_PACKAGE_INDEX].symbols[19] = strdup(LET);
-  packages[CORE_PACKAGE_INDEX].symbols[20] = strdup(LST);
-  packages[CORE_PACKAGE_INDEX].symbols[21] = strdup(LISTP);
-  packages[CORE_PACKAGE_INDEX].symbols[22] = strdup(SYMBOL_VALUE);
-  packages[CORE_PACKAGE_INDEX].symbols[23] = strdup(DEFMACRO);
-  packages[CORE_PACKAGE_INDEX].symbols[24] = strdup(BACKQUOTE);
-  packages[CORE_PACKAGE_INDEX].symbols[25] = strdup(GT);
-  packages[CORE_PACKAGE_INDEX].symbols[26] = strdup(GENSYM);
-  packages[CORE_PACKAGE_INDEX].symbols[27] = strdup(SETCAR);
-  packages[CORE_PACKAGE_INDEX].symbols[28] = strdup(SETCDR);
-  packages[CORE_PACKAGE_INDEX].symbols[29] = strdup(ERROR);
-  packages[CORE_PACKAGE_INDEX].symbols[30] = strdup(CREATE_PACKAGE);
-  packages[CORE_PACKAGE_INDEX].symbols[31] = strdup(IN_PACKAGE);
+  packages[CORE_PACKAGE_INDEX].symbols[4] = strdup("EQ");
+  EQ = (4 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[32] = strdup(COMMA);
-  packages[CORE_PACKAGE_INDEX].symbols[33] = strdup(COMMA_AT);
+  packages[CORE_PACKAGE_INDEX].symbols[5] = strdup("CAR");
+  CAR = (5 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[34] = strdup(EXPAND_MACRO);
-  packages[CORE_PACKAGE_INDEX].symbols[35] = strdup(APPLY);
+  packages[CORE_PACKAGE_INDEX].symbols[6] = strdup("CDR");
+  CDR = (6 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[36] = strdup(STRING);
+  packages[CORE_PACKAGE_INDEX].symbols[7] = strdup("CONS");
+  CONS = (7 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[37] = strdup(MAKE_ARRAY);
-  packages[CORE_PACKAGE_INDEX].symbols[38] = strdup(ARRAY_GET);
-  packages[CORE_PACKAGE_INDEX].symbols[39] = strdup(ARRAY_SET);
-  packages[CORE_PACKAGE_INDEX].symbols[40] = strdup(SUB_ARRAY);
-  packages[CORE_PACKAGE_INDEX].symbols[41] = strdup(ARRAY_LENGTH);
+  packages[CORE_PACKAGE_INDEX].symbols[8] = strdup("LAMBDA");
+  LAMBDA = (8 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[42] = strdup(PRINT_STRING);
+  packages[CORE_PACKAGE_INDEX].symbols[9] = strdup("DEFUN");
+  DEFUN = (9 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[43] = strdup(LABELS);
+  packages[CORE_PACKAGE_INDEX].symbols[10] = strdup("SET");
+  SET = (10 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[44] = strdup(CREATE_IMAGE);
+  packages[CORE_PACKAGE_INDEX].symbols[11] = strdup("+");
+  ADD = (11 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[45] = strdup(BREAK);
+  packages[CORE_PACKAGE_INDEX].symbols[12] = strdup("-");
+  SUB = (12 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup(LOAD_FOREIGN_LIBRARY);
-  packages[CORE_PACKAGE_INDEX].symbols[47] = strdup(CALL_FOREIGN_FUNCTION);
+  packages[CORE_PACKAGE_INDEX].symbols[13] = strdup("*");
+  MULT = (13 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[48] = strdup(PRINTENV);
-  packages[CORE_PACKAGE_INDEX].symbols[49] = strdup(CURRENTENV); 
+  packages[CORE_PACKAGE_INDEX].symbols[14] = strdup("/");
+  DIV = (14 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
-  packages[CORE_PACKAGE_INDEX].symbols[50] = strdup(IF);
-  packages[CORE_PACKAGE_INDEX].symbols[51] = strdup(WHILE); 
+  packages[CORE_PACKAGE_INDEX].symbols[15] = strdup("PROGN");
+  PROGN = (15 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[16] = strdup("PRINT");
+  PRINT = (16 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[17] = strdup("DEFVAR");
+  DEFVAR = (17 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[18] = strdup("LIST");
+  LST = (18 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[19] = strdup("LISTP");
+  LISTP = (19 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[20] = strdup("SYMBOL-VALUE");
+  SYMBOL_VALUE = (20 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[21] = strdup("DEFMACRO");
+  DEFMACRO = (21 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[22] = strdup("BACKQUOTE");
+  BACKQUOTE = (22 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[23] = strdup(">");
+  GT = (23 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[24] = strdup("GENSYM");
+  GENSYM = (24 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[25] = strdup("SETCAR");
+  SETCAR = (25 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[26] = strdup("SETCDR");
+  SETCDR = (26 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[27] = strdup("ERROR");
+  ERROR = (27 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[28] = strdup("CREATE-PACKAGE");
+  CREATE_PACKAGE = (28 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[29] = strdup("IN-PACKAGE");
+  IN_PACKAGE = (29 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[30] = strdup("COMMA");
+  COMMA = (30 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[31] = strdup("COMMA-AT");
+  COMMA_AT = (31 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[32] = strdup("EXPAND-MACRO");
+  EXPAND_MACRO = (32 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[33] = strdup("APPLY");
+  APPLY = (33 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[34] = strdup("STRING");
+  STRING = (34 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[35] = strdup("MAKE-ARRAY");
+  MAKE_ARRAY = (35 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[36] = strdup("ARRAY-GET");
+  ARRAY_GET = (36 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[37] = strdup("ARRAY-SET");
+  ARRAY_SET = (37 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[38] = strdup("SUB-ARRAY");
+  SUB_ARRAY = (38 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[39] = strdup("ARRAY-LENGTH");
+  ARRAY_LENGTH = (39 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[40] = strdup("PRINT-STRING");
+  PRINT_STRING = (40 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[41] = strdup("LABELS");
+  LABELS = (41 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[42] = strdup("CREATE-IMAGE");
+  CREATE_IMAGE = (42 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[43] = strdup("BREAK");
+  BREAK = (43 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[44] = strdup("LOAD-FOREIGN-LIBRARY");
+  LOAD_FOREIGN_LIBRARY = (44 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[45] = strdup("CALL-FOREIGN-FUNCTION");
+  CALL_FOREIGN_FUNCTION = (45 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("PRINTENV");
+  PRINTENV = (46 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[47] = strdup("CURRENTENV"); 
+  CURRENTENV = (47 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[48] = strdup("IF");
+  IF = (48 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[49] = strdup("EVAL"); 
+  EVAL = (49 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[50] = strdup("CALL-CC"); 
+  CALL_CC = (50 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[51] = strdup("DEFINE"); 
+  DEFINE = (51 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[52] = strdup("RESUME"); 
+  RESUME = (52 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[53] = strdup("BACKTRACE"); 
+  BACKTRACE = (53 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  /* symbols corresponding to assembler mnemonics */
+
+  packages[CORE_PACKAGE_INDEX].symbols[54] =  strdup("HALT");
+  HALT = (54 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[55] =  strdup("REFER");
+  REFER = (55 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[56] =  strdup("CONSTANT");
+  CONSTANT = (56 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[57] =  strdup("CLOSE");
+  CLOSE = (57 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[58] =  strdup("TEST");
+  TEST = (58 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[59] =  strdup("ASSIGN");         
+  ASSIGN = (59 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[60] =  strdup("CONTI");
+  CONTI = (60 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[61] =  strdup("NUATE");
+  NUATE = (61 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[62] =  strdup("FRAME");
+  FRAME = (62 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  packages[CORE_PACKAGE_INDEX].symbols[63] =  strdup("ARGUMENT");
+  ARGUMENT = (63 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  /* APPLY already defined as a special symbol */
+
+  packages[CORE_PACKAGE_INDEX].symbols[64] = strdup("RETURN");
+  RETURN = (64 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  /* DEFINE already defined as a special symbol */
+
+  packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("MACRO");
+  MACRO = (65 << SYMBOL_SHIFT) + SYMBOL_TAG;
+
+  /* end symbols corresponding to assembler mnemonics */
+
 }
 
 int find_package(char* package_name)
@@ -2216,7 +1348,7 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
   if(package_index == NOT_FOUND)
   {
     sprintf(err_buf, "Package %s does not exist", package_name);
-    raise_error();
+    raise_error(err_buf);
     return NIL;
   }
 
@@ -2267,7 +1399,7 @@ int add_qualified_symbol(char *package_name, char *sym)
   if(package_index == NOT_FOUND)
   {
     sprintf(err_buf, "Package %s does not exist", package_name);
-    raise_error();
+    raise_error(err_buf);
     return NIL;
   }
 
@@ -2400,12 +1532,12 @@ int get_int_value(OBJECT_PTR obj)
 {
   log_function_entry("get_int_value");
 
-  if(!(IS_INTEGER_OBJECT(obj)))
-  {
-    sprintf(err_buf, "Integer expected");
-    raise_error();
-    return NIL;
-  }
+  /* if(!(IS_INTEGER_OBJECT(obj))) */
+  /* { */
+  /*   sprintf(err_buf, "Integer expected"); */
+  /*   raise_error(err_buf); */
+  /*   return NIL; */
+  /* } */
 
   int ret;
 
@@ -2480,99 +1612,6 @@ OBJECT_PTR convert_float_to_object(float v)
   
 }
 
-OBJECT_PTR eval_string(OBJECT_PTR literal, OBJECT_PTR env_list)
-{
-  log_function_entry("eval_string");
-
-  assert(IS_STRING_LITERAL_OBJECT(literal));
-
-  //eval in not actually required here
-  char *str_val = strings[eval(literal, env_list)  >> STRING_LITERAL_SHIFT];
-
-  char *ptr = NULL;
-
-  int len = strlen(str_val);
-
-  RAW_PTR raw_ptr = object_alloc(len + 1);
-
-  set_heap(raw_ptr, convert_int_to_object(len));
-
-  int i=1;
-
-  for(ptr=str_val;*ptr;ptr++) 
-  { 
-    set_heap(raw_ptr + i, (*ptr << CHAR_SHIFT) + CHAR_TAG);
-    i++;
-  }
-
-  insert_node(&white, create_node((raw_ptr << ARRAY_SHIFT) + ARRAY_TAG));
-
-  log_function_exit("eval_string");
-
-  return (raw_ptr << ARRAY_SHIFT) + ARRAY_TAG;
-}
-
-OBJECT_PTR eval_make_array(OBJECT_PTR size_form, OBJECT_PTR default_form, OBJECT_PTR env_list)
-{
-  log_function_entry("eval_make_array");
-
-  OBJECT_PTR size = eval(size_form, env_list);
-  assert(IS_INTEGER_OBJECT(size));
-  
-  int sz = get_int_value(size);
-
-  RAW_PTR ptr = object_alloc(sz+1);
-
-  set_heap(ptr, size);
-
-  OBJECT_PTR default_value = default_form == NIL ? NIL : eval(default_form, env_list);
-
-  int i;
-
-  for(i=0; i< sz; i++)
-    set_heap(ptr + i + 1, default_value);
-
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
-
-  log_function_exit("eval_make_array");
-
-  return (ptr << ARRAY_SHIFT) + ARRAY_TAG;
-}
-
-OBJECT_PTR eval_array_get(OBJECT_PTR form, OBJECT_PTR env_list)
-{
-  log_function_entry("eval_array_get");
-
-  OBJECT_PTR array_obj = eval(car(form), env_list);
-  assert(IS_ARRAY_OBJECT(array_obj));
-
-  OBJECT_PTR idx = eval(CADR(form), env_list);
-  assert(IS_INTEGER_OBJECT(idx));
-
-  log_function_exit("eval_array_get");
-
-  return get_heap((array_obj >> ARRAY_SHIFT) + get_int_value(idx) + 1);
-}
-
-OBJECT_PTR eval_array_set(OBJECT_PTR form, OBJECT_PTR env_list)
-{
-  log_function_entry("eval_array_set");
-
-  OBJECT_PTR array_obj = eval(car(form), env_list);
-  assert(IS_ARRAY_OBJECT(array_obj));
-
-  OBJECT_PTR idx = eval(CADR(form), env_list);
-  assert(IS_INTEGER_OBJECT(idx));
-
-  OBJECT_PTR val = eval(CADDR(form), env_list);
-
-  set_heap((array_obj >> ARRAY_SHIFT) + get_int_value(idx) + 1, val);
-
-  log_function_exit("eval_array_set");
-
-  return val;
-}
-
 void print_array_object(OBJECT_PTR array)
 {
 
@@ -2598,95 +1637,6 @@ void print_array_object(OBJECT_PTR array)
   log_function_exit("print_array_object");
 }
 
-OBJECT_PTR eval_sub_array(OBJECT_PTR array_form, OBJECT_PTR start_form, OBJECT_PTR length_form, OBJECT_PTR env_list)
-{
-  log_function_entry("eval_sub_array");
-
-  OBJECT_PTR array = eval(array_form, env_list);
-  if(!(IS_ARRAY_OBJECT(array)))
-  {
-    sprintf(err_buf, "First argument to SUB-ARRAY not an ARRAY object");
-    raise_error();
-    return NIL;
-  }
-
-  OBJECT_PTR start = eval(start_form, env_list);
-  if(!(IS_INTEGER_OBJECT(start)))
-  {
-    sprintf(err_buf, "Second argument to SUB-ARRAY not an integer");
-    raise_error();
-    return NIL;
-  }
-
-  if(!(get_int_value(start) >= 0))
-  {
-    sprintf(err_buf, "Second argument to SUB-ARRAY should be not be negative");
-    raise_error();
-    return NIL;
-  }
-
-  OBJECT_PTR length = eval(length_form, env_list);
-  if(!(IS_INTEGER_OBJECT(length)))
-  {
-    sprintf(err_buf, "Third argument to SUB-ARRAY not an integer");
-    raise_error();
-    return NIL;
-  }
-
-  if(!(get_int_value(length) >= 0))
-  {
-    sprintf(err_buf, "Third argument to SUB-ARRAY should be not be negative");
-    raise_error();
-    return NIL;
-  }
-
-  if((start + get_int_value(length)) > get_int_value(get_heap(array >> ARRAY_SHIFT)))
-  {
-    sprintf(err_buf, "Range (start, length) for SUB-ARRAY out of bounds of the array");
-    raise_error();
-    return NIL;
-  }
-
-  OBJECT_PTR ret;
-  int st = get_int_value(start);
-  int len = get_int_value(length);
-
-  RAW_PTR orig_ptr = array >> ARRAY_SHIFT;
-
-  RAW_PTR ptr = object_alloc(len + 1);
-
-  set_heap(ptr, convert_int_to_object(len));
-
-  int i;
-
-  for(i=1; i<=len; i++)
-    set_heap(ptr+i, get_heap(orig_ptr + st + i));
-
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
-
-  ret = (ptr << ARRAY_SHIFT) + ARRAY_TAG;
-
-  log_function_exit("eval_sub_array");
-
-  return ret;
-}
-
-OBJECT_PTR eval_print_string(OBJECT_PTR string_form, OBJECT_PTR env_list)
-{
-  log_function_entry("eval_print_string");
-
-  if(IS_STRING_LITERAL_OBJECT(string_form))
-    print_object(string_form);
-  else
-    print_object(eval(string_form, env_list));
-
-  fprintf(stdout, "\n");
-
-  log_function_exit("eval_print_string");
-
-  return NIL;
-}
-
 void print_string(OBJECT_PTR string_object)
 {
   assert(is_string_object(string_object));
@@ -2703,17 +1653,6 @@ void print_string(OBJECT_PTR string_object)
     fprintf(stdout, "%c", get_heap(ptr + i) >> CHAR_SHIFT);
 
   fprintf(stdout, "\"");
-}
-
-void enter_debug_mode(OBJECT_PTR env)
-{
-  fprintf(stdout, "Entering debug mode.");
-
-  debug_mode = true;
-  debug_env = env;
-  prompt();
-
-  repl();
 }
 
 BOOLEAN is_string_object(OBJECT_PTR obj)
@@ -2768,39 +1707,13 @@ void initialize_heap()
   }
 }
 
-OBJECT_PTR eval_if(OBJECT_PTR cond_form, OBJECT_PTR then_form, OBJECT_PTR else_form, OBJECT_PTR env_list)
-{
-  if(eval(cond_form, env_list) != NIL)
-    return eval(then_form, env_list);
-  else
-    return eval(else_form, env_list);
-}
-
-OBJECT_PTR eval_while(OBJECT_PTR cond_form, OBJECT_PTR body_form, OBJECT_PTR env_list)
-{
-  OBJECT_PTR val;
-
-  while(eval(cond_form, env_list) != NIL)
-  {
-    OBJECT_PTR rest = body_form;
-
-    while(rest != NIL)
-    {
-      val = eval(car(rest), env_list);
-      rest = cdr(rest);
-    }
-  }
-
-  return val;
-}
-
 #ifndef DEBUG_MEMORY
 inline
 #endif
 void set_heap(RAW_PTR index, OBJECT_PTR val)
 {
-  if(!is_valid_object(val))
-    assert(false);
+  /* if(!is_valid_object(val)) */
+  /*   assert(false); */
 
   heap[index] = val;
 }
@@ -2820,13 +1733,14 @@ BOOLEAN is_valid_object(OBJECT_PTR obj)
   }
 
   return IS_CONS_OBJECT(obj)           ||
-         IS_FN_OBJECT(obj)             ||
+         IS_CLOSURE_OBJECT(obj)        ||
          IS_MACRO_OBJECT(obj)          ||
          IS_ARRAY_OBJECT(obj)          ||
          IS_INTEGER_OBJECT(obj)        ||
          IS_STRING_LITERAL_OBJECT(obj) ||
          IS_CHAR_OBJECT(obj)           ||
-         IS_FLOAT_OBJECT(obj);
+         IS_FLOAT_OBJECT(obj)          ||
+         IS_CONTINUATION_OBJECT(obj);
 }
 
 #ifndef DEBUG_MEMORY
@@ -2839,11 +1753,12 @@ OBJECT_PTR get_heap(RAW_PTR ptr)
 
   OBJECT_PTR ret = heap[ptr];
 
-  if(!is_valid_object(ret))
-  {
-    printf("%d %d\n", ptr, ret);
-    assert(false);
-  }
+  //TODO: is_valid_object() failing for some reason
+  /* if(!is_valid_object(ret)) */
+  /* { */
+  /*   printf("%d %d\n", ptr, ret); */
+  /*   assert(false); */
+  /* } */
 
   return ret;
 }

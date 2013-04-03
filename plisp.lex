@@ -21,4 +21,9 @@ int yyerror(char *s);
 \n                      /* ignore newline */
 "#|"(.|\n)*"|#"         /* ignore multiline comments */
 ^;(.)*                  /* ignore single line comments */
+
+"\033[A"                { printf("\n"); } /* ignore up arrow; the printf prevents overwriting the prompt  */
+"\033[B"                /* ignore down arrow */
+"\033[C"                /* ignore right arrow */
+"\033[D"                /* ignore left arrow */
 %%

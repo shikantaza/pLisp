@@ -13,35 +13,7 @@ extern char **strings;
 extern BOOLEAN in_exception;
 extern RAW_PTR *heap;
 
-OBJECT_PTR load_foreign_library(OBJECT_PTR library_name, OBJECT_PTR env_list)
-{
-  nof_dl_handles++;
-  
-  void **temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
-
-  if(temp == NULL)
-  {
-    sprintf(err_buf, "Unable to extend memory for dl_handles");
-    raise_error();
-    return NIL;
-  }
-
-  dl_handles = temp;
-
-  void *ret = dlopen(strings[eval(library_name, env_list) >> STRING_LITERAL_SHIFT], RTLD_LAZY);
-
-  if(!ret)
-  {
-    sprintf(err_buf, "dl_open() failed: %S", dlerror());
-    raise_error();
-    return NIL;
-  }
-
-  dl_handles[nof_dl_handles - 1] = ret;
-
-  return NIL;
-
-}
+extern OBJECT_PTR reg_current_env;
 
 //TODO: things are quite unstable; the function
 //runs successfully sometimes and fails at other times
@@ -49,13 +21,10 @@ OBJECT_PTR load_foreign_library(OBJECT_PTR library_name, OBJECT_PTR env_list)
 //issue most probably with the 'ptrs' pointer -- need
 //to investigate whether its role can be done by
 //arg_values itself
-OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PTR args, OBJECT_PTR env_list)
+OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PTR args)
 {
 
-  char *fn_name_str = strings[eval(fn_name, env_list) >> STRING_LITERAL_SHIFT];
-
-  if(in_exception)
-    return NIL;
+  char *fn_name_str = strings[fn_name >> STRING_LITERAL_SHIFT];
 
   ffi_cif cif;
 
@@ -64,16 +33,14 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
-    sprintf(err_buf, "Unable to allocate memory for argument types buffer");
-    raise_error();
+    raise_error("Unable to allocate memory for argument types buffer");
     return NIL;
   }
 
   void **arg_values = (void **)malloc(nof_args * sizeof(void *));
   if(!arg_values)
   {
-    sprintf(err_buf, "Unable to allocate memory for argument values buffer");
-    raise_error();
+    raise_error("Unable to allocate memory for argument values buffer");
     free(arg_types);
     return NIL;
   }
@@ -81,8 +48,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   void ***ptrs = (void ***)malloc(nof_args * sizeof(void **));
   if(!ptrs)
   {
-    sprintf(err_buf, "Unable to allocate memory for ptrs buffer");
-    raise_error();
+    raise_error("Unable to allocate memory for ptrs buffer");
     free(arg_types);
     free(arg_values);
     return NIL;
@@ -98,15 +64,14 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   while(rest_args != NIL)
   {
-    OBJECT_PTR val = eval(CAAR(rest_args), env_list);
+    OBJECT_PTR val = CAAR(rest_args);
     OBJECT_PTR type = CADAR(rest_args);
 
     if(equal(type, get_symbol_object(":INTEGER")))
     {
       if(!IS_INTEGER_OBJECT(val))
       {
-	sprintf(err_buf, "Argument type mismatch: integer expected");
-	raise_error();
+	raise_error("Argument type mismatch: integer expected");
 
         //we get a 'sig_send: wait for sig_complete event failed, signal 6, rc 258' error if
         //we try to free arg_values elements that are strings
@@ -137,8 +102,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       if(!IS_FLOAT_OBJECT(val))
       {
-	sprintf(err_buf, "Argument type mismatch: float expected");
-	raise_error();
+	raise_error("Argument type mismatch: float expected");
 
         /*
         int j=0;
@@ -168,8 +132,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       if(!IS_CHAR_OBJECT(val))
       {
-	sprintf(err_buf, "Argument type mismatch: character expected");
-	raise_error();
+	raise_error("Argument type mismatch: character expected");
 
         /*
         int j=0;
@@ -198,8 +161,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
       {
-	sprintf(err_buf, "Argument type mismatch: string object/literal expected");
-	raise_error();
+	raise_error("Argument type mismatch: string object/literal expected");
 
         /*
         int j=0;
@@ -240,8 +202,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
       {
-	sprintf(err_buf, "Mapping a non-variable to :INTEGER-POINTER / Argument type mismatch");
-	raise_error();
+	raise_error("Mapping a non-variable to :INTEGER-POINTER / Argument type mismatch");
 
 	/*
 	int j=0;
@@ -271,8 +232,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
       {
-	sprintf(err_buf, "Mapping a non-variable to :FLOAT-POINTER / Argument type mismatch");
-	raise_error();
+	raise_error("Mapping a non-variable to :FLOAT-POINTER / Argument type mismatch");
 
 	/*
 	int j=0;
@@ -300,8 +260,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     }
     else
     {
-      sprintf(err_buf, "call_foreign_function(): non-primitive object type not handled");
-      raise_error();
+      raise_error("call_foreign_function(): non-primitive object type not handled");
 
       /*
       int j=0;
@@ -340,8 +299,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_void, arg_types);
   else
   {
-    sprintf(err_buf, "Unknown return type: %s", strings[ret_type >> STRING_LITERAL_SHIFT]);
-    raise_error();
+    raise_error("Unknown return type");
 
     /*
     for(i=0; i<nof_args; i++)
@@ -362,8 +320,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   if(status != FFI_OK)
   {
-    sprintf(err_buf, "call_foreign_function(): ffi_prep_cif() failed");
-    raise_error();
+    raise_error("call_foreign_function(): ffi_prep_cif() failed");
 
     /*
     for(i=0; i<nof_args; i++)
@@ -393,8 +350,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   
   if(function_ptr == NULL)
   {
-    sprintf(err_buf, "Foreign function %s not found", fn_name_str);
-    raise_error();
+    raise_error("Foreign function not found");
 
     /*
     for(i=0; i<nof_args; i++)
@@ -432,10 +388,9 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     if(equal(type, get_symbol_object(":INTEGER-POINTER")))
     {
       value = convert_int_to_object((int)(*((int *)ptrs[i][0])));
-      if(update_environment(env_list, sym, value) == NIL)
+      if(update_environment(reg_current_env, sym, value) == NIL)
       {
-	sprintf(err_buf, "update_environment failed");
-	raise_error();
+	raise_error("update_environment failed");
 
 	/*
 	for(i=0; i<nof_args; i++)
@@ -456,10 +411,9 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     else if(equal(type, get_symbol_object(":FLOAT-POINTER")))
     {
       value = convert_float_to_object((float)(*((float *)ptrs[i][0])));
-      if(update_environment(env_list, sym, value) == NIL)
+      if(update_environment(reg_current_env, sym, value) == NIL)
       {
-	sprintf(err_buf, "update_environment failed");
-	raise_error();
+	raise_error("update_environment failed");
 
 	/*
 	for(i=0; i<nof_args; i++)
@@ -495,10 +449,9 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       free(str);
 
-      if(update_environment(env_list, sym, (ptr << ARRAY_SHIFT) + ARRAY_TAG) == NIL)
+      if(update_environment(reg_current_env, sym, (ptr << ARRAY_SHIFT) + ARRAY_TAG) == NIL)
       {
-	sprintf(err_buf, "update_environment failed");
-	raise_error();
+	raise_error("update_environment failed");
 
 	/*
 	for(i=0; i<nof_args; i++)

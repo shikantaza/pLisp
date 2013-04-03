@@ -188,7 +188,7 @@ expressions:
 
 int yyerror(char *s)
 {
-  printf("Syntax erron in expression\n");
+  printf("Syntax error in expression\n");
   prompt();
 }
 
