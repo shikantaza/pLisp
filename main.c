@@ -565,12 +565,7 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
     ret = NIL;
   else
   {
-    if(!(IS_CONS_OBJECT(cons_obj)))
-    {
-      sprintf(err_buf, "Argument to CAR not a CONS object");
-      raise_error(err_buf);
-      return NIL;
-    }
+    assert(IS_CONS_OBJECT(cons_obj));
 
     ret = get_heap(cons_obj >> CONS_SHIFT);
   }
@@ -591,12 +586,7 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
     ret = NIL;
   else
   {
-    if(!(IS_CONS_OBJECT(cons_obj)))
-      {
-        sprintf(err_buf, "Argument to CDR not a CONS object");
-        raise_error(err_buf);
-        return NIL;
-      }
+    assert(IS_CONS_OBJECT(cons_obj));
 
     ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
   }
@@ -617,7 +607,7 @@ void print_cons_object(OBJECT_PTR obj)
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
 
-  if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj))  && cdr_obj != NIL)
+  if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
   {
     fprintf(stdout, "(");
     print_object(car_obj);
@@ -631,14 +621,14 @@ void print_cons_object(OBJECT_PTR obj)
 
     OBJECT_PTR rest = obj;
 
-    while(rest != NIL && !(is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest)))
+    while(rest != NIL && !(is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
     {
       print_object(car(rest));
       fprintf(stdout, " ");
       rest = cdr(rest);
     }
 
-    if((is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest)) && rest != NIL)
+    if((is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
     {
       fprintf(stdout, " . ");
       print_object(rest);
@@ -757,8 +747,8 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
   
   OBJECT_PTR ret;
 
-  if(is_atom(obj))
-    ret = obj; //atoms are immutable and are reused
+  if(is_atom(obj) || IS_CONTINUATION_OBJECT(obj))
+    ret = obj; //atoms are immutable and are reused; continuation objects are also not cloned
   else
   {
     if(IS_CONS_OBJECT(obj))
@@ -838,12 +828,7 @@ int length(OBJECT_PTR cons_obj)
   if(cons_obj == NIL)
     return 0;
 
-  /* if(!(IS_CONS_OBJECT(cons_obj))) */
-  /* { */
-  /*   sprintf(err_buf, "Argument to LENGTH not a CONS object"); */
-  /*   raise_error(err_buf); */
-  /*   return 0; */
-  /* } */
+  assert(IS_CONS_OBJECT(cons_obj));
 
   OBJECT_PTR rest = cons_obj;
 
@@ -1345,12 +1330,7 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
 {
   int package_index = find_package(package_name);
 
-  if(package_index == NOT_FOUND)
-  {
-    sprintf(err_buf, "Package %s does not exist", package_name);
-    raise_error(err_buf);
-    return NIL;
-  }
+  assert(package_index != NOT_FOUND);
 
   int symbol_index = find_qualified_symbol(package_index, symbol_name);
 
@@ -1396,12 +1376,7 @@ int add_qualified_symbol(char *package_name, char *sym)
 
   int package_index = find_package(package_name);
 
-  if(package_index == NOT_FOUND)
-  {
-    sprintf(err_buf, "Package %s does not exist", package_name);
-    raise_error(err_buf);
-    return NIL;
-  }
+  assert(package_index != NOT_FOUND);
 
   packages[package_index].nof_symbols++;
 
@@ -1532,12 +1507,7 @@ int get_int_value(OBJECT_PTR obj)
 {
   log_function_entry("get_int_value");
 
-  /* if(!(IS_INTEGER_OBJECT(obj))) */
-  /* { */
-  /*   sprintf(err_buf, "Integer expected"); */
-  /*   raise_error(err_buf); */
-  /*   return NIL; */
-  /* } */
+  assert(IS_INTEGER_OBJECT(obj));
 
   int ret;
 
@@ -1712,8 +1682,8 @@ inline
 #endif
 void set_heap(RAW_PTR index, OBJECT_PTR val)
 {
-  /* if(!is_valid_object(val)) */
-  /*   assert(false); */
+  if(!is_valid_object(val))
+    assert(false);
 
   heap[index] = val;
 }
@@ -1753,12 +1723,11 @@ OBJECT_PTR get_heap(RAW_PTR ptr)
 
   OBJECT_PTR ret = heap[ptr];
 
-  //TODO: is_valid_object() failing for some reason
-  /* if(!is_valid_object(ret)) */
-  /* { */
-  /*   printf("%d %d\n", ptr, ret); */
-  /*   assert(false); */
-  /* } */
+  if(!is_valid_object(ret))
+  {
+    printf("%d %d\n", ptr, ret);
+    assert(false);
+  }
 
   return ret;
 }

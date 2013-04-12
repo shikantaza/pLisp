@@ -1142,6 +1142,7 @@ OBJECT_PTR eval()
       else if(operator == RESUME)
       {
         debug_mode = false;
+
         reg_current_stack = ((debug_continuation >> CONTINUATION_SHIFT) << CONS_SHIFT) + CONS_TAG;
 
         reg_current_value_rib = NIL;
@@ -1258,7 +1259,7 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 
   RAW_PTR ptr = object_alloc(4);
 
-  set_heap(ptr, 3);
+  set_heap(ptr, convert_int_to_object(3));
   set_heap(ptr+1, next_expression);
   set_heap(ptr+2, env);
   set_heap(ptr+3, rib);

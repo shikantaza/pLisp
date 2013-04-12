@@ -89,11 +89,9 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     }
 
     if(car_obj == LAMBDA)
-      //return cons(CLOSE, cons(CADR(exp), cons(compile(CADDR(exp), cons(RETURN, NIL)), cons(next, NIL))));
       return cons(CLOSE, cons(CADR(exp), cons(compile(cons(PROGN, CDDR(exp)), cons(RETURN, NIL)), cons(next, NIL))));
 
     if(car_obj == MACRO)
-      //return cons(MACRO, cons(CADR(exp), cons(compile(CADDR(exp), cons(RETURN, NIL)), cons(next, NIL))));
       return cons(MACRO, cons(CADR(exp), cons(compile(cons(PROGN, CDDR(exp)), cons(RETURN, NIL)), cons(next, NIL))));
 
     if(car_obj == IF)
@@ -274,7 +272,7 @@ void repl()
     //gc screws up continuation execution for some reason
     //(related to the trick we resort to storing
     //the stack object as a continuation object?)
-    //gc();
+    gc();
 
     if(yyin == stdin)
       prompt();

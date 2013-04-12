@@ -106,7 +106,7 @@ void dealloc(RAW_PTR ptr)
   //if(!is_valid_object(heap[ptr]))
   //  assert(false);
 
-  assert(heap[last_segment +1] == null);
+  assert(heap[last_segment + 1] == null);
 
   //make the current last segment's 'next' (so to speak) 
   //field point to one address above the deallocated segment 
@@ -421,26 +421,8 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 
 void build_grey_set()
 {
-
   insert_node(&grey, create_node(top_level_env));
   remove_node(&white, top_level_env);
-
-  /*
-  OBJECT_PTR rest = init_env_list;
-
-  while(rest != NIL)
-  {
-    OBJECT_PTR obj = car(rest);
-
-    if(is_dynamic_memory_object(obj))
-    {
-      insert_node(&grey, create_node(obj));
-      remove_node(&white, obj);
-    }
-
-    rest = cdr(rest);
-  }
-  */
 }
 
 int get_free_memory()
