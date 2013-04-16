@@ -283,24 +283,14 @@ void gc()
   //only top_level_env is stored in the grey set initially
   build_grey_set();
 
-  //printf("initial\n");
-  //print_tree(grey);
-  //printf("----------\n");
-
   while(!is_set_empty(grey))
   {
     //we can pick any grey object,
     //picking the root for convenience
     OBJECT_PTR obj = grey->key;
 
-    //print_object(obj); printf("\n");
-
     insert_node(&black, create_node(obj));
-    //printf("Size before removal: %d\n", get_size_of_tree(grey));
-    //printf("removing from grey set: ");
-    //print_object(obj);
     remove_node(&grey, obj);
-    //printf("\nSize after removal: %d\n", get_size_of_tree(grey));
 
     if(IS_CONS_OBJECT(obj))
     {
@@ -314,10 +304,7 @@ void gc()
       OBJECT_PTR cdr_obj = cdr(obj);
       if(is_dynamic_memory_object(cdr_obj))
       {
-	//print_object(cdr_obj);printf("\n");
-	//printf("%d\n", get_size_of_tree(grey));
 	insert_node(&grey, create_node(cdr_obj));
-	//printf("%d\n", get_size_of_tree(grey));
 	remove_node(&white, cdr_obj);
       }
     }
@@ -369,23 +356,11 @@ void gc()
       remove_node(&white, stack);
     }
 
-    //printf("grey:\n");
-    //print_tree(grey);
-    //printf("----\n");
-
     //though float objects are also allocated 
     //on the heap, they don't reference other objects
     //and hence just freeing them is sufficient
 
   } //end of while(!is_set_empty(grey))
-
-  //printf("black:\n");
-  //print_tree(black);
-  //printf("---------------\n");
-
-  //printf("white:\n");
-  //print_tree(white);
-  //printf("---------------\n");
 
   //free all the objects in the white set
   while(!is_set_empty(white))
