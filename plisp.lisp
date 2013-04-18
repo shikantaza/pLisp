@@ -42,6 +42,10 @@
       (cons (list (car x) (car y))
 	    (pair (cdr x) (cdr y)))))
 
+(defmacro rec (var exp)
+  `(let ((,var '()))
+     (set ,var ,exp)))
+
 (defmacro while (condition &rest body)
   `(((lambda (f) (set f (lambda ()
                           (if ,condition
@@ -237,9 +241,10 @@
 (defmacro labels (decls &rest body)
   (let ((f (lambda (decl)
              (cons (nth 0 decl)
-                   (list (list 'lambda
-                         (nth 1 decl)
-                         (nth 2 decl)))))))
+                   (list (list 'rec (nth 0 decl)
+                               (list 'lambda
+                                     (nth 1 decl)
+                                     (nth 2 decl))))))))
     `(let ,(map f decls)
        ,@body)))
 
