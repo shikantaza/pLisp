@@ -32,69 +32,80 @@ int gen_sym_count = 0;
 //standard objects defined
 //to avoid creating them
 //each time they're needed
-OBJECT_PTR TRUE;
-OBJECT_PTR NIL;
-OBJECT_PTR QUOTE;
-OBJECT_PTR LAMBDA;
-OBJECT_PTR IF;
-OBJECT_PTR SET;
-OBJECT_PTR CALL_CC;
-OBJECT_PTR DEFINE;
-OBJECT_PTR PROGN;
-OBJECT_PTR BACKQUOTE;
-
-OBJECT_PTR CONS;
-OBJECT_PTR EQ;
-OBJECT_PTR ATOM;
-OBJECT_PTR CAR;
-OBJECT_PTR CDR;
-
-OBJECT_PTR DEFUN;
-
-OBJECT_PTR ADD;
-OBJECT_PTR SUB;
-OBJECT_PTR MULT;
-OBJECT_PTR DIV;
-
-OBJECT_PTR PRINT;
-OBJECT_PTR DEFVAR;
-OBJECT_PTR LST;
-OBJECT_PTR LISTP;
-OBJECT_PTR SYMBOL_VALUE;
-OBJECT_PTR DEFMACRO;
-
-OBJECT_PTR GT;
-OBJECT_PTR GENSYM;
-OBJECT_PTR SETCAR;
-OBJECT_PTR SETCDR;
-OBJECT_PTR ERROR;
-OBJECT_PTR CREATE_PACKAGE;
-OBJECT_PTR IN_PACKAGE;
-OBJECT_PTR COMMA;
-OBJECT_PTR COMMA_AT;
-OBJECT_PTR EXPAND_MACRO;
-
-OBJECT_PTR STRING;
-OBJECT_PTR MAKE_ARRAY;
-OBJECT_PTR ARRAY_GET;
-OBJECT_PTR ARRAY_SET;
-OBJECT_PTR SUB_ARRAY;
-OBJECT_PTR ARRAY_LENGTH;
-OBJECT_PTR PRINT_STRING;
-OBJECT_PTR LABELS;
-OBJECT_PTR CREATE_IMAGE;
-OBJECT_PTR BREAK;
-OBJECT_PTR LOAD_FOREIGN_LIBRARY;
-OBJECT_PTR CALL_FOREIGN_FUNCTION;
-OBJECT_PTR PRINTENV;
-OBJECT_PTR CURRENTENV;
-OBJECT_PTR EVAL;
-
-OBJECT_PTR RESUME;
-
-OBJECT_PTR BACKTRACE;
+OBJECT_PTR TRUE                  =                        SYMBOL_TAG;
+OBJECT_PTR NIL                   =  (1 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR QUOTE                 =  (2 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ATOM                  =  (3 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EQ                    =  (4 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CAR                   =  (5 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CDR                   =  (6 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CONS                  =  (7 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LAMBDA                =  (8 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFUN                 =  (9 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SET                   = (10 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ADD                   = (11 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SUB                   = (12 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MULT                  = (13 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DIV                   = (14 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PROGN                 = (15 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PRINT                 = (16 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFVAR                = (17 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LST                   = (18 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LISTP                 = (19 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SYMBOL_VALUE          = (20 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFMACRO              = (21 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BACKQUOTE             = (22 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR GT                    = (23 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR GENSYM                = (24 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SETCAR                = (25 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SETCDR                = (26 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ERROR                 = (27 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CREATE_PACKAGE        = (28 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR IN_PACKAGE            = (29 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COMMA                 = (30 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COMMA_AT              = (31 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EXPAND_MACRO          = (32 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR APPLY                 = (33 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR STRING                = (34 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MAKE_ARRAY            = (35 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARRAY_GET             = (36 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARRAY_SET             = (37 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SUB_ARRAY             = (38 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARRAY_LENGTH          = (39 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PRINT_STRING          = (40 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LABELS                = (41 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CREATE_IMAGE          = (42 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BREAK                 = (43 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LOAD_FOREIGN_LIBRARY  = (44 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CALL_FOREIGN_FUNCTION = (45 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PRINTENV              = (46 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CURRENTENV            = (47 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR IF                    = (48 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EVAL                  = (49 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CALL_CC               = (50 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFINE                = (51 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR RESUME                = (52 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BACKTRACE             = (53 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
 //end of standard object definition
+
+/*symbols corresponding to assembler mnemonics */
+OBJECT_PTR HALT     = (54 << SYMBOL_SHIFT) + SYMBOL_TAG;                  
+OBJECT_PTR REFER    = (55 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CONSTANT = (56 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CLOSE    = (57 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR TEST     = (58 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ASSIGN   = (59 << SYMBOL_SHIFT) + SYMBOL_TAG;         
+OBJECT_PTR CONTI    = (60 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR NUATE    = (61 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FRAME    = (62 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARGUMENT = (63 << SYMBOL_SHIFT) + SYMBOL_TAG;
+/* APPLY already defined as a special symbol */
+OBJECT_PTR RETURN   = (64 << SYMBOL_SHIFT) + SYMBOL_TAG;
+/* DEFINE already defind as a special symbol */
+OBJECT_PTR MACRO    = (65 << SYMBOL_SHIFT) + SYMBOL_TAG;
+/* end symbols corresponding to assembler mnemonics */
+
 
 extern FILE *yyin;
 
@@ -151,21 +162,6 @@ OBJECT_PTR reg_current_env;
 OBJECT_PTR reg_current_value_rib;
 OBJECT_PTR reg_current_stack;
 
-/*symbols corresponding to assembler mnemonics */
-OBJECT_PTR HALT;                  
-OBJECT_PTR REFER;
-OBJECT_PTR CONSTANT;
-OBJECT_PTR CLOSE;
-OBJECT_PTR MACRO;
-OBJECT_PTR TEST;
-OBJECT_PTR ASSIGN;         
-OBJECT_PTR CONTI;
-OBJECT_PTR NUATE;
-OBJECT_PTR FRAME;
-OBJECT_PTR ARGUMENT;
-OBJECT_PTR APPLY;
-OBJECT_PTR RETURN;
-/* end symbols corresponding to assembler mnemonics */
 
 extern void print_stack();
 
@@ -1093,209 +1089,75 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols = (char **)malloc(packages[CORE_PACKAGE_INDEX].nof_symbols * sizeof(char *));
 
   packages[CORE_PACKAGE_INDEX].symbols[0] = strdup("T");
-  TRUE = SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[1] = strdup("NIL");
-  NIL = (1 << SYMBOL_SHIFT) + SYMBOL_TAG;  
-
   packages[CORE_PACKAGE_INDEX].symbols[2] = strdup("QUOTE");
-  QUOTE = (2 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[3] = strdup("ATOM");
-  ATOM = (3 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[4] = strdup("EQ");
-  EQ = (4 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[5] = strdup("CAR");
-  CAR = (5 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[6] = strdup("CDR");
-  CDR = (6 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[7] = strdup("CONS");
-  CONS = (7 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[8] = strdup("LAMBDA");
-  LAMBDA = (8 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[9] = strdup("DEFUN");
-  DEFUN = (9 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[10] = strdup("SET");
-  SET = (10 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[11] = strdup("+");
-  ADD = (11 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[12] = strdup("-");
-  SUB = (12 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[13] = strdup("*");
-  MULT = (13 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[14] = strdup("/");
-  DIV = (14 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[15] = strdup("PROGN");
-  PROGN = (15 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[16] = strdup("PRINT");
-  PRINT = (16 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[17] = strdup("DEFVAR");
-  DEFVAR = (17 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[18] = strdup("LIST");
-  LST = (18 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[19] = strdup("LISTP");
-  LISTP = (19 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[20] = strdup("SYMBOL-VALUE");
-  SYMBOL_VALUE = (20 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[21] = strdup("DEFMACRO");
-  DEFMACRO = (21 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[22] = strdup("BACKQUOTE");
-  BACKQUOTE = (22 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[23] = strdup(">");
-  GT = (23 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[24] = strdup("GENSYM");
-  GENSYM = (24 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[25] = strdup("SETCAR");
-  SETCAR = (25 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[26] = strdup("SETCDR");
-  SETCDR = (26 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[27] = strdup("ERROR");
-  ERROR = (27 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[28] = strdup("CREATE-PACKAGE");
-  CREATE_PACKAGE = (28 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[29] = strdup("IN-PACKAGE");
-  IN_PACKAGE = (29 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[30] = strdup("COMMA");
-  COMMA = (30 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[31] = strdup("COMMA-AT");
-  COMMA_AT = (31 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[32] = strdup("EXPAND-MACRO");
-  EXPAND_MACRO = (32 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[33] = strdup("APPLY");
-  APPLY = (33 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[34] = strdup("STRING");
-  STRING = (34 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[35] = strdup("MAKE-ARRAY");
-  MAKE_ARRAY = (35 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[36] = strdup("ARRAY-GET");
-  ARRAY_GET = (36 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[37] = strdup("ARRAY-SET");
-  ARRAY_SET = (37 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[38] = strdup("SUB-ARRAY");
-  SUB_ARRAY = (38 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[39] = strdup("ARRAY-LENGTH");
-  ARRAY_LENGTH = (39 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[40] = strdup("PRINT-STRING");
-  PRINT_STRING = (40 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[41] = strdup("LABELS");
-  LABELS = (41 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[42] = strdup("CREATE-IMAGE");
-  CREATE_IMAGE = (42 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[43] = strdup("BREAK");
-  BREAK = (43 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[44] = strdup("LOAD-FOREIGN-LIBRARY");
-  LOAD_FOREIGN_LIBRARY = (44 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[45] = strdup("CALL-FOREIGN-FUNCTION");
-  CALL_FOREIGN_FUNCTION = (45 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("PRINTENV");
-  PRINTENV = (46 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[47] = strdup("CURRENTENV"); 
-  CURRENTENV = (47 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[48] = strdup("IF");
-  IF = (48 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[49] = strdup("EVAL"); 
-  EVAL = (49 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[50] = strdup("CALL-CC"); 
-  CALL_CC = (50 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[51] = strdup("DEFINE"); 
-  DEFINE = (51 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[52] = strdup("RESUME"); 
-  RESUME = (52 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[53] = strdup("BACKTRACE"); 
-  BACKTRACE = (53 << SYMBOL_SHIFT) + SYMBOL_TAG;
 
   /* symbols corresponding to assembler mnemonics */
-
   packages[CORE_PACKAGE_INDEX].symbols[54] =  strdup("HALT");
-  HALT = (54 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[55] =  strdup("REFER");
-  REFER = (55 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[56] =  strdup("CONSTANT");
-  CONSTANT = (56 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[57] =  strdup("CLOSE");
-  CLOSE = (57 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[58] =  strdup("TEST");
-  TEST = (58 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[59] =  strdup("ASSIGN");         
-  ASSIGN = (59 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[60] =  strdup("CONTI");
-  CONTI = (60 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[61] =  strdup("NUATE");
-  NUATE = (61 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[62] =  strdup("FRAME");
-  FRAME = (62 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   packages[CORE_PACKAGE_INDEX].symbols[63] =  strdup("ARGUMENT");
-  ARGUMENT = (63 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   /* APPLY already defined as a special symbol */
-
   packages[CORE_PACKAGE_INDEX].symbols[64] = strdup("RETURN");
-  RETURN = (64 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   /* DEFINE already defined as a special symbol */
-
   packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("MACRO");
-  MACRO = (65 << SYMBOL_SHIFT) + SYMBOL_TAG;
-
   /* end symbols corresponding to assembler mnemonics */
 
 }
