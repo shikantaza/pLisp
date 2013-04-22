@@ -1371,6 +1371,7 @@ int get_int_value(OBJECT_PTR obj)
 
   assert(IS_INTEGER_OBJECT(obj));
 
+  /*
   int ret;
 
   int v = obj >> INTEGER_SHIFT;
@@ -1379,26 +1380,37 @@ int get_int_value(OBJECT_PTR obj)
     ret = v - TWO_RAISED_TO_28;
   else
     ret = v;
+  */
 
   log_function_exit("get_int_value");
 
-  return ret;
+  //get_heap() will fail; see get_float_value()
+  return heap[obj >> INTEGER_SHIFT];
 }
 
 OBJECT_PTR convert_int_to_object(int v)
 {
   log_function_entry("convert_int_to_object");
 
+  /*
   OBJECT_PTR ret;
 
   if(v > 0)
     ret = (v << INTEGER_SHIFT) + INTEGER_TAG;
   else
     ret = ((TWO_RAISED_TO_28 + v) << INTEGER_SHIFT) + INTEGER_TAG;
+  */
+
+  RAW_PTR ptr = object_alloc(1);
+
+  //set_heap() will fail; see convert_float_to_object()
+  heap[ptr] = v;
+
+  insert_node(&white, create_node((ptr << INTEGER_SHIFT) + INTEGER_TAG));
 
   log_function_exit("convert_int_to_object");
 
-  return ret;
+  return (ptr << INTEGER_SHIFT) + INTEGER_TAG;
 }
 
 float get_float_value(OBJECT_PTR obj)

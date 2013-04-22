@@ -1223,7 +1223,7 @@ OBJECT_PTR eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          raise_error("Continuations take exactly one argument\n");
+          raise_error("Continuations take exactly one argument");
           return NIL;
         }
 
@@ -1232,6 +1232,11 @@ OBJECT_PTR eval()
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
+      }
+      else
+      {
+        raise_error("Illegal operator");
+        return NIL;
       }
     }
   }

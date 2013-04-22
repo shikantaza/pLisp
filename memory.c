@@ -356,7 +356,7 @@ void gc()
       remove_node(&white, stack);
     }
 
-    //though float objects are also allocated 
+    //though integer and float objects are also allocated 
     //on the heap, they don't reference other objects
     //and hence just freeing them is sufficient
 
@@ -388,6 +388,7 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 {
    return IS_CONS_OBJECT(obj)    ||
           IS_ARRAY_OBJECT(obj)   ||
+          IS_INTEGER_OBJECT(obj) ||
           IS_FLOAT_OBJECT(obj)   ||
           IS_CLOSURE_OBJECT(obj) ||
           IS_MACRO_OBJECT(obj)   ||
