@@ -7,15 +7,16 @@ Features currently supported:
 5. A somewhat buggy foreign function interface
 6. Ability to store and load images (aka serialization)
 7. Macros
-8. A rudimentary debugger (step, break, resume, abort)
+8. A rudimentary debugger (break, resume, inspect variables)
 9. A package system
+10. Continuations
 
 TODO list:
 
-1. More comprehensive error handling; there are a lot of place where sanity checking of parameters is absent, leading to assertion failures or core dumps.
-2. Enhancements to the core library
-3. Graphical development environment
-4. Compiler
-5. Continuations and other implementatins of other 'cool' research ideas
+1. Enhancements to the core library
+2. Graphical development environment
+3. Compiler
 
 pLisp uses tpl (http://tpl.sourceforge.net/) for serialization and libffi (http://sourceware.org/libffi/) for the foreign function interface.
+
+http://shikantaza.blogspot.in/2013/04/building-lisp-interpreter-from-scratch.html has some documentation and implementation notes.
