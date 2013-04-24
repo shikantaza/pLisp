@@ -561,7 +561,9 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
     ret = NIL;
   else
   {
-    assert(IS_CONS_OBJECT(cons_obj));
+    //assert(IS_CONS_OBJECT(cons_obj));
+    if(!IS_CONS_OBJECT(cons_obj))
+      assert(false);
 
     ret = get_heap(cons_obj >> OBJECT_SHIFT);
   }

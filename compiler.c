@@ -269,7 +269,8 @@ void repl()
 
     delete_expression(g_expr);
 
-    gc();
+    if(!debug_mode)
+      gc();
 
     if(yyin == stdin)
       prompt();
