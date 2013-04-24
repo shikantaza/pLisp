@@ -33,77 +33,77 @@ int gen_sym_count = 0;
 //to avoid creating them
 //each time they're needed
 OBJECT_PTR TRUE                  =                        SYMBOL_TAG;
-OBJECT_PTR NIL                   =  (1 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR QUOTE                 =  (2 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ATOM                  =  (3 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR EQ                    =  (4 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CAR                   =  (5 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CDR                   =  (6 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CONS                  =  (7 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR LAMBDA                =  (8 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DEFUN                 =  (9 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR SET                   = (10 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ADD                   = (11 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR SUB                   = (12 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR MULT                  = (13 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DIV                   = (14 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR PROGN                 = (15 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR PRINT                 = (16 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DEFVAR                = (17 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR LST                   = (18 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR LISTP                 = (19 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR SYMBOL_VALUE          = (20 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DEFMACRO              = (21 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR BACKQUOTE             = (22 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR GT                    = (23 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR GENSYM                = (24 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR SETCAR                = (25 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR SETCDR                = (26 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ERROR                 = (27 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CREATE_PACKAGE        = (28 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR IN_PACKAGE            = (29 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR COMMA                 = (30 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR COMMA_AT              = (31 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR EXPAND_MACRO          = (32 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR APPLY                 = (33 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR STRING                = (34 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR MAKE_ARRAY            = (35 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ARRAY_GET             = (36 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ARRAY_SET             = (37 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR SUB_ARRAY             = (38 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ARRAY_LENGTH          = (39 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR PRINT_STRING          = (40 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR LABELS                = (41 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CREATE_IMAGE          = (42 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR BREAK                 = (43 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR LOAD_FOREIGN_LIBRARY  = (44 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CALL_FOREIGN_FUNCTION = (45 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR PRINTENV              = (46 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CURRENTENV            = (47 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR IF                    = (48 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR EVAL                  = (49 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CALL_CC               = (50 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DEFINE                = (51 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR RESUME                = (52 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR BACKTRACE             = (53 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR NIL                   =  (1 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR QUOTE                 =  (2 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ATOM                  =  (3 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EQ                    =  (4 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CAR                   =  (5 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CDR                   =  (6 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CONS                  =  (7 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LAMBDA                =  (8 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFUN                 =  (9 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SET                   = (10 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ADD                   = (11 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SUB                   = (12 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MULT                  = (13 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DIV                   = (14 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PROGN                 = (15 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PRINT                 = (16 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFVAR                = (17 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LST                   = (18 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LISTP                 = (19 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SYMBOL_VALUE          = (20 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFMACRO              = (21 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BACKQUOTE             = (22 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR GT                    = (23 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR GENSYM                = (24 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SETCAR                = (25 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SETCDR                = (26 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ERROR                 = (27 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CREATE_PACKAGE        = (28 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR IN_PACKAGE            = (29 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COMMA                 = (30 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COMMA_AT              = (31 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EXPAND_MACRO          = (32 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR APPLY                 = (33 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR STRING                = (34 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MAKE_ARRAY            = (35 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARRAY_GET             = (36 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARRAY_SET             = (37 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR SUB_ARRAY             = (38 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARRAY_LENGTH          = (39 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PRINT_STRING          = (40 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LABELS                = (41 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CREATE_IMAGE          = (42 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BREAK                 = (43 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LOAD_FOREIGN_LIBRARY  = (44 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CALL_FOREIGN_FUNCTION = (45 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR PRINTENV              = (46 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CURRENTENV            = (47 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR IF                    = (48 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EVAL                  = (49 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CALL_CC               = (50 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFINE                = (51 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR RESUME                = (52 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BACKTRACE             = (53 << OBJECT_SHIFT) + SYMBOL_TAG;
 
 //end of standard object definition
 
 /*symbols corresponding to assembler mnemonics */
-OBJECT_PTR HALT     = (54 << SYMBOL_SHIFT) + SYMBOL_TAG;                  
-OBJECT_PTR REFER    = (55 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CONSTANT = (56 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CLOSE    = (57 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR TEST     = (58 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ASSIGN   = (59 << SYMBOL_SHIFT) + SYMBOL_TAG;         
-OBJECT_PTR CONTI    = (60 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR NUATE    = (61 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FRAME    = (62 << SYMBOL_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ARGUMENT = (63 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR HALT     = (54 << OBJECT_SHIFT) + SYMBOL_TAG;                  
+OBJECT_PTR REFER    = (55 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CONSTANT = (56 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CLOSE    = (57 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR TEST     = (58 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ASSIGN   = (59 << OBJECT_SHIFT) + SYMBOL_TAG;         
+OBJECT_PTR CONTI    = (60 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR NUATE    = (61 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FRAME    = (62 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARGUMENT = (63 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* APPLY already defined as a special symbol */
-OBJECT_PTR RETURN   = (64 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR RETURN   = (64 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* DEFINE already defind as a special symbol */
-OBJECT_PTR MACRO    = (65 << SYMBOL_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MACRO    = (65 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols corresponding to assembler mnemonics */
 
 
@@ -444,7 +444,7 @@ void print_object(OBJECT_PTR obj_ptr)
 
   if(IS_SYMBOL_OBJECT(obj_ptr))
   {
-    int package_index = obj_ptr >> (SYMBOL_BITS + SYMBOL_SHIFT);
+    int package_index = obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
 
     if(package_index == current_package)
       fprintf(stdout, "%s", get_symbol_name(obj_ptr));
@@ -468,9 +468,9 @@ void print_object(OBJECT_PTR obj_ptr)
   else if(IS_FLOAT_OBJECT(obj_ptr))
     fprintf(stdout, "%f", get_float_value(obj_ptr));
   else if(IS_STRING_LITERAL_OBJECT(obj_ptr))
-    fprintf(stdout, "\"%s\"", strings[obj_ptr >> STRING_LITERAL_SHIFT]);
+    fprintf(stdout, "\"%s\"", strings[obj_ptr >> OBJECT_SHIFT]);
   else if(IS_CHAR_OBJECT(obj_ptr))
-    fprintf(stdout, "#\\%c", obj_ptr >> CHAR_SHIFT);
+    fprintf(stdout, "#\\%c", obj_ptr >> OBJECT_SHIFT);
   else if(IS_ARRAY_OBJECT(obj_ptr))
   {
     if(is_string_object(obj_ptr))
@@ -495,11 +495,11 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
   set_heap(ptr, car);
   set_heap(ptr+1, cdr);
 
-  insert_node(&white, create_node((ptr << CONS_SHIFT) + CONS_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + CONS_TAG));
 
   log_function_exit("cons");
 
-  return (ptr << CONS_SHIFT) + CONS_TAG;
+  return (ptr << OBJECT_SHIFT) + CONS_TAG;
 }
 
 OBJECT_PTR get_string_object(char *str)
@@ -512,9 +512,9 @@ OBJECT_PTR get_string_object(char *str)
   OBJECT_PTR retval;
 
   if(index != NOT_FOUND) //string exists in string table
-    retval = (index << STRING_LITERAL_SHIFT) + STRING_LITERAL_TAG;
+    retval = (index << OBJECT_SHIFT) + STRING_LITERAL_TAG;
   else
-    retval = (add_string(str) << STRING_LITERAL_SHIFT) + STRING_LITERAL_TAG;
+    retval = (add_string(str) << OBJECT_SHIFT) + STRING_LITERAL_TAG;
 
   log_function_exit("get_string_object");
 
@@ -542,9 +542,9 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   OBJECT_PTR retval;
 
   if(index != NOT_FOUND) //symbol exists in symbol table
-    retval = (package_index << (SYMBOL_BITS + SYMBOL_SHIFT)) + (index << SYMBOL_SHIFT) + SYMBOL_TAG;
+    retval = (package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG;
   else
-    retval = (package_index << (SYMBOL_BITS + SYMBOL_SHIFT)) + (add_symbol(symbol_name) << SYMBOL_SHIFT) + SYMBOL_TAG;
+    retval = (package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG;
 
   log_function_exit("get_symbol_object");
 
@@ -563,7 +563,7 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
   {
     assert(IS_CONS_OBJECT(cons_obj));
 
-    ret = get_heap(cons_obj >> CONS_SHIFT);
+    ret = get_heap(cons_obj >> OBJECT_SHIFT);
   }
 
   log_function_exit("car");
@@ -584,7 +584,7 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   {
     assert(IS_CONS_OBJECT(cons_obj));
 
-    ret = get_heap((cons_obj >> CONS_SHIFT) + 1);
+    ret = get_heap((cons_obj >> OBJECT_SHIFT) + 1);
   }
 
   log_function_exit("cdr");
@@ -672,7 +672,7 @@ OBJECT_PTR convert_expression_to_object(expression_t *e)
   else if(e->type == STRING_LITERAL)
     ret = get_string_object(e->atom_value);
   else if(e->type == CHARACTER)
-    ret = (e->char_value << CHAR_SHIFT) + CHAR_TAG;
+    ret = (e->char_value << OBJECT_SHIFT) + CHAR_TAG;
   else if(e->type == LIST)
   {
     if(e->nof_elements == 0)
@@ -727,9 +727,9 @@ OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
 
-  insert_node(&white, create_node((ptr << CLOSURE_SHIFT) + CLOSURE_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + CLOSURE_TAG));
   
-  return (ptr << CLOSURE_SHIFT) + CLOSURE_TAG;
+  return (ptr << OBJECT_SHIFT) + CLOSURE_TAG;
 }
 
 OBJECT_PTR clone_object(OBJECT_PTR obj)
@@ -759,7 +759,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 				clone_object(get_body_object(obj)));
     else if(IS_ARRAY_OBJECT(obj))
     {
-      RAW_PTR ptr = obj >> ARRAY_SHIFT;
+      RAW_PTR ptr = obj >> OBJECT_SHIFT;
       int len = get_int_value(get_heap(ptr));
 
       RAW_PTR new_ptr = object_alloc(len+1);
@@ -771,9 +771,9 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       for(i=1; i<=len; i++)
 	set_heap(new_ptr + i, clone_object(get_heap(ptr + i)));
 
-      insert_node(&white, create_node((new_ptr << ARRAY_SHIFT) + ARRAY_TAG));
+      insert_node(&white, create_node((new_ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
-      ret = (new_ptr << ARRAY_SHIFT) + ARRAY_TAG;
+      ret = (new_ptr << OBJECT_SHIFT) + ARRAY_TAG;
     }
   }
 
@@ -790,19 +790,19 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 OBJECT_PTR get_env_list(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj >> (IS_CLOSURE_OBJECT(obj) ? CLOSURE_SHIFT : MACRO_SHIFT));
+  return get_heap(obj >> (IS_CLOSURE_OBJECT(obj) ? OBJECT_SHIFT : OBJECT_SHIFT));
 }
 
 OBJECT_PTR get_params_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? CLOSURE_SHIFT : MACRO_SHIFT)) + 1);
+  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? OBJECT_SHIFT : OBJECT_SHIFT)) + 1);
 }
 
 OBJECT_PTR get_body_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? CLOSURE_SHIFT : MACRO_SHIFT)) + 2);
+  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? OBJECT_SHIFT : OBJECT_SHIFT)) + 2);
 }
 
 void print_closure_object(OBJECT_PTR obj)
@@ -921,7 +921,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     {
       if(equal(CAAR(rest2),symbol_obj))
       {
-	set_heap((car(rest2) >> CONS_SHIFT) + 1, val);
+	set_heap((car(rest2) >> OBJECT_SHIFT) + 1, val);
 	return symbol_obj;
       }
 
@@ -938,7 +938,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
   {
     if(equal(CAAR(rest2),symbol_obj))
     {
-      set_heap((car(rest2) >> CONS_SHIFT) + 1, val);
+      set_heap((car(rest2) >> OBJECT_SHIFT) + 1, val);
       return symbol_obj;
     }
 
@@ -969,14 +969,14 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
       //the new value
       if(equal(CAAR(rest),symbol_obj))
       {
-        set_heap((car(rest) >> CONS_SHIFT) + 1, val);
+        set_heap((car(rest) >> OBJECT_SHIFT) + 1, val);
         return;
       }
       rest = cdr(rest);
     }
 
     //symbol does not exist in the environment
-    set_heap((last_cell(top_level_env) >> CONS_SHIFT) + 1, cons(cons(symbol_obj, val), NIL));
+    set_heap((last_cell(top_level_env) >> OBJECT_SHIFT) + 1, cons(cons(symbol_obj, val), NIL));
   }
 }
 
@@ -984,7 +984,7 @@ BOOLEAN is_special_form(OBJECT_PTR form)
 {
   if(IS_SYMBOL_OBJECT(form))
   {
-    int index = form >> SYMBOL_SHIFT;
+    int index = form >> OBJECT_SHIFT;
 
     return (index >= 0 && index <= NOF_SPECIAL_SYMBOLS);
   }
@@ -1000,9 +1000,9 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
 
-  insert_node(&white, create_node((ptr << MACRO_SHIFT) + MACRO_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + MACRO_TAG));
   
-  return (ptr << MACRO_SHIFT) + MACRO_TAG;
+  return (ptr << OBJECT_SHIFT) + MACRO_TAG;
 }
 
 void print_macro_object(OBJECT_PTR macro_obj)
@@ -1056,7 +1056,7 @@ OBJECT_PTR gensym()
 
   sprintf(sym, "#:G%04d", gen_sym_count);
 
-  return (current_package << (SYMBOL_BITS + SYMBOL_SHIFT)) + (add_symbol(sym) << SYMBOL_SHIFT) + SYMBOL_TAG;
+  return (current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(sym) << OBJECT_SHIFT) + SYMBOL_TAG;
   
 }
 
@@ -1199,9 +1199,9 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
   OBJECT_PTR retval;
 
   if(symbol_index != NOT_FOUND) //symbol exists in symbol table
-    retval = (package_index << (SYMBOL_BITS + SYMBOL_SHIFT)) + (symbol_index << SYMBOL_SHIFT) + SYMBOL_TAG;
+    retval = (package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (symbol_index << OBJECT_SHIFT) + SYMBOL_TAG;
   else
-    retval = (package_index << (SYMBOL_BITS + SYMBOL_SHIFT)) + (add_qualified_symbol(package_name, symbol_name) << SYMBOL_SHIFT) + SYMBOL_TAG;
+    retval = (package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_qualified_symbol(package_name, symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG;
 
   return retval;
 }
@@ -1215,8 +1215,8 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
 
   memset(buf,'\0',SYMBOL_STRING_SIZE);
 
-  int package_index = ptr >> (SYMBOL_BITS + SYMBOL_SHIFT);
-  int symbol_index =  (ptr >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+  int package_index = ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int symbol_index =  (ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
   if(package_index < 0 || package_index >= nof_packages)
     assert(false);
@@ -1266,8 +1266,8 @@ char *get_symbol_name(OBJECT_PTR symbol_object)
 
   assert(IS_SYMBOL_OBJECT(symbol_object));
 
-  int package_index = symbol_object >> (SYMBOL_BITS + SYMBOL_SHIFT);
-  int symbol_index =  (symbol_object >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+  int package_index = symbol_object >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int symbol_index =  (symbol_object >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
   return packages[package_index].symbols[symbol_index];
 }
@@ -1374,7 +1374,7 @@ int get_int_value(OBJECT_PTR obj)
   /*
   int ret;
 
-  int v = obj >> INTEGER_SHIFT;
+  int v = obj >> OBJECT_SHIFT;
 
   if(v > TWO_RAISED_TO_27) // most significant bit is 1, and hence number is negative)
     ret = v - TWO_RAISED_TO_28;
@@ -1387,7 +1387,7 @@ int get_int_value(OBJECT_PTR obj)
   //return ret;
 
   //get_heap() will fail; see get_float_value()
-  return heap[obj >> INTEGER_SHIFT];
+  return heap[obj >> OBJECT_SHIFT];
 }
 
 OBJECT_PTR convert_int_to_object(int v)
@@ -1398,9 +1398,9 @@ OBJECT_PTR convert_int_to_object(int v)
   OBJECT_PTR ret;
 
   if(v > 0)
-    ret = (v << INTEGER_SHIFT) + INTEGER_TAG;
+    ret = (v << OBJECT_SHIFT) + INTEGER_TAG;
   else
-    ret = ((TWO_RAISED_TO_28 + v) << INTEGER_SHIFT) + INTEGER_TAG;
+    ret = ((TWO_RAISED_TO_28 + v) << OBJECT_SHIFT) + INTEGER_TAG;
   */
 
   RAW_PTR ptr = object_alloc(1);
@@ -1408,12 +1408,12 @@ OBJECT_PTR convert_int_to_object(int v)
   //set_heap() will fail; see convert_float_to_object()
   heap[ptr] = v;
 
-  insert_node(&white, create_node((ptr << INTEGER_SHIFT) + INTEGER_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + INTEGER_TAG));
 
   log_function_exit("convert_int_to_object");
 
   //return ret;
-  return (ptr << INTEGER_SHIFT) + INTEGER_TAG;
+  return (ptr << OBJECT_SHIFT) + INTEGER_TAG;
 }
 
 float get_float_value(OBJECT_PTR obj)
@@ -1425,8 +1425,8 @@ float get_float_value(OBJECT_PTR obj)
   union float_and_uint fi;
 
   //get_heap() will fail (is_valid_object(), actually)
-  //fi.i = get_heap(obj >> FLOAT_SHIFT); 
-  fi.i = heap[obj >> FLOAT_SHIFT];
+  //fi.i = get_heap(obj >> OBJECT_SHIFT); 
+  fi.i = heap[obj >> OBJECT_SHIFT];
 
   float ret;
 
@@ -1451,11 +1451,11 @@ OBJECT_PTR convert_float_to_object(float v)
   //set_heap(ptr, fi.i);
   heap[ptr] = fi.i;
 
-  insert_node(&white, create_node((ptr << FLOAT_SHIFT) + FLOAT_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + FLOAT_TAG));
 
   log_function_exit("convert_float_to_object");
 
-  return (ptr << FLOAT_SHIFT) + FLOAT_TAG;
+  return (ptr << OBJECT_SHIFT) + FLOAT_TAG;
   
 }
 
@@ -1466,13 +1466,13 @@ void print_array_object(OBJECT_PTR array)
 
   fprintf(stdout, "[");
 
-  int length = get_int_value(get_heap(array >> ARRAY_SHIFT));
+  int length = get_int_value(get_heap(array >> OBJECT_SHIFT));
 
   int i;
 
   for(i=0; i< length; i++)
   {
-    print_object(get_heap((array >> ARRAY_SHIFT) + i + 1));
+    print_object(get_heap((array >> OBJECT_SHIFT) + i + 1));
     fprintf(stdout, " ");
   }
 
@@ -1488,7 +1488,7 @@ void print_string(OBJECT_PTR string_object)
 {
   assert(is_string_object(string_object));
 
-  RAW_PTR ptr = string_object >> ARRAY_SHIFT;
+  RAW_PTR ptr = string_object >> OBJECT_SHIFT;
 
   int len = get_int_value(get_heap(ptr));
 
@@ -1497,7 +1497,7 @@ void print_string(OBJECT_PTR string_object)
   fprintf(stdout, "\"");
 
   for(i=1; i<=len; i++)
-    fprintf(stdout, "%c", get_heap(ptr + i) >> CHAR_SHIFT);
+    fprintf(stdout, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
 
   fprintf(stdout, "\"");
 }
@@ -1507,7 +1507,7 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
   if(!(IS_ARRAY_OBJECT(obj)))
     return false;
 
-  RAW_PTR ptr = obj >> ARRAY_SHIFT;
+  RAW_PTR ptr = obj >> OBJECT_SHIFT;
 
   int len = get_int_value(get_heap(ptr));
 
@@ -1526,7 +1526,7 @@ char *get_string(OBJECT_PTR string_object)
 {
   assert(is_string_object(string_object));
 
-  RAW_PTR ptr = string_object >> ARRAY_SHIFT;
+  RAW_PTR ptr = string_object >> OBJECT_SHIFT;
 
   int len = get_int_value(get_heap(ptr));
 
@@ -1535,7 +1535,7 @@ char *get_string(OBJECT_PTR string_object)
   int i;
 
   for(i=1; i<=len; i++)
-    ret[i-1] = get_heap(ptr + i) >> CHAR_SHIFT;
+    ret[i-1] = get_heap(ptr + i) >> OBJECT_SHIFT;
 
   ret[len] = '\0';
 
@@ -1570,8 +1570,8 @@ BOOLEAN is_valid_object(OBJECT_PTR obj)
 
   if(IS_SYMBOL_OBJECT(obj))
   {
-    int package_index = obj >> (SYMBOL_BITS + SYMBOL_SHIFT);
-    int symbol_index =  (obj >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+    int package_index = obj >> (SYMBOL_BITS + OBJECT_SHIFT);
+    int symbol_index =  (obj >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
     return package_index >= 0 && 
            package_index < nof_packages &&

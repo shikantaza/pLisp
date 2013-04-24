@@ -24,7 +24,7 @@ extern OBJECT_PTR reg_current_env;
 OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PTR args)
 {
 
-  char *fn_name_str = strings[fn_name >> STRING_LITERAL_SHIFT];
+  char *fn_name_str = strings[fn_name >> OBJECT_SHIFT];
 
   ffi_cif cif;
 
@@ -154,7 +154,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       }
 
       arg_types[i] = &ffi_type_schar;
-      char c_val = val >> CHAR_SHIFT;
+      char c_val = val >> OBJECT_SHIFT;
       arg_values[i] = &c_val;
     }
     else if(equal(type, get_symbol_object(":CHARACTER-POINTER")))
@@ -185,7 +185,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       if(IS_STRING_LITERAL_OBJECT(val))
       {
 	arg_types[i] = &ffi_type_pointer;
-	char *s_val = strdup(strings[val >> STRING_LITERAL_SHIFT]);
+	char *s_val = strdup(strings[val >> OBJECT_SHIFT]);
 	arg_values[i] = &s_val;
       }
       else if(is_string_object(val))
@@ -445,11 +445,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       int j;
       for(j=0; j< sz; j++)
-	heap[ptr + j + 1] = (str[j] << CHAR_SHIFT) + CHAR_TAG;
+	heap[ptr + j + 1] = (str[j] << OBJECT_SHIFT) + CHAR_TAG;
 
       free(str);
 
-      if(update_environment(reg_current_env, sym, (ptr << ARRAY_SHIFT) + ARRAY_TAG) == NIL)
+      if(update_environment(reg_current_env, sym, (ptr << OBJECT_SHIFT) + ARRAY_TAG) == NIL)
       {
 	raise_error("update_environment failed");
 
@@ -477,7 +477,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   if(equal(ret_type, get_symbol_object(":INTEGER")))
     ret = convert_int_to_object((int)ret_val);
   else if(equal(ret_type, get_symbol_object(":CHARACTER")))
-    ret = ((char)ret_val << CHAR_SHIFT) + CHAR_TAG;
+    ret = ((char)ret_val << OBJECT_SHIFT) + CHAR_TAG;
   else if(equal(ret_type, get_symbol_object(":FLOAT")))
     ret = convert_float_to_object((float)float_ret);
   else if(equal(ret_type, get_symbol_object(":CHARACTER-POINTER")))
@@ -492,11 +492,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     heap[ptr] = convert_int_to_object(sz);
 
     for(i=0; i< sz; i++)
-      heap[ptr + i + 1] = (str[i] << CHAR_SHIFT) + CHAR_TAG;
+      heap[ptr + i + 1] = (str[i] << OBJECT_SHIFT) + CHAR_TAG;
 
     free(str);
 
-    ret = (ptr << ARRAY_SHIFT) + ARRAY_TAG;
+    ret = (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 
   }
   else if(equal(ret_type, get_symbol_object(":VOID")))

@@ -16,6 +16,9 @@
 
 //all in-built types are
 //identified by a four-bit tag
+#define OBJECT_SHIFT         4
+
+/*
 #define SYMBOL_SHIFT         4
 #define CONS_SHIFT           4
 #define CLOSURE_SHIFT        4
@@ -26,6 +29,7 @@
 #define MACRO_SHIFT          4
 #define ARRAY_SHIFT          4
 #define CONTINUATION_SHIFT   4
+*/
 
 #define BIT_MASK 15
 

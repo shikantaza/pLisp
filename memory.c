@@ -333,7 +333,7 @@ void gc()
     }
     else if(IS_ARRAY_OBJECT(obj))
     {
-      RAW_PTR ptr = obj >> ARRAY_SHIFT;
+      RAW_PTR ptr = obj >> OBJECT_SHIFT;
 
       OBJECT_PTR length_obj = get_heap(ptr);
 
@@ -357,7 +357,7 @@ void gc()
     }
     else if(IS_CONTINUATION_OBJECT(obj))
     {
-      OBJECT_PTR stack = ((obj >> CONTINUATION_SHIFT) << CONS_SHIFT) + CONS_TAG;
+      OBJECT_PTR stack = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
       insert_node(&grey, create_node(stack));
       remove_node(&white, stack);
     }
@@ -373,7 +373,7 @@ void gc()
   {
     struct node *white_obj = white;
     if(!value_exists(black, white_obj->key))
-      dealloc(white_obj->key >> CONS_SHIFT);
+      dealloc(white_obj->key >> OBJECT_SHIFT);
     remove_node(&white, white_obj->key);
   }
 

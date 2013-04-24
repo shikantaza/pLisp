@@ -466,17 +466,17 @@ OBJECT_PTR eval()
         fprintf(stdout, "Error: ");
 
         if(IS_STRING_LITERAL_OBJECT(error_string_obj))
-          fprintf(stdout, "%s\n", strings[error_string_obj >> STRING_LITERAL_SHIFT]);
+          fprintf(stdout, "%s\n", strings[error_string_obj >> OBJECT_SHIFT]);
         else if(is_string_object(error_string_obj))
         {
-          RAW_PTR ptr = error_string_obj >> ARRAY_SHIFT;
+          RAW_PTR ptr = error_string_obj >> OBJECT_SHIFT;
 
           int len = get_int_value(get_heap(ptr));
 
           int i;
 
           for(i=1; i <= len; i++)
-            fprintf(stdout, "%c", get_heap(ptr + i) >> CHAR_SHIFT);
+            fprintf(stdout, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
         }
         
         fprintf(stdout, "\n");
@@ -504,7 +504,7 @@ OBJECT_PTR eval()
           if(reg_accumulator == NIL)
             reg_accumulator = cons(car(rest), NIL);
           else
-            set_heap((last_cell(reg_accumulator) >> CONS_SHIFT) + 1, 
+            set_heap((last_cell(reg_accumulator) >> OBJECT_SHIFT) + 1, 
                      cons(car(rest), NIL));         
 
           rest = cdr(rest);
@@ -627,7 +627,7 @@ OBJECT_PTR eval()
           return NIL;
         }
 
-        set_heap((car_obj >> CONS_SHIFT), CADR(reg_current_value_rib));
+        set_heap((car_obj >> OBJECT_SHIFT), CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
@@ -650,7 +650,7 @@ OBJECT_PTR eval()
           return NIL;
         }
 
-        set_heap((car_obj >> CONS_SHIFT) + 1, CADR(reg_current_value_rib));
+        set_heap((car_obj >> OBJECT_SHIFT) + 1, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
@@ -667,7 +667,7 @@ OBJECT_PTR eval()
 
         OBJECT_PTR package = car(reg_current_value_rib);
 
-        char *package_name = (char *)convert_to_upper_case(strings[package >> STRING_LITERAL_SHIFT]);
+        char *package_name = (char *)convert_to_upper_case(strings[package >> OBJECT_SHIFT]);
 
         if(!strcmp(package_name,"CORE"))
 	{
@@ -691,7 +691,7 @@ OBJECT_PTR eval()
         }
 
         OBJECT_PTR package = car(reg_current_value_rib);
-        char *package_name = (char *)convert_to_upper_case(strings[package >> STRING_LITERAL_SHIFT]);
+        char *package_name = (char *)convert_to_upper_case(strings[package >> OBJECT_SHIFT]);
 
         if(!strcmp(package_name,"CORE"))
 	{
@@ -745,7 +745,7 @@ OBJECT_PTR eval()
             if(reg_current_value_rib == NIL)
               reg_current_value_rib = cons(car(args), NIL);
             else
-              set_heap((last_cell(reg_current_value_rib) >> CONS_SHIFT) + 1, 
+              set_heap((last_cell(reg_current_value_rib) >> OBJECT_SHIFT) + 1, 
                        cons(car(args), NIL));         
             args = cdr(args);
           }
@@ -858,7 +858,7 @@ OBJECT_PTR eval()
           return NIL;
         }        
 
-        int array_len = get_int_value(get_heap(array_obj >> ARRAY_SHIFT));
+        int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
 
         int index = get_int_value(idx);
 
@@ -868,7 +868,7 @@ OBJECT_PTR eval()
           return NIL;
         }        
  
-        set_heap((array_obj >> ARRAY_SHIFT) + index + 1, CADDR(reg_current_value_rib));
+        set_heap((array_obj >> OBJECT_SHIFT) + index + 1, CADDR(reg_current_value_rib));
 
         reg_accumulator = CADDR(reg_current_value_rib);
 
@@ -899,7 +899,7 @@ OBJECT_PTR eval()
           return NIL;
         }        
 
-        int array_len = get_int_value(get_heap(array_obj >> ARRAY_SHIFT));
+        int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
 
         int index = get_int_value(idx);
 
@@ -909,7 +909,7 @@ OBJECT_PTR eval()
           return NIL;
         }        
 
-        reg_accumulator = get_heap((array_obj >> ARRAY_SHIFT) + index + 1);
+        reg_accumulator = get_heap((array_obj >> OBJECT_SHIFT) + index + 1);
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
@@ -958,7 +958,7 @@ OBJECT_PTR eval()
           return NIL;
         }
 
-        if((start + get_int_value(array_length)) > get_int_value(get_heap(array >> ARRAY_SHIFT)))
+        if((start + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
         {
           raise_error("Range (start, length) for SUB-ARRAY out of bounds of the array");
           return NIL;
@@ -985,7 +985,7 @@ OBJECT_PTR eval()
           return NIL;
         }
 
-        reg_accumulator = get_heap(array >> ARRAY_SHIFT);
+        reg_accumulator = get_heap(array >> OBJECT_SHIFT);
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
@@ -1030,7 +1030,7 @@ OBJECT_PTR eval()
           return NIL;
         }
 
-        create_image(strings[file_name >> STRING_LITERAL_SHIFT]);
+        create_image(strings[file_name >> OBJECT_SHIFT]);
 
         reg_accumulator = NIL;
 
@@ -1065,7 +1065,7 @@ OBJECT_PTR eval()
 
         dl_handles = temp;
 
-        void *ret = dlopen(strings[file_name >> STRING_LITERAL_SHIFT], RTLD_LAZY);
+        void *ret = dlopen(strings[file_name >> OBJECT_SHIFT], RTLD_LAZY);
 
         if(!ret)
         {
@@ -1143,7 +1143,7 @@ OBJECT_PTR eval()
       {
         debug_mode = false;
 
-        reg_current_stack = ((debug_continuation >> CONTINUATION_SHIFT) << CONS_SHIFT) + CONS_TAG;
+        reg_current_stack = ((debug_continuation >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
@@ -1188,8 +1188,8 @@ OBJECT_PTR eval()
 
         while(rest_params != NIL)
         {
-          int package_index = car(rest_params) >> (SYMBOL_BITS + SYMBOL_SHIFT);
-          int symbol_index =  (car(rest_params) >> SYMBOL_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+          int package_index = car(rest_params) >> (SYMBOL_BITS + OBJECT_SHIFT);
+          int symbol_index =  (car(rest_params) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
           char *param_name = packages[package_index].symbols[symbol_index];
 
@@ -1198,7 +1198,7 @@ OBJECT_PTR eval()
             if(params_env == NIL)
               params_env = cons(cons(CADR(rest_params), rest_args), NIL);
             else
-              set_heap((last_cell(params_env) >> CONS_SHIFT) + 1, 
+              set_heap((last_cell(params_env) >> OBJECT_SHIFT) + 1, 
                        cons(cons(CADR(rest_params),rest_args), NIL));            
             break;
           }
@@ -1207,7 +1207,7 @@ OBJECT_PTR eval()
             if(params_env == NIL)
               params_env = cons(cons(car(rest_params), car(rest_args)), NIL);
             else
-              set_heap((last_cell(params_env) >> CONS_SHIFT) + 1, 
+              set_heap((last_cell(params_env) >> OBJECT_SHIFT) + 1, 
                        cons(cons(car(rest_params),car(rest_args)), NIL));         
           }
 
@@ -1227,7 +1227,7 @@ OBJECT_PTR eval()
           return NIL;
         }
 
-        reg_current_stack = ((reg_accumulator >> CONTINUATION_SHIFT) << CONS_SHIFT) + CONS_TAG;
+        reg_current_stack = ((reg_accumulator >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
 
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
@@ -1245,7 +1245,7 @@ OBJECT_PTR eval()
     OBJECT_PTR frame = car(reg_current_stack);
     reg_current_stack = cdr(reg_current_stack);
 
-    RAW_PTR ptr = frame >> ARRAY_SHIFT;
+    RAW_PTR ptr = frame >> OBJECT_SHIFT;
     reg_next_expression   = get_heap(ptr+1);
     reg_current_env       = get_heap(ptr+2);
     reg_current_value_rib = get_heap(ptr+3);
@@ -1269,16 +1269,16 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
   set_heap(ptr+2, env);
   set_heap(ptr+3, rib);
 
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
   log_function_exit("create_call_frame");
 
-  return (ptr << ARRAY_SHIFT) + ARRAY_TAG;
+  return (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 }
 
 OBJECT_PTR create_current_continuation()
 {
-  return ((reg_current_stack >> CONS_SHIFT) << CONTINUATION_SHIFT) + CONTINUATION_TAG;
+  return ((reg_current_stack >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONTINUATION_TAG;
 }
 
 void raise_error(char *err_str)
@@ -1305,7 +1305,7 @@ void print_stack()
   {
     OBJECT_PTR frame = car(rest);
 
-    RAW_PTR ptr = frame >> ARRAY_SHIFT;
+    RAW_PTR ptr = frame >> OBJECT_SHIFT;
 
     printf("---- begin frame %0x----\n, frame");
     printf("Next expression: ");
@@ -1402,7 +1402,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = obj;
 	  else
-	    set_heap((last_cell(result) >> CONS_SHIFT) + 1, obj);
+	    set_heap((last_cell(result) >> OBJECT_SHIFT) + 1, obj);
 	}
 	else
 	{
@@ -1411,7 +1411,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = cons(obj, NIL);
 	  else
-	    set_heap((last_cell(result) >> CONS_SHIFT) + 1, cons(obj, NIL));
+	    set_heap((last_cell(result) >> OBJECT_SHIFT) + 1, cons(obj, NIL));
 	}
       }
       else
@@ -1421,7 +1421,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	if(result == NIL)
 	  result = cons(obj, NIL);
 	else
-	  set_heap((last_cell(result) >> CONS_SHIFT) + 1, cons(obj, NIL));
+	  set_heap((last_cell(result) >> OBJECT_SHIFT) + 1, cons(obj, NIL));
       }
       rest = cdr(rest);
     }
@@ -1438,7 +1438,7 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 {
   assert(IS_STRING_LITERAL_OBJECT(literal));
 
-  char *str_val = strings[literal >> STRING_LITERAL_SHIFT];
+  char *str_val = strings[literal >> OBJECT_SHIFT];
 
   char *ptr = NULL;
 
@@ -1452,13 +1452,13 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
-    set_heap(raw_ptr + i, (*ptr << CHAR_SHIFT) + CHAR_TAG);
+    set_heap(raw_ptr + i, (*ptr << OBJECT_SHIFT) + CHAR_TAG);
     i++;
   }
 
-  insert_node(&white, create_node((raw_ptr << ARRAY_SHIFT) + ARRAY_TAG));
+  insert_node(&white, create_node((raw_ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
-  return (raw_ptr << ARRAY_SHIFT) + ARRAY_TAG;
+  return (raw_ptr << OBJECT_SHIFT) + ARRAY_TAG;
 }
 
 OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
@@ -1476,9 +1476,9 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   for(i=0; i<sz; i++)
     set_heap(ptr + i + 1, default_value);
 
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
-  return (ptr << ARRAY_SHIFT) + ARRAY_TAG;
+  return (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 }
 
 OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
@@ -1488,7 +1488,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int st = get_int_value(start);
   int len = get_int_value(length);
 
-  RAW_PTR orig_ptr = array >> ARRAY_SHIFT;
+  RAW_PTR orig_ptr = array >> OBJECT_SHIFT;
 
   RAW_PTR ptr = object_alloc(len + 1);
 
@@ -1499,9 +1499,9 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   for(i=1; i<=len; i++)
     set_heap(ptr+i, get_heap(orig_ptr + st + i));
 
-  insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
+  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
-  ret = (ptr << ARRAY_SHIFT) + ARRAY_TAG;
+  ret = (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 
   log_function_exit("eval_sub_array");
 

@@ -145,7 +145,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
             if(reg_current_value_rib == NIL)
               reg_current_value_rib = cons(car(args), NIL);
             else
-              set_heap((last_cell(reg_current_value_rib) >> CONS_SHIFT) + 1, 
+              set_heap((last_cell(reg_current_value_rib) >> OBJECT_SHIFT) + 1, 
                        cons(car(args), NIL));         
             args = cdr(args);
           }
