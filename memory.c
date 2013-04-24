@@ -102,7 +102,7 @@ void dealloc(RAW_PTR ptr)
 {
   assert(ptr >= 0 && ptr < HEAP_SIZE);
 
-  //to avoid float objects being incorrectly flagged
+  //to avoid integer and float objects being incorrectly flagged
   //if(!is_valid_object(heap[ptr]))
   //  assert(false);
 
@@ -335,6 +335,11 @@ void gc()
     {
       RAW_PTR ptr = obj >> ARRAY_SHIFT;
 
+      OBJECT_PTR length_obj = get_heap(ptr);
+
+      insert_node(&grey, create_node(length_obj));
+      remove_node(&white, length_obj);
+
       int len = get_int_value(get_heap(ptr));
 
       int i;
@@ -342,6 +347,7 @@ void gc()
       for(i=1; i<=len; i++)
       {
         OBJECT_PTR array_elem = get_heap(ptr + i);
+
         if(is_dynamic_memory_object(array_elem))
         {
           insert_node(&grey, create_node(array_elem));

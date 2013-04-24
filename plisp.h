@@ -59,8 +59,8 @@ typedef int BOOLEAN;
 #define false 0
 
 //constants defined for speed and clarity
-#define TWO_RAISED_TO_27 134217728
-#define TWO_RAISED_TO_28 268435456
+//#define TWO_RAISED_TO_27 134217728
+//#define TWO_RAISED_TO_28 268435456
 #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
 
 typedef struct package

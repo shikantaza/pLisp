@@ -269,9 +269,6 @@ void repl()
 
     delete_expression(g_expr);
 
-    //gc screws up continuation execution for some reason
-    //(related to the trick we resort to storing
-    //the stack object as a continuation object?)
     gc();
 
     if(yyin == stdin)

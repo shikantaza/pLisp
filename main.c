@@ -1384,6 +1384,8 @@ int get_int_value(OBJECT_PTR obj)
 
   log_function_exit("get_int_value");
 
+  //return ret;
+
   //get_heap() will fail; see get_float_value()
   return heap[obj >> INTEGER_SHIFT];
 }
@@ -1410,6 +1412,7 @@ OBJECT_PTR convert_int_to_object(int v)
 
   log_function_exit("convert_int_to_object");
 
+  //return ret;
   return (ptr << INTEGER_SHIFT) + INTEGER_TAG;
 }
 

@@ -1473,7 +1473,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
 
   int i;
 
-  for(i=0; i< sz; i++)
+  for(i=0; i<sz; i++)
     set_heap(ptr + i + 1, default_value);
 
   insert_node(&white, create_node((ptr << ARRAY_SHIFT) + ARRAY_TAG));
