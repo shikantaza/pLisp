@@ -262,6 +262,5 @@
 
 (create-package "user")
 
-(load-file "math.lisp")
-
+(in-package "user")
 

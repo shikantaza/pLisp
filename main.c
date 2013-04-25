@@ -78,14 +78,14 @@ OBJECT_PTR CREATE_IMAGE          = (42 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR BREAK                 = (43 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR LOAD_FOREIGN_LIBRARY  = (44 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR CALL_FOREIGN_FUNCTION = (45 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR PRINTENV              = (46 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CURRENTENV            = (47 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR IF                    = (48 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR EVAL                  = (49 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CALL_CC               = (50 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DEFINE                = (51 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR RESUME                = (52 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR BACKTRACE             = (53 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ENV                   = (46 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR IF                    = (47 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR EVAL                  = (48 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CALL_CC               = (49 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DEFINE                = (50 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR RESUME                = (51 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR BACKTRACE             = (52 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LOAD_FILE             = (53 << OBJECT_SHIFT) + SYMBOL_TAG;
 
 //end of standard object definition
 
@@ -330,6 +330,9 @@ void delete_expression(expression_t *e)
 
   log_function_entry("delete_expression");
 
+  if(!e)
+    return;
+
 #ifdef DEBUG
   print_expression(e);
   fprintf(stdout, "\n");
@@ -411,7 +414,8 @@ void cleanup()
 
   log_function_entry("cleanup");
 
-  fclose(yyin);
+  if(yyin != stdin)
+    fclose(yyin);
 
   delete_expression(g_expr);
 
@@ -1134,14 +1138,14 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[43] = strdup("BREAK");
   packages[CORE_PACKAGE_INDEX].symbols[44] = strdup("LOAD-FOREIGN-LIBRARY");
   packages[CORE_PACKAGE_INDEX].symbols[45] = strdup("CALL-FOREIGN-FUNCTION");
-  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("PRINTENV");
-  packages[CORE_PACKAGE_INDEX].symbols[47] = strdup("CURRENTENV"); 
-  packages[CORE_PACKAGE_INDEX].symbols[48] = strdup("IF");
-  packages[CORE_PACKAGE_INDEX].symbols[49] = strdup("EVAL"); 
-  packages[CORE_PACKAGE_INDEX].symbols[50] = strdup("CALL-CC"); 
-  packages[CORE_PACKAGE_INDEX].symbols[51] = strdup("DEFINE"); 
-  packages[CORE_PACKAGE_INDEX].symbols[52] = strdup("RESUME"); 
-  packages[CORE_PACKAGE_INDEX].symbols[53] = strdup("BACKTRACE"); 
+  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("ENV");
+  packages[CORE_PACKAGE_INDEX].symbols[47] = strdup("IF");
+  packages[CORE_PACKAGE_INDEX].symbols[48] = strdup("EVAL"); 
+  packages[CORE_PACKAGE_INDEX].symbols[49] = strdup("CALL-CC"); 
+  packages[CORE_PACKAGE_INDEX].symbols[50] = strdup("DEFINE"); 
+  packages[CORE_PACKAGE_INDEX].symbols[51] = strdup("RESUME"); 
+  packages[CORE_PACKAGE_INDEX].symbols[52] = strdup("BACKTRACE"); 
+  packages[CORE_PACKAGE_INDEX].symbols[53] = strdup("LOAD-FILE"); 
 
   /* symbols corresponding to assembler mnemonics */
   packages[CORE_PACKAGE_INDEX].symbols[54] =  strdup("HALT");
@@ -1524,7 +1528,8 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
 
 char *get_string(OBJECT_PTR string_object)
 {
-  assert(is_string_object(string_object));
+  if(!is_string_object(string_object))
+    assert(false);
 
   RAW_PTR ptr = string_object >> OBJECT_SHIFT;
 

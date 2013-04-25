@@ -13,5 +13,3 @@
     (if (< b 0)
         (/ 1.0 (power a (abs b)))
       (* a (power a (- b 1))))))
-
-(in-package "user")

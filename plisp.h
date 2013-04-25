@@ -263,3 +263,5 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR);
 
 void print_backtrace();
+
+void load_core_library();

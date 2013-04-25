@@ -9,6 +9,7 @@ extern OBJECT_PTR IF;
 extern OBJECT_PTR SET;
 extern OBJECT_PTR CALL_CC;
 extern OBJECT_PTR PROGN;
+extern OBJECT_PTR LOAD_FILE;
 
 extern OBJECT_PTR HALT;                  
 extern OBJECT_PTR REFER;
@@ -44,6 +45,8 @@ OBJECT_PTR execution_stack;
 OBJECT_PTR debug_execution_stack;
 
 BOOLEAN in_error;
+
+BOOLEAN loaded_core_library = false;
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -190,20 +193,15 @@ int main(int argc, char **argv)
   else
     load_from_image(argv[1]);
 
-  welcome();
+  load_core_library();
 
-  yyin = fopen("plisp.lisp", "r");
-
-  if(!yyin)
+  if(in_error)
   {
-    fprintf(stderr, "Unable to open file plisp.lisp; exiting\n");
     cleanup();
     exit(1);
   }
 
-  //uncomment this if testing
-  //without loading plisp.lisp
-  //prompt();
+  welcome();
 
   while(1)
   {
@@ -222,25 +220,6 @@ void repl()
     fprintf(stdout, "Bye.\n");
     cleanup();
     exit(0);
-  }
-  else if(g_expr->type == LIST && 
-	  g_expr->elements[0]->type == SYMBOL &&
-	  !strcmp(g_expr->elements[0]->atom_value, "LOAD-FILE"))
-  {
-    FILE *next_yyin = yyin;
-
-    yyin = fopen(g_expr->elements[1]->atom_value,"r");
-
-    if(yyin == NULL)
-    {
-      fprintf(stdout, "Unable to open file \"%s\"\n", g_expr->elements[1]->atom_value);
-      yyin = next_yyin;
-      prompt();
-
-      return;
-    }
-    else
-      return;
   }
   else if(debug_mode && !is_permitted_in_debug_mode(convert_expression_to_object(g_expr)))
   {
@@ -277,4 +256,35 @@ void repl()
 
     return;
   }
+}
+
+void load_core_library()
+{
+  reg_accumulator       = NIL;
+  reg_next_expression   = compile(cons(LOAD_FILE, cons(get_string_object("plisp.lisp"),
+                                                       NIL)), 
+                                  cons(HALT, NIL));
+
+  reg_current_env = NIL;
+
+  reg_current_value_rib = NIL;
+  reg_current_stack     = NIL;
+
+  execution_stack = NIL;
+
+  in_error = false;
+
+  while(reg_next_expression != NIL)
+  {
+    eval();
+  }
+
+  if(in_error)
+    return;
+
+  gc();
+
+  loaded_core_library = true;
+
+  return;  
 }

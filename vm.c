@@ -54,13 +54,13 @@ extern OBJECT_PTR CREATE_IMAGE;
 extern OBJECT_PTR BREAK;
 extern OBJECT_PTR LOAD_FOREIGN_LIBRARY;
 extern OBJECT_PTR CALL_FOREIGN_FUNCTION;
-extern OBJECT_PTR PRINTENV;
-extern OBJECT_PTR CURRENTENV;
+extern OBJECT_PTR ENV;
 extern OBJECT_PTR EVAL;
 
 extern OBJECT_PTR RESUME;
 
 extern OBJECT_PTR BACKTRACE;
+extern OBJECT_PTR LOAD_FILE;
 
 /*symbols corresponding to assembler mnemonics */
 extern OBJECT_PTR HALT;                  
@@ -102,6 +102,10 @@ extern OBJECT_PTR execution_stack;
 extern OBJECT_PTR debug_execution_stack;
 
 extern  BOOLEAN in_error;
+
+extern FILE *yyin;
+
+extern BOOLEAN loaded_core_library;
 
 OBJECT_PTR eval()
 {
@@ -1084,7 +1088,7 @@ OBJECT_PTR eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          raise_error("LOAD_FOREIGN_LIBRARY requires exactly three arguments");
+          raise_error("LOAD-FOREIGN-LIBRARY requires exactly three arguments");
           return NIL;
         }        
 
@@ -1095,23 +1099,18 @@ OBJECT_PTR eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
       }
-      else if(operator == PRINTENV)
+      else if(operator == ENV)
       {
-        if(reg_current_env == NIL && !debug_mode)
-          print_object(top_level_env);
-        else
-          print_object(debug_mode ? debug_env : reg_current_env);
+        /* if(reg_current_env == NIL && !debug_mode) */
+        /*   print_object(top_level_env); */
+        /* else */
+        /*   print_object(debug_mode ? debug_env : reg_current_env); */
+
+        print_object(cons(top_level_env, debug_mode ? debug_env : reg_current_env));
 
         fprintf(stdout, "\n");
 
         reg_accumulator = NIL;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(RETURN, NIL);
-      }
-      else if(operator == CURRENTENV)
-      {
-        reg_accumulator = debug_mode ? debug_env : reg_current_env;
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
@@ -1157,6 +1156,51 @@ OBJECT_PTR eval()
         print_backtrace();
         reg_next_expression = cons(RETURN, NIL);
         return;
+      }
+      else if(operator == LOAD_FILE)
+      {
+        //TODO: maintain a stack of yyin file pointers
+        //so that load-file calls can be nested arbitrarily
+        if(loaded_core_library && yyin != stdin)
+        {
+          raise_error("Attempt to call LOAD-FILE from within another file");
+          return NIL;
+        }
+
+        if(length(reg_current_value_rib) != 1)
+        {
+          raise_error("LOAD-FILE requires exactly one argument");
+          yyin = stdin;
+          return NIL;
+        }        
+
+        OBJECT_PTR arg = car(reg_current_value_rib);
+
+        if(!is_string_object(arg) && (!IS_STRING_LITERAL_OBJECT(arg)))
+        {
+          raise_error("Argument to LOAD-FILE should be a string");
+          yyin = stdin;
+          return NIL;
+        }
+
+        yyin = fopen(is_string_object(arg) ?  get_string(arg) : strings[arg >> OBJECT_SHIFT], "r");
+
+        if(!yyin)
+        {
+          raise_error("LOAD-FILE unable to open file");
+          yyin = stdin;
+          return NIL;
+        }
+
+        while(!feof(yyin))
+          repl();
+
+        reg_accumulator = NIL;
+
+        reg_current_value_rib = NIL;
+
+        if(loaded_core_library)
+          yyin = stdin;
       }
       else
       {
@@ -1242,6 +1286,9 @@ OBJECT_PTR eval()
   }
   else if(opcode == RETURN)
   {
+    if(reg_current_stack == NIL)
+      assert(false);
+
     OBJECT_PTR frame = car(reg_current_stack);
     reg_current_stack = cdr(reg_current_stack);
 
@@ -1516,9 +1563,8 @@ BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR exp)
 
     if(IS_SYMBOL_OBJECT(car_obj))
     {
-      return (car_obj == RESUME) || 
-             (car_obj == PRINTENV) || 
-             (car_obj == CURRENTENV) ||
+      return (car_obj == RESUME)     || 
+             (car_obj == ENV)        || 
              (car_obj == BACKTRACE);
     }
 
