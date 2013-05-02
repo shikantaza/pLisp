@@ -103,11 +103,11 @@ extern OBJECT_PTR debug_execution_stack;
 
 extern  BOOLEAN in_error;
 
+extern BOOLEAN yyin_popped;
+
 extern FILE *yyin;
 
-extern BOOLEAN loaded_core_library;
-
-OBJECT_PTR eval()
+void eval()
 {
   OBJECT_PTR exp = reg_next_expression;
   OBJECT_PTR opcode = car(reg_next_expression);
@@ -131,7 +131,7 @@ OBJECT_PTR eval()
 	print_symbol(CADR(exp), buf);
 	sprintf(err_buf, "Symbol not bound: %s", buf);
         raise_error(err_buf);
-        return NIL;
+        return;
       }
     }
     reg_next_expression = CADDR(exp);
@@ -166,7 +166,7 @@ OBJECT_PTR eval()
       print_symbol(CADR(exp), buf);
       sprintf(err_buf, "Symbol not bound: %s", buf);
       raise_error(err_buf);
-      return NIL;
+      return;
     }
     reg_next_expression = CADDR(exp);
   }
@@ -229,7 +229,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("EQ expects two arguments");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR v1 = car(reg_current_value_rib);
@@ -244,7 +244,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("ATOM expects one argument");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR v = car(reg_current_value_rib);
@@ -258,13 +258,13 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("CAR expects one argument, a CONS object");
-          return NIL;
+          return;
         }
 
         if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
         {
           raise_error("Argument to CAR should be a CONS object");
-          return NIL;
+          return;
         }
 
         reg_accumulator = CAAR(reg_current_value_rib);
@@ -276,13 +276,13 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("CDR expects one argument, a CONS object");
-          return NIL;
+          return;
         }
 
         if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
         {
           raise_error("Argument to CDR should be a CONS object");
-          return NIL;
+          return;
         }
 
         reg_accumulator = CDAR(reg_current_value_rib);
@@ -295,7 +295,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) < 2)
         {
           raise_error("Operator '+' requires at leaset two arguments");
-          return NIL;
+          return;
         }
 
         float sum = 0;
@@ -329,7 +329,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) < 2)
         {
           raise_error("Operator '-' requires at leaset two arguments");
-          return NIL;
+          return;
         }
 
         float val;
@@ -378,7 +378,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) < 2)
         {
           raise_error("Operator '*' requires at leaset two arguments");
-          return NIL;
+          return;
         }
 
         float sum = 1;
@@ -414,7 +414,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) < 2)
         {
           raise_error("Operator '/' requires at leaset two arguments");
-          return NIL;
+          return;
         }
 
         float val;
@@ -452,7 +452,7 @@ OBJECT_PTR eval()
         if(sum == 0)
         {
           raise_error("Division by zero");
-          return NIL;
+          return;
         }
 
         if(is_float)
@@ -530,7 +530,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("LISTP requires exactly one argument");
-          return NIL;
+          return;
         }
 
         reg_accumulator = is_atom(car(reg_current_value_rib)) ? NIL : TRUE;
@@ -544,7 +544,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("SYMBOL-VALUE requires exactly one argument");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR sym = car(reg_current_value_rib);
@@ -552,7 +552,7 @@ OBJECT_PTR eval()
         if(!IS_SYMBOL_OBJECT(sym))
         {
           raise_error("Argument to SYMBOL-VALUE should be a symbol object");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR res = get_symbol_value(sym, reg_current_env);
@@ -560,7 +560,7 @@ OBJECT_PTR eval()
         if(car(res) == NIL)
         {
           raise_error("Symbol not bound");
-          return NIL;
+          return;
         }
 
         reg_accumulator = cdr(res);
@@ -573,7 +573,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("> requires exactly two arguments");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR v1 = car(reg_current_value_rib);
@@ -583,7 +583,7 @@ OBJECT_PTR eval()
            (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
         {
           raise_error("Arguments to > should be numbers (integer or float)");
-          return NIL;
+          return;
         }
 
         float val1, val2;
@@ -608,7 +608,7 @@ OBJECT_PTR eval()
         if(reg_current_value_rib != NIL)
         {
           raise_error("GEMSYM requires no argument");
-          return NIL;
+          return;
         }
 
         reg_accumulator = gensym();
@@ -620,7 +620,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("SETCAR requires two arguments");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR car_obj = car(reg_current_value_rib);
@@ -628,7 +628,7 @@ OBJECT_PTR eval()
         if((!(IS_CONS_OBJECT(car_obj))))
         {
           raise_error("First argument to SETCAR should be a CONS object");
-          return NIL;
+          return;
         }
 
         set_heap((car_obj >> OBJECT_SHIFT), CADR(reg_current_value_rib));
@@ -643,7 +643,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("SETCDR requires two arguments");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR car_obj = car(reg_current_value_rib);
@@ -651,7 +651,7 @@ OBJECT_PTR eval()
         if((!(IS_CONS_OBJECT(car_obj))))
         {
           raise_error("First argument to SETCDR should be a CONS object");
-          return NIL;
+          return;
         }
 
         set_heap((car_obj >> OBJECT_SHIFT) + 1, CADR(reg_current_value_rib));
@@ -666,7 +666,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("CREATE-PACKAGE requires exactly one argument");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR package = car(reg_current_value_rib);
@@ -676,7 +676,7 @@ OBJECT_PTR eval()
         if(!strcmp(package_name,"CORE"))
 	{
           raise_error("Core package already exists");
-          return NIL;
+          return;
         }
 
         create_package(package_name);
@@ -691,7 +691,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("IN-PACKAGE requires exactly one argument");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR package = car(reg_current_value_rib);
@@ -700,7 +700,7 @@ OBJECT_PTR eval()
         if(!strcmp(package_name,"CORE"))
 	{
           raise_error("Core package cannot be updated");
-          return NIL;
+          return;
         }
         else
 	{
@@ -708,7 +708,7 @@ OBJECT_PTR eval()
           if(index == NOT_FOUND)
 	  {
             raise_error("Package does not exist");
-            return NIL;
+            return;
           }
           else
           {
@@ -725,7 +725,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("EXPAND-MACRO requires exactly one argument");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR macro_body = car(reg_current_value_rib);
@@ -734,7 +734,7 @@ OBJECT_PTR eval()
         if(car(res) == NIL)
 	{
           raise_error("Macro undefined");
-          return NIL;
+          return;
 	}
         else
         {
@@ -771,7 +771,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("APPLY requires exactly two arguments");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR obj = car(reg_current_value_rib);
@@ -781,14 +781,14 @@ OBJECT_PTR eval()
            (!(IS_CONTINUATION_OBJECT(obj))))
         {
           raise_error("First argument to APPLY should be a special form, a closure or a continuation");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR args = CADR(reg_current_value_rib);
         if((!(IS_CONS_OBJECT(args))))
         {
           raise_error("Second argument to APPLY should be a list of arguments");
-          return NIL;
+          return;
         }
 
         reg_accumulator = obj;
@@ -801,7 +801,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("STRING requires exactly one argument, a literal string");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR string_literal = car(reg_current_value_rib);
@@ -809,7 +809,7 @@ OBJECT_PTR eval()
         if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
         {
           raise_error("Argument to STRING should be a literal string");
-          return NIL;
+          return;
         }        
  
         reg_accumulator = eval_string(string_literal);
@@ -822,7 +822,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("MAKE-ARRAY requires exactly two arguments");
-          return NIL;
+          return;
         }        
         
         OBJECT_PTR size = car(reg_current_value_rib);
@@ -830,7 +830,7 @@ OBJECT_PTR eval()
         if((!(IS_INTEGER_OBJECT(size))))
         {
           raise_error("First argument to MAKE-ARRAY should be the size of the array (integer)");
-          return NIL;
+          return;
         }        
 
         reg_accumulator = eval_make_array(size, CADR(reg_current_value_rib));
@@ -843,7 +843,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 3)
         {
           raise_error("ARRAY-SET requires exactly three arguments");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
@@ -851,7 +851,7 @@ OBJECT_PTR eval()
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
           raise_error("First argument to ARRAY-SET should be an array");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR idx = CADR(reg_current_value_rib);
@@ -859,7 +859,7 @@ OBJECT_PTR eval()
         if((!(IS_INTEGER_OBJECT(idx))))
         {
           raise_error("Second argument to ARRAY-SET should be an integer (index into the array)");
-          return NIL;
+          return;
         }        
 
         int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
@@ -869,7 +869,7 @@ OBJECT_PTR eval()
         if(index < 0 || (index >= array_len))
         {
           raise_error("Array index out of bounds");
-          return NIL;
+          return;
         }        
  
         set_heap((array_obj >> OBJECT_SHIFT) + index + 1, CADDR(reg_current_value_rib));
@@ -884,7 +884,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 2)
         {
           raise_error("ARRAY-GET requires exactly two arguments");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
@@ -892,7 +892,7 @@ OBJECT_PTR eval()
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
           raise_error("First argument to ARRAY-GET should be an array");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR idx = CADR(reg_current_value_rib);
@@ -900,7 +900,7 @@ OBJECT_PTR eval()
         if((!(IS_INTEGER_OBJECT(idx))))
         {
           raise_error("Second argument to ARRAY-GET should be an integer (index into the array)");
-          return NIL;
+          return;
         }        
 
         int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
@@ -910,7 +910,7 @@ OBJECT_PTR eval()
         if(index < 0 || (index >= array_len))
         {
           raise_error("Array index out of bounds");
-          return NIL;
+          return;
         }        
 
         reg_accumulator = get_heap((array_obj >> OBJECT_SHIFT) + index + 1);
@@ -923,7 +923,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 3)
         {
           raise_error("SUB-ARRAY requires exactly three arguments");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR array = car(reg_current_value_rib);
@@ -931,7 +931,7 @@ OBJECT_PTR eval()
         if(!(IS_ARRAY_OBJECT(array)))
         {
           raise_error("First argument to SUB-ARRAY should be an ARRAY object");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR start = CADR(reg_current_value_rib);
@@ -939,13 +939,13 @@ OBJECT_PTR eval()
         if(!(IS_INTEGER_OBJECT(start)))
         {
           raise_error("Second argument to SUB-ARRAY should be an integer (start index)");
-          return NIL;
+          return;
         }
 
         if(!(get_int_value(start) >= 0))
         {
           raise_error("Second argument to SUB-ARRAY should be a non-negative integer");
-          return NIL;
+          return;
         }
 
         OBJECT_PTR array_length = CADDR(reg_current_value_rib);
@@ -953,19 +953,19 @@ OBJECT_PTR eval()
         if(!(IS_INTEGER_OBJECT(array_length)))
         {
           raise_error("Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
-          return NIL;
+          return;
         }
 
         if(!(get_int_value(array_length) >= 0))
         {
           raise_error("Third argument to SUB-ARRAY should be a non- negative integer");
-          return NIL;
+          return;
         }
 
         if((start + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
         {
           raise_error("Range (start, length) for SUB-ARRAY out of bounds of the array");
-          return NIL;
+          return;
         }
 
         reg_accumulator = eval_sub_array(array, start, array_length);
@@ -978,7 +978,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("ARRAY-LENGTH requires exactly one argument, an array object");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR array = car(reg_current_value_rib);
@@ -986,7 +986,7 @@ OBJECT_PTR eval()
         if(!(IS_ARRAY_OBJECT(array)))
         {
           raise_error("Argument to ARRAY-LENGTH should be an ARRAY object");
-          return NIL;
+          return;
         }
 
         reg_accumulator = get_heap(array >> OBJECT_SHIFT);
@@ -999,7 +999,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("PRINT-STRING requires exactly one argument, a string object");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR str = car(reg_current_value_rib);
@@ -1007,7 +1007,7 @@ OBJECT_PTR eval()
         if(!(is_string_object(str)) && (!(IS_STRING_LITERAL_OBJECT(str))))
         {
           raise_error("Argument to PRINT_STRING should be a string object");
-          return NIL;
+          return;
         }
 
         print_object(str);
@@ -1023,7 +1023,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("CREATE-IMAGE requires exactly one argument, a string object denoting the file name of the image");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR file_name = car(reg_current_value_rib);
@@ -1031,7 +1031,7 @@ OBJECT_PTR eval()
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
           raise_error("Argument to PRINT_STRING should be a string object denoting the file name of the image");
-          return NIL;
+          return;
         }
 
         create_image(strings[file_name >> OBJECT_SHIFT]);
@@ -1046,7 +1046,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("LOAD_FOREIGN_LIBRARY requires exactly one argument, a string object denoting the library name");
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR file_name = car(reg_current_value_rib);
@@ -1054,7 +1054,7 @@ OBJECT_PTR eval()
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
           raise_error("Argument to LOAD_FOREIGN_LIBRARY should be a string object denoting the library name");
-          return NIL;
+          return;
         }
 
         nof_dl_handles++;
@@ -1064,7 +1064,7 @@ OBJECT_PTR eval()
         if(temp == NULL)
         {
           raise_error("Unable to extend memory for dl_handles");
-          return NIL;
+          return;
         }
 
         dl_handles = temp;
@@ -1074,7 +1074,7 @@ OBJECT_PTR eval()
         if(!ret)
         {
           raise_error("dl_open() failed");
-          return NIL;
+          return;
         }
 
         dl_handles[nof_dl_handles - 1] = ret;
@@ -1089,7 +1089,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 3)
         {
           raise_error("LOAD-FOREIGN-LIBRARY requires exactly three arguments");
-          return NIL;
+          return;
         }        
 
         reg_accumulator = call_foreign_function(car(reg_current_value_rib),
@@ -1159,19 +1159,10 @@ OBJECT_PTR eval()
       }
       else if(operator == LOAD_FILE)
       {
-        //TODO: maintain a stack of yyin file pointers
-        //so that load-file calls can be nested arbitrarily
-        if(loaded_core_library && yyin != stdin)
-        {
-          raise_error("Attempt to call LOAD-FILE from within another file");
-          return NIL;
-        }
-
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("LOAD-FILE requires exactly one argument");
-          yyin = stdin;
-          return NIL;
+          return;
         }        
 
         OBJECT_PTR arg = car(reg_current_value_rib);
@@ -1179,28 +1170,34 @@ OBJECT_PTR eval()
         if(!is_string_object(arg) && (!IS_STRING_LITERAL_OBJECT(arg)))
         {
           raise_error("Argument to LOAD-FILE should be a string");
-          yyin = stdin;
-          return NIL;
+          return;
         }
 
-        yyin = fopen(is_string_object(arg) ?  get_string(arg) : strings[arg >> OBJECT_SHIFT], "r");
+        FILE *temp = fopen(is_string_object(arg) ?  get_string(arg) : strings[arg >> OBJECT_SHIFT], "r");
 
-        if(!yyin)
+        if(!temp)
         {
           raise_error("LOAD-FILE unable to open file");
-          yyin = stdin;
-          return NIL;
+          return;
         }
 
-        while(!feof(yyin))
-          repl();
+        if(set_up_new_yyin(temp))
+        {
+          raise_error("Unable to read from file");
+          return;
+        }
+
+        while(!yyparse())
+        {
+          if(repl())
+            return;
+        }
+
+        pop_yyin();
 
         reg_accumulator = NIL;
 
         reg_current_value_rib = NIL;
-
-        if(loaded_core_library)
-          yyin = stdin;
       }
       else
       {
@@ -1208,7 +1205,7 @@ OBJECT_PTR eval()
 	print_symbol(operator, buf);
 	sprintf(err_buf, "Symbol not bound: %s", buf);
         raise_error(err_buf);
-        return NIL;
+        return;
       }
     }
     else //user-defined operator (closure, macro, or continuation)
@@ -1222,7 +1219,7 @@ OBJECT_PTR eval()
         /* if(length(params) != length(reg_current_value_rib)) */
         /* { */
         /*   raise_error("Arguments to function not supplied\n"); */
-        /*   return NIL; */
+        /*   return; */
         /* } */
 
         OBJECT_PTR params_env = NIL;
@@ -1268,7 +1265,7 @@ OBJECT_PTR eval()
         if(length(reg_current_value_rib) != 1)
         {
           raise_error("Continuations take exactly one argument");
-          return NIL;
+          return;
         }
 
         reg_current_stack = ((reg_accumulator >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
@@ -1280,7 +1277,7 @@ OBJECT_PTR eval()
       else
       {
         raise_error("Illegal operator");
-        return NIL;
+        return;
       }
     }
   }
@@ -1299,8 +1296,6 @@ OBJECT_PTR eval()
 
     execution_stack = cdr(execution_stack);
   }
-
-  return reg_accumulator;
 }
 
 OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,

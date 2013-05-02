@@ -403,8 +403,11 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 
 void build_grey_set()
 {
-  insert_node(&grey, create_node(top_level_env));
-  remove_node(&white, top_level_env);
+  if(top_level_env != NIL)
+  {
+    insert_node(&grey, create_node(top_level_env));
+    remove_node(&white, top_level_env);
+  }
 }
 
 int get_free_memory()

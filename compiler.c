@@ -46,8 +46,6 @@ OBJECT_PTR debug_execution_stack;
 
 BOOLEAN in_error;
 
-BOOLEAN loaded_core_library = false;
-
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -189,29 +187,34 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
 int main(int argc, char **argv)
 {
   if(argc == 1)
-    initialize();
-  else
-    load_from_image(argv[1]);
-
-  load_core_library();
-
-  if(in_error)
   {
-    cleanup();
-    exit(1);
+    initialize();
+    load_core_library();
+    if(in_error)
+    {
+      cleanup();
+      exit(1);
+    }
+  }
+  else
+  {
+    load_from_image(argv[1]);
   }
 
   welcome();
 
   while(1)
   {
+    prompt();
+    yyparse();
     repl();
   }
 }
 
-void repl()
+int repl()
 {
-  yyparse();
+  if(!g_expr)
+    return 0;
 
   if(g_expr->type == SYMBOL && ( !strcmp(g_expr->atom_value,"QUIT") ||
 				 !strcmp(g_expr->atom_value,"EXIT") ||
@@ -224,12 +227,15 @@ void repl()
   else if(debug_mode && !is_permitted_in_debug_mode(convert_expression_to_object(g_expr)))
   {
     fprintf(stdout, "Expression not permitted in debug mode\n");
-    return;
+    return 1;
   }
   else
   {
     reg_accumulator       = NIL;
-    reg_next_expression   = compile(convert_expression_to_object(g_expr), cons(HALT, NIL));
+
+    OBJECT_PTR exp = convert_expression_to_object(g_expr);
+
+    reg_next_expression   = compile(exp, cons(HALT, NIL));
     
     reg_current_env = NIL;
 
@@ -247,14 +253,15 @@ void repl()
       print_object(reg_accumulator);
 
     delete_expression(g_expr);
+    g_expr = NULL;
 
     if(!debug_mode)
       gc();
 
-    if(yyin == stdin)
-      prompt();
+    /* if(yyin == stdin) */
+    /*   prompt(); */
 
-    return;
+    return 0;
   }
 }
 
@@ -275,16 +282,12 @@ void load_core_library()
   in_error = false;
 
   while(reg_next_expression != NIL)
-  {
     eval();
-  }
 
   if(in_error)
     return;
 
   gc();
-
-  loaded_core_library = true;
 
   return;  
 }

@@ -8,7 +8,7 @@ CFLAGS	= -g -I/usr/local/lib/libffi-3.0.10/include -L/usr/local/lib
 all:	plisp
 
 plisp:	$(OBJS)
-		$(CC) $(CFLAGS) $(OBJS) libtpl.a -o plisp -lfl -lffi
+		$(CC) $(CFLAGS) $(OBJS) libtpl.a -o plisp -lffi
 
 lex.o:	lex.yy.c
 		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o

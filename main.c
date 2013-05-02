@@ -718,6 +718,22 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
     if(IS_CONS_OBJECT(obj1) && IS_CONS_OBJECT(obj2))
       ret = (equal(car(obj1), car(obj2)) && 
 	     equal(cdr(obj1), cdr(obj2)));
+    else if(IS_INTEGER_OBJECT(obj1))
+    {
+      int val = get_int_value(obj1);
+      if(IS_INTEGER_OBJECT(obj2))
+        ret = (val  == get_int_value(obj2));
+      else if(IS_FLOAT_OBJECT(obj2))
+        ret = (val == get_float_value(obj2));
+    }
+    else if(IS_FLOAT_OBJECT(obj1))
+    {
+      int val = get_float_value(obj1);
+      if(IS_INTEGER_OBJECT(obj2))
+        ret = (val  == get_int_value(obj2));
+      else if(IS_FLOAT_OBJECT(obj2))
+        ret = (val == get_float_value(obj2));
+    }
   }
   
   return ret;
@@ -1196,6 +1212,7 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
 {
   int package_index = find_package(package_name);
 
+  //TODO: convert this into a pLisp error
   assert(package_index != NOT_FOUND);
 
   int symbol_index = find_qualified_symbol(package_index, symbol_name);

@@ -104,7 +104,7 @@ expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);
 
-void repl();
+int repl();
 void prompt();
 void cleanup();
 
@@ -247,8 +247,7 @@ OBJECT_PTR create_current_continuation();
 OBJECT_PTR compile_loop(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR compile(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR compile_progn(OBJECT_PTR, OBJECT_PTR);
-void repl();
-OBJECT_PTR eval();
+void eval();
 void raise_error(char *);
 
 void print_stack();

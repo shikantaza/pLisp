@@ -1,17 +1,17 @@
 %{
 #include <stdio.h>
+#include <assert.h>
+
 #include "plisp.h"
 #include "util.h"
 
 int yyerror(char *s);
-int yylex(void);
 
 extern expression_t *g_expr;
 
 int parens = 0;
 
 extern void prompt();
-extern void repl();
 
 extern FILE *yyin;
 
@@ -37,6 +37,8 @@ extern FILE *yyin;
 %token                           T_COMMA
 %token                           T_COMMA_AT
 
+%token                           END_OF_FILE
+
 %type   <expr_value>             atom
 %type   <expr_value>             list
 %type   <expr_value>             expressions_in_parens
@@ -55,8 +57,7 @@ expression:
       if(parens == 0)
       {
 	g_expr = $$;
-	//repl();
-	return;
+	YYACCEPT;
       }
     }
     | list
@@ -64,12 +65,13 @@ expression:
       if(parens == 0)
       {
 	g_expr = $$;
-	//repl();
-	return;
+	YYACCEPT;
       }
     };
 
 atom:
+    END_OF_FILE { return -1; }
+    |
     T_INTEGER
     {
       $$ = create_expression(INTEGER, NULL, $1, 0, 0);
@@ -190,12 +192,15 @@ int yyerror(char *s)
 {
   printf("Syntax error in expression\n");
   prompt();
+  assert(false);
 }
 
 
-int yywrap()
-{
-  yyin = stdin;
-  prompt();
-  return 0;
-}
+/* int yywrap() */
+/* { */
+/*   printf("EOF file reached\n"); */
+
+/*   pop_yyin(); */
+
+/*   return 1; */
+/* } */

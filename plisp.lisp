@@ -260,7 +260,8 @@
 (defmacro substring (str)
   `(sub-array ,str))
 
+(load-file "math.lisp")
+
 (create-package "user")
 
 (in-package "user")
-
