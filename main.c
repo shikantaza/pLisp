@@ -656,41 +656,62 @@ BOOLEAN is_atom(OBJECT_PTR ptr)
   return ret;
 }
 
-OBJECT_PTR convert_expression_to_object(expression_t *e)
+int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
 {
-  OBJECT_PTR ret;
+  int ret = 0;
 
   log_function_entry("convert_expression_to_object");
 
   if(e->type == SYMBOL)
   {
     if(e->package_name == NULL)
-      ret = get_symbol_object(e->atom_value);
+      *out_val = get_symbol_object(e->atom_value);
     else
-      ret = get_qualified_symbol_object(e->package_name, e->atom_value);
+    {
+      OBJECT_PTR val = get_qualified_symbol_object(e->package_name, e->atom_value);
+      if(val == NIL)
+      {
+        fprintf(stdout, "Packgage %s does not exist\n", e->package_name);
+        *out_val = NIL;
+        ret = -1;
+      }
+    }
   }
   else if(e->type == INTEGER)
-    ret = convert_int_to_object(e->integer_value);
+    *out_val = convert_int_to_object(e->integer_value);
   else if(e->type == FLOAT)
-    ret = convert_float_to_object(e->float_value);
+    *out_val = convert_float_to_object(e->float_value);
   else if(e->type == STRING_LITERAL)
-    ret = get_string_object(e->atom_value);
+    *out_val = get_string_object(e->atom_value);
   else if(e->type == CHARACTER)
-    ret = (e->char_value << OBJECT_SHIFT) + CHAR_TAG;
+    *out_val = (e->char_value << OBJECT_SHIFT) + CHAR_TAG;
   else if(e->type == LIST)
   {
     if(e->nof_elements == 0)
-      ret = NIL;
+      *out_val = NIL;
     else
     {
       int i;
 
-      OBJECT_PTR cons_obj = cons(convert_expression_to_object(e->elements[e->nof_elements-1]), NIL);
+      OBJECT_PTR out;
+      int val = convert_expression_to_object(e->elements[e->nof_elements-1], &out);
+      
+      if(val != 0)
+        return -1;
+
+      OBJECT_PTR cons_obj = cons(out, NIL);
 
       for(i=e->nof_elements - 2; i>=0; i--)
-	cons_obj = cons(convert_expression_to_object(e->elements[i]), cons_obj);
+      {
+        OBJECT_PTR out1;
+        int val1 = convert_expression_to_object(e->elements[i], &out1);
 
-      ret = cons_obj;
+        if(val != 0)
+          return -1;
+
+	cons_obj = cons(out1, cons_obj);
+      }
+      *out_val = cons_obj;
     }
   }
 
@@ -1212,8 +1233,8 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
 {
   int package_index = find_package(package_name);
 
-  //TODO: convert this into a pLisp error
-  assert(package_index != NOT_FOUND);
+  if(package_index == NOT_FOUND)
+    return NIL;
 
   int symbol_index = find_qualified_symbol(package_index, symbol_name);
 

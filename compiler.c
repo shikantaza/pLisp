@@ -224,23 +224,36 @@ int repl()
     cleanup();
     exit(0);
   }
-  else if(debug_mode && !is_permitted_in_debug_mode(convert_expression_to_object(g_expr)))
+  else if(debug_mode)
   {
-    fprintf(stdout, "Expression not permitted in debug mode\n");
-    return 1;
+    OBJECT_PTR out;
+    int val = convert_expression_to_object(g_expr, &out);
+
+    if(val != 0)
+      return 1;
+
+    if(!is_permitted_in_debug_mode(out))
+    {
+      fprintf(stdout, "Expression not permitted in debug mode\n");
+      return 1;
+    }
   }
   else
   {
-    reg_accumulator       = NIL;
+    reg_accumulator = NIL;
 
-    OBJECT_PTR exp = convert_expression_to_object(g_expr);
+    OBJECT_PTR exp;
+    int val = convert_expression_to_object(g_expr, &exp);
 
-    reg_next_expression   = compile(exp, cons(HALT, NIL));
+    if(val != 0)
+      return 1;
+
+    reg_next_expression = compile(exp, cons(HALT, NIL));
     
     reg_current_env = NIL;
 
     reg_current_value_rib = NIL;
-    reg_current_stack     = NIL;
+    reg_current_stack = NIL;
 
     execution_stack = NIL;
 

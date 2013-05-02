@@ -127,7 +127,7 @@ void print_cons_object(OBJECT_PTR);
 
 int is_atom(OBJECT_PTR);
 
-OBJECT_PTR convert_expression_to_object(expression_t *);
+int convert_expression_to_object(expression_t *, OBJECT_PTR *);
 
 BOOLEAN equal(OBJECT_PTR, OBJECT_PTR);
 
