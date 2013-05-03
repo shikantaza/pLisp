@@ -1088,7 +1088,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          raise_error("LOAD-FOREIGN-LIBRARY requires exactly three arguments");
+          raise_error("CALL-FOREIGN-FUNCTION requires exactly three arguments");
           return;
         }        
 

@@ -4,7 +4,7 @@ Features currently supported:
 2. Other operators and utility functions written in pLisp itself (there is a rudimentary library at present)
 3. Error handling in the form of an '(error "...")' operator
 4. Garbage collection
-5. A somewhat buggy foreign function interface
+5. Foreign function interface
 6. Ability to store and load images (aka serialization)
 7. Macros
 8. A rudimentary debugger (break, resume, inspect variables)
