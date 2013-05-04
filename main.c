@@ -89,7 +89,7 @@ OBJECT_PTR LOAD_FILE             = (53 << OBJECT_SHIFT) + SYMBOL_TAG;
 
 //end of standard object definition
 
-/*symbols corresponding to assembler mnemonics */
+/* symbols corresponding to assembler mnemonics */
 OBJECT_PTR HALT     = (54 << OBJECT_SHIFT) + SYMBOL_TAG;                  
 OBJECT_PTR REFER    = (55 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR CONSTANT = (56 << OBJECT_SHIFT) + SYMBOL_TAG;
@@ -106,6 +106,15 @@ OBJECT_PTR RETURN   = (64 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR MACRO    = (65 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols corresponding to assembler mnemonics */
 
+/* symbols useful in FFI */
+OBJECT_PTR INTEGR        = (66 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FLOT          = (67 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CHAR          = (68 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR VOID          = (69 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR INT_POINTER   = (70 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FLOAT_POINTER = (71 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CHAR_POINTER  = (72 << OBJECT_SHIFT) + SYMBOL_TAG;
+/* end symbols useful in FFI */
 
 extern FILE *yyin;
 
@@ -1126,7 +1135,7 @@ void initialize_core_package()
   /* There are 11 assembler mnemonics that are defined for convenience
      in addtion to the special symbols . These mnemonics are not special,
      i.e., it doesn't matter if the user source code uses them */
-  packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS + 12; 
+  packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS + 19; 
   packages[CORE_PACKAGE_INDEX].symbols = (char **)malloc(packages[CORE_PACKAGE_INDEX].nof_symbols * sizeof(char *));
 
   packages[CORE_PACKAGE_INDEX].symbols[0] = strdup("T");
@@ -1201,6 +1210,15 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("MACRO");
   /* end symbols corresponding to assembler mnemonics */
 
+  /* symbols for FFI */
+  packages[CORE_PACKAGE_INDEX].symbols[66] = strdup("INTEGER");
+  packages[CORE_PACKAGE_INDEX].symbols[67] = strdup("FLOAT");
+  packages[CORE_PACKAGE_INDEX].symbols[68] = strdup("CHARACTER");
+  packages[CORE_PACKAGE_INDEX].symbols[69] = strdup("VOID");
+  packages[CORE_PACKAGE_INDEX].symbols[70] = strdup("INTEGER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[71] = strdup("FLOAT-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[72] = strdup("CHARACTER-POINTER");
+  /* end symbols for FFI */
 }
 
 int find_package(char* package_name)

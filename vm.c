@@ -80,6 +80,14 @@ extern OBJECT_PTR RETURN;
 extern OBJECT_PTR BACKQUOTE;
 /* end symbols corresponding to assembler mnemonics */
 
+extern OBJECT_PTR INTEGR;
+extern OBJECT_PTR FLOT;
+extern OBJECT_PTR CHAR;
+extern OBJECT_PTR VOID;
+extern OBJECT_PTR INT_POINTER;
+extern OBJECT_PTR FLOAT_POINTER;
+extern OBJECT_PTR CHAR_POINTER;
+
 extern OBJECT_PTR top_level_env;
 
 extern struct node *white;
@@ -1092,9 +1100,37 @@ void eval()
           return;
         }        
 
-        reg_accumulator = call_foreign_function(car(reg_current_value_rib),
-                                                CADR(reg_current_value_rib),
-                                                CADDR(reg_current_value_rib));
+        OBJECT_PTR fn_name = car(reg_current_value_rib);
+
+        if(!IS_STRING_LITERAL_OBJECT(fn_name) && !is_string_object(fn_name))
+        {
+          raise_error("First argument to CALL-FOREIGN-FUNCTION should be the funtion name (string)");
+          return;
+        }
+
+        OBJECT_PTR ret_type = CADR(reg_current_value_rib);
+
+        if(!(ret_type == INTEGR        ||
+             ret_type == FLOT          ||
+             ret_type == CHAR          ||
+             ret_type == VOID          ||
+             ret_type == INT_POINTER   ||
+             ret_type == FLOAT_POINTER ||
+             ret_type == CHAR_POINTER))
+        {
+          raise_error("Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
+          return;
+        }
+
+        OBJECT_PTR args = CADDR(reg_current_value_rib);
+
+        if(!IS_CONS_OBJECT(args))
+        {
+          raise_error("Arguments should be a list of two-element lists (argument, type)");
+          return;
+        }
+
+        reg_accumulator = call_foreign_function(fn_name, ret_type, args);
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);

@@ -15,6 +15,14 @@ extern RAW_PTR *heap;
 
 extern OBJECT_PTR reg_current_env;
 
+extern OBJECT_PTR INTEGR;
+extern OBJECT_PTR FLOT;
+extern OBJECT_PTR CHAR;
+extern OBJECT_PTR VOID;
+extern OBJECT_PTR INT_POINTER;
+extern OBJECT_PTR FLOAT_POINTER;
+extern OBJECT_PTR CHAR_POINTER;
+
 OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PTR args)
 {
   char *fn_name_str = strings[fn_name >> OBJECT_SHIFT];
@@ -48,6 +56,20 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   while(rest_args != NIL)
   {
+    OBJECT_PTR car_rest_args = car(rest_args);
+
+    if(!IS_CONS_OBJECT(car_rest_args))
+    {
+      raise_error("Arguments should be a list of two-element lists (argument, type)");
+      return NIL;
+    }
+
+    if(length(car_rest_args) != 2)
+    {
+      raise_error("Arguments should be a list of two-element lists (argument, type)");
+      return NIL;
+    }
+
     OBJECT_PTR val = CAAR(rest_args);
 
     if(!(IS_INTEGER_OBJECT(val)        ||
@@ -78,25 +100,21 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       }
     }
 
-    if(equal(type, get_symbol_object("INTEGER")))
+    if(type == INTEGR)
     {
       if(!IS_INTEGER_OBJECT(val))
       {
 	raise_error("Argument type mismatch: integer expected");
 
-        //we get a 'sig_send: wait for sig_complete event failed, signal 6, rc 258' error if
-        //we try to free arg_values elements that are strings
-        /*
         int j=0;
 
-        for(j=0; j<i; j++)
-        {
-	  if(arg_types[j] == &ffi_type_pointer)
-	    free(arg_values[j]);
-        }
+        /* for(j=0; j<i; j++) */
+        /* { */
+	/*   if(arg_types[j] == &ffi_type_pointer) */
+	/*     free(*(int **)arg_values[j]); */
+        /* } */
         free(arg_values);
         free(arg_types);
-        */
 	
 	return NIL;
       }
@@ -104,24 +122,22 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       int i_val = get_int_value(val);
       *(int *)arg_values[i] = i_val;
     }
-    else if(equal(type, get_symbol_object("FLOAT")))
+    else if(type == FLOT)
     {
 
       if(!IS_FLOAT_OBJECT(val))
       {
 	raise_error("Argument type mismatch: float expected");
 
-        /*
         int j=0;
 
-        for(j=0; j<i; j++)
-        {
-	  if(arg_types[j] == &ffi_type_pointer)
-	    free(arg_values[j]);
-        }
+        /* for(j=0; j<i; j++) */
+        /* { */
+	/*   if(arg_types[j] == &ffi_type_pointer) */
+	/*     free(*(int **)arg_values[j]); */
+        /* } */
         free(arg_values);
         free(arg_types);
-        */
 	
 	return NIL;
       }
@@ -130,24 +146,21 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       float f_val = get_float_value(val);
       *(float *)arg_values[i] = f_val;
     }
-    else if(equal(type, get_symbol_object("CHARACTER")))
+    else if(type == CHAR)
     {
-
       if(!IS_CHAR_OBJECT(val))
       {
 	raise_error("Argument type mismatch: character expected");
 
-        /*
         int j=0;
 
-        for(j=0; j<i; j++)
-        {
-	  if(arg_types[j] == &ffi_type_pointer)
-	    free(arg_values[j]);
-        }
+        /* for(j=0; j<i; j++) */
+        /* { */
+	/*   if(arg_types[j] == &ffi_type_pointer) */
+	/*     free(*(int **)arg_values[j]); */
+        /* } */
         free(arg_values);
         free(arg_types);
-        */
 	
 	return NIL;
       }
@@ -156,23 +169,21 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       char c_val = val >> OBJECT_SHIFT;
       arg_values[i] = &c_val;
     }
-    else if(equal(type, get_symbol_object("CHARACTER-POINTER")))
+    else if(type == CHAR_POINTER)
     {
       if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
       {
 	raise_error("Argument type mismatch: string object/literal expected");
 
-        /*
         int j=0;
 
-        for(j=0; j<i; j++)
-        {
-	  if(arg_types[j] == &ffi_type_pointer)
-	    free(arg_values[j]);
-        }
+        /* for(j=0; j<i; j++) */
+        /* { */
+	/*   if(arg_types[j] == &ffi_type_pointer) */
+	/*     free(*(int **)arg_values[j]); */
+        /* } */
         free(arg_values);
         free(arg_types);
-        */
 	
 	return NIL;
       }
@@ -181,23 +192,21 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       char *s_val = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = &s_val;
     }
-    else if(equal(type, get_symbol_object("INTEGER-POINTER")))
+    else if(type == INT_POINTER)
     {
       if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
       {
 	raise_error("Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
 
-	/*
 	int j=0;
 
-	for(j=0; j<i; j++)
-	{
-          if(arg_types[j] == &ffi_type_pointer)
-	    free(arg_values[j]);
-	}
+	/* for(j=0; j<i; j++) */
+	/* { */
+        /*   if(arg_types[j] == &ffi_type_pointer) */
+	/*     free(*(int **)arg_values[j]); */
+	/* } */
         free(arg_values);
         free(arg_types);
-        */
 	
 	return NIL;
       }
@@ -207,23 +216,21 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       *i_val = get_int_value(val);
       arg_values[i] = &i_val;
     }
-    else if(equal(type, get_symbol_object("FLOAT-POINTER")))
+    else if(type == FLOAT_POINTER)
     {
       if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
       {
 	raise_error("Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
 
-	/*
 	int j=0;
 
-	for(j=0; j<i; j++)
-	{
-          if(arg_types[j] == &ffi_type_pointer)
-	    free(arg_values[j]);
-	}
+	/* for(j=0; j<i; j++) */
+	/* { */
+        /*   if(arg_types[j] == &ffi_type_pointer) */
+	/*     free(*(int **)arg_values[j]); */
+	/* } */
         free(arg_values);
         free(arg_types);
-        */
 	
 	return NIL;
       }
@@ -237,17 +244,15 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       raise_error("call_foreign_function(): non-primitive object type not handled");
 
-      /*
       int j=0;
 
-      for(j=0; j<i; j++)
-      {
-	if(arg_types[j] == &ffi_type_pointer)
-	  free(arg_values[j]);
-      }
+      /* for(j=0; j<i; j++) */
+      /* { */
+      /*   if(arg_types[j] == &ffi_type_pointer) */
+      /*     free(*(int **)arg_values[j]); */
+      /* } */
       free(arg_values);
       free(arg_types);
-      */
 
       return NIL;
     }
@@ -258,29 +263,27 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   ffi_status status;
 
-  if(equal(ret_type, get_symbol_object("INTEGER")))
+  if(ret_type == INTEGR)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_sint, arg_types);
-  else if(equal(ret_type, get_symbol_object("CHARACTER")))
+  else if(ret_type == CHAR)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_schar, arg_types);
-  else if(equal(ret_type, get_symbol_object("FLOAT")))
+  else if(ret_type == FLOT)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_float, arg_types);
-  else if(equal(ret_type, get_symbol_object("CHARACTER-POINTER")))
+  else if(ret_type == CHAR_POINTER)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_pointer, arg_types);
-  else if(equal(ret_type, get_symbol_object("VOID")))
+  else if(ret_type == VOID)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_void, arg_types);
   else
   {
     raise_error("Unknown return type");
 
-    /*
-    for(i=0; i<nof_args; i++)
-    {
-      if(arg_types[i] == &ffi_type_pointer)
-	free(arg_values[i]);
-    }
+    /* for(i=0; i<nof_args; i++) */
+    /* { */
+    /*   if(arg_types[i] == &ffi_type_pointer) */
+    /*     free(*(int **)arg_values[i]); */
+    /* } */
     free(arg_values);
     free(arg_types);
-    */
 
     return NIL;
   }
@@ -289,15 +292,13 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   {
     raise_error("call_foreign_function(): ffi_prep_cif() failed");
 
-    /*
     for(i=0; i<nof_args; i++)
     {
       if(arg_types[i] == &ffi_type_pointer)
-	free(arg_values[i]);
+	free(*(int **)arg_values[i]);
     }
     free(arg_values);
     free(arg_types);
-    */
 
     return NIL;
   }
@@ -315,20 +316,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   {
     raise_error("Foreign function not found");
 
-    /*
     for(i=0; i<nof_args; i++)
     {
       if(arg_types[i] == &ffi_type_pointer)
-	free(arg_values[i]);
+	free(*(int **)arg_values[i]);
     }
     free(arg_values);
     free(arg_types);
-    */
 
     return NIL;
   }
 
-  if(equal(ret_type, get_symbol_object("FLOAT")))
+  if(ret_type == FLOT)
     ffi_call(&cif, function_ptr, &float_ret, arg_values);
   else
     ffi_call(&cif, function_ptr, &ret_val, arg_values);
@@ -344,7 +343,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     OBJECT_PTR type = CADAR(rest_args);
     OBJECT_PTR value;
 
-    if(equal(type, get_symbol_object("INTEGER-POINTER")))
+    if(type == INT_POINTER && IS_SYMBOL_OBJECT(sym))
     {
       value = convert_int_to_object(*((int *)*(int **)arg_values[i]));
 
@@ -352,19 +351,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
 	raise_error("update_environment failed");
 
-	/*
 	for(i=0; i<nof_args; i++)
 	{
 	  if(arg_types[i] == &ffi_type_pointer)
-	     free(arg_values[i]);
+            free(*(int **)arg_values[i]);
         }
         free(arg_values);
         free(arg_types);
-        */
+
 	return NIL;
       }
     }
-    else if(equal(type, get_symbol_object("FLOAT-POINTER")))
+    else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
     {
       value = convert_float_to_object(*((float *)*(float **)arg_values[i]));
 
@@ -372,21 +370,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
 	raise_error("update_environment failed");
 
-	/*
 	for(i=0; i<nof_args; i++)
 	{
 	  if(arg_types[i] == &ffi_type_pointer)
-	     free(arg_values[i]);
+            free(*(int **)arg_values[i]);
         }
         free(arg_values);
         free(arg_types);
-        */
+
 	return NIL;
       }
     }
-    else if(equal(type, get_symbol_object("CHARACTER-POINTER"))
-	    && IS_SYMBOL_OBJECT(sym))
-      //&& is_string_object(eval(CAAR(rest_args), env_list)))
+    else if(type == CHAR_POINTER && IS_SYMBOL_OBJECT(sym))
     {
       char *str = *(char **)arg_values[i];
 
@@ -406,15 +401,14 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
 	raise_error("update_environment failed");
 
-	/*
 	for(i=0; i<nof_args; i++)
 	{
 	  if(arg_types[i] == &ffi_type_pointer)
-	     free(arg_values[i]);
+            free(*(int **)arg_values[i]);
         }
         free(arg_values);
         free(arg_types);
-        */
+
 	return NIL;
       }
     }
@@ -423,13 +417,13 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     i++;
   }
 
-  if(equal(ret_type, get_symbol_object("INTEGER")))
+  if(ret_type == INTEGR)
     ret = convert_int_to_object((int)ret_val);
-  else if(equal(ret_type, get_symbol_object("CHARACTER")))
+  else if(ret_type == CHAR)
     ret = ((char)ret_val << OBJECT_SHIFT) + CHAR_TAG;
-  else if(equal(ret_type, get_symbol_object("FLOAT")))
+  else if(ret_type == FLOT)
     ret = convert_float_to_object((float)float_ret);
-  else if(equal(ret_type, get_symbol_object("CHARACTER-POINTER")))
+  else if(ret_type == CHAR_POINTER)
   {
 
     char *str = (char *)ret_val;
@@ -448,18 +442,16 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     ret = (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 
   }
-  else if(equal(ret_type, get_symbol_object("VOID")))
+  else if(ret_type == VOID)
     ret = NIL;
 
-  /*
-  for(i=0; i<nof_args; i++)
-  {
-    if(arg_types[i] == &ffi_type_pointer)
-      free(arg_values[i]);
-  }
+  /* for(i=0; i<nof_args; i++) */
+  /* { */
+  /*   if(arg_types[i] == &ffi_type_pointer) */
+  /*     free((int *)arg_values[i]); */
+  /* } */
   free(arg_values);
   free(arg_types);
-  */
 
   return ret;
 }
