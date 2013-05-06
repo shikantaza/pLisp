@@ -1114,8 +1114,8 @@ void eval()
              ret_type == FLOT          ||
              ret_type == CHAR          ||
              ret_type == VOID          ||
-             ret_type == INT_POINTER   ||
-             ret_type == FLOAT_POINTER ||
+             /* ret_type == INT_POINTER   || */ //not handling int and float pointer return values
+             /* ret_type == FLOAT_POINTER || */
              ret_type == CHAR_POINTER))
         {
           raise_error("Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
@@ -1128,6 +1128,110 @@ void eval()
         {
           raise_error("Arguments should be a list of two-element lists (argument, type)");
           return;
+        }
+
+        OBJECT_PTR rest_args = args;
+
+        while(rest_args != NIL)
+        {
+          OBJECT_PTR car_rest_args = car(rest_args);
+
+          if(!IS_CONS_OBJECT(car_rest_args))
+          {
+            raise_error("Arguments should be a list of two-element lists (argument, type)");
+            return;
+          }
+
+          if(length(car_rest_args) != 2)
+          {
+            raise_error("Arguments should be a list of two-element lists (argument, type)");
+            return;
+          }
+
+          OBJECT_PTR val = CAAR(rest_args);
+
+          if(!(IS_INTEGER_OBJECT(val)        ||
+               IS_FLOAT_OBJECT(val)          ||
+               IS_CHAR_OBJECT(val)           ||
+               IS_STRING_LITERAL_OBJECT(val) ||
+               is_string_object(val)         ||
+               IS_SYMBOL_OBJECT(val)))
+          {
+            raise_error("Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
+            return;
+          }
+
+          if(IS_SYMBOL_OBJECT(val))
+          {
+            OBJECT_PTR res = get_symbol_value(val, reg_current_env);
+            if(car(res) == NIL)
+            {
+              char buf[SYMBOL_STRING_SIZE];
+              print_symbol(val, buf);
+              sprintf(err_buf, "Symbol not bound: %s", buf);
+              raise_error(err_buf);
+              return;
+            }
+            val = cdr(res);
+          }
+
+          OBJECT_PTR type = CADAR(rest_args);
+
+          if(type == INTEGR)
+          {
+            if(!IS_INTEGER_OBJECT(val))
+            {
+              raise_error("Argument type mismatch: integer expected");
+              return;
+            }
+          }          
+          else if(type == FLOT)
+          {
+            if(!IS_FLOAT_OBJECT(val))
+            {
+              raise_error("Argument type mismatch: float expected");
+              return;
+            }
+          }
+          else if(type == CHAR)
+          {
+            if(!IS_CHAR_OBJECT(val))
+            {
+              raise_error("Argument type mismatch: character expected");
+              return;
+            }
+          }
+          else if(type == CHAR_POINTER)
+          {
+            if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
+            {
+              raise_error("Argument type mismatch: string object/literal expected");
+              return;
+            }
+          }
+          else if(type == INT_POINTER)
+          {
+            if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
+            {
+              raise_error("Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
+              return;
+            }
+          }
+          else if(type == FLOAT_POINTER)
+          {
+            if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
+            {
+              raise_error("Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
+              return;
+            }
+          }
+          else
+          {
+            raise_error("call_foreign_function(): non-primitive object type not handled");
+            return;
+          }
+
+          rest_args = cdr(rest_args);
         }
 
         reg_accumulator = call_foreign_function(fn_name, ret_type, args);
