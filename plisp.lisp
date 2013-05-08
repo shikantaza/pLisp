@@ -73,7 +73,9 @@
 (defun length (lst)
   (if (null lst)
       0
-    (+ 1 (length (cdr lst)))))
+    (if (not (consp lst))
+        (error "Not a list")
+      (+ 1 (length (cdr lst))))))
 
 (defun last (lst)
    (if (null (cdr lst))
@@ -85,7 +87,7 @@
       nil
       (cons (car lst) (remove-last (cdr lst)))))
 
-(defun sublist (lst start &optional len)
+(defun sublist (lst start len)
   (let ((res nil)
 	(s start)
 	(end (if (null len) 
@@ -96,7 +98,7 @@
       (incf s))
     res))
 
-(defun butlast (lst &optional (n 1))
+(defun butlast (lst n)
   (sublist lst 0 (- (length lst) n)))
 
 (defun reverse (lst)
@@ -148,7 +150,7 @@
 	  (car lst)
 	  (nth (- n 1) (cdr lst)))))
 
-(defun make-string (size &optional (elem nil))
+(defun make-string (size elem)
   (make-array size elem))
 
 (defun string-set (str pos val)

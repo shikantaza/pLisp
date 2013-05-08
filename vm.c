@@ -88,6 +88,17 @@ extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
 
+extern OBJECT_PTR CONSP;
+extern OBJECT_PTR INTEGERP;
+extern OBJECT_PTR FLOATP;
+extern OBJECT_PTR CHARACTERP;
+extern OBJECT_PTR SYMBOLP;
+extern OBJECT_PTR STRINGP;
+extern OBJECT_PTR ARRAYP;
+extern OBJECT_PTR CLOSUREP;
+extern OBJECT_PTR MACROP;
+extern OBJECT_PTR CONTINUATIONP;
+
 extern OBJECT_PTR top_level_env;
 
 extern struct node *white;
@@ -1241,16 +1252,7 @@ void eval()
       }
       else if(operator == ENV)
       {
-        /* if(reg_current_env == NIL && !debug_mode) */
-        /*   print_object(top_level_env); */
-        /* else */
-        /*   print_object(debug_mode ? debug_env : reg_current_env); */
-
-        print_object(cons(top_level_env, debug_mode ? debug_env : reg_current_env));
-
-        fprintf(stdout, "\n");
-
-        reg_accumulator = NIL;
+        reg_accumulator = cons(top_level_env, debug_mode ? debug_env : reg_current_env);
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
@@ -1327,17 +1329,77 @@ void eval()
           return;
         }
 
+        int ret;
+
         while(!yyparse())
         {
-          if(repl())
-            return;
+          repl();
         }
-
         pop_yyin();
 
         reg_accumulator = NIL;
 
         reg_current_value_rib = NIL;
+      }
+      else if(operator == CONSP)
+      {
+        reg_accumulator = IS_CONS_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  INTEGERP)
+      {
+        reg_accumulator = IS_INTEGER_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  FLOATP)
+      {
+        reg_accumulator = IS_FLOAT_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  CHARACTERP)
+      {
+        reg_accumulator = IS_CHAR_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  SYMBOLP)
+      {
+        reg_accumulator = IS_SYMBOL_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  STRINGP)
+      {
+        reg_accumulator = (IS_STRING_LITERAL_OBJECT(car(reg_current_value_rib)) || is_string_object(car(reg_current_value_rib))) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  ARRAYP)
+      {
+        reg_accumulator = IS_ARRAY_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  CLOSUREP)
+      {
+        reg_accumulator = IS_CLOSURE_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  MACROP)
+      {
+        reg_accumulator = IS_MACRO_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
+      }
+      else if(operator ==  CONTINUATIONP)
+      {
+        reg_accumulator = IS_CONTINUATION_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(RETURN, NIL);
       }
       else
       {
