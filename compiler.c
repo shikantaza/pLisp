@@ -135,6 +135,13 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       {
         if(IS_MACRO_OBJECT(cdr(res)))
         {
+          reg_next_expression = cons(FRAME,
+                                     cons(cons(HALT, NIL),
+                                          cons(cons(APPLY, NIL),
+                                               NIL)));
+
+          eval();
+
           reg_current_value_rib = NIL;
 
           OBJECT_PTR args = cdr(exp);
@@ -153,7 +160,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
 
           //place the macro object in the accumulator (to invoke APPLY)
           reg_accumulator = cdr(res);
-          reg_next_expression = cons(APPLY, NIL);
+          /* reg_next_expression = cons(APPLY, NIL); */
           
           //evaluate the macro invocation
           while(reg_next_expression != NIL)
@@ -249,7 +256,7 @@ int repl()
       return 1;
 
     reg_next_expression = compile(exp, cons(HALT, NIL));
-    
+
     reg_current_env = NIL;
 
     reg_current_value_rib = NIL;

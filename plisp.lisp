@@ -262,6 +262,13 @@
 (defmacro substring (str)
   `(sub-array ,str))
 
+(defmacro cond (&rest lst)
+  (if (null lst)
+      nil
+    `(if ,(caar lst)
+         ,(cadar lst)
+       (cond ,@(cdr lst)))))
+
 (load-file "math.lisp")
 
 (create-package "user")

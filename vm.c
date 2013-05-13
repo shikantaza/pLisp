@@ -280,13 +280,20 @@ void eval()
           return;
         }
 
-        if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
+        OBJECT_PTR car_obj = car(reg_current_value_rib);
+        
+        if(car_obj == NIL)
+          reg_accumulator = NIL;
+        else
         {
-          raise_error("Argument to CAR should be a CONS object");
-          return;
+          if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
+          {
+            raise_error("Argument to CAR should be a CONS object");
+            return;
+          }
+          reg_accumulator = CAAR(reg_current_value_rib);
         }
 
-        reg_accumulator = CAAR(reg_current_value_rib);
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);        
       }
@@ -298,13 +305,21 @@ void eval()
           return;
         }
 
-        if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
+        OBJECT_PTR car_obj = car(reg_current_value_rib);
+        
+        if(car_obj == NIL)
+          reg_accumulator = NIL;
+        else
         {
-          raise_error("Argument to CDR should be a CONS object");
-          return;
+          if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
+          {
+            raise_error("Argument to CDR should be a CONS object");
+            return;
+          }
+
+          reg_accumulator = CDAR(reg_current_value_rib);
         }
 
-        reg_accumulator = CDAR(reg_current_value_rib);
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);        
       }
@@ -775,7 +790,11 @@ void eval()
 
           //place the macro object in the accumulator (to invoke APPLY)
           reg_accumulator = obj;
-          reg_next_expression = cons(APPLY, NIL);
+          //reg_next_expression = cons(APPLY, NIL);
+          reg_next_expression = cons(FRAME,
+                                     cons(cons(HALT, NIL),
+                                          cons(cons(APPLY, NIL),
+                                               NIL)));
           
           //evaluate the macro invocation
           while(reg_next_expression != NIL)
@@ -1782,4 +1801,31 @@ void print_backtrace()
 
     rest = cdr(rest);
   }
+}
+
+void print_state()
+{
+  fprintf(stdout, "Begin print state\n");
+
+  fprintf(stdout, "Accumulator:\n");
+  print_object(reg_accumulator);
+  fprintf(stdout, "\n");
+
+  fprintf(stdout, "Value rib:\n");
+  print_object(reg_current_value_rib);
+  fprintf(stdout, "\n");
+
+  fprintf(stdout, "Next expression:\n");
+  print_object(reg_next_expression);
+  fprintf(stdout, "\n");
+
+  fprintf(stdout, "Environment:\n");
+  print_object(reg_current_env);
+  fprintf(stdout, "\n");
+
+  fprintf(stdout, "Stack:\n");
+  print_object(reg_current_stack);
+  fprintf(stdout, "\n");
+
+  fprintf(stdout, "End print state\n");
 }

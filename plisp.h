@@ -264,3 +264,5 @@ BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR);
 void print_backtrace();
 
 void load_core_library();
+
+void print_state();
