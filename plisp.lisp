@@ -56,8 +56,14 @@
       nil
     (cons (f (car lst)) (map f (cdr lst)))))
 
-(defmacro let (specs &rest body)
+(defmacro let-internal (specs &rest body)
   `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
+
+(defmacro let (specs &rest body)
+  (if (null specs)
+      `(progn ,@body)
+    `(let-internal (,(car specs))
+                   (let ,(cdr specs) ,@body))))
 
 (defun assoc (x y)
   (if (eq (caar y) x)
@@ -210,8 +216,19 @@
       (incf i))
     result))
 
-(defmacro nconc (lst1 lst2)
-  `(set ,lst1 (append ,lst1 ,lst2)))
+;(defmacro nconc (lst1 lst2)
+; `(set ,lst1 (append ,lst1 ,lst2)))
+
+(defun concat (lst &rest lists)
+  (if (not (listp lst))
+      (error "First argument to CONCAT should be a list")
+    (let ((result lst))
+      (dolist (x lists)
+        (set result (append result x)))
+      result)))
+
+(defmacro nconc (lst &rest lists)
+  `(set ,lst (concat ,lst ,@lists)))
 
 (defun remove (e lst count)
   (if (null lst)
@@ -259,8 +276,8 @@
 (defmacro setq (var value)
   `(set ,var ,value))
 
-(defmacro substring (str)
-  `(sub-array ,str))
+(defmacro substring (str &rest rest)
+  `(sub-array ,str ,@rest))
 
 (defmacro cond (&rest lst)
   (if (null lst)
@@ -269,7 +286,38 @@
          ,(cadar lst)
        (cond ,@(cdr lst)))))
 
+(defmacro dotimes (spec &rest statements)
+  `(let ((,(car spec) 0))
+    (while (< ,(car spec) ,(cadr spec))
+      (progn ,@statements (incf ,(car spec))))
+    ,(caddr spec)))
+
+(defmacro values (&rest body)
+  `(list ,@body))
+
+(defmacro multiple-value-bind (vars var-form &rest body)
+  `(apply (lambda ,vars ,@body) ,var-form))
+
+(defmacro funcall (fn &rest args)
+  `(apply ,fn ',args))
+
+(defmacro numberp (x)
+  `(or (integerp ,x) (floatp ,x)))
+
+(defmacro assert (condition text)
+  `(if (not ,condition)
+       (error ,text)))
+
+(defun remove-if (pred lst)
+  (if (null lst)
+      nil
+    (if (not (pred (car lst)))
+        (cons (car lst) (remove-if pred (cdr lst)))
+      (remove-if pred (cdr lst)))))
+
 (load-file "math.lisp")
+
+(load-file "utils.lisp")
 
 (create-package "user")
 

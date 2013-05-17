@@ -5,7 +5,7 @@
 (load-foreign-library "libplisp.so")
 
 (defun random ()
-  (call-foreign-function "plisp_random" :float))
+  (call-foreign-function "plisp_random" 'float nil))
 
 (defmacro my-append (lst value)
   `(nconc ,lst (list ,value)))
@@ -60,3 +60,11 @@
 (defun first-n (lst n)
   (let ((l (length lst)))
     (if (> l n) (butlast lst (- l n)) lst)))
+
+(defun quicksort (lst)
+  (if (or (null lst) (<= (length lst) 1))
+      lst
+    (let ((pivot (first lst)))
+      (concat (quicksort (remove-if (lambda (x) (>= x pivot)) lst))
+              (remove-if (lambda (x) (not (eq x pivot))) lst)
+              (quicksort (remove-if (lambda (x) (<= x pivot)) lst))))))

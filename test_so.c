@@ -27,7 +27,8 @@ float fn_ret_float(int i, float f, char c, char *s)
   printf("%c\n",c);
   printf("%s\n",s);
   printf("%f\n", f + f);
-  return f;
+  printf("exiting fn_ret_float\n");
+  return f+f;
 }
 
 char fn_ret_char(int i, float f, char c, char *s)

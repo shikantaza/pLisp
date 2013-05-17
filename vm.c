@@ -775,6 +775,13 @@ void eval()
           OBJECT_PTR obj = cdr(res);
           OBJECT_PTR args = cdr(macro_body);
 
+          reg_next_expression = cons(FRAME,
+                                     cons(cons(HALT, NIL),
+                                          cons(cons(APPLY, NIL),
+                                               NIL)));
+
+          eval();
+
           reg_current_value_rib = NIL;
 
           //build the value rib
@@ -791,10 +798,6 @@ void eval()
           //place the macro object in the accumulator (to invoke APPLY)
           reg_accumulator = obj;
           //reg_next_expression = cons(APPLY, NIL);
-          reg_next_expression = cons(FRAME,
-                                     cons(cons(HALT, NIL),
-                                          cons(cons(APPLY, NIL),
-                                               NIL)));
           
           //evaluate the macro invocation
           while(reg_next_expression != NIL)
@@ -1154,9 +1157,9 @@ void eval()
 
         OBJECT_PTR args = CADDR(reg_current_value_rib);
 
-        if(!IS_CONS_OBJECT(args))
+        if(args != NIL && !IS_CONS_OBJECT(args))
         {
-          raise_error("Arguments should be a list of two-element lists (argument, type)");
+          raise_error("Arguments should be a list of two-element lists (argument, type) -- 1");
           return;
         }
 
@@ -1168,13 +1171,13 @@ void eval()
 
           if(!IS_CONS_OBJECT(car_rest_args))
           {
-            raise_error("Arguments should be a list of two-element lists (argument, type)");
+            raise_error("Arguments should be a list of two-element lists (argument, type) -- 2");
             return;
           }
 
           if(length(car_rest_args) != 2)
           {
-            raise_error("Arguments should be a list of two-element lists (argument, type)");
+            raise_error("Arguments should be a list of two-element lists (argument, type) -- 3");
             return;
           }
 

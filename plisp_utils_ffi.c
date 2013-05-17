@@ -8,8 +8,9 @@ commands to build .so file:
 
 #include <stdlib.h>
 
-
 float plisp_random()
 {
-  return (1.0 * rand()) / RAND_MAX ;
+  int i = rand();
+  float ret = (i*1.0)/RAND_MAX;
+  return ret;
 }

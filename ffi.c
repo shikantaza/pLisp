@@ -162,8 +162,12 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   }
 
   ffi_arg ret_val;
+  float float_ret_val;
 
-  ffi_call(&cif, function_ptr, &ret_val, arg_values);
+  if(ret_type == FLOT)
+    ffi_call(&cif, function_ptr, &float_ret_val, arg_values);
+  else
+    ffi_call(&cif, function_ptr, &ret_val, arg_values);
 
   //processing IN-OUT parameters
 
@@ -237,7 +241,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   else if(ret_type == CHAR)
     ret = ((char)ret_val << OBJECT_SHIFT) + CHAR_TAG;
   else if(ret_type == FLOT)
-    ret = convert_float_to_object((float)ret_val);
+    ret = convert_float_to_object(float_ret_val);
   else if(ret_type == CHAR_POINTER)
   {
 

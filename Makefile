@@ -5,7 +5,19 @@ OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o
 CC	= gcc -DDEBUG_MEMORY
 CFLAGS	= -g -I/usr/local/lib/libffi-3.0.10/include -L/usr/local/lib
 
-all:	plisp
+all:	plisp libplisp.so libtest.so
+
+libplisp.so:	plisp_utils_ffi.o
+		$(CC) -shared -W1,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o
+
+plisp_utils_ffi.o:	plisp_utils_ffi.c
+		$(CC) -c -fPIC plisp_utils_ffi.c -o plisp_utils_ffi.o
+
+libtest.so:	test_so.o
+		$(CC) -shared -W1,-soname,libtest.so -o libtest.so test_so.o
+
+test_so.o:	test_so.c
+		$(CC) -c -fPIC test_so.c -o test_so.o
 
 plisp:	$(OBJS)
 		$(CC) $(CFLAGS) $(OBJS) libtpl.a -o plisp -lffi
@@ -54,5 +66,5 @@ ffi.o		: plisp.h
 memory.o	: plisp.h
 
 clean:
-	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe *.stackdump
+	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump
 
