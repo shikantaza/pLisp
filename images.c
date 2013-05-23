@@ -19,6 +19,18 @@ extern RAW_PTR *heap;
 extern RAW_PTR free_list;
 extern RAW_PTR last_segment;
 
+extern BOOLEAN debug_mode;
+extern OBJECT_PTR debug_continuation;
+extern OBJECT_PTR debug_env;
+extern OBJECT_PTR execution_stack;
+extern OBJECT_PTR debug_execution_stack;
+extern OBJECT_PTR reg_accumulator;
+extern OBJECT_PTR reg_next_expression;
+extern OBJECT_PTR reg_current_env;
+extern OBJECT_PTR reg_current_value_rib;
+extern OBJECT_PTR reg_current_stack;
+
+
 jmp_buf env;
 extern tpl_hook_t tpl_hook;
 
@@ -36,6 +48,16 @@ void create_image(char *file_name)
     unsigned int   current_package
     int            gen_sym_count
     package_t      *packages
+    BOOLEAN        debug_mode
+    OBJECT_PTR     debug_continuation
+    OBJECT_PTR     debug_env
+    OBJECT_PTR     execution_stack
+    OBJECT_PTR     debug_execution_stack
+    OBJECT_PTR     reg_accumulator
+    OBJECT_PTR     reg_next_expression
+    OBJECT_PTR     reg_current_env
+    OBJECT_PTR     reg_current_value_rib
+    OBJECT_PTR     reg_current_stack
   */
 
   int i,j;
@@ -49,7 +71,7 @@ void create_image(char *file_name)
 
   char *sym;
 
-  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))", 
+  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))uuuuuuuuuu", 
 			 &str, 
 			 &top_level_env,
 			 &free_list,
@@ -58,7 +80,17 @@ void create_image(char *file_name)
 			 &current_package,
 			 &gen_sym_count,
 			 &package,
-			 &sym);
+			 &sym,
+                         &debug_mode,
+                         &debug_continuation,
+                         &debug_env,
+                         &execution_stack,
+                         &debug_execution_stack,
+                         &reg_accumulator,
+                         &reg_next_expression,
+                         &reg_current_env,
+                         &reg_current_value_rib,
+                         &reg_current_stack);
 
   i=0;
 
@@ -128,7 +160,7 @@ void load_from_image(char *file_name)
     exit(1);
   }
 
-  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))", 
+  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))uuuuuuuuuu", 
 			 &str, 
 			 &top_level_env,
 			 &free_list,
@@ -137,7 +169,17 @@ void load_from_image(char *file_name)
 			 &current_package,
 			 &gen_sym_count,
 			 &package,
-			 &sym);
+			 &sym,
+                         &debug_mode,
+                         &debug_continuation,
+                         &debug_env,
+                         &execution_stack,
+                         &debug_execution_stack,
+                         &reg_accumulator,
+                         &reg_next_expression,
+                         &reg_current_env,
+                         &reg_current_value_rib,
+                         &reg_current_stack);
 
   tpl_load(tn, TPL_FILE, file_name);
 

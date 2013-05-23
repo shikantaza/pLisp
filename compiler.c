@@ -244,6 +244,24 @@ int repl()
       fprintf(stdout, "Expression not permitted in debug mode\n");
       return 1;
     }
+
+    reg_next_expression = compile(out, cons(HALT, NIL));
+
+    reg_current_env = NIL;
+
+    reg_current_value_rib = NIL;
+    reg_current_stack = NIL;
+
+    execution_stack = NIL;    
+
+    while(reg_next_expression != NIL)
+      eval();
+
+    if(yyin == stdin && !in_error)
+      print_object(reg_accumulator);
+
+    delete_expression(g_expr);
+    g_expr = NULL;
   }
   else
   {

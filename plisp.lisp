@@ -56,25 +56,19 @@
       nil
     (cons (f (car lst)) (map f (cdr lst)))))
 
-(defmacro let-internal (specs &rest body)
+(defmacro let (specs &rest body)
   `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
 
-(defmacro let (specs &rest body)
-  (if (null specs)
-      `(progn ,@body)
-    `(let-internal (,(car specs))
-                   (let ,(cdr specs) ,@body))))
+;(defmacro let (specs &rest body)
+;  (if (null specs)
+;      `(progn ,@body)
+;    `(let-internal (,(car specs))
+;                   (let ,(cdr specs) ,@body))))
 
 (defun assoc (x y)
   (if (eq (caar y) x)
       (cadar y)
       (assoc x (cdr y))))
-
-(defun mapcar-internal (f lst)
-  (if (null lst)
-      nil
-      (cons (f (car lst))
-	    (mapcar-internal f (cdr lst)))))
 
 (defun length (lst)
   (if (null lst)
@@ -92,20 +86,6 @@
   (if (eq (length lst) 1)
       nil
       (cons (car lst) (remove-last (cdr lst)))))
-
-(defun sublist (lst start len)
-  (let ((res nil)
-	(s start)
-	(end (if (null len) 
-		 (length lst) 
-		 (+ start len))))
-    (while (< s end)
-      (nconc res (list (nth s lst)))
-      (incf s))
-    res))
-
-(defun butlast (lst n)
-  (sublist lst 0 (- (length lst) n)))
 
 (defun reverse (lst)
   (if (eq (length lst) 1)
@@ -156,14 +136,14 @@
 	  (car lst)
 	  (nth (- n 1) (cdr lst)))))
 
-(defun make-string (size elem)
-  (make-array size elem))
+(defmacro make-string (size elem)
+  `(make-array ,size ,elem))
 
-(defun string-set (str pos val)
-  (array-set str pos val))
+(defmacro string-set (str pos val)
+  `(array-set ,str ,pos ,val))
 
-(defun string-get (str pos)
-  (array-get str pos))
+(defmacro string-get (str pos)
+  `(array-get ,str ,pos))
 
 (defmacro incf (var)
   `(set ,var (+ ,var 1)))
@@ -197,24 +177,6 @@
 (defun curry (function &rest args)
     (lambda (&rest more-args)
       (apply function (append args more-args))))
-
-(defun mapcar (f &rest lists)  
-  (let ((min-length (min (mapcar-internal length lists)))
-	(result nil)
-	(i 0))
-    (while (< i min-length)
-      (set result (append result (list (apply f (mapcar-internal (curry nth i) lists)))))
-      (incf i))
-    result))
-
-(defun mapcan (f &rest lists)  
-  (let ((min-length (min (mapcar-internal length lists)))
-	(result nil)
-	(i 0))
-    (while (< i min-length)
-      (set result (append result (apply f (mapcar-internal (curry nth i) lists))))
-      (incf i))
-    result))
 
 ;(defmacro nconc (lst1 lst2)
 ; `(set ,lst1 (append ,lst1 ,lst2)))
@@ -298,11 +260,11 @@
 (defmacro multiple-value-bind (vars var-form &rest body)
   `(apply (lambda ,vars ,@body) ,var-form))
 
-(defmacro funcall (fn &rest args)
-  `(apply ,fn ',args))
+(defun funcall (fn &rest args)
+  (apply fn args))
 
-(defmacro numberp (x)
-  `(or (integerp ,x) (floatp ,x)))
+(defun numberp (x)
+  (or (integerp x) (floatp x)))
 
 (defmacro assert (condition text)
   `(if (not ,condition)
@@ -314,6 +276,34 @@
     (if (not (pred (car lst)))
         (cons (car lst) (remove-if pred (cdr lst)))
       (remove-if pred (cdr lst)))))
+
+(defun sublist (lst start len)
+  (let ((res))
+    (for (i start (< i (+ start len)) (incf i) res)
+         (set res (append res (list (nth i lst)))))))
+
+(defun butlast (lst n)
+  (sublist lst 0 (- (length lst) n)))
+
+;to be debugged
+(defun mapcar (f &rest lists)  
+  (let ((min-length (min (map length lists)))
+	(result nil)
+	(i 0))
+    (while (< i min-length)
+      (nconc result (list (apply f (map (curry nth i) lists))))
+      (incf i))
+    result))
+
+;to be debugged
+(defun mapcan (f &rest lists)  
+  (let ((min-length (min (map length lists)))
+	(result nil)
+	(i 0))
+    (while (< i min-length)
+      (set result (append result (apply f (map (curry nth i) lists))))
+      (incf i))
+    result))
 
 (load-file "math.lisp")
 

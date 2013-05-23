@@ -98,6 +98,7 @@ extern OBJECT_PTR ARRAYP;
 extern OBJECT_PTR CLOSUREP;
 extern OBJECT_PTR MACROP;
 extern OBJECT_PTR CONTINUATIONP;
+extern OBJECT_PTR LAMBDA_EXPRESSION;
 
 extern OBJECT_PTR top_level_env;
 
@@ -130,6 +131,8 @@ void eval()
 {
   OBJECT_PTR exp = reg_next_expression;
   OBJECT_PTR opcode = car(reg_next_expression);
+
+  //print_object(exp); printf("\n");
 
   if(opcode == HALT)
   {
@@ -999,11 +1002,11 @@ void eval()
 
         if(!(get_int_value(array_length) >= 0))
         {
-          raise_error("Third argument to SUB-ARRAY should be a non- negative integer");
+          raise_error("Third argument to SUB-ARRAY should be a non-negative integer");
           return;
         }
 
-        if((start + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
+        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
         {
           raise_error("Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
@@ -1423,6 +1426,26 @@ void eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(RETURN, NIL);
       }
+      else if(operator == LAMBDA_EXPRESSION)
+      {
+        if(length(reg_current_value_rib) != 1)
+        {
+          raise_error("LAMBDA-EXPRESSION requires exactly one argument, a closure or macro object");
+          return;
+        }        
+
+        OBJECT_PTR obj = car(reg_current_value_rib);        
+
+        if(!IS_CLOSURE_OBJECT(obj) && !IS_MACRO_OBJECT(obj))
+        {
+          raise_error("Argument to LAMBDA-EXPRESSION should be a closure or macro object");
+          return;
+        }
+
+        reg_accumulator = cons(get_params_object(obj),
+                               get_body_object(obj));
+        reg_next_expression = cons(RETURN, NIL);
+      }
       else
       {
 	char buf[SYMBOL_STRING_SIZE];
@@ -1481,6 +1504,7 @@ void eval()
         }
 
         reg_current_env = cons(params_env, get_env_list(reg_accumulator));
+
         reg_current_value_rib = NIL;
         reg_next_expression = get_body_object(reg_accumulator); 
       }
@@ -1784,7 +1808,8 @@ BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR exp)
     {
       return (car_obj == RESUME)     || 
              (car_obj == ENV)        || 
-             (car_obj == BACKTRACE);
+             (car_obj == BACKTRACE)  ||
+             (car_obj == CREATE_IMAGE);
     }
 
     return false;
