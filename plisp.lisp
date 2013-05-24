@@ -46,11 +46,6 @@
   `(let ((,var '()))
      (set ,var ,exp)))
 
-(defmacro while (condition &rest body)
-  `(((lambda (f) (set f (lambda ()
-                          (if ,condition
-                              (progn ,@body (f)))))) '())))
-
 (defun map (f lst)
   (if (null lst)
       nil
@@ -58,12 +53,6 @@
 
 (defmacro let (specs &rest body)
   `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
-
-;(defmacro let (specs &rest body)
-;  (if (null specs)
-;      `(progn ,@body)
-;    `(let-internal (,(car specs))
-;                   (let ,(cdr specs) ,@body))))
 
 (defun assoc (x y)
   (if (eq (caar y) x)
@@ -109,16 +98,6 @@
       nil
       (cons start
 	    (range (+ start incr) end incr))))
-
-(defmacro dolistold (spec &rest body)
-  (let ((elem (car spec))
-	(lst (car (cdr spec))))
-    (print lst)
-    `(if (eq ,lst nil)
-	 nil
-	 (progn (let ((,elem (car ,lst)))
-		  ,@body)
-		(dolistold (,elem (cdr ,lst)) ,@body)))))
 
 (defmacro dolist (spec &rest body)
   (let ((elem (car spec))
@@ -285,27 +264,23 @@
 (defun butlast (lst n)
   (sublist lst 0 (- (length lst) n)))
 
-;to be debugged
 (defun mapcar (f &rest lists)  
   (let ((min-length (min (map length lists)))
 	(result nil)
 	(i 0))
     (while (< i min-length)
-      (nconc result (list (apply f (map (curry nth i) lists))))
+      (set result (append result (list (apply f (map (curry nth i) lists)))))
       (incf i))
     result))
 
-;to be debugged
-(defun mapcan (f &rest lists)  
-  (let ((min-length (min (map length lists)))
-	(result nil)
-	(i 0))
-    (while (< i min-length)
-      (set result (append result (apply f (map (curry nth i) lists))))
-      (incf i))
-    result))
+(defun flatten (lst)
+  (let ((flattened-list))
+    (dolist (x lst)
+      (set flattened-list (append flattened-list x)))
+    flattened-list))
 
-(load-file "math.lisp")
+(defmacro mapcan (f &rest lists)  
+  `(flatten (mapcar ,f ,@lists))) 
 
 (load-file "utils.lisp")
 

@@ -16,12 +16,6 @@
       (+ (* (first a) (first b))
          (dot-product (rest a) (rest b)))))
 
-(defun flatten (lst)
-  (let ((flattened-list))
-    (dolist (x lst)
-      (set flattened-list (append flattened-list x)))
-    flattened-list))
-
 (defun random-interval (low high)
   (+ low (* (- high low) (random))))
 

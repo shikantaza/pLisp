@@ -26,6 +26,7 @@ extern OBJECT_PTR ARGUMENT;
 extern OBJECT_PTR APPLY;
 extern OBJECT_PTR RETURN;
 extern OBJECT_PTR BACKQUOTE;
+extern OBJECT_PTR WHILE;
 
 extern expression_t *g_expr;
 
@@ -101,6 +102,15 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       OBJECT_PTR elsec = compile(CADDDR(exp), next);
 
       return compile(CADR(exp), cons(TEST, cons(thenc, cons(elsec, NIL))));
+    }
+
+    if(car_obj == WHILE)
+    {
+      OBJECT_PTR cond = compile(CADR(exp), cons(HALT,NIL));
+      OBJECT_PTR body = compile(cons(PROGN, CDDR(exp)), 
+                                cons(HALT, NIL));
+
+      return cons(WHILE, cons(cond, cons(body, cons(next, NIL))));
     }
 
     if(car_obj == SET)

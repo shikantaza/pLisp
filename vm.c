@@ -99,6 +99,7 @@ extern OBJECT_PTR CLOSUREP;
 extern OBJECT_PTR MACROP;
 extern OBJECT_PTR CONTINUATIONP;
 extern OBJECT_PTR LAMBDA_EXPRESSION;
+extern OBJECT_PTR WHILE;
 
 extern OBJECT_PTR top_level_env;
 
@@ -179,6 +180,34 @@ void eval()
       reg_next_expression = CADR(exp);
     else
       reg_next_expression = CADDR(exp);
+  }
+  else if(opcode == WHILE)
+  {
+    OBJECT_PTR cond = CADR(exp);
+    OBJECT_PTR body  = CADDR(exp);
+
+    OBJECT_PTR ret = NIL;
+
+    while(1)
+    {
+      reg_next_expression = cond;
+
+      while(reg_next_expression != NIL)
+        eval();
+
+      if(reg_accumulator == NIL)
+        break;
+
+      reg_next_expression = body;
+
+      while(reg_next_expression != NIL)
+        eval();
+
+      ret = reg_accumulator;
+    }
+
+    reg_accumulator = ret;
+    reg_next_expression = CADDDR(exp);
   }
   else if(opcode == ASSIGN)
   {
