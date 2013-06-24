@@ -191,8 +191,8 @@ expressions:
 int yyerror(char *s)
 {
   printf("Syntax error in expression\n");
-  prompt();
-  assert(false);
+  //prompt();
+  //assert(false);
 }
 
 

@@ -95,39 +95,44 @@ OBJECT_PTR MACROP                = (59 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR CONTINUATIONP         = (60 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR LAMBDA_EXPRESSION     = (61 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR WHILE                 = (62 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FORMAT                = (63 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CLONE                 = (64 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR RETURN                = (65 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COMPILE               = (66 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR RETURN_FROM           = (67 << OBJECT_SHIFT) + SYMBOL_TAG;
 
 //end of standard object definition
 
 /* symbols corresponding to assembler mnemonics */
-OBJECT_PTR HALT     = (63 << OBJECT_SHIFT) + SYMBOL_TAG;                  
-OBJECT_PTR REFER    = (64 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CONSTANT = (65 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CLOSE    = (66 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR TEST     = (67 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ASSIGN   = (68 << OBJECT_SHIFT) + SYMBOL_TAG;         
-OBJECT_PTR CONTI    = (69 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR NUATE    = (70 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FRAME    = (71 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ARGUMENT = (72 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR HALT     = (68 << OBJECT_SHIFT) + SYMBOL_TAG;                  
+OBJECT_PTR REFER    = (69 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CONSTANT = (70 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CLOSE    = (71 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR TEST     = (72 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ASSIGN   = (73 << OBJECT_SHIFT) + SYMBOL_TAG;         
+OBJECT_PTR CONTI    = (74 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR NUATE    = (75 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FRAME    = (76 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARGUMENT = (77 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* APPLY already defined as a special symbol */
-OBJECT_PTR RETURN   = (73 << OBJECT_SHIFT) + SYMBOL_TAG;
+/* RETURN already defined as a special symbol */
 /* DEFINE already defind as a special symbol */
-OBJECT_PTR MACRO    = (74 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MACRO    = (78 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols corresponding to assembler mnemonics */
 
 /* symbols useful in FFI */
-OBJECT_PTR INTEGR        = (75 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FLOT          = (76 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CHAR          = (77 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR VOID          = (78 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR INT_POINTER   = (79 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FLOAT_POINTER = (80 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CHAR_POINTER  = (81 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR INTEGR        = (79 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FLOT          = (80 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CHAR          = (81 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR VOID          = (82 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR INT_POINTER   = (83 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FLOAT_POINTER = (84 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CHAR_POINTER  = (85 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols useful in FFI */
 
 extern FILE *yyin;
 
-#define NOF_SPECIAL_SYMBOLS     63
+#define NOF_SPECIAL_SYMBOLS     67
 #define NOF_NON_SPECIAL_SYMBOLS 19
 
 BOOLEAN in_exception = false;
@@ -180,7 +185,6 @@ OBJECT_PTR reg_next_expression;
 OBJECT_PTR reg_current_env;
 OBJECT_PTR reg_current_value_rib;
 OBJECT_PTR reg_current_stack;
-
 
 extern void print_stack();
 
@@ -584,7 +588,9 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
     ret = NIL;
   else
   {
-    assert(IS_CONS_OBJECT(cons_obj));
+    //assert(IS_CONS_OBJECT(cons_obj));
+    if(!IS_CONS_OBJECT(cons_obj))
+      assert(false);
 
     ret = get_heap(cons_obj >> OBJECT_SHIFT);
   }
@@ -640,14 +646,14 @@ void print_cons_object(OBJECT_PTR obj)
 
     OBJECT_PTR rest = obj;
 
-    while(rest != NIL && !(is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
+    while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
     {
       print_object(car(rest));
       fprintf(stdout, " ");
       rest = cdr(rest);
     }
 
-    if((is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
+    if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
     {
       fprintf(stdout, " . ");
       print_object(rest);
@@ -770,7 +776,7 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
     }
     else if(IS_FLOAT_OBJECT(obj1))
     {
-      int val = get_float_value(obj1);
+      float val = get_float_value(obj1);
       if(IS_INTEGER_OBJECT(obj2))
         ret = (val  == get_int_value(obj2));
       else if(IS_FLOAT_OBJECT(obj2))
@@ -1214,32 +1220,37 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[60] = strdup("CONTINUATIONP");
   packages[CORE_PACKAGE_INDEX].symbols[61] = strdup("LAMBDA-EXPRESSION");
   packages[CORE_PACKAGE_INDEX].symbols[62] = strdup("WHILE");
+  packages[CORE_PACKAGE_INDEX].symbols[63] = strdup("FORMAT");
+  packages[CORE_PACKAGE_INDEX].symbols[64] = strdup("CLONE");
+  packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("RETURN");
+  packages[CORE_PACKAGE_INDEX].symbols[66] = strdup("COMPILE");
+  packages[CORE_PACKAGE_INDEX].symbols[67] = strdup("RETURN-FROM");
 
   /* symbols corresponding to assembler mnemonics */
-  packages[CORE_PACKAGE_INDEX].symbols[63] =  strdup("HALT");
-  packages[CORE_PACKAGE_INDEX].symbols[64] =  strdup("REFER");
-  packages[CORE_PACKAGE_INDEX].symbols[65] =  strdup("CONSTANT");
-  packages[CORE_PACKAGE_INDEX].symbols[66] =  strdup("CLOSE");
-  packages[CORE_PACKAGE_INDEX].symbols[67] =  strdup("TEST");
-  packages[CORE_PACKAGE_INDEX].symbols[68] =  strdup("ASSIGN");         
-  packages[CORE_PACKAGE_INDEX].symbols[69] =  strdup("CONTI");
-  packages[CORE_PACKAGE_INDEX].symbols[70] =  strdup("NUATE");
-  packages[CORE_PACKAGE_INDEX].symbols[71] =  strdup("FRAME");
-  packages[CORE_PACKAGE_INDEX].symbols[72] =  strdup("ARGUMENT");
+  packages[CORE_PACKAGE_INDEX].symbols[68] =  strdup("HALT");
+  packages[CORE_PACKAGE_INDEX].symbols[69] =  strdup("REFER");
+  packages[CORE_PACKAGE_INDEX].symbols[70] =  strdup("CONSTANT");
+  packages[CORE_PACKAGE_INDEX].symbols[71] =  strdup("CLOSE");
+  packages[CORE_PACKAGE_INDEX].symbols[72] =  strdup("TEST");
+  packages[CORE_PACKAGE_INDEX].symbols[73] =  strdup("ASSIGN");         
+  packages[CORE_PACKAGE_INDEX].symbols[74] =  strdup("CONTI");
+  packages[CORE_PACKAGE_INDEX].symbols[75] =  strdup("NUATE");
+  packages[CORE_PACKAGE_INDEX].symbols[76] =  strdup("FRAME");
+  packages[CORE_PACKAGE_INDEX].symbols[77] =  strdup("ARGUMENT");
   /* APPLY already defined as a special symbol */
-  packages[CORE_PACKAGE_INDEX].symbols[73] = strdup("RETURN");
+  /* RETURN already defined as a special symbol */
   /* DEFINE already defined as a special symbol */
-  packages[CORE_PACKAGE_INDEX].symbols[74] = strdup("MACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[78] = strdup("MACRO");
   /* end symbols corresponding to assembler mnemonics */
 
   /* symbols for FFI */
-  packages[CORE_PACKAGE_INDEX].symbols[75] = strdup("INTEGER");
-  packages[CORE_PACKAGE_INDEX].symbols[76] = strdup("FLOAT");
-  packages[CORE_PACKAGE_INDEX].symbols[77] = strdup("CHARACTER");
-  packages[CORE_PACKAGE_INDEX].symbols[78] = strdup("VOID");
-  packages[CORE_PACKAGE_INDEX].symbols[79] = strdup("INTEGER-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[80] = strdup("FLOAT-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[81] = strdup("CHARACTER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[79] = strdup("INTEGER");
+  packages[CORE_PACKAGE_INDEX].symbols[80] = strdup("FLOAT");
+  packages[CORE_PACKAGE_INDEX].symbols[81] = strdup("CHARACTER");
+  packages[CORE_PACKAGE_INDEX].symbols[82] = strdup("VOID");
+  packages[CORE_PACKAGE_INDEX].symbols[83] = strdup("INTEGER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[84] = strdup("FLOAT-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[85] = strdup("CHARACTER-POINTER");
   /* end symbols for FFI */
 }
 
@@ -1688,6 +1699,76 @@ OBJECT_PTR get_heap(RAW_PTR ptr)
     printf("%d %d\n", ptr, ret);
     assert(false);
   }
+
+  return ret;
+}
+
+OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)
+{
+  log_function_entry("get_symbol_from_value");
+
+  OBJECT_PTR rest = env_list;
+  OBJECT_PTR ret;
+  BOOLEAN found = false;
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR result = get_symbol_from_value_from_env(value_obj, car(rest));
+
+    if(car(result) == TRUE)
+    {
+       ret = cons(TRUE, cdr(result));
+       found = true;
+       break;
+    }
+    rest =  cdr(rest);
+  }
+
+  //if symbol is not found, check
+  //in the top level environment
+  if(!found)
+  {
+    OBJECT_PTR result = get_symbol_from_value_from_env(value_obj, top_level_env);
+
+    if(car(result) == TRUE)
+    {
+       ret = cons(TRUE, cdr(result));
+       found = true;
+    }
+  }
+
+  if(!found)
+    ret = cons(NIL, NIL);
+
+  log_function_exit("get_symbol_from_value");
+
+  return ret;
+}
+
+OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_obj)
+{
+  log_function_entry("get_symbol_from_value_from_env");
+
+  OBJECT_PTR rest = env_obj;
+  OBJECT_PTR ret;
+  BOOLEAN found = false;
+
+  while(rest != NIL)
+  {
+    if(equal(CDAR(rest), value_obj))
+    {
+      ret = cons(TRUE, CAAR(rest));
+      found = true;
+      break;
+    }
+    
+    rest = cdr(rest);
+  }
+
+  if(!found)
+    ret = cons(NIL, NIL);
+
+  log_function_exit("get_symbol_from_value_from_env");
 
   return ret;
 }

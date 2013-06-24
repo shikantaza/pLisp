@@ -28,6 +28,8 @@ extern OBJECT_PTR RETURN;
 extern OBJECT_PTR BACKQUOTE;
 extern OBJECT_PTR WHILE;
 
+extern OBJECT_PTR ERROR;
+
 extern expression_t *g_expr;
 
 extern OBJECT_PTR reg_accumulator;
@@ -47,6 +49,8 @@ OBJECT_PTR debug_execution_stack;
 
 BOOLEAN in_error;
 
+OBJECT_PTR continuations_map;
+
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -54,17 +58,35 @@ OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
     if(car(next) == RETURN)
       return c;
     else
-      return cons(FRAME, cons(next ,cons(c, NIL)));
+      return cons(FRAME, 
+                       cons(next,
+                            cons(c, NIL)));
   }
   else
-    return compile_loop(cdr(args), compile(car(args), cons(ARGUMENT, cons(c, NIL))), next);
+  {
+    OBJECT_PTR temp = compile(car(args), 
+                              cons(cons(ARGUMENT, 
+                                        cons(c, NIL)),
+                                   cdr(c)));
+
+    if(temp == ERROR)
+    {
+      printf("compile_loop() failed\n");
+      return ERROR;
+    }
+    else
+      return compile_loop(cdr(args), temp, next);
+  }
 }
 
 OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
 {
   if(IS_SYMBOL_OBJECT(exp))
   {
-    return cons(REFER, cons (exp, cons(next, NIL)));
+    return cons(cons(REFER,
+                     cons(exp, 
+                          cons(next, NIL))),
+                exp);
   }
 
   if(IS_CONS_OBJECT(exp))
@@ -72,65 +94,116 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     OBJECT_PTR car_obj = car(exp);
 
     if(car_obj == QUOTE)
-      return cons(CONSTANT, cons(CADR(exp), cons(next, NIL)));
+      return cons(cons(CONSTANT,
+                       cons(CADR(exp), 
+                            cons(next, NIL))),
+                  exp);
 
     if(car_obj == BACKQUOTE)
     {
-      return cons(FRAME,
-                  cons(next,
-                       cons(cons(CONSTANT,
-                                 cons(CADR(exp),
-                                      cons(cons(ARGUMENT,
-                                                cons(cons(CONSTANT,
-                                                          cons(BACKQUOTE,
-                                                               cons(cons(APPLY, NIL),
-                                                                    NIL))),
-                                                     NIL)),
-                                           NIL))),
-                            NIL)));
+
+      //basically (FRAME next (CONSTANT cadr(exp) (ARGUMENT (CONSTANT BACKQUOTE (APPLY)))))
+      //decorated with exp (cons'd to all the instructions recursively)
+
+      return cons(cons(FRAME, cons(next, cons(cons(cons(CONSTANT, cons(CADR(exp), cons(cons(cons(ARGUMENT, cons(cons(cons(CONSTANT, cons(BACKQUOTE, cons(cons(cons(APPLY, NIL), NIL), exp))), NIL), exp)), NIL), exp))), NIL), exp))), exp);
+
     }
 
     if(car_obj == LAMBDA)
-      return cons(CLOSE, cons(CADR(exp), cons(compile(cons(PROGN, CDDR(exp)), cons(RETURN, NIL)), cons(next, NIL))));
+    {
+      OBJECT_PTR temp = compile(cons(PROGN, CDDR(exp)), cons(cons(RETURN, NIL), exp));
+
+      if(temp == ERROR)
+      {
+        printf("Compiling lambda expression failed\n");
+        return ERROR;
+      }
+      else
+        return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(next, NIL)))),
+                    exp);
+    }
 
     if(car_obj == MACRO)
-      return cons(MACRO, cons(CADR(exp), cons(compile(cons(PROGN, CDDR(exp)), cons(RETURN, NIL)), cons(next, NIL))));
+    {
+      OBJECT_PTR temp = compile(cons(PROGN, CDDR(exp)), cons(cons(RETURN, NIL), exp));
+
+      if(temp == ERROR)
+      {
+        printf("Compiling macro expression failed\n");
+        return ERROR;
+      }
+      else
+        return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(next, NIL)))),
+                    exp);
+    }
 
     if(car_obj == IF)
     {
       OBJECT_PTR thenc = compile(CADDR(exp), next);
-      OBJECT_PTR elsec = compile(CADDDR(exp), next);
+      if(thenc == ERROR)
+      {
+        printf("Compiling then clause of IF expression failed\n");
+        return ERROR;
+      }
 
-      return compile(CADR(exp), cons(TEST, cons(thenc, cons(elsec, NIL))));
+      OBJECT_PTR elsec = compile(CADDDR(exp), next);
+      if(elsec == ERROR)
+      {
+        printf("Compiling else clause of IF expression failed\n");
+        return ERROR;
+      }
+
+      return compile(CADR(exp), cons(cons(TEST, cons(thenc, cons(elsec, NIL))), exp));
     }
 
     if(car_obj == WHILE)
     {
-      OBJECT_PTR cond = compile(CADR(exp), cons(HALT,NIL));
-      OBJECT_PTR body = compile(cons(PROGN, CDDR(exp)), 
-                                cons(HALT, NIL));
+      OBJECT_PTR cond = compile(CADR(exp), cons(cons(HALT,NIL), exp));
+      if(cond == ERROR)
+      {
+        printf("Compiling condition in WHILE failed\n");
+        return ERROR;
+      }
 
-      return cons(WHILE, cons(cond, cons(body, cons(next, NIL))));
+      OBJECT_PTR body = compile(cons(PROGN, CDDR(exp)), 
+                                cons(cons(HALT, NIL), exp));
+      if(body == ERROR)
+      {
+        printf("Compiling body of WHILE failed\n");
+        return ERROR;
+      }
+
+      return cons(cons(WHILE, cons(cond, cons(body, cons(next, NIL)))),
+                  exp);
     }
 
     if(car_obj == SET)
-      return compile(CADDR(exp), cons(ASSIGN, cons(CADR(exp), cons(next, NIL))));
+      return compile(CADDR(exp), cons(cons(ASSIGN, cons(CADR(exp), cons(next, NIL))), exp));
 
     if(car_obj == DEFINE)
-      return compile(CADDR(exp), cons(DEFINE, cons(CADR(exp), cons(next, NIL))));
+      return compile(CADDR(exp), cons(cons(DEFINE, cons(CADR(exp), cons(next, NIL))), exp) );
 
     if(car_obj == CALL_CC)
     {
+      OBJECT_PTR temp = compile(CADR(exp), cons(cons(APPLY, NIL), exp));
+      if(temp == ERROR)
+      {
+        printf("Compiling CALL-CC failed\n");
+        return ERROR;
+      }
+
       OBJECT_PTR c = cons(CONTI,
-                          cons(cons(ARGUMENT, 
-                                    cons(compile(CADR(exp), cons(APPLY, NIL)), 
-                                         NIL)),
+                          cons(cons(cons(ARGUMENT, 
+                                         cons(temp, 
+                                              NIL)),
+                                    exp),
                                NIL));
 
       if(car(next) == RETURN)
-        return c;
+        return cons(c,exp);
       else
-        return cons(FRAME, cons(next, cons(c, NIL)));
+        return cons(cons(FRAME, cons(next, cons(cons(c, NIL), exp))),
+                    exp);
     }
 
     if(car_obj == PROGN)
@@ -145,12 +218,19 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       {
         if(IS_MACRO_OBJECT(cdr(res)))
         {
-          reg_next_expression = cons(FRAME,
-                                     cons(cons(HALT, NIL),
-                                          cons(cons(APPLY, NIL),
-                                               NIL)));
+          reg_next_expression = cons(cons(FRAME,
+                                          cons(cons(cons(HALT, NIL), car_obj),
+                                               cons(cons(cons(APPLY, NIL), car_obj),
+                                                    NIL))),
+                                     car_obj);
 
           eval();
+
+          if(in_error)
+          {
+            printf("Compiling macro failed(1)\n");
+            return ERROR;
+          }
 
           reg_current_value_rib = NIL;
 
@@ -173,8 +253,15 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           /* reg_next_expression = cons(APPLY, NIL); */
           
           //evaluate the macro invocation
-          while(reg_next_expression != NIL)
+          while(car(reg_next_expression) != NIL)
+          {
             eval();
+            if(in_error)
+            {
+              printf("Compiling macro failed (2)\n");
+              return ERROR;
+            }
+          }
 
           //compile the output of the macro invocation
           return compile(reg_accumulator, next);
@@ -184,13 +271,12 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     } /* end of if(IS_SYMBOL_OBJECT(car_obj)) */
 
     //it's an application
-    //TODO: do we need a closure here (bundling 'next' with compile_loop
-    //instead of passing it as a parameter?)
-    return compile_loop(cdr(exp), compile(car(exp), cons(APPLY, NIL)), next);
+    return cons(compile_loop(cdr(exp), compile(car(exp), cons(cons(APPLY, NIL), exp)), next), exp);
   }
 
-  //it's a constant object (integer, float, char, string, array, closure, continuation, macro) 
-  return cons(CONSTANT, cons (exp, cons(next, NIL)));
+  //it's a constant object (integer, float, char, string, array) 
+  return cons(cons(CONSTANT, cons (exp, cons(next, NIL))),
+              exp);
 }
 
 OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
@@ -206,8 +292,8 @@ int main(int argc, char **argv)
   if(argc == 1)
   {
     initialize();
-    load_core_library();
-    if(in_error)
+
+    if(load_core_library())
     {
       cleanup();
       exit(1);
@@ -255,7 +341,13 @@ int repl()
       return 1;
     }
 
-    reg_next_expression = compile(out, cons(HALT, NIL));
+    reg_next_expression = compile(out, cons(cons(HALT, NIL), out));
+
+    if(reg_next_expression == ERROR)
+    {
+      fprintf(stdout, "Compilation of expression failed\n");
+      return 1;
+    }
 
     reg_current_env = NIL;
 
@@ -264,8 +356,17 @@ int repl()
 
     execution_stack = NIL;    
 
-    while(reg_next_expression != NIL)
+    continuations_map = NIL;
+
+    while(car(reg_next_expression) != NIL)
+    {
       eval();
+      if(in_error)
+      {
+        fprintf(stdout, "Eval failed\n");
+        return 1;
+      }
+    }
 
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);
@@ -283,7 +384,7 @@ int repl()
     if(val != 0)
       return 1;
 
-    reg_next_expression = compile(exp, cons(HALT, NIL));
+    reg_next_expression = compile(exp, cons(cons(HALT, NIL), exp));
 
     reg_current_env = NIL;
 
@@ -291,11 +392,16 @@ int repl()
     reg_current_stack = NIL;
 
     execution_stack = NIL;
+    continuations_map = NIL;
 
     in_error = false;
 
-    while(reg_next_expression != NIL)
+    while(car(reg_next_expression) != NIL)
+    {
       eval();
+      if(in_error)
+        return 1;
+    }
 
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);
@@ -313,12 +419,23 @@ int repl()
   }
 }
 
-void load_core_library()
+int load_core_library()
 {
   reg_accumulator       = NIL;
-  reg_next_expression   = compile(cons(LOAD_FILE, cons(get_string_object("plisp.lisp"),
-                                                       NIL)), 
-                                  cons(HALT, NIL));
+
+  OBJECT_PTR src = cons(LOAD_FILE, 
+                        cons(get_string_object("plisp.lisp"),
+                             NIL));
+
+  OBJECT_PTR temp = compile(src, cons(cons(HALT, NIL), src));
+
+  if(temp == ERROR)
+  {
+    fprintf(stdout, "Compile failed while loading core library\n");
+    return 1;
+  }
+
+  reg_next_expression   = temp;
 
   reg_current_env = NIL;
 
@@ -327,15 +444,21 @@ void load_core_library()
 
   execution_stack = NIL;
 
+  continuations_map = NIL;
+
   in_error = false;
 
-  while(reg_next_expression != NIL)
+  while(car(reg_next_expression) != NIL)
+  {
     eval();
-
-  if(in_error)
-    return;
+    if(in_error)
+    {
+      fprintf(stdout, "Eval failed while loading core library\n");
+      return 1;
+    }
+  }
 
   gc();
 
-  return;  
+  return 0;  
 }

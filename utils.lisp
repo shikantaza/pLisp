@@ -2,13 +2,8 @@
 
 (in-package "utils")
 
-(load-foreign-library "libplisp.so")
-
 (defun random ()
   (call-foreign-function "plisp_random" 'float nil))
-
-(defmacro my-append (lst value)
-  `(nconc ,lst (list ,value)))
 
 (defun dot-product (a b)
   (if (or (null a) (null b))
@@ -22,15 +17,21 @@
 (defun all-permutations (lst)
   (if (null lst) '(())
       (mapcan (lambda (x)
-		(mapcar (lambda (y) (cons x y))
-			(all-permutations (remove x lst)))) lst)))
+		(mapcar (lambda (y) 
+                          (cons x y))
+			(all-permutations (remove x lst 1)))) 
+              lst)))
 
 (defun permutations (lst n)
   (if (eq n 1)
-      (mapcar (lambda (x) (list x)) lst)
-      (mapcan (lambda (x)
-		(mapcar (lambda (y) (cons x y))
-			(permutations (remove x lst) (- n 1)))) lst)))
+      (mapcar (lambda (x) 
+                (list x))
+              lst)
+    (mapcan (lambda (x)
+              (mapcar (lambda (y) 
+                        (cons x y))
+                      (permutations (remove x lst 1) (- n 1))))
+            lst)))
 
 (defun same-list-p (lst1 lst2)
   (and (eq (length lst1) (length lst2))

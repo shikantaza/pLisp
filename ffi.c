@@ -26,6 +26,7 @@ extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
 
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
+void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 
 //all error-checking is done by eval() before calling
 //call_foreign_function
@@ -289,6 +290,130 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
       else if(type  == FLOAT_POINTER)
         free(*(float **)values[i]);
       else if(type == CHAR_POINTER)
+        free(*(char **)values[i]);
+    }
+    else if(types[i] == &ffi_type_sint)
+      free((int *)values[i]);
+    else if(types[i] == &ffi_type_float)
+      free((float *)values[i]);
+    else if(types[i] == &ffi_type_schar)
+      free((char *)values[i]);
+
+    rest = cdr(rest);
+  }
+}
+
+//for handling FORMAT statements. Floats
+//need to be converted to double to make
+//varargs work in libffi, so we don't
+//want to use call_foreign_function.
+//with a little work, the existing code
+//could have been shoehorned to handle this,
+//but this is simpler and cleaner
+int format(OBJECT_PTR args)
+{
+  int nof_args = length(args);
+  int i;
+
+  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  if(!arg_types)
+  {
+    raise_error("Unable to allocate memory for argument types buffer");
+    return -1;
+  }
+
+  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  if(!arg_values)
+  {
+    raise_error("Unable to allocate memory for argument values buffer");
+    free(arg_types);
+    return -1;
+  }
+
+  OBJECT_PTR rest_args = args;
+
+  i=0;
+
+  int   i_val, *i_val_ptr;
+  double d_val, *d_val_ptr;
+  char  c_val, *c_val_ptr;
+
+  while(rest_args != NIL)
+  {
+    OBJECT_PTR val = car(rest_args);
+
+    if(IS_INTEGER_OBJECT(val))
+    {
+      arg_types[i] = &ffi_type_sint;
+      i_val = get_int_value(val);
+      arg_values[i] = (int *)malloc(sizeof(int));
+      *(int *)arg_values[i] = i_val;
+    }
+    else if(IS_FLOAT_OBJECT(val))
+    {
+      arg_types[i] = &ffi_type_double;
+      d_val = get_float_value(val);
+      arg_values[i] = (double *)malloc(sizeof(double));
+      *(double *)arg_values[i] = d_val;
+    }
+    else if(IS_CHAR_OBJECT(val))
+    {
+      arg_types[i] = &ffi_type_schar;
+      c_val = val >> OBJECT_SHIFT;
+      arg_values[i] = (char *)malloc(sizeof(char));
+      *(char *)arg_values[i] = c_val;
+    }
+    else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
+    {
+      arg_types[i] = &ffi_type_pointer;
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[val >> OBJECT_SHIFT]) : get_string(val);
+      arg_values[i] = (char **)malloc(sizeof(char *));
+      *(char **)arg_values[i] = c_val_ptr;
+    }
+
+    i++;
+    rest_args = cdr(rest_args);
+  }
+  
+  ffi_cif cif;
+  ffi_status status;
+
+  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_void, arg_types);
+
+  if(status != FFI_OK)
+  {
+    raise_error("format(): ffi_prep_cif() failed");
+    free_arg_values(arg_types, arg_values, args, nof_args);
+    free(arg_values);
+    free(arg_types);
+    return -1;
+  }
+
+  ffi_arg ret_val;
+
+  ffi_call(&cif, (void *)printf, &ret_val, arg_values);
+
+  free_arg_values_for_format(arg_types, arg_values, args, nof_args);
+
+  free(arg_values);
+  free(arg_types);
+
+  return 0;
+}
+
+void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args, int nargs)
+{
+  OBJECT_PTR rest = args;
+
+  int i;
+
+  for(i=0; i<nargs; i++)
+  {
+    OBJECT_PTR val = car(rest);
+
+    if(types[i] == &ffi_type_pointer)
+    {
+      if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
         free(*(char **)values[i]);
     }
     else if(types[i] == &ffi_type_sint)

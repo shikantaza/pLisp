@@ -22,11 +22,19 @@
 (defun null (x)
   (eq x '()))
 
-(defun and (x y)
-  (if x (if y 't nil) nil))
+(defun and (&rest lst)
+  (if (null lst)
+      't
+    (if (car lst)
+        (apply and (cdr lst))
+      nil)))
 
-(defun or (x y)
-  (if x 't (if y 't nil)))
+(defun or (&rest lst)
+  (if (null lst)
+      nil
+    (if (car lst)
+        't
+      (apply or (cdr lst)))))
 
 (defun not (x)
   (if x nil 't))
@@ -161,12 +169,10 @@
 ; `(set ,lst1 (append ,lst1 ,lst2)))
 
 (defun concat (lst &rest lists)
-  (if (not (listp lst))
-      (error "First argument to CONCAT should be a list")
-    (let ((result lst))
-      (dolist (x lists)
-        (set result (append result x)))
-      result)))
+  (let ((result (copy-list lst)))
+    (dolist (x lists)
+      (set result (append result x)))
+    result))
 
 (defmacro nconc (lst &rest lists)
   `(set ,lst (concat ,lst ,@lists)))
@@ -282,7 +288,22 @@
 (defmacro mapcan (f &rest lists)  
   `(flatten (mapcar ,f ,@lists))) 
 
+(load-foreign-library "libplisp.so")
+
+;needed because FORMAT does not handle newlines
+(defmacro println ()
+  `(call-foreign-function "print_line" 'void nil))
+
+(defun copy-list (lst)
+  (if (null lst)
+      nil
+    (cons (car lst) (copy-list (cdr lst)))))
+
 (load-file "utils.lisp")
+
+(load-file "math.lisp")
+
+(load-file "matrix.lisp")
 
 (create-package "user")
 

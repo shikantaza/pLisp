@@ -2,8 +2,8 @@
 
 OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o
 
-CC	= gcc -DDEBUG_MEMORY
-CFLAGS	= -g -I/usr/local/lib/libffi-3.0.10/include -L/usr/local/lib
+CC	= gcc
+CFLAGS	= -g -I/usr/local/lib/libffi-3.0.13/include -L/usr/local/lib/
 
 all:	plisp libplisp.so libtest.so
 

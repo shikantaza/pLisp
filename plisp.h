@@ -9,7 +9,7 @@
 #define CHARACTER 5
 #define FLOAT 6
 
-#define HEAP_SIZE 8388608
+#define HEAP_SIZE 67108864
 #define null -1  //not using NULL because 0 is a valid entry in our heap
 
 #define NOT_FOUND -1
@@ -263,6 +263,13 @@ BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR);
 
 void print_backtrace();
 
-void load_core_library();
+int load_core_library();
 
 void print_state();
+
+int format(OBJECT_PTR);
+
+OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR get_symbol_from_value(OBJECT_PTR, OBJECT_PTR);
+
+OBJECT_PTR get_continuation_for_return(OBJECT_PTR);

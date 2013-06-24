@@ -7,6 +7,7 @@ commands to build .so file:
  **/
 
 #include <stdlib.h>
+#include <stdarg.h>
 
 float plisp_random()
 {
@@ -14,3 +15,19 @@ float plisp_random()
   float ret = (i*1.0)/RAND_MAX;
   return ret;
 }
+
+void format(const char *fmt, ...)
+{
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
+}
+
+//needed because we're not able
+//to pass \n in the format string for format()
+void print_line()
+{
+  printf("\n");
+}
+
