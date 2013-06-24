@@ -1,3 +1,22 @@
+/**
+  Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+
+  This file is part of pLisp.
+
+  pLisp is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  pLisp is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
+**/
+
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
@@ -460,9 +479,28 @@ void cleanup()
   log_function_exit("cleanup");
 }
 
+void print_copyright_notice()
+{
+  fprintf(stdout, "pLisp is a Lisp interpreter.\n\n");
+  fprintf(stdout, "Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n");
+
+  fprintf(stdout, "pLisp is free software: you can redistribute it and/or modify\n");
+  fprintf(stdout, "it under the terms of the GNU General Public License as published by\n");
+  fprintf(stdout, "the Free Software Foundation, either version 3 of the License, or\n");
+  fprintf(stdout, "(at your option) any later version.\n\n");
+
+  fprintf(stdout, "pLisp is distributed in the hope that it will be useful,\n");
+  fprintf(stdout, "but WITHOUT ANY WARRANTY; without even the implied warranty of\n");
+  fprintf(stdout, "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n");
+  fprintf(stdout, "GNU General Public License for more details.\n\n");
+
+  fprintf(stdout, "You should have received a copy of the GNU General Public License\n");
+  fprintf(stdout, "along with pLisp.  If not, see <http://www.gnu.org/licenses/>.\n\n");
+}
+
 void welcome()
 {
-  fprintf(stdout, "Welcome to pLISP. Type 'quit' to exit.");
+  fprintf(stdout, "Welcome to pLisp's top level. Type 'quit' to exit.");
 }
 
 void print_object(OBJECT_PTR obj_ptr)

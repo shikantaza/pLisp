@@ -1,3 +1,22 @@
+/**
+  Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+
+  This file is part of pLisp.
+
+  pLisp is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  pLisp is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
+**/
+
 #include <stdio.h>
 
 #include "plisp.h"
@@ -289,6 +308,8 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
 
 int main(int argc, char **argv)
 {
+  print_copyright_notice();
+
   if(argc == 1)
   {
     initialize();
@@ -421,6 +442,9 @@ int repl()
 
 int load_core_library()
 {
+  fprintf(stdout, "Loading core library...");
+  fflush(stdout);
+  
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
@@ -459,6 +483,9 @@ int load_core_library()
   }
 
   gc();
+
+  //hack to prevent message being overwritten
+  fprintf(stdout, "Loading core library... done\n");
 
   return 0;  
 }

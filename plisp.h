@@ -1,3 +1,22 @@
+/**
+  Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+
+  This file is part of pLisp.
+
+  pLisp is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  pLisp is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
+**/
+
 #include <stdlib.h>
 
 #define YY_NO_INPUT
@@ -273,3 +292,5 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR get_symbol_from_value(OBJECT_PTR, OBJECT_PTR);
 
 OBJECT_PTR get_continuation_for_return(OBJECT_PTR);
+
+void print_copyright_notice();
