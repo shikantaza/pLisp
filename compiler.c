@@ -482,7 +482,7 @@ int load_core_library()
     }
   }
 
-  gc();
+  //gc();
 
   //hack to prevent message being overwritten
   fprintf(stdout, "Loading core library... done\n");

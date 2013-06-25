@@ -155,11 +155,13 @@ void insert_node(struct node **r, struct node *n)
 {
   struct node *root;
 
+#ifdef DEBUG
   if(!is_valid_object(n->key))
     assert(false);
 
   if(!is_dynamic_memory_object(n->key))
     assert(false);
+#endif
 
   if(*r == NULL)
     *r = n;
@@ -570,6 +572,10 @@ BOOLEAN value_exists(struct node *r, RAW_PTR val)
 
   if(r->key == val)
     return true;
+  else if(r->key > val)
+    return value_exists(r->left, val);
+  else
+    return value_exists(r->right, val);
 
-  return value_exists(r->left, val) || value_exists(r->right, val);
+  //return value_exists(r->left, val) || value_exists(r->right, val);
 }
