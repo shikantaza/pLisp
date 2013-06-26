@@ -316,6 +316,9 @@
       nil
     (cons (car lst) (copy-list (cdr lst)))))
 
+(defmacro alias (sym1 sym2)
+  `(define ,sym1 ,sym2))
+  
 (load-file "utils.lisp")
 
 (load-file "math.lisp")

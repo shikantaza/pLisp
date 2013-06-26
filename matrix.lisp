@@ -19,6 +19,8 @@
 
 (in-package "matrix")
 
+(alias dot-product utils:dot-product)
+
 (defun matrixp (m)
   (labels ((check (lst)
                   (if (< (length lst) 2)
@@ -144,7 +146,7 @@
     (let ((p (create-matrix r c)))
       (dotimes (i r)
         (dotimes (j c)
-          (set-elem p i j (utils:dot-product (get-row m1 i 1) (get-col m2 j 1)))))
+          (set-elem p i j (dot-product (get-row m1 i 1) (get-col m2 j 1)))))
       p)))
 
 ;transpose of a matrix

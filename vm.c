@@ -123,6 +123,8 @@ extern OBJECT_PTR FORMAT;
 extern OBJECT_PTR CLONE;
 extern OBJECT_PTR COMPILE;
 extern OBJECT_PTR RETURN_FROM;
+extern OBJECT_PTR SYMBL;
+//extern OBJECT_PTR SYMBOL_NAME;
 
 extern OBJECT_PTR top_level_env;
 
@@ -582,7 +584,7 @@ void eval()
         {
           char msg[500];
 
-          memset(msg, 500, '\0');
+          memset(msg, '\0', 500);
 
           RAW_PTR ptr = error_string_obj >> OBJECT_SHIFT;
 
@@ -591,7 +593,7 @@ void eval()
           int i;
 
           for(i=1; i <= len; i++)
-            sprintf(msg, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
+            msg[i-1] = get_heap(ptr + i) >> OBJECT_SHIFT;
 
           raise_error(msg);
         }
@@ -1010,31 +1012,45 @@ void eval()
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
 
-        if((!(IS_ARRAY_OBJECT(array_obj))))
-        {
-          raise_error("First argument to ARRAY-GET should be an array");
-          return;
-        }        
-
         OBJECT_PTR idx = CADR(reg_current_value_rib);
-
-        if((!(IS_INTEGER_OBJECT(idx))))
-        {
-          raise_error("Second argument to ARRAY-GET should be an integer (index into the array)");
-          return;
-        }        
-
-        int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
-
         int index = get_int_value(idx);
 
-        if(index < 0 || (index >= array_len))
+        if(IS_STRING_LITERAL_OBJECT(array_obj))
         {
-          raise_error("Array index out of bounds");
-          return;
-        }        
+          char *str = strings[array_obj >> OBJECT_SHIFT];
 
-        reg_accumulator = get_heap((array_obj >> OBJECT_SHIFT) + index + 1);
+          if(index < 0 || index >= strlen(str))
+          {
+            raise_error("Array index out of bounds");
+            return;
+          }        
+
+          reg_accumulator = (str[index] << OBJECT_SHIFT) + CHAR_TAG;
+        }
+        else
+        {
+          if((!(IS_ARRAY_OBJECT(array_obj))))
+          {
+            raise_error("First argument to ARRAY-GET should be an array");
+            return;
+          }        
+
+          if((!(IS_INTEGER_OBJECT(idx))))
+          {
+            raise_error("Second argument to ARRAY-GET should be an integer (index into the array)");
+            return;
+          }        
+
+          int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
+
+          if(index < 0 || (index >= array_len))
+          {
+            raise_error("Array index out of bounds");
+            return;
+          }        
+
+          reg_accumulator = get_heap((array_obj >> OBJECT_SHIFT) + index + 1);
+        }
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -1112,13 +1128,18 @@ void eval()
           return;
         }
 
-        if(!(IS_ARRAY_OBJECT(array)))
+        if(IS_STRING_LITERAL_OBJECT(array))
+          reg_accumulator = convert_int_to_object(strlen(strings[array >> OBJECT_SHIFT]));
+        else
         {
-          raise_error("Argument to ARRAY-LENGTH should be an ARRAY object");
-          return;
-        }
+          if(!(IS_ARRAY_OBJECT(array)))
+          {
+            raise_error("Argument to ARRAY-LENGTH should be an ARRAY object");
+            return;
+          }
 
-        reg_accumulator = get_heap(array >> OBJECT_SHIFT);
+          reg_accumulator = get_heap(array >> OBJECT_SHIFT);
+        }
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -1642,6 +1663,71 @@ void eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
+      else if(operator == SYMBL)
+      {
+        if(length(reg_current_value_rib) != 1)
+        {
+          raise_error("SYMBOL needs one argument, a string object/literal");
+          return;
+        }
+
+        OBJECT_PTR str = car(reg_current_value_rib);
+        if(!IS_STRING_LITERAL_OBJECT(str) && !is_string_object(str))
+        {
+          raise_error("SYMBOL needs one argument, a string object/literal");
+          return;
+        }
+
+        if(IS_STRING_LITERAL_OBJECT(str))
+        {
+          reg_accumulator = get_symbol_object(convert_to_upper_case(strdup(strings[str >> OBJECT_SHIFT])));
+        }
+        else if(is_string_object(str))
+        {
+          char msg[500];
+
+          memset(msg, '\0', 500);
+
+          RAW_PTR ptr = str >> OBJECT_SHIFT;
+
+          int len = get_int_value(get_heap(ptr));
+
+          int i;
+
+          for(i=1; i <= len; i++)
+            msg[i-1] = get_heap(ptr + i) >> OBJECT_SHIFT;
+
+          reg_accumulator = get_symbol_object(convert_to_upper_case(msg));
+        }
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      /* else if(operator == SYMBOL_NAME) */
+      /* { */
+      /*   if(length(reg_current_value_rib) != 1) */
+      /*   { */
+      /*     raise_error("SYMBOL-NAME requires exactly one argument, a symbol object"); */
+      /*     return; */
+      /*   } */
+
+      /*   OBJECT_PTR sym = car(reg_current_value_rib); */
+
+      /*   if(!IS_SYMBOL_OBJECT(sym)) */
+      /*   { */
+      /*     raise_error("Parameter to SYMBOL_NAME should be a symbol object"); */
+      /*     return; */
+      /*   } */
+
+      /*   char buf[SYMBOL_STRING_SIZE]; */
+      /*   memset(buf,'\0',SYMBOL_STRING_SIZE); */
+
+      /*   print_symbol(sym, buf); */
+
+      /*   reg_accumulator = (add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG; */
+      /*   reg_current_value_rib = NIL; */
+      /*   reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression)); */
+      /* } */
       else
       {
 	char buf[SYMBOL_STRING_SIZE];
