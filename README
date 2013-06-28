@@ -17,6 +17,11 @@ TODO list:
 2. Graphical development environment
 3. Compiler
 
-pLisp uses tpl (http://tpl.sourceforge.net/) for serialization and libffi (http://sourceware.org/libffi/) for the foreign function interface.
+pLisp uses these external libraries:
+
+1. tpl (http://tpl.sourceforge.net/) for serialization 
+2. libffi (http://sourceware.org/libffi/) for the foreign function interface
+3. Emin Martinian's Red Black Tree code (http://web.mit.edu/~emin/www.old/source_code/red_black_tree/index.html)
+   in the GC implementation
 
 http://shikantaza.blogspot.in/2013/04/building-lisp-interpreter-from-scratch.html has some documentation and implementation notes.

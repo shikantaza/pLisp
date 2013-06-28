@@ -24,6 +24,8 @@
 #include "plisp.h"
 #include "util.h"
 
+#include "memory.h"
+
 expression_t *g_expr = NULL;
 
 extern void yyparse();
@@ -174,8 +176,6 @@ OBJECT_PTR root_form;
 int nof_dl_handles = 0;
 void **dl_handles = NULL;
 
-extern struct node *white;
-
 inline OBJECT_PTR CAAR(x)   { return car(car(x)); }
 inline OBJECT_PTR CDAR(x)   { return cdr(car(x)); }
 inline OBJECT_PTR CADR(x)   { return car(cdr(x)); }
@@ -211,9 +211,12 @@ extern void print_stack();
 
 void initialize()
 {
-  initialize_heap();
-
-  initialize_free_list();
+  if(initialize_memory())
+  {
+    fprintf(stderr, "Initialization of memory failed\n");
+    cleanup();
+    exit(1);
+  }
 
   nof_packages = 0;
 
@@ -557,12 +560,10 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
 {
   log_function_entry("cons");
 
-  RAW_PTR ptr = object_alloc(2);
+  RAW_PTR ptr = object_alloc(2, CONS_TAG);
 
   set_heap(ptr, car);
   set_heap(ptr+1, cdr);
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + CONS_TAG));
 
   log_function_exit("cons");
 
@@ -827,13 +828,11 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
 
 OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
 {
-  RAW_PTR ptr = object_alloc(3);
+  RAW_PTR ptr = object_alloc(3, CLOSURE_TAG);
 
   set_heap(ptr, env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + CLOSURE_TAG));
   
   return (ptr << OBJECT_SHIFT) + CLOSURE_TAG;
 }
@@ -868,7 +867,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       RAW_PTR ptr = obj >> OBJECT_SHIFT;
       int len = get_int_value(get_heap(ptr));
 
-      RAW_PTR new_ptr = object_alloc(len+1);
+      RAW_PTR new_ptr = object_alloc(len+1, ARRAY_TAG);
       
       set_heap(new_ptr, get_heap(ptr));
 
@@ -876,8 +875,6 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
       for(i=1; i<=len; i++)
 	set_heap(new_ptr + i, clone_object(get_heap(ptr + i)));
-
-      insert_node(&white, create_node((new_ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
       ret = (new_ptr << OBJECT_SHIFT) + ARRAY_TAG;
     }
@@ -1100,14 +1097,12 @@ BOOLEAN is_special_form(OBJECT_PTR form)
 
 OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
 {
-  RAW_PTR ptr = object_alloc(3);
+  RAW_PTR ptr = object_alloc(3, MACRO_TAG);
 
   set_heap(ptr, env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
 
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + MACRO_TAG));
-  
   return (ptr << OBJECT_SHIFT) + MACRO_TAG;
 }
 
@@ -1536,12 +1531,10 @@ OBJECT_PTR convert_int_to_object(int v)
     ret = ((TWO_RAISED_TO_28 + v) << OBJECT_SHIFT) + INTEGER_TAG;
   */
 
-  RAW_PTR ptr = object_alloc(1);
+  RAW_PTR ptr = object_alloc(1, INTEGER_TAG);
 
   //set_heap() will fail; see convert_float_to_object()
   heap[ptr] = v;
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + INTEGER_TAG));
 
   log_function_exit("convert_int_to_object");
 
@@ -1577,14 +1570,12 @@ OBJECT_PTR convert_float_to_object(float v)
   union float_and_uint fi;
   fi.f = v;
   
-  RAW_PTR ptr = object_alloc(1);
+  RAW_PTR ptr = object_alloc(1, FLOAT_TAG);
 
   //set_heap() will fail if the last
   //four bits of the float object are not 0111 (i.e. FLOAT_TAG)
   //set_heap(ptr, fi.i);
   heap[ptr] = fi.i;
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + FLOAT_TAG));
 
   log_function_exit("convert_float_to_object");
 
@@ -1674,18 +1665,6 @@ char *get_string(OBJECT_PTR string_object)
   ret[len] = '\0';
 
   return ret;
-}
-
-void initialize_heap()
-{
-  heap = (RAW_PTR *)malloc(HEAP_SIZE * sizeof(RAW_PTR));
-
-  if(!heap)
-  {
-    fprintf(stderr, "Unable to create heap of size %d\n", HEAP_SIZE);
-    cleanup();
-    exit(1);
-  }
 }
 
 #ifndef DEBUG_MEMORY

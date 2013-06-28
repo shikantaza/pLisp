@@ -21,8 +21,10 @@
 #include <stdarg.h>
 #include <setjmp.h>
 
-#include "plisp.h"
 #include "tpl.h"
+
+#include "plisp.h"
+#include "memory.h"
 
 extern OBJECT_PTR top_level_env;
 extern unsigned int current_package;

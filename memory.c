@@ -23,28 +23,93 @@
 
 #include "plisp.h"
 
+#include "memory.h"
+
+#include "red_black_tree.h"
+
 RAW_PTR *heap;
 RAW_PTR free_list;
 RAW_PTR last_segment;
 
+#ifdef CUSTOM_BST
 //do we need the black set at all?
 struct node *black = NULL, *white = NULL, *grey = NULL;
+#else
+rb_red_blk_tree *white, *grey, *black;
+#endif
 
 extern OBJECT_PTR top_level_env, NIL;
 
-void initialize_free_list()
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
+
+//forward declarations
+
+void dealloc(RAW_PTR);
+
+void insert_node(unsigned int, OBJECT_PTR);
+
+#ifdef CUSTOM_BST
+
+struct node *create_node(OBJECT_PTR);
+struct node *put(struct node *, OBJECT_PTR);
+void insert_node_orig(struct node **, struct node *);
+void remove_node(struct node **, OBJECT_PTR);
+void destroy(struct node **);
+void print_tree(struct node *);
+BOOLEAN is_set_empty(struct node *);
+int get_size_of_tree(struct node *);
+int get_height_of_tree(struct node *);
+BOOLEAN value_exists(struct node **, OBJECT_PTR);
+
+#else
+
+void remove_node(rb_red_blk_tree *, OBJECT_PTR);
+void destroy(rb_red_blk_tree *);
+void print_tree(rb_red_blk_tree *);
+BOOLEAN is_set_empty(rb_red_blk_tree *);
+BOOLEAN value_exists(rb_red_blk_tree *, OBJECT_PTR);
+
+#endif
+
+void gc();
+BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
+void build_grey_set();
+
+int get_free_memory();
+
+//end forward declarations
+
+enum {WHITE, GREY, BLACK};
+
+int initialize_memory()
 {
+  heap = (RAW_PTR *)malloc(HEAP_SIZE * sizeof(RAW_PTR));
+
+  if(!heap)
+  {
+    fprintf(stderr, "Unable to create heap of size %d\n", HEAP_SIZE);
+    return -1;
+  }
+
   free_list = 0;
   heap[free_list] = HEAP_SIZE;
   heap[free_list + 1] = null;
 
   last_segment = 0;
+
+  return 0;
 }
 
 //first-fit (use the first segment
 //whose length is closest
 //to the required size)
-RAW_PTR object_alloc(int size)
+RAW_PTR object_alloc(int size, unsigned int tag)
 {
   assert(size > 0 && size <= HEAP_SIZE);
 
@@ -77,6 +142,8 @@ RAW_PTR object_alloc(int size)
 	if(prev != null)
 	  heap[prev] = heap[it + 1]; 
 
+        insert_node(WHITE, ((it+1) << OBJECT_SHIFT) + tag);
+
 	return it + 1;
       }
       else
@@ -103,6 +170,8 @@ RAW_PTR object_alloc(int size)
 	heap[it + heap[it]] = new_size + 1;
 
 	ret = it + heap[it] + 1;
+
+        insert_node(WHITE, (ret << OBJECT_SHIFT) + tag);
 
 	//return the address of the new segment
 	return ret;
@@ -141,6 +210,243 @@ void dealloc(RAW_PTR ptr)
 
 }
 
+void gc()
+{
+#ifdef CUSTOM_BST
+  destroy(&black);
+  destroy(&grey);
+#else
+  destroy(black);
+  destroy(grey);
+#endif
+
+  //only top_level_env is stored in the grey set initially
+  build_grey_set();
+
+  while(!is_set_empty(grey))
+  {
+    //we can pick any grey object,
+    //picking the root for convenience
+#ifdef CUSTOM_BST
+    OBJECT_PTR obj = grey->key;
+#else
+    OBJECT_PTR obj = *(unsigned int *)grey->root->left->key;
+#endif
+
+    insert_node(BLACK, obj);
+
+#ifdef CUSTOM_BST
+    remove_node(&grey, obj);
+#else
+    remove_node(grey, obj);
+#endif
+
+    if(IS_CONS_OBJECT(obj))
+    {
+      OBJECT_PTR car_obj = car(obj);
+      if(is_dynamic_memory_object(car_obj))
+      {
+	insert_node(GREY, car_obj);
+#ifdef CUSTOM_BST
+	remove_node(&white, car_obj);
+#else
+	remove_node(white, car_obj);
+#endif
+      }
+
+      OBJECT_PTR cdr_obj = cdr(obj);
+      if(is_dynamic_memory_object(cdr_obj))
+      {
+	insert_node(GREY, cdr_obj);
+#ifdef CUSTOM_BST
+	remove_node(&white, cdr_obj);
+#else
+        remove_node(white, cdr_obj);
+#endif
+      }
+    }
+    else if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
+    {
+      OBJECT_PTR env_obj = get_env_list(obj);
+      if(is_dynamic_memory_object(env_obj))
+      {
+	insert_node(GREY, env_obj);
+#ifdef CUSTOM_BST
+	remove_node(&white, env_obj);
+#else
+	remove_node(white, env_obj);
+#endif
+      }
+
+      OBJECT_PTR params_obj = get_params_object(obj);
+      if(is_dynamic_memory_object(params_obj))
+      {
+	insert_node(GREY, params_obj);
+#ifdef CUSTOM_BST
+	remove_node(&white, params_obj);
+#else
+	remove_node(white, params_obj);
+#endif
+      }
+
+      OBJECT_PTR body_obj = get_body_object(obj);
+      if(is_dynamic_memory_object(body_obj))
+      {
+	insert_node(GREY, body_obj);
+#ifdef CUSTOM_BST
+	remove_node(&white, body_obj);
+#else
+	remove_node(white, body_obj);
+#endif
+      }
+    }
+    else if(IS_ARRAY_OBJECT(obj))
+    {
+      RAW_PTR ptr = obj >> OBJECT_SHIFT;
+
+      OBJECT_PTR length_obj = get_heap(ptr);
+
+      insert_node(GREY, length_obj);
+#ifdef CUSTOM_BST
+      remove_node(&white, length_obj);
+#else
+      remove_node(white, length_obj);
+#endif
+
+      int len = get_int_value(get_heap(ptr));
+
+      int i;
+
+      for(i=1; i<=len; i++)
+      {
+        OBJECT_PTR array_elem = get_heap(ptr + i);
+
+        if(is_dynamic_memory_object(array_elem))
+        {
+          insert_node(GREY, array_elem);
+#ifdef CUSTOM_BST
+          remove_node(&white, array_elem);
+#else
+          remove_node(white, array_elem);
+#endif
+        }
+      }
+    }
+    else if(IS_CONTINUATION_OBJECT(obj))
+    {
+      OBJECT_PTR stack = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      insert_node(GREY, stack);
+#ifdef CUSTOM_BST
+      remove_node(&white, stack);
+#else
+      remove_node(white, stack);
+#endif
+    }
+
+    //though integer and float objects are also allocated 
+    //on the heap, they don't reference other objects
+    //and hence just freeing them is sufficient
+
+  } //end of while(!is_set_empty(grey))
+
+  //free all the objects in the white set
+  while(!is_set_empty(white))
+  {
+#ifdef CUSTOM_BST
+    struct node *white_obj = white;
+#else
+    rb_red_blk_node *white_obj = white->root->left;
+#endif
+
+#ifdef CUSTOM_BST
+    if(!value_exists(black, white_obj->key))
+      dealloc(white_obj->key >> OBJECT_SHIFT);
+
+    remove_node(&white, white_obj->key);
+#else
+    if(!value_exists(black, *(unsigned int *)white_obj->key))
+      dealloc(*(unsigned int *)white_obj->key >> OBJECT_SHIFT);
+
+    remove_node(white,*(unsigned int *)white_obj->key);
+#endif
+  }
+
+#ifdef CUSTOM_BST
+  destroy(&black);
+  destroy(&grey);
+  destroy(&white);
+#else
+  destroy(black);
+  destroy(grey);
+  destroy(white);
+#endif
+
+}
+
+BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
+{
+   return IS_CONS_OBJECT(obj)    ||
+          IS_ARRAY_OBJECT(obj)   ||
+          IS_INTEGER_OBJECT(obj) ||
+          IS_FLOAT_OBJECT(obj)   ||
+          IS_CLOSURE_OBJECT(obj) ||
+          IS_MACRO_OBJECT(obj)   ||
+          IS_CONTINUATION_OBJECT(obj);
+}
+
+void build_grey_set()
+{
+  if(top_level_env != NIL)
+  {
+    insert_node(GREY, top_level_env);
+#ifdef CUSTOM_BST
+    remove_node(&white, top_level_env);
+#else
+    remove_node(white,top_level_env);
+#endif
+  }
+}
+
+int get_free_memory()
+{
+  int free_mem = 0;
+
+  RAW_PTR it = free_list;
+
+  while(it != null)
+  {
+    free_mem += heap[it];
+    it = heap[it + 1];
+  }
+
+  return free_mem;
+}
+
+void test_memory()
+{
+  printf("Testing memory\n");
+
+  OBJECT_PTR ptr;
+
+  printf("Allocating 50000 objects...");
+  ptr = object_alloc(50000, CONS_TAG);
+  printf("done\n");
+
+  printf("Deallocating 50000 objects...");
+  dealloc(ptr);
+  printf("done\n");
+
+  printf("Allocating 50000 objects...");
+  ptr = object_alloc(50000, CONS_TAG);
+  printf("done\n");
+
+  printf("Deallocating 50000 objects...");
+  dealloc(ptr);
+  printf("done\n");  
+}
+
+#ifdef CUSTOM_BST
+
 struct node *create_node(OBJECT_PTR value)
 {
   struct node *n = (struct node *)malloc(sizeof(struct node));
@@ -151,7 +457,37 @@ struct node *create_node(OBJECT_PTR value)
   return n;
 }
 
-void insert_node(struct node **r, struct node *n)
+void insert_node(unsigned int set_type, OBJECT_PTR val)
+{
+
+#ifdef DEBUG
+  assert(set_type == WHITE || set_type == GREY || set_type == BLACK);
+#endif
+
+  if(set_type == WHITE)
+    white = put(white, val);
+  else if(set_type == GREY)
+    grey = put(grey, val);
+  else
+    black = put(black, val);
+}
+
+struct node *put(struct node *x, OBJECT_PTR val)
+{
+  if(x == NULL)
+    return create_node(val);
+
+  if(val > x->key)
+    x->right = put(x->right, val);
+  else if(val < x->key)
+    x->left = put(x->left, val);
+  else
+    x->key = val;
+
+  return x;
+}
+
+void insert_node_orig(struct node **r, struct node *n)
 {
   struct node *root;
 
@@ -169,9 +505,9 @@ void insert_node(struct node **r, struct node *n)
   {
     root = *r;
     if(n->key > root->key)
-      insert_node(&(root->right), n);
+      insert_node_orig(&(root->right), n);
     else if(n->key < root->key)
-      insert_node(&(root->left), n);
+      insert_node_orig(&(root->left), n);
   }
 }
 
@@ -296,154 +632,12 @@ void print_tree(struct node *n)
 
 }
 
-void gc()
-{
-  destroy(&black);
-  destroy(&grey);
-
-  //only top_level_env is stored in the grey set initially
-  build_grey_set();
-
-  while(!is_set_empty(grey))
-  {
-    //we can pick any grey object,
-    //picking the root for convenience
-    OBJECT_PTR obj = grey->key;
-
-    insert_node(&black, create_node(obj));
-    remove_node(&grey, obj);
-
-    if(IS_CONS_OBJECT(obj))
-    {
-      OBJECT_PTR car_obj = car(obj);
-      if(is_dynamic_memory_object(car_obj))
-      {
-	insert_node(&grey, create_node(car_obj));
-	remove_node(&white, car_obj);
-      }
-
-      OBJECT_PTR cdr_obj = cdr(obj);
-      if(is_dynamic_memory_object(cdr_obj))
-      {
-	insert_node(&grey, create_node(cdr_obj));
-	remove_node(&white, cdr_obj);
-      }
-    }
-    else if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
-    {
-      OBJECT_PTR env_obj = get_env_list(obj);
-      if(is_dynamic_memory_object(env_obj))
-      {
-	insert_node(&grey, create_node(env_obj));
-	remove_node(&white, env_obj);
-      }
-
-      OBJECT_PTR params_obj = get_params_object(obj);
-      if(is_dynamic_memory_object(params_obj))
-      {
-	insert_node(&grey, create_node(params_obj));
-	remove_node(&white, params_obj);
-      }
-
-      OBJECT_PTR body_obj = get_body_object(obj);
-      if(is_dynamic_memory_object(body_obj))
-      {
-	insert_node(&grey, create_node(body_obj));
-	remove_node(&white, body_obj);
-      }
-    }
-    else if(IS_ARRAY_OBJECT(obj))
-    {
-      RAW_PTR ptr = obj >> OBJECT_SHIFT;
-
-      OBJECT_PTR length_obj = get_heap(ptr);
-
-      insert_node(&grey, create_node(length_obj));
-      remove_node(&white, length_obj);
-
-      int len = get_int_value(get_heap(ptr));
-
-      int i;
-
-      for(i=1; i<=len; i++)
-      {
-        OBJECT_PTR array_elem = get_heap(ptr + i);
-
-        if(is_dynamic_memory_object(array_elem))
-        {
-          insert_node(&grey, create_node(array_elem));
-          remove_node(&white, array_elem);
-        }
-      }
-    }
-    else if(IS_CONTINUATION_OBJECT(obj))
-    {
-      OBJECT_PTR stack = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
-      insert_node(&grey, create_node(stack));
-      remove_node(&white, stack);
-    }
-
-    //though integer and float objects are also allocated 
-    //on the heap, they don't reference other objects
-    //and hence just freeing them is sufficient
-
-  } //end of while(!is_set_empty(grey))
-
-  //free all the objects in the white set
-  while(!is_set_empty(white))
-  {
-    struct node *white_obj = white;
-    if(!value_exists(black, white_obj->key))
-      dealloc(white_obj->key >> OBJECT_SHIFT);
-    remove_node(&white, white_obj->key);
-  }
-
-  destroy(&black);
-  destroy(&grey);
-  destroy(&white);
-}
-
 BOOLEAN is_set_empty(struct node *set)
 {
   if(set == NULL)
     return true;
   else
     return false;
-}
-
-BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
-{
-   return IS_CONS_OBJECT(obj)    ||
-          IS_ARRAY_OBJECT(obj)   ||
-          IS_INTEGER_OBJECT(obj) ||
-          IS_FLOAT_OBJECT(obj)   ||
-          IS_CLOSURE_OBJECT(obj) ||
-          IS_MACRO_OBJECT(obj)   ||
-          IS_CONTINUATION_OBJECT(obj);
-}
-
-void build_grey_set()
-{
-  if(top_level_env != NIL)
-  {
-    insert_node(&grey, create_node(top_level_env));
-    remove_node(&white, top_level_env);
-  }
-}
-
-int get_free_memory()
-{
-  int free_mem = 0;
-
-  RAW_PTR it = free_list;
-
-  while(it != null)
-  {
-    free_mem += heap[it];
-    it = heap[it + 1];
-  }
-
-  return free_mem;
 }
 
 int get_size_of_tree(struct node *n)
@@ -454,27 +648,16 @@ int get_size_of_tree(struct node *n)
     return 1 + get_size_of_tree(n->left) + get_size_of_tree(n->right);
 }
 
-void test_memory()
+int get_height_of_tree(struct node *n)
 {
-  printf("Testing memory\n");
-
-  OBJECT_PTR ptr;
-
-  printf("Allocating 50000 objects...");
-  ptr = object_alloc(50000);
-  printf("done\n");
-
-  printf("Deallocating 50000 objects...");
-  dealloc(ptr);
-  printf("done\n");
-
-  printf("Allocating 50000 objects...");
-  ptr = object_alloc(50000);
-  printf("done\n");
-
-  printf("Deallocating 50000 objects...");
-  dealloc(ptr);
-  printf("done\n");  
+  if(n == NULL)
+    return -1;
+  else
+  {
+    int l = get_height_of_tree(n->left);
+    int r = get_height_of_tree(n->right);
+    return 1 + ((l>r) ? l : r);
+  }
 }
 
 void test_bst()
@@ -492,7 +675,7 @@ void test_bst()
   /* for(i=0; i< 1000; i++) */
   /* { */
   /*   a[i] = rand(); */
-  /*   insert_node(&grey, create_node(a[i])); */
+  /*   insert_node(GREY, a[i]); */
   /* } */
 
   /* print_tree(grey); */
@@ -511,15 +694,15 @@ void test_bst()
 
   //test 2
 
-  /* insert_node(&grey, create_node(10)); */
-  /* insert_node(&grey, create_node(5)); */
-  /* insert_node(&grey, create_node(20)); */
-  /* insert_node(&grey, create_node(3)); */
-  /* insert_node(&grey, create_node(8)); */
-  /* insert_node(&grey, create_node(15)); */
-  /* insert_node(&grey, create_node(40)); */
-  /* insert_node(&grey, create_node(13)); */
-  /* insert_node(&grey, create_node(18)); */
+  /* insert_node(GREY, 10); */
+  /* insert_node(GREY, 5); */
+  /* insert_node(GREY, 20); */
+  /* insert_node(GREY, 3); */
+  /* insert_node(GREY, 8); */
+  /* insert_node(GREY, 15); */
+  /* insert_node(GREY, 40); */
+  /* insert_node(GREY, 13); */
+  /* insert_node(GREY, 18); */
 
   /* print_tree(grey); */
 
@@ -540,15 +723,15 @@ void test_bst()
   //end of test 2
 
   //test 3
-  insert_node(&grey, create_node(100));
-  insert_node(&grey, create_node(80));
-  insert_node(&grey, create_node(60));
-  insert_node(&grey, create_node(40));
-  insert_node(&grey, create_node(120));
-  insert_node(&grey, create_node(110));
-  insert_node(&grey, create_node(130));
-  insert_node(&grey, create_node(90));
-  insert_node(&grey, create_node(95));
+  insert_node(GREY, 100);
+  insert_node(GREY, 80);
+  insert_node(GREY, 60);
+  insert_node(GREY, 40);
+  insert_node(GREY, 120);
+  insert_node(GREY, 110);
+  insert_node(GREY, 130);
+  insert_node(GREY, 90);
+  insert_node(GREY, 95);
 
   print_tree(grey);
   printf("----%d------\n", get_size_of_tree(grey));
@@ -578,4 +761,96 @@ BOOLEAN value_exists(struct node *r, RAW_PTR val)
     return value_exists(r->right, val);
 
   //return value_exists(r->left, val) || value_exists(r->right, val);
+}
+
+#endif
+
+void IntDest(void* a)
+{
+  free((unsigned int*)a);
+}
+
+int IntComp(const void* a,const void* b)
+{
+  if( *(unsigned int*)a > *(unsigned int*)b) return(1);
+  if( *(unsigned int*)a < *(unsigned int*)b) return(-1);
+  return(0);
+}
+
+void IntPrint(const void* a)
+{
+  printf("%i",*(unsigned int*)a);
+}
+
+void InfoPrint(void* a)
+{
+  ;
+}
+
+void InfoDest(void *a)
+{
+  ;
+}
+
+void insert_node(unsigned int set_type, OBJECT_PTR val)
+{
+
+#ifdef DEBUG
+  assert(set_type == WHITE || set_type == GREY || set_type == BLACK);
+#endif
+
+  rb_red_blk_tree *tree;
+
+  if(set_type == WHITE)
+    tree = white;
+  else if(set_type == GREY)
+    tree = grey;
+  else
+    tree = black;
+
+  if(tree == NULL)
+    tree = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
+
+  unsigned int *newInt=(unsigned int*) malloc(sizeof(unsigned int));
+  *newInt = val;
+  RBTreeInsert(tree,newInt,0);  
+}
+
+void remove_node(rb_red_blk_tree *tree, OBJECT_PTR val)
+{
+  if(!tree)
+    return;
+
+  rb_red_blk_node* newNode;
+  if((newNode=RBExactQuery(tree,&val))) 
+    RBDelete(tree,newNode);  
+}
+
+void destroy(rb_red_blk_tree *tree)
+{
+  if(tree)
+    RBTreeDestroy(tree);
+  tree = NULL;
+}
+
+void print_tree(rb_red_blk_tree *tree)
+{
+  RBTreePrint(tree);
+}
+
+BOOLEAN is_set_empty(rb_red_blk_tree *tree)
+{
+  if(!tree)
+    return true;
+
+  return tree->root->left->parent == NULL;
+}
+
+BOOLEAN value_exists(rb_red_blk_tree *tree, OBJECT_PTR val)
+{
+  rb_red_blk_node* newNode;
+  if((newNode=RBExactQuery(tree,&val)))
+    return true;
+  else
+    return false;
 }

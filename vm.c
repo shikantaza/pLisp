@@ -23,6 +23,8 @@
 
 #include "plisp.h"
 
+#include "memory.h"
+
 extern OBJECT_PTR reg_accumulator;
 extern OBJECT_PTR reg_next_expression;
 extern OBJECT_PTR reg_current_env;
@@ -127,8 +129,6 @@ extern OBJECT_PTR SYMBL;
 //extern OBJECT_PTR SYMBOL_NAME;
 
 extern OBJECT_PTR top_level_env;
-
-extern struct node *white;
 
 extern char **strings;
 
@@ -1835,14 +1835,12 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 {
   log_function_entry("create_call_frame");
 
-  RAW_PTR ptr = object_alloc(4);
+  RAW_PTR ptr = object_alloc(4, ARRAY_TAG);
 
   set_heap(ptr, convert_int_to_object(3));
   set_heap(ptr+1, next_expression);
   set_heap(ptr+2, env);
   set_heap(ptr+3, rib);
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
   log_function_exit("create_call_frame");
 
@@ -2045,7 +2043,7 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   int len = strlen(str_val);
 
-  RAW_PTR raw_ptr = object_alloc(len + 1);
+  RAW_PTR raw_ptr = object_alloc(len + 1, ARRAY_TAG);
 
   set_heap(raw_ptr, convert_int_to_object(len));
 
@@ -2057,8 +2055,6 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
     i++;
   }
 
-  insert_node(&white, create_node((raw_ptr << OBJECT_SHIFT) + ARRAY_TAG));
-
   return (raw_ptr << OBJECT_SHIFT) + ARRAY_TAG;
 }
 
@@ -2068,7 +2064,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   
   int sz = get_int_value(size);
 
-  RAW_PTR ptr = object_alloc(sz+1);
+  RAW_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
 
   set_heap(ptr, size);
 
@@ -2076,8 +2072,6 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
 
   for(i=0; i<sz; i++)
     set_heap(ptr + i + 1, default_value);
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
   return (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 }
@@ -2091,7 +2085,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
 
   RAW_PTR orig_ptr = array >> OBJECT_SHIFT;
 
-  RAW_PTR ptr = object_alloc(len + 1);
+  RAW_PTR ptr = object_alloc(len + 1, ARRAY_TAG);
 
   set_heap(ptr, convert_int_to_object(len));
 
@@ -2099,8 +2093,6 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
 
   for(i=1; i<=len; i++)
     set_heap(ptr+i, get_heap(orig_ptr + st + i));
-
-  insert_node(&white, create_node((ptr << OBJECT_SHIFT) + ARRAY_TAG));
 
   ret = (ptr << OBJECT_SHIFT) + ARRAY_TAG;
 

@@ -35,7 +35,7 @@ test_so.o:	test_so.c
 		$(CC) -c -fPIC test_so.c -o test_so.o
 
 plisp:	$(OBJS)
-		$(CC) $(CFLAGS) $(OBJS) libtpl.a -o plisp -lffi
+		$(CC) $(CFLAGS) $(OBJS) libtpl.a librb.a -o plisp -lffi
 
 lex.o:	lex.yy.c
 		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o
@@ -72,13 +72,13 @@ ffi.o:		ffi.c
 
 bison.o		: plisp.tab.c plisp.h util.h
 lex.o		: plisp.tab.h plisp.h
-main.o		: plisp.h
+main.o		: plisp.h memory.h
 compiler.o	: plisp.h
-vm.o		: plisp.h
+vm.o		: plisp.h memory.h
 util.o		: util.h
-images.o	: plisp.h
+images.o	: plisp.h memory.h
 ffi.o		: plisp.h
-memory.o	: plisp.h
+memory.o	: plisp.h memory.h
 
 clean:
 	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump

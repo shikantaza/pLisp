@@ -28,7 +28,6 @@
 #define CHARACTER 5
 #define FLOAT 6
 
-#define HEAP_SIZE 67108864
 #define null -1  //not using NULL because 0 is a valid entry in our heap
 
 #define NOT_FOUND -1
@@ -133,7 +132,6 @@ void print_object(OBJECT_PTR);
 
 OBJECT_PTR evaluate_expression(expression_t *, OBJECT_PTR);
 
-RAW_PTR object_alloc(int);
 OBJECT_PTR get_symbol_object(char *);
 OBJECT_PTR cons(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR build_list_object(expression_t **, int, int);
@@ -217,42 +215,10 @@ BOOLEAN is_string_object(OBJECT_PTR);
 char *get_string(OBJECT_PTR);
 void print_string(OBJECT_PTR);
 
-void initialize_free_list();
-void initialize_heap();
-
-void dealloc(RAW_PTR);
-
-struct node *create_node(OBJECT_PTR);
-void insert_node(struct node **, struct node *);
-void remove_node(struct node **, OBJECT_PTR);
-void destroy(struct node **);
-void print_tree(struct node *);
-BOOLEAN is_set_empty(struct node *);
-
-void gc();
-BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
-void build_grey_set();
-
-int get_free_memory();
-int get_size_of_tree(struct node *);
-
 OBJECT_PTR eval_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR eval_while(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 
-#ifndef DEBUG_MEMORY
-inline
-#endif
-void set_heap(RAW_PTR, OBJECT_PTR);
-
 BOOLEAN is_valid_object(OBJECT_PTR);
-
-#ifndef DEBUG_MEMORY
-inline
-#endif
-OBJECT_PTR get_heap(RAW_PTR);
-
-void test_memory();
-void test_bst();
 
 void print_continuation_object(OBJECT_PTR);
 
