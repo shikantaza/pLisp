@@ -427,6 +427,11 @@ int repl()
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);
 
+    //reset the EXCEPTION-HANDLERS variable
+    update_environment(cons(top_level_env, NIL),
+                       get_symbol_object("EXCEPTION-HANDLERS"),
+                       NIL);
+
     delete_expression(g_expr);
     g_expr = NULL;
 

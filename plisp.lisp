@@ -318,6 +318,25 @@
 
 (defmacro alias (sym1 sym2)
   `(define ,sym1 ,sym2))
+
+(define exception-handlers nil)
+
+(defun exception (&rest e)
+  (if (null exception-handlers)
+      (error  (concat-strings "Uncaught exception: " (symbol-name (car e))))
+    (progn ((car exception-handlers) e)
+           (set exception-handlers (cdr exception-handlers)))))
+
+(defmacro try (body exception-clause finally-clause)
+  `(call-cc (lambda (cc)
+              (let ((ret))
+                (progn (set exception-handlers (cons (lambda ,(cadr exception-clause)
+                                                       (cc (progn ,(caddr exception-clause)
+                                                                  ,finally-clause)))
+                                                     exception-handlers))
+                       (set ret ,body )
+                       ,finally-clause
+                       ret)))))
   
 (load-file "utils.lisp")
 

@@ -126,7 +126,7 @@ extern OBJECT_PTR CLONE;
 extern OBJECT_PTR COMPILE;
 extern OBJECT_PTR RETURN_FROM;
 extern OBJECT_PTR SYMBL;
-//extern OBJECT_PTR SYMBOL_NAME;
+extern OBJECT_PTR SYMBOL_NAME;
 
 extern OBJECT_PTR top_level_env;
 
@@ -851,9 +851,9 @@ void eval()
           OBJECT_PTR args = cdr(macro_body);
 
           reg_next_expression = cons(cons(FRAME,
-                                          cons(cons(HALT, NIL),
-                                               cons(cons(APPLY, NIL),
-                                                    NIL))),
+                                          (cons(cons(cons(HALT, NIL), car(macro_body)),
+                                                cons(cons(cons(APPLY, NIL), car(macro_body)),
+                                                     NIL)))),
                                      car(macro_body));
 
           eval();
@@ -1703,31 +1703,31 @@ void eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
-      /* else if(operator == SYMBOL_NAME) */
-      /* { */
-      /*   if(length(reg_current_value_rib) != 1) */
-      /*   { */
-      /*     raise_error("SYMBOL-NAME requires exactly one argument, a symbol object"); */
-      /*     return; */
-      /*   } */
+      else if(operator == SYMBOL_NAME)
+      {
+        if(length(reg_current_value_rib) != 1)
+        {
+          raise_error("SYMBOL-NAME requires exactly one argument, a symbol object");
+          return;
+        }
 
-      /*   OBJECT_PTR sym = car(reg_current_value_rib); */
+        OBJECT_PTR sym = car(reg_current_value_rib);
 
-      /*   if(!IS_SYMBOL_OBJECT(sym)) */
-      /*   { */
-      /*     raise_error("Parameter to SYMBOL_NAME should be a symbol object"); */
-      /*     return; */
-      /*   } */
+        if(!IS_SYMBOL_OBJECT(sym))
+        {
+          raise_error("Parameter to SYMBOL_NAME should be a symbol object");
+          return;
+        }
 
-      /*   char buf[SYMBOL_STRING_SIZE]; */
-      /*   memset(buf,'\0',SYMBOL_STRING_SIZE); */
+        char buf[SYMBOL_STRING_SIZE];
+        memset(buf,'\0',SYMBOL_STRING_SIZE);
 
-      /*   print_symbol(sym, buf); */
+        print_symbol(sym, buf);
 
-      /*   reg_accumulator = (add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG; */
-      /*   reg_current_value_rib = NIL; */
-      /*   reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression)); */
-      /* } */
+        reg_accumulator = (add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
       else
       {
 	char buf[SYMBOL_STRING_SIZE];
