@@ -36,6 +36,9 @@
 (defun cadar (lst)
   (car (cdr (car lst))))
 
+(defmacro cadddr (lst)
+  `(car (cdr (cdr (cdr ,lst)))))
+
 (defun null (x)
   (eq x '()))
 
@@ -102,9 +105,9 @@
       (cons (car lst) (remove-last (cdr lst)))))
 
 (defun reverse (lst)
-  (if (eq (length lst) 1)
-      (list (car lst))
-      (cons (last lst) (reverse (remove-last lst)))))
+  (if (null lst)
+      nil
+    (append (reverse (cdr lst)) (list (car lst)))))
 
 (defmacro < (x y)
   `(not (or (> ,x ,y) (eq ,x ,y))))
@@ -186,7 +189,7 @@
 ; `(set ,lst1 (append ,lst1 ,lst2)))
 
 (defun concat (lst &rest lists)
-  (let ((result (copy-list lst)))
+  (let ((result (clone lst)))
     (dolist (x lists)
       (set result (append result x)))
     result))
@@ -311,21 +314,23 @@
 (defmacro println ()
   `(call-foreign-function "print_line" 'void nil))
 
-(defun copy-list (lst)
-  (if (null lst)
-      nil
-    (cons (car lst) (copy-list (cdr lst)))))
-
 (defmacro alias (sym1 sym2)
   `(define ,sym1 ,sym2))
 
 (define exception-handlers nil)
 
-(defun exception (&rest e)
+(defun exception (excp desc)
+  (cons excp desc))
+
+(defun throw (e)
   (if (null exception-handlers)
-      (error  (concat-strings "Uncaught exception: " (symbol-name (car e))))
-    (progn ((car exception-handlers) e)
-           (set exception-handlers (cdr exception-handlers)))))
+      (let ((err-str (concat-strings "Uncaught exception: " (symbol-name (car e)))))
+        (error  (if (null (cdr e))
+                    err-str
+                  (concat-strings err-str (concat-strings ":" (cdr e))))))
+    (let ((h (car exception-handlers)))
+      (progn (set exception-handlers (cdr exception-handlers))
+             (h e)))))
 
 (defmacro try (body exception-clause finally-clause)
   `(call-cc (lambda (cc)
@@ -337,7 +342,9 @@
                        (set ret ,body )
                        ,finally-clause
                        ret)))))
-  
+
+(load-file "pos.lisp")
+
 (load-file "utils.lisp")
 
 (load-file "math.lisp")

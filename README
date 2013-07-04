@@ -2,7 +2,7 @@ Features currently supported:
 
 1. Basic operators like CAR, CDR, and other language primitives (cf. Paul Graham's 'Roots of Lisp')
 2. Other operators and utility functions written in pLisp itself (there is a rudimentary library at present)
-3. Error handling in the form of an '(error "...")' operator
+3. Exception handling in the form of '(try .. (catch ..) ..)
 4. Garbage collection
 5. Foreign function interface
 6. Ability to store and load images (aka serialization)
@@ -10,6 +10,7 @@ Features currently supported:
 8. A rudimentary debugger (break, resume, inspect variables)
 9. A package system
 10. Continuations
+11. A basic but complete object system that supports inheritance, encapsulation, etc.
 
 TODO list:
 
