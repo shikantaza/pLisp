@@ -40,7 +40,7 @@
                      e6)))      
         `(let ,e7
            (let (,e3 ,e4 ,@e5 ,@e6)
-             ,(if (not (null e4) '(initialize)))
+             ,(if (not (null e4) '(progn (if (not (null parent)) (call-method parent 'initialize)) (initialize))))
              (list (cons 'get-parent get-parent)
                    (cons 'initialize initialize)
                    ,@e8
@@ -91,6 +91,7 @@
                                                                                                    ,instance-var-list 
                                                                                                    ,instance-init-form 
                                                                                                    ,instance-methods))))
+                                 ,(if (not (null e3) '(progn (if (not (null superclass-name)) (call-method superclass-name 'initialize)) (initialize))))
                                  (list (cons 'get-superclass get-superclass)
                                        (cons 'initialize initialize)
                                        ,@e6

@@ -336,12 +336,15 @@
   `(call-cc (lambda (cc)
               (let ((ret))
                 (progn (set exception-handlers (cons (lambda ,(cadr exception-clause)
-                                                       (cc (progn ,(caddr exception-clause)
-                                                                  ,finally-clause)))
+                                                       (cc (progn ,finally-clause
+                                                                  ,(caddr exception-clause))))
                                                      exception-handlers))
                        (set ret ,body )
                        ,finally-clause
                        ret)))))
+
+(defmacro unwind-protect (body finally-clause)
+  `(try ,body (catch (e) (throw e)) ,finally-clause))
 
 (load-file "pos.lisp")
 
