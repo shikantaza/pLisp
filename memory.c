@@ -25,7 +25,7 @@
 
 #include "memory.h"
 
-#include "red_black_tree.h"
+#include "rb/red_black_tree.h"
 
 RAW_PTR *heap;
 RAW_PTR free_list;

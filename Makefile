@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o
+OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
 CFLAGS	= -g -I/usr/local/lib/libffi-3.0.13/include -L/usr/local/lib/
@@ -35,7 +35,7 @@ test_so.o:	test_so.c
 		$(CC) -c -fPIC test_so.c -o test_so.o
 
 plisp:	$(OBJS)
-		$(CC) $(CFLAGS) $(OBJS) libtpl.a librb.a -o plisp -lffi
+		$(CC) $(CFLAGS) $(OBJS) -o plisp -lffi
 
 lex.o:	lex.yy.c
 		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o
@@ -66,6 +66,18 @@ memory.o:	memory.c
 
 images.o:	images.c
 		$(CC) $(CFLAGS) -c images.c -o images.o
+
+tpl.o:		./tpl/tpl.c
+		$(CC) $(CFLAGS) -c ./tpl/tpl.c -o tpl.o
+
+red_black_tree.o:	./rb/red_black_tree.c
+		$(CC) $(CFLAGS) -c ./rb/red_black_tree.c -o red_black_tree.o
+
+stack.o:	./rb/stack.c
+		$(CC) $(CFLAGS) -c ./rb/stack.c -o stack.o
+
+misc.o:		./rb/misc.c
+		$(CC) $(CFLAGS) -c ./rb/misc.c -o misc.o
 
 ffi.o:		ffi.c
 		$(CC) $(CFLAGS) -c ffi.c -o ffi.o

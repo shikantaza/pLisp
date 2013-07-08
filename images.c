@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <setjmp.h>
 
-#include "tpl.h"
+#include "tpl/tpl.h"
 
 #include "plisp.h"
 #include "memory.h"
