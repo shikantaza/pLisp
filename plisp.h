@@ -177,7 +177,7 @@ OBJECT_PTR last_cell(OBJECT_PTR);
 
 OBJECT_PTR gensym();
 
-void raise_error();
+//void raise_error();
 
 void create_package(char *);
 void initialize_core_package();
@@ -260,3 +260,5 @@ OBJECT_PTR get_symbol_from_value(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR get_continuation_for_return(OBJECT_PTR);
 
 void print_copyright_notice();
+
+void throw_exception(char *);

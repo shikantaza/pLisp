@@ -66,7 +66,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   
   if(function_ptr == NULL)
   {
-    raise_error("Foreign function not found");
+    throw_exception("Foreign function not found");
     return NIL;
   }
 
@@ -75,14 +75,14 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
-    raise_error("Unable to allocate memory for argument types buffer");
+    throw_exception("Unable to allocate memory for argument types buffer");
     return NIL;
   }
 
   void **arg_values = (void **)malloc(nof_args * sizeof(void *));
   if(!arg_values)
   {
-    raise_error("Unable to allocate memory for argument values buffer");
+    throw_exception("Unable to allocate memory for argument values buffer");
     free(arg_types);
     return NIL;
   }
@@ -174,7 +174,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   if(status != FFI_OK)
   {
-    raise_error("call_foreign_function(): ffi_prep_cif() failed");
+    throw_exception("call_foreign_function(): ffi_prep_cif() failed");
     free_arg_values(arg_types, arg_values, args, nof_args);
     free(arg_values);
     free(arg_types);
@@ -206,7 +206,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       if(update_environment(reg_current_env, sym, value) == NIL)
       {
-	raise_error("update_environment failed");
+	throw_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
         free(arg_values);
         free(arg_types);
@@ -219,7 +219,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       if(update_environment(reg_current_env, sym, value) == NIL)
       {
-	raise_error("update_environment failed");
+	throw_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
         free(arg_values);
         free(arg_types);
@@ -242,7 +242,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       if(update_environment(reg_current_env, sym, (ptr << OBJECT_SHIFT) + ARRAY_TAG) == NIL)
       {
-	raise_error("update_environment failed");
+	throw_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
         free(arg_values);
         free(arg_types);
@@ -337,14 +337,14 @@ int format(OBJECT_PTR args)
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
-    raise_error("Unable to allocate memory for argument types buffer");
+    throw_exception("Unable to allocate memory for argument types buffer");
     return -1;
   }
 
   void **arg_values = (void **)malloc(nof_args * sizeof(void *));
   if(!arg_values)
   {
-    raise_error("Unable to allocate memory for argument values buffer");
+    throw_exception("Unable to allocate memory for argument values buffer");
     free(arg_types);
     return -1;
   }
@@ -401,7 +401,7 @@ int format(OBJECT_PTR args)
 
   if(status != FFI_OK)
   {
-    raise_error("format(): ffi_prep_cif() failed");
+    throw_exception("format(): ffi_prep_cif() failed");
     free_arg_values(arg_types, arg_values, args, nof_args);
     free(arg_values);
     free(arg_types);
