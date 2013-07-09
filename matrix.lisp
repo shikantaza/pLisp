@@ -21,6 +21,10 @@
 
 (alias dot-product utils:dot-product)
 
+(alias convert-list-to-array utils:convert-list-to-array)
+
+(alias convert-array-to-list utils:convert-array-to-list)
+
 (defun matrixp (m)
   (labels ((check (lst)
                   (if (< (length lst) 2)
@@ -33,12 +37,6 @@
                  (apply and (map arrayp l))
                  (check (map array-length l))))))
 
-(defun convert-list-to-array (lst)
-  (let ((m (make-array (length lst) nil)))
-    (dotimes (i (length lst))
-      (array-set m i (nth i lst)))
-    m))
-       
 (defun create-matrix-from-list (lst)
   (labels ((check (lst)
                   (if (< (length lst) 2)
@@ -59,13 +57,6 @@
 
 (defmacro matrix (lst)
   `(create-matrix-from-list ,lst))
-
-(defun convert-array-to-list (ar)
-  (let ((result)
-        (len (array-length ar)))
-    (dotimes (i len)
-      (nconc result (list (array-get ar i))))
-    result))
 
 (defun create-matrix (r c)
   (let ((result (make-array r nil)))

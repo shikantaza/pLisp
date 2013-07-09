@@ -83,9 +83,11 @@
   `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
 
 (defun assoc (x y)
-  (if (eq (caar y) x)
-      (cadar y)
-      (assoc x (cdr y))))
+  (if (null y)
+      nil
+    (if (eq (caar y) x)
+        (cadar y)
+      (assoc x (cdr y)))))
 
 (defun length (lst)
   (if (null lst)

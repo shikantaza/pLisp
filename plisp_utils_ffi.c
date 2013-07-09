@@ -50,3 +50,10 @@ void print_line()
   printf("\n");
 }
 
+int plisp_floor(float x)
+{
+  if(x >= 0)
+    return (int)x;
+  else
+    return (-1) * (int)round(abs(x) + 0.5 );
+}
