@@ -24,6 +24,9 @@
 (defun cadr (lst)
   (car (cdr lst)))
 
+(defun cddr (lst)
+  (cdr (cdr lst)))
+
 (defun caddr (lst)
   (car (cdr (cdr lst))))
 
@@ -355,6 +358,8 @@
 (load-file "math.lisp")
 
 (load-file "matrix.lisp")
+
+(load-file "statistics.lisp")
 
 (create-package "user")
 

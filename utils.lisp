@@ -81,6 +81,32 @@
               (remove-if (lambda (x) (not (eq x pivot))) lst)
               (quicksort (remove-if (lambda (x) (<= x pivot)) lst))))))
 
+;helper function for sort
+(defun split (lst)
+  (cond ((null lst)
+         (cons nil nil))
+        ((eq (length lst) 1)
+         (cons lst nil))
+        (t (let ((res (split (cddr lst))))
+             (cons (cons (car lst) (car res))
+                   (cons (cadr lst) (cdr res)))))))
+
+;helper function for sort
+(defun merge (lst1 lst2 compare-fn)
+  (cond ((null lst2)
+         lst1)
+        ((null lst1)
+         lst2)
+        (t (if (compare-fn (car lst1) (car lst2))
+               (cons (car lst1) (merge (cdr lst1) lst2 compare-fn))
+             (cons (car lst2) (merge lst1 (cdr lst2) compare-fn))))))
+
+(defun sort (lst compare-fn)
+  (if (or (null lst) (eq (length lst) 1))
+      lst
+    (let ((res (split lst)))
+      (merge (sort (car res) compare-fn) (sort (cdr res) compare-fn) compare-fn))))
+
 (defun concat-strings (str1 str2)
   (let ((l1 (array-length str1))
         (l2 (array-length str2)))

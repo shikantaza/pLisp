@@ -30,3 +30,18 @@
     (if (< b 0)
         (/ 1.0 (power a (abs b)))
       (* a (power a (- b 1))))))
+
+(defun sqrt (x)
+  (cond ((null x) 
+         (throw (exception 'exception "SQRT needs a non-negative number")))
+        ((not (numberp x))
+         (throw (exception 'exception "SQRT needs a non-negative number")))
+        ((not (>= x 0))
+         (throw (exception 'exception "SQRT needs a non-negative number")))
+        (t
+         (if (eq x 0)
+             0
+           (let ((guess 1.0))
+             (while (> (abs (- x (* guess guess))) 0.000001)
+               (set guess (/ (+ guess (/ x guess)) 2.0)))
+             guess)))))
