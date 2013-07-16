@@ -261,4 +261,5 @@ OBJECT_PTR get_continuation_for_return(OBJECT_PTR);
 
 void print_copyright_notice();
 
-void throw_exception(char *);
+void throw_generic_exception(char *);
+void throw_exception(char *, char *);

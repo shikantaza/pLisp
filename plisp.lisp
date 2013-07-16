@@ -351,6 +351,12 @@
 (defmacro unwind-protect (body finally-clause)
   `(try ,body (catch (e) (throw e)) ,finally-clause))
 
+;let* named let1 as we don't allow asterisks in symbol names (yet)
+(defmacro let1 (specs &rest body)
+  (if (or (null specs) (eq (length specs) 1))
+      `(let ,specs ,@body)
+    `(let (,(car specs)) (let1 ,(cdr specs) ,@body))))
+
 (load-file "pos.lisp")
 
 (load-file "utils.lisp")
@@ -364,3 +370,5 @@
 (create-package "user")
 
 (in-package "user")
+
+(load-file "tests/unit_tests.lisp")

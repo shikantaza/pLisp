@@ -392,8 +392,8 @@ int repl()
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);
 
-    delete_expression(g_expr);
-    g_expr = NULL;
+    //delete_expression(g_expr);
+    //g_expr = NULL;
   }
   else
   {
@@ -432,8 +432,8 @@ int repl()
                        get_symbol_object("EXCEPTION-HANDLERS"),
                        NIL);
 
-    delete_expression(g_expr);
-    g_expr = NULL;
+    //delete_expression(g_expr);
+    //g_expr = NULL;
 
     if(!debug_mode)
       gc();
@@ -441,8 +441,12 @@ int repl()
     /* if(yyin == stdin) */
     /*   prompt(); */
 
-    return 0;
   }
+
+  delete_expression(g_expr);
+  g_expr = NULL;
+
+  return 0;
 }
 
 int load_core_library()

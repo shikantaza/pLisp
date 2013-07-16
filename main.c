@@ -486,7 +486,7 @@ void cleanup()
 
 void print_copyright_notice()
 {
-  fprintf(stdout, "pLisp is a Lisp interpreter.\n\n");
+  fprintf(stdout, "pLisp is an interpreter for a Lisp-1 dialect.\n\n");
   fprintf(stdout, "Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n");
 
   fprintf(stdout, "pLisp is free software: you can redistribute it and/or modify\n");
@@ -1498,6 +1498,8 @@ int get_int_value(OBJECT_PTR obj)
   log_function_entry("get_int_value");
 
   assert(IS_INTEGER_OBJECT(obj));
+  /* if(!IS_INTEGER_OBJECT(obj)) */
+  /*   assert(false); */
 
   /*
   int ret;

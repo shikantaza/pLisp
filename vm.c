@@ -181,7 +181,7 @@ void eval()
 	char buf[SYMBOL_STRING_SIZE];
 	print_symbol(CADR(exp), buf);
 	sprintf(err_buf, "Symbol not bound(1): %s", buf);
-        throw_exception(err_buf);
+        throw_generic_exception(err_buf);
         return;
       }
     }
@@ -260,7 +260,7 @@ void eval()
       char buf[SYMBOL_STRING_SIZE];
       print_symbol(CADR(exp), buf);
       sprintf(err_buf, "Symbol not bound(2): %s", buf);
-      throw_exception(err_buf);
+      throw_generic_exception(err_buf);
       return;
     }
     reg_next_expression = CADDR(exp);
@@ -316,6 +316,13 @@ void eval()
         
       if(operator == CONS)
       {
+
+        if(length(reg_current_value_rib) != 2)
+        {
+          throw_exception("ARG-MISMATCH", "CONS expects two arguments");
+          return;
+        }
+
         reg_accumulator = cons(car(reg_current_value_rib), CADR(reg_current_value_rib));
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -324,7 +331,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("EQ expects two arguments");
+          throw_exception("ARG-MISMATCH", "EQ expects two arguments");
           return;
         }
 
@@ -339,7 +346,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("ATOM expects one argument");
+          throw_generic_exception("ATOM expects one argument");
           return;
         }
 
@@ -353,7 +360,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("CAR expects one argument, a CONS object");
+          throw_exception("NOT-A-CONS", "CAR expects one argument, a CONS object");
           return;
         }
 
@@ -365,7 +372,7 @@ void eval()
         {
           if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
           {
-            throw_exception("Argument to CAR should be a CONS object");
+            throw_exception("NOT-A-CONS", "Argument to CAR should be a CONS object");
             return;
           }
           reg_accumulator = CAAR(reg_current_value_rib);
@@ -378,7 +385,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("CDR expects one argument, a CONS object");
+          throw_exception("NOT-A-CONS", "CDR expects one argument, a CONS object");
           return;
         }
 
@@ -390,7 +397,7 @@ void eval()
         {
           if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
           {
-            throw_exception("Argument to CDR should be a CONS object");
+            throw_exception("NOT-A-CONS", "Argument to CDR should be a CONS object");
             return;
           }
 
@@ -405,7 +412,7 @@ void eval()
 
         if(length(reg_current_value_rib) < 2)
         {
-          throw_exception("Operator '+' requires at leaset two arguments");
+          throw_exception("ARG-MISMATCH", "Operator '+' requires at least two arguments");
           return;
         }
 
@@ -421,8 +428,13 @@ void eval()
             is_float = true;
             sum += get_float_value(val);
           }
-          else
+          else if(IS_INTEGER_OBJECT(val))
             sum += get_int_value(val);
+          else
+          {
+            throw_exception("INVALID-ARGUMENT", "Argument to operator '+' should be a number");
+            return;            
+          }
 
           rest = cdr(rest);
         }
@@ -439,7 +451,7 @@ void eval()
       {
         if(length(reg_current_value_rib) < 2)
         {
-          throw_exception("Operator '-' requires at leaset two arguments");
+          throw_exception("ARG-MISMATCH", "Operator '-' requires at least two arguments");
           return;
         }
 
@@ -453,8 +465,13 @@ void eval()
           is_float = true;
           val = get_float_value(first);
         }
-        else
+        else if(IS_INTEGER_OBJECT(first))
           val = get_int_value(first);
+        else
+        {
+          throw_exception("INVALID-ARGUMENT", "Argument to operator '-' should be a number");
+          return;
+        }
 
         OBJECT_PTR rest = cdr(reg_current_value_rib);
 
@@ -469,8 +486,13 @@ void eval()
             is_float = true;
             sum += get_float_value(val);
           }
-          else
+          else if(IS_INTEGER_OBJECT(val))
             sum += get_int_value(val);
+          else
+          {
+            throw_exception("INVALID-ARGUMENT", "Argument to operator '-' should be a number");
+            return;
+          }
 
           rest = cdr(rest);
         }
@@ -488,7 +510,7 @@ void eval()
 
         if(length(reg_current_value_rib) < 2)
         {
-          throw_exception("Operator '*' requires at leaset two arguments");
+          throw_exception("ARG-MISMATCH", "Operator '*' requires at least two arguments");
           return;
         }
 
@@ -505,8 +527,13 @@ void eval()
             is_float = true;
             sum *= get_float_value(val);
           }
-          else
+          else if(IS_INTEGER_OBJECT(val))
             sum *= get_int_value(val);
+          else
+          {
+            throw_exception("INVALID-ARGUMENT", "Argument to operator '*' should be a number");
+            return;
+          }
 
           rest = cdr(rest);
         }
@@ -524,7 +551,7 @@ void eval()
 
         if(length(reg_current_value_rib) < 2)
         {
-          throw_exception("Operator '/' requires at leaset two arguments");
+          throw_exception("ARG-MISMATCH", "Operator '/' requires at least two arguments");
           return;
         }
 
@@ -538,8 +565,13 @@ void eval()
           is_float = true;
           val = get_float_value(first);
         }
-        else
+        else if(IS_INTEGER_OBJECT(first))
           val = get_int_value(first);
+        else
+        {
+          throw_exception("INVALID-ARGUMENT", "Argument to operator '/' should be a number");
+          return;
+        }
 
         OBJECT_PTR rest = cdr(reg_current_value_rib);
 
@@ -554,15 +586,20 @@ void eval()
             is_float = true;
             sum *= get_float_value(val);
           }
-          else
+          else if(IS_INTEGER_OBJECT(val))
             sum *= get_int_value(val);
+          else
+          {
+            throw_exception("INVALID-ARGUMENT", "Argument to operator '/' should be a number");
+            return;
+          }
 
-	    rest = cdr(rest);
+          rest = cdr(rest);
         }
 
         if(sum == 0)
         {
-          throw_exception("Division by zero");
+          throw_exception("DIV-BY-ZERO-EXCEPTION", "Division by zero");
           return;
         }
 
@@ -634,15 +671,20 @@ void eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
-      else if(operator == LISTP) //can actually do this with a macro (not (atom) ...)
+      else if(operator == LISTP)
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("LISTP requires exactly one argument");
+          throw_exception("ARG-MISMATCH", "LISTP requires exactly one argument");
           return;
         }
 
-        reg_accumulator = is_atom(car(reg_current_value_rib)) ? NIL : TRUE;
+        OBJECT_PTR arg = car(reg_current_value_rib);
+
+        if(arg == NIL)
+          reg_accumulator = TRUE;
+        else
+          reg_accumulator = IS_CONS_OBJECT(arg) ? TRUE : NIL;
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -652,7 +694,7 @@ void eval()
 
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("SYMBOL-VALUE requires exactly one argument");
+          throw_exception("ARG-MISMATCH", "SYMBOL-VALUE requires exactly one argument");
           return;
         }
 
@@ -660,7 +702,7 @@ void eval()
 
         if(!IS_SYMBOL_OBJECT(sym))
         {
-          throw_exception("Argument to SYMBOL-VALUE should be a symbol object");
+          throw_exception("INVALID-ARGUMENT", "Argument to SYMBOL-VALUE should be a symbol object");
           return;
         }
 
@@ -668,7 +710,7 @@ void eval()
 
         if(car(res) == NIL)
         {
-          throw_exception("Symbol not bound");
+          throw_exception("SYMBOL-NOT-BOUND", "Symbol not bound");
           return;
         }
 
@@ -681,7 +723,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("> requires exactly two arguments");
+          throw_exception("ARG-MISMATCH", "> requires exactly two arguments");
           return;
         }
 
@@ -691,7 +733,7 @@ void eval()
         if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
            (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
         {
-          throw_exception("Arguments to > should be numbers (integer or float)");
+          throw_exception("INVALID-ARGUMENT", "Arguments to > should be numbers (integer or float)");
           return;
         }
 
@@ -716,7 +758,7 @@ void eval()
       {
         if(reg_current_value_rib != NIL)
         {
-          throw_exception("GEMSYM requires no argument");
+          throw_exception("ARG-MISMATCH", "GEMSYM requires no argument");
           return;
         }
 
@@ -728,7 +770,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("SETCAR requires two arguments");
+          throw_exception("ARG-MISMATCH", "SETCAR requires two arguments");
           return;
         }
 
@@ -736,7 +778,7 @@ void eval()
 
         if((!(IS_CONS_OBJECT(car_obj))))
         {
-          throw_exception("First argument to SETCAR should be a CONS object");
+          throw_exception("ARG-MISMATCH", "First argument to SETCAR should be a CONS object");
           return;
         }
 
@@ -751,7 +793,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("SETCDR requires two arguments");
+          throw_exception("ARG-MISMATCH", "SETCDR requires two arguments");
           return;
         }
 
@@ -759,7 +801,7 @@ void eval()
 
         if((!(IS_CONS_OBJECT(car_obj))))
         {
-          throw_exception("First argument to SETCDR should be a CONS object");
+          throw_exception("ARG-MISMATCH", "First argument to SETCDR should be a CONS object");
           return;
         }
 
@@ -774,17 +816,29 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("CREATE-PACKAGE requires exactly one argument");
+          throw_exception("ARG-MISMATCH", "CREATE-PACKAGE requires exactly one argument");
           return;
         }
 
         OBJECT_PTR package = car(reg_current_value_rib);
 
+        if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
+        {
+          throw_exception("INVALID-ARGUMENT", "CREATE-PACKAGE requires a string object or string literal as its argument");
+          return;
+        }
+
         char *package_name = (char *)convert_to_upper_case(strings[package >> OBJECT_SHIFT]);
 
-        if(!strcmp(package_name,"CORE"))
+        /* if(!strcmp(package_name,"CORE")) */
+	/* { */
+        /*   throw_exception("CORE-PACKAGE-EXISTS", "Core package already exists"); */
+        /*   return; */
+        /* } */
+
+        if(find_package(package_name) != NOT_FOUND)
 	{
-          throw_exception("Core package already exists");
+          throw_exception("PACKAGE-ALREADY-EXISTS", "Package already exists");
           return;
         }
 
@@ -799,16 +853,23 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("IN-PACKAGE requires exactly one argument");
+          throw_exception("ARG-MISMATCH", "IN-PACKAGE requires exactly one argument");
           return;
         }
 
         OBJECT_PTR package = car(reg_current_value_rib);
+
+        if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
+        {
+          throw_exception("INVALID-ARGUMENT", "IN-PACKAGE requires a string object or string literal as its argument");
+          return;
+        }
+
         char *package_name = (char *)convert_to_upper_case(strings[package >> OBJECT_SHIFT]);
 
         if(!strcmp(package_name,"CORE"))
 	{
-          throw_exception("Core package cannot be updated");
+          throw_exception("ACCESS-VIOLATION","Core package cannot be updated");
           return;
         }
         else
@@ -816,7 +877,7 @@ void eval()
           int index = find_package(package_name);
           if(index == NOT_FOUND)
 	  {
-            throw_exception("Package does not exist");
+            throw_exception("PACKAGE-NOT-FOUND", "Package does not exist");
             return;
           }
           else
@@ -833,16 +894,23 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("EXPAND-MACRO requires exactly one argument");
+          throw_exception("ARG-MISMATCH", "EXPAND-MACRO requires exactly one argument");
           return;
         }
 
         OBJECT_PTR macro_body = car(reg_current_value_rib);
+
+        if(!IS_CONS_OBJECT(macro_body))
+        {
+          throw_exception("INVALID-ARGUMENT", "EXPAND-MACRO requires a CONS form as argument");
+          return;
+        }
+
         OBJECT_PTR res = get_symbol_value(car(macro_body), reg_current_env);
 
         if(car(res) == NIL)
 	{
-          throw_exception("Macro undefined");
+          throw_exception("MACRO-UNDEFINED", "Macro undefined");
           return;
 	}
         else
@@ -893,7 +961,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("APPLY requires exactly two arguments");
+          throw_generic_exception("APPLY requires exactly two arguments");
           return;
         }        
 
@@ -903,14 +971,14 @@ void eval()
            (!(IS_CLOSURE_OBJECT(obj)))     &&
            (!(IS_CONTINUATION_OBJECT(obj))))
         {
-          throw_exception("First argument to APPLY should be a special form, a closure or a continuation");
+          throw_generic_exception("First argument to APPLY should be a special form, a closure or a continuation");
           return;
         }
 
         OBJECT_PTR args = CADR(reg_current_value_rib);
         if(args != NIL && (!(IS_CONS_OBJECT(args))))
         {
-          throw_exception("Second argument to APPLY should be a list of arguments");
+          throw_generic_exception("Second argument to APPLY should be a list of arguments");
           return;
         }
 
@@ -923,7 +991,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("STRING requires exactly one argument, a literal string");
+          throw_generic_exception("STRING requires exactly one argument, a literal string");
           return;
         }        
 
@@ -931,7 +999,7 @@ void eval()
 
         if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
         {
-          throw_exception("Argument to STRING should be a literal string");
+          throw_generic_exception("Argument to STRING should be a literal string");
           return;
         }        
  
@@ -944,7 +1012,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("MAKE-ARRAY requires exactly two arguments");
+          throw_generic_exception("MAKE-ARRAY requires exactly two arguments");
           return;
         }        
         
@@ -952,7 +1020,7 @@ void eval()
 
         if((!(IS_INTEGER_OBJECT(size))))
         {
-          throw_exception("First argument to MAKE-ARRAY should be the size of the array (integer)");
+          throw_generic_exception("First argument to MAKE-ARRAY should be the size of the array (integer)");
           return;
         }        
 
@@ -965,7 +1033,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          throw_exception("ARRAY-SET requires exactly three arguments");
+          throw_generic_exception("ARRAY-SET requires exactly three arguments");
           return;
         }        
 
@@ -973,7 +1041,7 @@ void eval()
 
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
-          throw_exception("First argument to ARRAY-SET should be an array");
+          throw_generic_exception("First argument to ARRAY-SET should be an array");
           return;
         }        
 
@@ -981,7 +1049,7 @@ void eval()
 
         if((!(IS_INTEGER_OBJECT(idx))))
         {
-          throw_exception("Second argument to ARRAY-SET should be an integer (index into the array)");
+          throw_generic_exception("Second argument to ARRAY-SET should be an integer (index into the array)");
           return;
         }        
 
@@ -991,7 +1059,7 @@ void eval()
 
         if(index < 0 || (index >= array_len))
         {
-          throw_exception("Array index out of bounds");
+          throw_generic_exception("Array index out of bounds");
           return;
         }        
  
@@ -1006,7 +1074,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("ARRAY-GET requires exactly two arguments");
+          throw_generic_exception("ARRAY-GET requires exactly two arguments");
           return;
         }        
 
@@ -1021,7 +1089,7 @@ void eval()
 
           if(index < 0 || index >= strlen(str))
           {
-            throw_exception("Array index out of bounds");
+            throw_generic_exception("Array index out of bounds");
             return;
           }        
 
@@ -1031,13 +1099,13 @@ void eval()
         {
           if((!(IS_ARRAY_OBJECT(array_obj))))
           {
-            throw_exception("First argument to ARRAY-GET should be an array");
+            throw_generic_exception("First argument to ARRAY-GET should be an array");
             return;
           }        
 
           if((!(IS_INTEGER_OBJECT(idx))))
           {
-            throw_exception("Second argument to ARRAY-GET should be an integer (index into the array)");
+            throw_generic_exception("Second argument to ARRAY-GET should be an integer (index into the array)");
             return;
           }        
 
@@ -1045,7 +1113,7 @@ void eval()
 
           if(index < 0 || (index >= array_len))
           {
-            throw_exception("Array index out of bounds");
+            throw_generic_exception("Array index out of bounds");
             return;
           }        
 
@@ -1059,7 +1127,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          throw_exception("SUB-ARRAY requires exactly three arguments");
+          throw_generic_exception("SUB-ARRAY requires exactly three arguments");
           return;
         }        
 
@@ -1067,7 +1135,7 @@ void eval()
 
         if(!(IS_ARRAY_OBJECT(array)))
         {
-          throw_exception("First argument to SUB-ARRAY should be an ARRAY object");
+          throw_generic_exception("First argument to SUB-ARRAY should be an ARRAY object");
           return;
         }
 
@@ -1075,13 +1143,13 @@ void eval()
 
         if(!(IS_INTEGER_OBJECT(start)))
         {
-          throw_exception("Second argument to SUB-ARRAY should be an integer (start index)");
+          throw_generic_exception("Second argument to SUB-ARRAY should be an integer (start index)");
           return;
         }
 
         if(!(get_int_value(start) >= 0))
         {
-          throw_exception("Second argument to SUB-ARRAY should be a non-negative integer");
+          throw_generic_exception("Second argument to SUB-ARRAY should be a non-negative integer");
           return;
         }
 
@@ -1089,19 +1157,19 @@ void eval()
 
         if(!(IS_INTEGER_OBJECT(array_length)))
         {
-          throw_exception("Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
+          throw_generic_exception("Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
           return;
         }
 
         if(!(get_int_value(array_length) >= 0))
         {
-          throw_exception("Third argument to SUB-ARRAY should be a non-negative integer");
+          throw_generic_exception("Third argument to SUB-ARRAY should be a non-negative integer");
           return;
         }
 
         if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
         {
-          throw_exception("Range (start, length) for SUB-ARRAY out of bounds of the array");
+          throw_generic_exception("Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
         }
 
@@ -1114,7 +1182,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("ARRAY-LENGTH requires exactly one argument, an array object");
+          throw_generic_exception("ARRAY-LENGTH requires exactly one argument, an array object");
           return;
         }        
 
@@ -1134,7 +1202,7 @@ void eval()
         {
           if(!(IS_ARRAY_OBJECT(array)))
           {
-            throw_exception("Argument to ARRAY-LENGTH should be an ARRAY object");
+            throw_generic_exception("Argument to ARRAY-LENGTH should be an ARRAY object");
             return;
           }
 
@@ -1148,7 +1216,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("PRINT-STRING requires exactly one argument, a string object");
+          throw_generic_exception("PRINT-STRING requires exactly one argument, a string object");
           return;
         }        
 
@@ -1156,7 +1224,7 @@ void eval()
 
         if(!(is_string_object(str)) && (!(IS_STRING_LITERAL_OBJECT(str))))
         {
-          throw_exception("Argument to PRINT_STRING should be a string object");
+          throw_generic_exception("Argument to PRINT_STRING should be a string object");
           return;
         }
 
@@ -1172,7 +1240,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("CREATE-IMAGE requires exactly one argument, a string object denoting the file name of the image");
+          throw_generic_exception("CREATE-IMAGE requires exactly one argument, a string object denoting the file name of the image");
           return;
         }        
 
@@ -1180,7 +1248,7 @@ void eval()
 
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
-          throw_exception("Argument to PRINT_STRING should be a string object denoting the file name of the image");
+          throw_generic_exception("Argument to PRINT_STRING should be a string object denoting the file name of the image");
           return;
         }
 
@@ -1195,7 +1263,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("LOAD-FOREIGN-LIBRARY requires exactly one argument, a string object denoting the library name");
+          throw_generic_exception("LOAD-FOREIGN-LIBRARY requires exactly one argument, a string object denoting the library name");
           return;
         }        
 
@@ -1203,7 +1271,7 @@ void eval()
 
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
-          throw_exception("Argument to LOAD-FOREIGN-LIBRARY should be a string object denoting the library name");
+          throw_generic_exception("Argument to LOAD-FOREIGN-LIBRARY should be a string object denoting the library name");
           return;
         }
 
@@ -1213,7 +1281,7 @@ void eval()
 
         if(temp == NULL)
         {
-          throw_exception("Unable to extend memory for dl_handles");
+          throw_generic_exception("Unable to extend memory for dl_handles");
           return;
         }
 
@@ -1223,7 +1291,7 @@ void eval()
 
         if(!ret)
         {
-          throw_exception("dl_open() failed");
+          throw_generic_exception("dl_open() failed");
           return;
         }
 
@@ -1238,7 +1306,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          throw_exception("CALL-FOREIGN-FUNCTION requires exactly three arguments");
+          throw_generic_exception("CALL-FOREIGN-FUNCTION requires exactly three arguments");
           return;
         }        
 
@@ -1246,7 +1314,7 @@ void eval()
 
         if(!IS_STRING_LITERAL_OBJECT(fn_name) && !is_string_object(fn_name))
         {
-          throw_exception("First argument to CALL-FOREIGN-FUNCTION should be the funtion name (string)");
+          throw_generic_exception("First argument to CALL-FOREIGN-FUNCTION should be the funtion name (string)");
           return;
         }
 
@@ -1260,7 +1328,7 @@ void eval()
              /* ret_type == FLOAT_POINTER || */
              ret_type == CHAR_POINTER))
         {
-          throw_exception("Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
+          throw_generic_exception("Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
           return;
         }
 
@@ -1268,7 +1336,7 @@ void eval()
 
         if(args != NIL && !IS_CONS_OBJECT(args))
         {
-          throw_exception("Arguments should be a list of two-element lists (argument, type) -- 1");
+          throw_generic_exception("Arguments should be a list of two-element lists (argument, type) -- 1");
           return;
         }
 
@@ -1280,13 +1348,13 @@ void eval()
 
           if(!IS_CONS_OBJECT(car_rest_args))
           {
-            throw_exception("Arguments should be a list of two-element lists (argument, type) -- 2");
+            throw_generic_exception("Arguments should be a list of two-element lists (argument, type) -- 2");
             return;
           }
 
           if(length(car_rest_args) != 2)
           {
-            throw_exception("Arguments should be a list of two-element lists (argument, type) -- 3");
+            throw_generic_exception("Arguments should be a list of two-element lists (argument, type) -- 3");
             return;
           }
 
@@ -1299,7 +1367,7 @@ void eval()
                is_string_object(val)         ||
                IS_SYMBOL_OBJECT(val)))
           {
-            throw_exception("Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
+            throw_generic_exception("Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
             return;
           }
 
@@ -1311,7 +1379,7 @@ void eval()
               char buf[SYMBOL_STRING_SIZE];
               print_symbol(val, buf);
               sprintf(err_buf, "Symbol not bound(3): %s", buf);
-              throw_exception(err_buf);
+              throw_generic_exception(err_buf);
               return;
             }
             val = cdr(res);
@@ -1323,7 +1391,7 @@ void eval()
           {
             if(!IS_INTEGER_OBJECT(val))
             {
-              throw_exception("Argument type mismatch: integer expected");
+              throw_generic_exception("Argument type mismatch: integer expected");
               return;
             }
           }          
@@ -1331,7 +1399,7 @@ void eval()
           {
             if(!IS_FLOAT_OBJECT(val))
             {
-              throw_exception("Argument type mismatch: float expected");
+              throw_generic_exception("Argument type mismatch: float expected");
               return;
             }
           }
@@ -1339,7 +1407,7 @@ void eval()
           {
             if(!IS_CHAR_OBJECT(val))
             {
-              throw_exception("Argument type mismatch: character expected");
+              throw_generic_exception("Argument type mismatch: character expected");
               return;
             }
           }
@@ -1347,7 +1415,7 @@ void eval()
           {
             if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
             {
-              throw_exception("Argument type mismatch: string object/literal expected");
+              throw_generic_exception("Argument type mismatch: string object/literal expected");
               return;
             }
           }
@@ -1355,7 +1423,7 @@ void eval()
           {
             if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
             {
-              throw_exception("Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
+              throw_generic_exception("Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
               return;
             }
           }
@@ -1363,13 +1431,13 @@ void eval()
           {
             if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
             {
-              throw_exception("Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
+              throw_generic_exception("Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
               return;
             }
           }
           else
           {
-            throw_exception("call_foreign_function(): non-primitive object type not handled");
+            throw_generic_exception("call_foreign_function(): non-primitive object type not handled");
             return;
           }
 
@@ -1395,7 +1463,7 @@ void eval()
 
         if(temp == ERROR)
         {
-          throw_exception("EVAL: Compilation failed");
+          throw_generic_exception("EVAL: Compilation failed");
           return;
         }
 
@@ -1408,7 +1476,7 @@ void eval()
           eval();
           if(in_error)
           {
-            throw_exception("EVAL failed");
+            throw_generic_exception("EVAL failed");
             return;
           }
         }
@@ -1449,7 +1517,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("LOAD-FILE requires exactly one argument");
+          throw_generic_exception("LOAD-FILE requires exactly one argument");
           return;
         }        
 
@@ -1457,7 +1525,7 @@ void eval()
 
         if(!is_string_object(arg) && (!IS_STRING_LITERAL_OBJECT(arg)))
         {
-          throw_exception("Argument to LOAD-FILE should be a string");
+          throw_generic_exception("Argument to LOAD-FILE should be a string");
           return;
         }
 
@@ -1465,13 +1533,13 @@ void eval()
 
         if(!temp)
         {
-          throw_exception("LOAD-FILE unable to open file");
+          throw_generic_exception("LOAD-FILE unable to open file");
           return;
         }
 
         if(set_up_new_yyin(temp))
         {
-          throw_exception("Unable to read from file");
+          throw_generic_exception("Unable to read from file");
           return;
         }
 
@@ -1551,7 +1619,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("LAMBDA-EXPRESSION requires exactly one argument, a closure or macro object");
+          throw_generic_exception("LAMBDA-EXPRESSION requires exactly one argument, a closure or macro object");
           return;
         }        
 
@@ -1559,7 +1627,7 @@ void eval()
 
         if(!IS_CLOSURE_OBJECT(obj) && !IS_MACRO_OBJECT(obj))
         {
-          throw_exception("Argument to LAMBDA-EXPRESSION should be a closure or macro object");
+          throw_generic_exception("Argument to LAMBDA-EXPRESSION should be a closure or macro object");
           return;
         }
 
@@ -1571,13 +1639,13 @@ void eval()
       {
         if(length(reg_current_value_rib) < 1)
         {
-          throw_exception("FORMAT requires at least one argument, a format specification string");
+          throw_generic_exception("FORMAT requires at least one argument, a format specification string");
           return;
         }
 
         if(!(IS_STRING_LITERAL_OBJECT(car(reg_current_value_rib))))
         {
-          throw_exception("First parameter to FORMAT must be a format specification string");
+          throw_generic_exception("First parameter to FORMAT must be a format specification string");
           return;
         }
         
@@ -1593,7 +1661,7 @@ void eval()
                IS_STRING_LITERAL_OBJECT(val) ||
                is_string_object(val)))
           {
-            throw_exception("Parameters to FORMAT should be integers, floats, characters or strings");
+            throw_generic_exception("Parameters to FORMAT should be integers, floats, characters or strings");
             return;
           }
 
@@ -1613,7 +1681,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("CLONE takes exactly one parameter, the object to be cloned");
+          throw_generic_exception("CLONE takes exactly one parameter, the object to be cloned");
           return;
         }
 
@@ -1625,7 +1693,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("RETURN-FROM requires two parameters: the closure/macro from which to return, and the value to be returned");
+          throw_generic_exception("RETURN-FROM requires two parameters: the closure/macro from which to return, and the value to be returned");
           return;
         }
 
@@ -1633,7 +1701,7 @@ void eval()
 
         if(cont == NIL)
         {
-          throw_exception("RETURN-FROM passed non-existent closure/macro object");
+          throw_generic_exception("RETURN-FROM passed non-existent closure/macro object");
           return;
         }
 
@@ -1647,7 +1715,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_exception("COMPILE needs two arguments, an expression to be compiled and a 'next' expression");
+          throw_generic_exception("COMPILE needs two arguments, an expression to be compiled and a 'next' expression");
           return;
         }
 
@@ -1655,7 +1723,7 @@ void eval()
 
         if(temp == ERROR)
         {
-          throw_exception("COMPILE failed");
+          throw_generic_exception("COMPILE failed");
           return;
         }
 
@@ -1667,14 +1735,14 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("SYMBOL needs one argument, a string object/literal");
+          throw_generic_exception("SYMBOL needs one argument, a string object/literal");
           return;
         }
 
         OBJECT_PTR str = car(reg_current_value_rib);
         if(!IS_STRING_LITERAL_OBJECT(str) && !is_string_object(str))
         {
-          throw_exception("SYMBOL needs one argument, a string object/literal");
+          throw_generic_exception("SYMBOL needs one argument, a string object/literal");
           return;
         }
 
@@ -1707,7 +1775,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("SYMBOL-NAME requires exactly one argument, a symbol object");
+          throw_generic_exception("SYMBOL-NAME requires exactly one argument, a symbol object");
           return;
         }
 
@@ -1715,7 +1783,7 @@ void eval()
 
         if(!IS_SYMBOL_OBJECT(sym))
         {
-          throw_exception("Parameter to SYMBOL_NAME should be a symbol object");
+          throw_generic_exception("Parameter to SYMBOL_NAME should be a symbol object");
           return;
         }
 
@@ -1733,7 +1801,7 @@ void eval()
 	char buf[SYMBOL_STRING_SIZE];
 	print_symbol(operator, buf);
 	sprintf(err_buf, "Symbol not bound(4): %s", buf);
-        throw_exception(err_buf);
+        throw_generic_exception(err_buf);
         return;
       }
     }
@@ -1750,7 +1818,7 @@ void eval()
         //not match the value rib
         /* if(length(params) != length(reg_current_value_rib)) */
         /* { */
-        /*   throw_exception("Arguments to function not supplied\n"); */
+        /*   throw_generic_exception("Arguments to function not supplied\n"); */
         /*   return; */
         /* } */
 
@@ -1797,7 +1865,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_exception("Continuations take exactly one argument");
+          throw_generic_exception("Continuations take exactly one argument");
           return;
         }
 
@@ -1809,7 +1877,7 @@ void eval()
       }
       else
       {
-        throw_exception("Illegal operator");
+        throw_generic_exception("Illegal operator");
         return;
       }
     }
@@ -1917,7 +1985,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 
       if(temp == ERROR)
       {
-        throw_exception("Backquote evaluation(1): compile failed");
+        throw_generic_exception("Backquote evaluation(1): compile failed");
         return NIL;
       }
 
@@ -1932,7 +2000,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
         eval();
         if(in_error)
         {
-          throw_exception("Evaluation of backquote failed(1)");
+          throw_generic_exception("Evaluation of backquote failed(1)");
           return NIL;
         }
       }
@@ -1973,7 +2041,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
           OBJECT_PTR temp = compile(CADAR(rest), NIL);
           if(temp == ERROR)
           {
-            throw_exception("Backquote evaluation(2): compile failed");
+            throw_generic_exception("Backquote evaluation(2): compile failed");
             return NIL;
           }
 
@@ -1988,7 +2056,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
             eval();
             if(in_error)
             {
-              throw_exception("Evaluation of backquote failed(2)");
+              throw_generic_exception("Evaluation of backquote failed(2)");
               return NIL;
             }
           }
@@ -2188,9 +2256,17 @@ OBJECT_PTR get_continuation_for_return(OBJECT_PTR obj)
   return NIL;
 }
 
-void throw_exception(char *err_str)
+void throw_generic_exception(char *err_str)
 {
   reg_current_value_rib = cons(cons(get_symbol_object("EXCEPTION"), get_string_object(err_str)), NIL);
+
+  //basically (REFER THROW (APPLY))
+  reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL);
+}
+
+void throw_exception(char *excp, char *err_str)
+{
+  reg_current_value_rib = cons(cons(get_symbol_object(excp), get_string_object(err_str)), NIL);
 
   //basically (REFER THROW (APPLY))
   reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL);
