@@ -357,6 +357,16 @@
       `(let ,specs ,@body)
     `(let (,(car specs)) (let1 ,(cdr specs) ,@body))))
 
+(defun array-eq (a1 a2)
+  (if (or (not (arrayp a1)) (not (arrayp a2)))
+      (throw (exception 'invalid-argument "Both arguments to ARRAY-EQ should be arrays"))
+    (progn (let ((l (array-length a1)))
+             (cond ((neq l (array-length a2)) nil)
+                   (t (dotimes (i l)
+                        (if (neq (array-get a1 i) (array-get a2 i))
+                            (return-from array-eq nil))))))
+           t)))
+
 (load-file "pos.lisp")
 
 (load-file "utils.lisp")

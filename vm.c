@@ -918,15 +918,15 @@ void eval()
           OBJECT_PTR obj = cdr(res);
           OBJECT_PTR args = cdr(macro_body);
 
-          reg_next_expression = cons(cons(FRAME,
-                                          (cons(cons(cons(HALT, NIL), car(macro_body)),
-                                                cons(cons(cons(APPLY, NIL), car(macro_body)),
-                                                     NIL)))),
-                                     car(macro_body));
+          /* reg_next_expression = cons(cons(FRAME, */
+          /*                                 (cons(cons(cons(HALT, NIL), car(macro_body)), */
+          /*                                       cons(cons(cons(APPLY, NIL), car(macro_body)), */
+          /*                                            NIL)))), */
+          /*                            car(macro_body)); */
 
-          eval();
-          if(in_error)
-            return;
+          /* eval(); */
+          /* if(in_error) */
+          /*   return; */
 
           reg_current_value_rib = NIL;
 
@@ -943,7 +943,7 @@ void eval()
 
           //place the macro object in the accumulator (to invoke APPLY)
           reg_accumulator = obj;
-          //reg_next_expression = cons(APPLY, NIL);
+          reg_next_expression = cons(cons(APPLY, NIL), car(macro_body));
           
           //evaluate the macro invocation
           while(car(reg_next_expression) != NIL)
@@ -961,7 +961,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_generic_exception("APPLY requires exactly two arguments");
+          throw_exception("ARG-MISMATCH", "APPLY requires exactly two arguments");
           return;
         }        
 
@@ -971,14 +971,14 @@ void eval()
            (!(IS_CLOSURE_OBJECT(obj)))     &&
            (!(IS_CONTINUATION_OBJECT(obj))))
         {
-          throw_generic_exception("First argument to APPLY should be a special form, a closure or a continuation");
+          throw_exception("INVALID-ARGUMENT", "First argument to APPLY should be a special form, a closure or a continuation");
           return;
         }
 
         OBJECT_PTR args = CADR(reg_current_value_rib);
         if(args != NIL && (!(IS_CONS_OBJECT(args))))
         {
-          throw_generic_exception("Second argument to APPLY should be a list of arguments");
+          throw_exception("INVALID-ARGUMENT", "Second argument to APPLY should be a list of arguments");
           return;
         }
 
@@ -991,7 +991,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 1)
         {
-          throw_generic_exception("STRING requires exactly one argument, a literal string");
+          throw_exception("ARG-MISMATCH", "STRING requires exactly one argument, a literal string");
           return;
         }        
 
@@ -999,7 +999,7 @@ void eval()
 
         if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
         {
-          throw_generic_exception("Argument to STRING should be a literal string");
+          throw_exception("INVALID-ARGUMENT", "Argument to STRING should be a literal string");
           return;
         }        
  
@@ -1010,9 +1010,10 @@ void eval()
       }
       else if(operator == MAKE_ARRAY)
       {
-        if(length(reg_current_value_rib) != 2)
+        int len = length(reg_current_value_rib);
+        if((len != 1) && (len != 2))
         {
-          throw_generic_exception("MAKE-ARRAY requires exactly two arguments");
+          throw_exception("ARG-MISMATCH", "MAKE-ARRAY requires the size as the first parameter, and optionally, the default value as the second");
           return;
         }        
         
@@ -1020,7 +1021,7 @@ void eval()
 
         if((!(IS_INTEGER_OBJECT(size))))
         {
-          throw_generic_exception("First argument to MAKE-ARRAY should be the size of the array (integer)");
+          throw_exception("INVALID-ARGUMENT", "First argument to MAKE-ARRAY should be the size of the array (integer)");
           return;
         }        
 
@@ -1033,7 +1034,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          throw_generic_exception("ARRAY-SET requires exactly three arguments");
+          throw_exception("ARG-MISMATCH", "ARRAY-SET requires exactly three arguments");
           return;
         }        
 
@@ -1041,7 +1042,7 @@ void eval()
 
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
-          throw_generic_exception("First argument to ARRAY-SET should be an array");
+          throw_exception("INVALID-ARGUMENT", "First argument to ARRAY-SET should be an array");
           return;
         }        
 
@@ -1049,7 +1050,7 @@ void eval()
 
         if((!(IS_INTEGER_OBJECT(idx))))
         {
-          throw_generic_exception("Second argument to ARRAY-SET should be an integer (index into the array)");
+          throw_exception("INVALID-ARGUMENT", "Second argument to ARRAY-SET should be an integer (index into the array)");
           return;
         }        
 
@@ -1059,7 +1060,7 @@ void eval()
 
         if(index < 0 || (index >= array_len))
         {
-          throw_generic_exception("Array index out of bounds");
+          throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
           return;
         }        
  
@@ -1074,13 +1075,20 @@ void eval()
       {
         if(length(reg_current_value_rib) != 2)
         {
-          throw_generic_exception("ARRAY-GET requires exactly two arguments");
+          throw_exception("ARG-MISMATCH", "ARRAY-GET requires exactly two arguments");
           return;
         }        
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
 
         OBJECT_PTR idx = CADR(reg_current_value_rib);
+
+        if(!IS_INTEGER_OBJECT(idx))
+        {
+          throw_exception("INVALID-ARGUMENT", "Second argument to ARRAY-GET should be an integer (index into the array)");
+          return;
+        }        
+
         int index = get_int_value(idx);
 
         if(IS_STRING_LITERAL_OBJECT(array_obj))
@@ -1089,7 +1097,7 @@ void eval()
 
           if(index < 0 || index >= strlen(str))
           {
-            throw_generic_exception("Array index out of bounds");
+            throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
             return;
           }        
 
@@ -1097,15 +1105,9 @@ void eval()
         }
         else
         {
-          if((!(IS_ARRAY_OBJECT(array_obj))))
+          if(!IS_ARRAY_OBJECT(array_obj))
           {
-            throw_generic_exception("First argument to ARRAY-GET should be an array");
-            return;
-          }        
-
-          if((!(IS_INTEGER_OBJECT(idx))))
-          {
-            throw_generic_exception("Second argument to ARRAY-GET should be an integer (index into the array)");
+            throw_exception("INVALID-ARGUMENT", "First argument to ARRAY-GET should be an array");
             return;
           }        
 
@@ -1113,7 +1115,7 @@ void eval()
 
           if(index < 0 || (index >= array_len))
           {
-            throw_generic_exception("Array index out of bounds");
+            throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
             return;
           }        
 
@@ -1127,7 +1129,7 @@ void eval()
       {
         if(length(reg_current_value_rib) != 3)
         {
-          throw_generic_exception("SUB-ARRAY requires exactly three arguments");
+          throw_exception("ARG-MISMATCH", "SUB-ARRAY requires exactly three arguments");
           return;
         }        
 
@@ -1135,7 +1137,7 @@ void eval()
 
         if(!(IS_ARRAY_OBJECT(array)))
         {
-          throw_generic_exception("First argument to SUB-ARRAY should be an ARRAY object");
+          throw_exception("INVALID-ARGUMENT", "First argument to SUB-ARRAY should be an ARRAY object");
           return;
         }
 
@@ -1143,13 +1145,13 @@ void eval()
 
         if(!(IS_INTEGER_OBJECT(start)))
         {
-          throw_generic_exception("Second argument to SUB-ARRAY should be an integer (start index)");
+          throw_exception("INVALID-ARGUMENT", "Second argument to SUB-ARRAY should be an integer (start index)");
           return;
         }
 
         if(!(get_int_value(start) >= 0))
         {
-          throw_generic_exception("Second argument to SUB-ARRAY should be a non-negative integer");
+          throw_exception("INVALID-ARGUMENT", "Second argument to SUB-ARRAY should be a non-negative integer");
           return;
         }
 
@@ -1157,19 +1159,19 @@ void eval()
 
         if(!(IS_INTEGER_OBJECT(array_length)))
         {
-          throw_generic_exception("Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
+          throw_exception("INVALID-ARGUMENT", "Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
           return;
         }
 
         if(!(get_int_value(array_length) >= 0))
         {
-          throw_generic_exception("Third argument to SUB-ARRAY should be a non-negative integer");
+          throw_exception("INVALID-ARGUMENT", "Third argument to SUB-ARRAY should be a non-negative integer");
           return;
         }
 
         if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
         {
-          throw_generic_exception("Range (start, length) for SUB-ARRAY out of bounds of the array");
+          throw_exception("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
         }
 
@@ -1248,7 +1250,7 @@ void eval()
 
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
-          throw_generic_exception("Argument to PRINT_STRING should be a string object denoting the file name of the image");
+          throw_generic_exception("Argument to CREATE-IMAGE should be a string object or a string literal denoting the file name of the image");
           return;
         }
 
@@ -1593,7 +1595,8 @@ void eval()
       }
       else if(operator ==  ARRAYP)
       {
-        reg_accumulator = IS_ARRAY_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
+        OBJECT_PTR obj = car(reg_current_value_rib);
+        reg_accumulator = (IS_ARRAY_OBJECT(obj) || IS_STRING_LITERAL_OBJECT(obj)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
