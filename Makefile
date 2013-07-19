@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o red_black_tree.o stack.o misc.o
+OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o mmap.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
 CFLAGS	= -g -I/usr/local/lib/libffi-3.0.13/include -L/usr/local/lib/
@@ -70,6 +70,9 @@ images.o:	images.c
 tpl.o:		./tpl/tpl.c
 		$(CC) $(CFLAGS) -c ./tpl/tpl.c -o tpl.o
 
+mmap.o:		./tpl/win/mmap.c
+		$(CC) $(CFLAGS) -c ./tpl/win/mmap.c -o mmap.o
+
 red_black_tree.o:	./rb/red_black_tree.c
 		$(CC) $(CFLAGS) -c ./rb/red_black_tree.c -o red_black_tree.o
 
@@ -88,9 +91,12 @@ main.o		: plisp.h memory.h
 compiler.o	: plisp.h
 vm.o		: plisp.h memory.h
 util.o		: util.h
-images.o	: plisp.h memory.h
+images.o	: plisp.h memory.h tpl/tpl.h
 ffi.o		: plisp.h
 memory.o	: plisp.h memory.h
+
+tpl.o		: tpl/tpl.h
+mmap.o		: tpl/win/mman.h
 
 clean:
 	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump

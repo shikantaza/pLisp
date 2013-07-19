@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <setjmp.h>
 
+#define TPL_NOLIB
+
 #include "tpl/tpl.h"
 
 #include "plisp.h"

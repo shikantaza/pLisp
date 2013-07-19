@@ -35,6 +35,12 @@
               (incf passed-cases)
             (progn (format "Test case #%d failed" ,id) (println) (incf failed-cases))))))
 
+(defmacro test-happy-case (id body)
+  `(progn (try ,body
+               (catch (e)
+                 (progn (format "Test case #%d failed" ,id) (println) (incf failed-cases))))
+          (incf passed-cases)))
+
 ;;car
 (test-exception 1 (car 1) 'not-a-cons)
 
@@ -357,13 +363,11 @@
 
 (test-exception 129 (in-package (symbol-name (gensym))) 'package-not-found)
 
-(try (let ((x (symbol-name (gensym))))
-       (create-package x)
-       (in-package x)
-       (in-package "user")
-       (incf passed-cases))
-     (catch (e)
-       (progn (format "Test case #%d failed" 130) (println) (incf failed-cases))))
+(test-happy-case 130 (let ((x (symbol-name (gensym))))
+                       (create-package x)
+                       (in-package x)
+                       (in-package "user")))
+
 ;end in-package
 
 ;expand-macro
@@ -498,6 +502,353 @@
 
 ;end sub-array
 
+;array-length
+(test-exception 176 (array-length) 'arg-mismatch)
+
+(test-exception 177 (array-length 1 2) 'arg-mismatch)
+
+(test-exception 178 (array-length 1) 'invalid-argument)
+
+(test-condition 179 (eq (array-length (make-array 3)) 3))
+;end array-length
+
+;print-string
+(test-exception 180 (print-string) 'arg-mismatch)
+
+(test-exception 181 (print-string 1 2) 'arg-mismatch)
+
+(test-exception 182 (print-string 1) 'invalid-argument)
+
+(test-happy-case 183 (print-string "Diagnostic from test case #183"))
+
+(test-happy-case 184 (print-string (string "Diagnostic from test case #184")))
+;end print-string
+
+;create-image
+(test-exception 185 (create-image) 'arg-mismatch)
+
+(test-exception 186 (create-image 1 2) 'arg-mismatch)
+
+(test-exception 187 (create-image 1) 'invalid-argument)
+
+(test-happy-case 188 (progn (create-image "test1.image")
+                            (utils:system "ls -l test1.image")
+                            (utils:system "rm test1.image")))
+
+(test-happy-case 189 (progn (create-image (string "test2.image"))
+                            (utils:system "ls -l test2.image")
+                            (utils:system "rm test2.image")))
+;end create-image
+
+;load-foreign-library
+(test-exception 190 (load-foreign-library) 'arg-mismatch)
+
+(test-exception 191 (load-foreign-library 1 2) 'arg-mismatch)
+
+(test-exception 192 (load-foreign-library 1) 'invalid-argument)
+
+(test-happy-case 193 (load-foreign-library "libtest.so"))
+
+(test-happy-case 194 (load-foreign-library (string "libtest.so")))
+;end load-foreign-library
+
+;call-foreign-function
+(test-exception 195 (call-foreign-function) 'arg-mismatch)
+
+(test-exception 196 (call-foreign-function 1) 'arg-mismatch)
+
+(test-exception 197 (call-foreign-function 1 2) 'arg-mismatch)
+
+(test-exception 198 (call-foreign-function 1 2 3 4) 'arg-mismatch)
+
+(test-exception 199 (call-foreign-function 1 2 3) 'invalid-argument)
+
+(test-exception 200 (call-foreign-function "abc" 1 2) 'invalid-argument)
+
+(test-exception 201 (call-foreign-function (string "abc") 1 2) 'invalid-argument)
+
+(test-exception 202 (call-foreign-function "abc" 'integer 1) 'invalid-argument)
+
+(test-exception 203 (call-foreign-function "abc" 'integer '(1 2 3)) 'invalid-argument)
+
+(test-exception 204 (call-foreign-function "abc" 'integer '((1) (2) (3))) 'invalid-argument)
+
+(test-exception 205 (call-foreign-function "abc" 'integer '((1 2 3) (4 5 6) (7 8 9))) 'invalid-argument)
+
+(test-exception 206 (call-foreign-function "abc" 'integer '((1 2) (3 4) (5 6))) 'invalid-argument)
+
+(test-exception 207 (call-foreign-function "abc" 'integer '((x 2) (3 4) (5 6))) 'symbol-not-bound)
+
+(test-exception 208 (call-foreign-function "abc" 'integer '(("abc" integer))) 'arg-mismatch)
+
+(test-exception 209 (call-foreign-function "abc" 'integer '(("abc" float))) 'arg-mismatch)
+
+(test-exception 210 (call-foreign-function "abc" 'integer '(("abc" character))) 'arg-mismatch)
+
+(test-exception 211 (call-foreign-function "abc" 'integer '((1 character-pointer))) 'arg-mismatch)
+
+(test-exception 212 (call-foreign-function "abc" 'integer '(("abc" integer-pointer))) 'arg-mismatch)
+
+(test-exception 213 (call-foreign-function "abc" 'integer '(("abc" float-pointer))) 'arg-mismatch)
+
+(test-exception 214 (call-foreign-function "abc" 'integer '(("abc" some-other-type))) 'invalid-argument)
+
+(let ((i 10)
+      (x (string "abc"))
+      (f 19.56))
+
+  (load-foreign-library "libtest.so")
+
+  (test-condition 215 (eq (call-foreign-function "fn_ret_int" 'integer
+                                             '((i integer)
+                                               (6.5 float)
+                                               (#\a character)
+                                               (x character-pointer)))
+                      100))
+
+  
+  (test-condition 216 (eq (call-foreign-function "fn_ret_float" 'float
+                                                 '((10 integer)
+                                                   (6.5 float)
+                                                   (#\a character)
+                                                   ("abc" character-pointer)))
+                          13))
+
+  (test-condition 217 (eq (call-foreign-function "fn_ret_char" 'character
+                                                 '((10 integer)
+                                                   (6.5 float)
+                                                   (#\a character)
+                                                   ("abc" character-pointer)))
+                          #\a))
+
+  (test-condition 218 (eq (call-foreign-function "fn_ret_char_ptr" 'character-pointer
+                                                 '((10 integer)
+                                                   (6.5 float)
+                                                   (#\a character)
+                                                   ("abc" character-pointer)))
+                          "aaaaaaaaaa"))
+
+  (call-foreign-function "fn_arg_int_ptr" 
+                         'integer
+                         '((i integer-pointer)))
+
+  (test-condition 219 (eq i 100))
+
+  (call-foreign-function "fn_arg_float_ptr" 
+                         'integer
+                         '((f float-pointer)))
+
+  (test-condition 220 (eq f 100.97))
+
+  (call-foreign-function "fn_arg_char_ptr" 
+                         'integer
+                         '((x character-pointer)))
+
+  (test-condition 221 (eq x "ABC"))
+
+  (test-happy-case 222 (call-foreign-function "function_ret_void" 'void
+                                              '((10 integer)
+                                                (6.5 float)
+                                                (#\a character)
+                                                ("abc" character-pointer)))))
+;end call-foreign-library
+
+;load-file
+(test-exception 223 (load-file) 'arg-mismatch)
+
+(test-exception 224 (load-file 1 2) 'arg-mismatch)
+
+(test-exception 225 (load-file 1) 'invalid-argument)
+
+(test-exception 226 (load-file (concat-strings (symbol-name (gensym)) ".lisp")) 'file-open-error)
+
+;happy case not tested since LOAD-FILE is tested in running this file (unit_tests.lisp) itself
+;end load-file
+
+;predicate functions that test for object type
+(test-exception 227 (consp) 'arg-mismatch)
+(test-exception 228 (consp 1 2) 'arg-mismatch)
+(test-condition 229 (null (consp 1)))
+(test-condition 230 (consp '(1 2)))
+
+(test-exception 231 (integerp) 'arg-mismatch)
+(test-exception 232 (integerp 1 2) 'arg-mismatch)
+(test-condition 233 (null (integerp 1.0)))
+(test-condition 234 (integerp 1))
+
+(test-exception 235 (floatp) 'arg-mismatch)
+(test-exception 236 (floatp 1 2) 'arg-mismatch)
+(test-condition 237 (null (floatp 1)))
+(test-condition 238 (floatp 1.0))
+
+(test-exception 239 (characterp) 'arg-mismatch)
+(test-exception 240 (characterp 1 2) 'arg-mismatch)
+(test-condition 241 (null (characterp 1)))
+(test-condition 242 (characterp #\a))
+
+(test-exception 243 (stringp) 'arg-mismatch)
+(test-exception 244 (stringp 1 2) 'arg-mismatch)
+(test-condition 245 (null (stringp 1)))
+(test-condition 246 (stringp "abc"))
+(test-condition 247 (stringp (string "abc")))
+
+(test-exception 248 (symbolp) 'arg-mismatch)
+(test-exception 249 (symbolp 1 2) 'arg-mismatch)
+(test-condition 250 (null (symbolp 1)))
+(test-condition 251 (symbolp 'a))
+(test-condition 252 (symbolp (gensym)))
+(test-condition 253 (symbolp (symbol "abc")))
+
+(test-exception 254 (arrayp) 'arg-mismatch)
+(test-exception 255 (arrayp 1 2) 'arg-mismatch)
+(test-condition 256 (null (arrayp 1)))
+(test-condition 257 (arrayp (make-array 3)))
+(test-condition 258 (arrayp (string "abc")))
+
+(test-exception 259 (closurep) 'arg-mismatch)
+(test-exception 260 (closurep 1 2) 'arg-mismatch)
+(test-condition 261 (null (closurep 1)))
+(test-condition 262 (closurep (lambda (x) x)))
+(test-condition 263 (closurep cadr))
+
+(test-exception 264 (macrop) 'arg-mismatch)
+(test-exception 265 (macrop 1 2) 'arg-mismatch)
+(test-condition 266 (null (macrop 1)))
+(test-condition 267 (macrop (macro (x) x)))
+(test-condition 268 (macrop defun))
+
+(test-exception 269 (continuationp) 'arg-mismatch)
+(test-exception 270 (continuationp 1 2) 'arg-mismatch)
+(test-condition 271 (null (continuationp 1)))
+
+(let ((cont))
+  (call-cc (lambda (cc) (set cont cc)))
+  (test-condition 272 (continuationp cont)))
+;end predicate functions that test for object type
+
+;lambda-expression
+(test-exception 273 (lambda-expression) 'arg-mismatch)
+
+(test-exception 274 (lambda-expression 1 2) 'arg-mismatch)
+
+(test-exception 275 (lambda-expression 1) 'invalid-argument)
+
+(let ((val (lambda-expression (lambda (x) x))))
+  (test-condition 276 (and (eq (car val) '(x))
+                           (eq (car (cadr val)) 'refer)
+                           (eq (cadr (cadr val)) 'x))))
+
+(let ((val (lambda-expression (macro (x) x))))
+  (test-condition 277 (and (eq (car val) '(x))
+                           (eq (car (cadr val)) 'refer)
+                           (eq (cadr (cadr val)) 'x))))
+;end lambda-expression
+
+;format
+(test-exception 278 (format) 'arg-mismatch)
+
+(test-exception 279 (format 1) 'invalid-argument)
+
+(test-exception 280 (format "%d" 'a) 'invalid-argument)
+
+(test-exception 281 (format "%d" (make-array 3)) 'invalid-argument)
+
+(test-exception 282 (format "%d" (lambda (x) x)) 'invalid-argument)
+
+(test-exception 283 (format "%d" (macro (x) x)) 'invalid-argument)
+
+(let ((cont))
+  (call-cc (lambda (cc) (set cont cc)))
+  (test-exception 284(format "%d" cont) 'invalid-argument))
+
+(test-happy-case 285 (progn (format "Diagnostic from test case #285") (println)))
+
+(test-happy-case 286 (progn (format "Diagnostic from test case #%d %d" 286 10) (println)))
+
+(test-happy-case 287 (progn (format "Diagnostic from test case #%d %0.2f" 287 3.1415) (println)))
+
+(test-happy-case 288 (progn (format "Diagnostic from test case #%d %c" 288 #\a) (println)))
+
+(test-happy-case 289 (progn (format "Diagnostic from test case #%d %s" 289 "abc") (println)))
+;end-format
+
+;clone
+(test-exception 290 (clone) 'arg-mismatch)
+
+(test-exception 291 (clone 1 2) 'arg-mismatch)
+
+(dolist (x (list 1 1.0 #\a "abc" 'a '(1 2 3)))
+  (test-condition 292 (eq x (clone x))))
+
+(let ((val (make-array 3)))
+  (array-set val 0 0)
+  (array-set val 1 1)
+  (array-set val 2 2)
+  (test-condition 293 (array-eq val (clone val))))
+
+(let ((cont))
+  (call-cc (lambda (cc) (set cont cc)))
+  (test-condition 294 (eq cont (clone cont))))
+;end clone
+
+;return-from
+(test-exception 295 (return-from) 'arg-mismatch)
+
+(test-exception 296 (return-from 1) 'arg-mismatch)
+
+(test-exception 297 (return-from 1 2 3) 'arg-mismatch)
+
+(let ((x)
+      (val))
+
+  (defun f (n)
+    (if (> n 0)
+      (progn (set x 10) 
+             (return-from f 20)))
+    (set x 30)
+    40)
+
+  (set val (f 10))
+  (test-condition 298 (and (eq x 10) (eq val 20)))
+
+  (set val (f -10))
+  (test-condition 299 (and (eq x 30) (eq val 40))))
+
+;end return-from
+
+;compile
+(test-exception 300 (compile) 'arg-mismatch)
+
+(test-exception 301 (compile 1) 'arg-mismatch)
+
+(test-exception 302 (compile 1 2 3) 'arg-mismatch)
+;end compile
+
+;symbol
+(test-exception 303 (symbol) 'arg-mismatch)
+
+(test-exception 304 (symbol 1 2) 'arg-mismatch)
+
+(test-exception 305 (symbol 1) 'invalid-argument)
+
+(test-condition 306 (eq (symbol "abc") 'abc))
+
+(test-condition 307 (eq (symbol (string "abc")) 'abc))
+;end symbol
+
+;symbol-name
+(test-exception 308 (symbol-name) 'arg-mismatch)
+
+(test-exception 309 (symbol-name 1 2) 'arg-mismatch)
+
+(test-exception 310 (symbol-name 1) 'invalid-argument)
+
+(test-condition 311 (eq (symbol-name 'abc) "USER:ABC"))
+;end symbol-name
+
+;symbol not bound
+(test-exception 312 an-undefined-symbol 'symbol-not-bound)
+;end symbol not bound
 
 (format "%d of %d test cases passed (%.2f%%)" 
         passed-cases 

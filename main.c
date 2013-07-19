@@ -821,6 +821,22 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
       else if(IS_FLOAT_OBJECT(obj2))
         ret = (val == get_float_value(obj2));
     }
+    else if(is_string_object(obj1))
+    {
+      char *str1 = get_string(obj1);
+      if(is_string_object(obj2))
+        ret = !strcmp(str1, get_string(obj2));
+      else if(IS_STRING_LITERAL_OBJECT(obj2))
+        ret = !strcmp(str1, strings[obj2 >> OBJECT_SHIFT]);
+    }
+    else if(IS_STRING_LITERAL_OBJECT(obj1))
+    {
+      char *str1 = strings[obj1 >> OBJECT_SHIFT];
+      if(is_string_object(obj2))
+        ret = !strcmp(str1, get_string(obj2));
+      else if(IS_STRING_LITERAL_OBJECT(obj2))
+        ret = !strcmp(str1, strings[obj2 >> OBJECT_SHIFT]);
+    }    
   }
   
   return ret;

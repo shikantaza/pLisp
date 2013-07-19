@@ -51,7 +51,12 @@ void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 //call_foreign_function
 OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PTR args)
 {
-  char *fn_name_str = strings[fn_name >> OBJECT_SHIFT];
+  char *fn_name_str;
+
+  if(IS_STRING_LITERAL_OBJECT(fn_name))
+     fn_name_str = strings[fn_name >> OBJECT_SHIFT];
+  else
+    fn_name_str = get_string(fn_name);
 
   void (*function_ptr)(void);
 

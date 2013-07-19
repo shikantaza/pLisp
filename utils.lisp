@@ -179,7 +179,7 @@
 ;naive implementation
 (defun oddp (n)
   (if (not (integerp n))
-      (throw (exception 'exception "Argument to ODDP should be an integer"))
+      (throw (exception 'invalid-argument "Argument to ODDP should be an integer"))
     (let ((x 0))
       (while (< x n)
         (set x (+ x 2)))
@@ -187,7 +187,12 @@
 
 (defun floor (n)
   (if (not (numberp n))
-      (throw (exception 'exception "Argument to FLOOR should be a number"))
+      (throw (exception 'invalid-argument "Argument to FLOOR should be a number"))
     (if (integerp n)
         n
       (call-foreign-function "plisp_floor" 'integer '((n float))))))
+
+(defun system (str)
+  (if (not (stringp str))
+      (throw (exception 'invalid-argument "Argument to SYSTEM should be a string literal or a string object"))
+    (call-foreign-function "plisp_system" 'void '((str character-pointer)))))

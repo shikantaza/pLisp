@@ -20,7 +20,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H 
 
-#define HEAP_SIZE 67108864
+#define HEAP_SIZE 16777216
 
 int initialize_memory();
 

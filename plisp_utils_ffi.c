@@ -27,6 +27,7 @@ commands to build .so file:
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 float plisp_random()
 {
@@ -56,4 +57,9 @@ int plisp_floor(float x)
     return (int)x;
   else
     return (-1) * (int)round(abs(x) + 0.5 );
+}
+
+void plisp_system(char *cmd)
+{
+  system(cmd);
 }
