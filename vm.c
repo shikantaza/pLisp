@@ -1995,9 +1995,11 @@ void raise_error(char *err_str)
 {
   fprintf(stdout, "%s\n", err_str);
 
-  fprintf(stdout, "Begin backtrace\n");
-  print_backtrace();
-  fprintf(stdout, "End backtrace\n");
+  //to stay commented out till we are
+  //able to prpvide a meaningful backtrace
+  //fprintf(stdout, "Begin backtrace\n");
+  //print_backtrace();
+  //fprintf(stdout, "End backtrace\n");
 
   reg_accumulator = NIL;
   reg_current_value_rib = NIL;

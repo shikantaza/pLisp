@@ -243,6 +243,8 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
                                                     NIL))),
                                      car_obj);
 
+          in_error = false;
+
           eval();
 
           if(in_error)
@@ -271,6 +273,8 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           reg_accumulator = cdr(res);
           /* reg_next_expression = cons(APPLY, NIL); */
           
+          in_error = false;
+
           //evaluate the macro invocation
           while(car(reg_next_expression) != NIL)
           {
@@ -379,6 +383,8 @@ int repl()
 
     continuations_map = NIL;
 
+    in_error = false;
+
     while(car(reg_next_expression) != NIL)
     {
       eval();
@@ -406,6 +412,9 @@ int repl()
       return 1;
 
     reg_next_expression = compile(exp, cons(cons(HALT, NIL), exp));
+
+    if(reg_next_expression == ERROR)
+      return 1;
 
     reg_current_env = NIL;
 
