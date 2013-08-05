@@ -2266,6 +2266,10 @@ void print_backtrace()
 {
   OBJECT_PTR rest = (debug_mode ? debug_execution_stack : reg_current_stack);
 
+  //to skip the two elements
+  //corresponding to (throw ..)
+  rest = cdr(cdr(rest));
+
   int i=0;
 
   while(rest != NIL)

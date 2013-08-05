@@ -367,6 +367,41 @@
                             (return-from array-eq nil))))))
            t)))
 
+;general-purpose read; returns integer, float or string
+;depending on what is read from stdin
+(defun read ()
+  (let1 ((i 0) 
+         (f 0.0)
+         (c (string ""))
+         (ret (call-foreign-function "plisp_read" 'integer '((i integer-pointer)
+                                                             (f float-pointer)
+                                                             (c character-pointer)))))
+    (cond ((eq ret -1)        (throw (exception 'read-exception "Error calling read (overflow?)")))
+          ((eq ret 1)         i)
+          ((eq ret 2)         f)
+          (t                  c))))
+
+(defun read-integer ()
+  (let ((i (read)))
+    (if (integerp i)
+        i
+      (throw (exception 'not-an-integer "Not an integer")))))
+
+(defun read-float ()
+  (let ((f (read)))
+    (if (numberp f) 
+        (* 1.0 f)
+      (throw (exception 'not-a-float "Not a float")))))
+
+(defun read-string ()
+  (let ((s (read)))
+    (if (stringp s) 
+        s
+      (throw (exception 'not-a-string "Not a string")))))
+
+(defun read-character ()
+  (array-get (read-string) 0))
+
 (load-file "pos.lisp")
 
 (load-file "utils.lisp")

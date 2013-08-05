@@ -28,6 +28,8 @@ commands to build .so file:
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <limits.h>
+#include <errno.h>
 
 float plisp_random()
 {
@@ -62,4 +64,66 @@ int plisp_floor(float x)
 void plisp_system(char *cmd)
 {
   system(cmd);
+}
+
+int plisp_read(int *int_val, 
+               float *float_val, 
+               char *str_val)
+{
+  int base = 10;
+  char *end_ptr;
+
+  long i_val;
+  float f_val;
+
+  int maybe_float = 0;
+
+  char inp[500];
+
+  fscanf(stdin, "%s", inp);
+
+  int i;
+  for(i=0; i<strlen(inp); i++)
+  {
+    if(inp[i] == '.')
+    {
+      maybe_float = 1;
+      break;
+    }
+  }
+
+  if(maybe_float)
+  {
+    errno = 0;
+  
+    f_val = strtof(inp, &end_ptr);
+
+    if((errno == ERANGE) || (errno != 0 && f_val == 0))
+      return -1;
+
+    if(errno == 0 && (end_ptr != inp))
+    {
+      *float_val = f_val;
+      return 2;
+    }
+  }
+
+  errno = 0;
+  
+  i_val = strtol(inp, &end_ptr, base);
+
+  if((errno == ERANGE && (i_val == LONG_MAX || i_val == LONG_MIN)) ||
+     (errno != 0 && i_val == 0) ||
+     (errno == 0 && (i_val < INT_MIN || i_val > INT_MAX)))
+    return -1;
+
+  if(errno == 0 && (end_ptr != inp))
+  {
+    *int_val = i_val;
+    return 1;
+  }
+     
+  strcpy(str_val, inp);
+  return 3;
+
 }
