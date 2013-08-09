@@ -18,24 +18,24 @@
 OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o mmap.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
-CFLAGS	= -g -I/usr/local/lib/libffi-3.0.13/include -L/usr/local/lib/
+CFLAGS	= -g `pkg-config --cflags libffi`
 
 all:	plisp libplisp.so libtest.so
 
 libplisp.so:	plisp_utils_ffi.o
-		$(CC) -shared -W1,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o
+		$(CC) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o
 
 plisp_utils_ffi.o:	plisp_utils_ffi.c
 		$(CC) -c -fPIC plisp_utils_ffi.c -o plisp_utils_ffi.o
 
 libtest.so:	test_so.o
-		$(CC) -shared -W1,-soname,libtest.so -o libtest.so test_so.o
+		$(CC) -shared -Wl,-soname,libtest.so -o libtest.so test_so.o
 
 test_so.o:	test_so.c
 		$(CC) -c -fPIC test_so.c -o test_so.o
 
 plisp:	$(OBJS)
-		$(CC) $(CFLAGS) $(OBJS) -o plisp -lffi
+		$(CC) $(CFLAGS) $(OBJS) -o plisp `pkg-config --libs libffi`
 
 lex.o:	lex.yy.c
 		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o
