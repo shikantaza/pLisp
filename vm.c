@@ -1993,7 +1993,12 @@ OBJECT_PTR create_current_continuation()
 
 void raise_error(char *err_str)
 {
+
+#ifdef GUI
+  show_error_dialog(err_str);
+#else
   fprintf(stdout, "%s\n", err_str);
+#endif
 
   //to stay commented out till we are
   //able to prpvide a meaningful backtrace

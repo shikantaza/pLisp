@@ -449,7 +449,16 @@ void print_expression(expression_t *e)
 void prompt()
 {
   if(!debug_mode)
+  {
+#ifdef GUI
+    char buf[500];
+    memset(buf, '\0',500);
+    sprintf(buf,"pLisp Workspace [Package: %s]", packages[current_package].name);
+    set_workspace_window_title(buf);
+#else
     fprintf(stdout, "\n%s> ", packages[current_package].name);
+#endif
+  }
   else
     fprintf(stdout, "\nDEBUG> ");
 }
@@ -512,6 +521,56 @@ void print_object(OBJECT_PTR obj_ptr)
 {
   log_function_entry("print_object");
 
+#ifdef GUI
+
+  char buf[500];
+  memset(buf, '\0', 500);
+
+  int length = 0;
+
+  if(IS_SYMBOL_OBJECT(obj_ptr))
+  {
+    int package_index = obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+    if(package_index == current_package)
+      length = sprintf(buf+length, "%s", get_symbol_name(obj_ptr));
+    else
+    {
+      char buf1[SYMBOL_STRING_SIZE];
+      print_symbol(obj_ptr, buf1);
+      length = sprintf(buf+length, "%s", buf1);
+    }
+  }
+  else if(IS_CONS_OBJECT(obj_ptr))
+    print_cons_object(obj_ptr);
+  else if(IS_CLOSURE_OBJECT(obj_ptr))
+    print_closure_object(obj_ptr);
+  else if(IS_CONTINUATION_OBJECT(obj_ptr))
+    length = sprintf(buf+length, "#<CONTINUATION #x%08x> ", obj_ptr);
+  else if(IS_MACRO_OBJECT(obj_ptr))
+    print_macro_object(obj_ptr);
+  else if(IS_INTEGER_OBJECT(obj_ptr))
+    length = sprintf(buf+length, "%d", get_int_value(obj_ptr));
+  else if(IS_FLOAT_OBJECT(obj_ptr))
+    length = sprintf(buf+length, "%f", get_float_value(obj_ptr));
+  else if(IS_STRING_LITERAL_OBJECT(obj_ptr))
+    length = sprintf(buf+length, "\"%s\"", strings[obj_ptr >> OBJECT_SHIFT]);
+  else if(IS_CHAR_OBJECT(obj_ptr))
+    length = sprintf(buf+length, "#\\%c", obj_ptr >> OBJECT_SHIFT);
+  else if(IS_ARRAY_OBJECT(obj_ptr))
+  {
+    if(is_string_object(obj_ptr))
+       print_string(obj_ptr);
+    else
+      print_array_object(obj_ptr);
+  }
+  else
+    assert(false);
+
+  print_to_transcript(buf);
+
+#else
+
   if(IS_SYMBOL_OBJECT(obj_ptr))
   {
     int package_index = obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
@@ -552,6 +611,8 @@ void print_object(OBJECT_PTR obj_ptr)
     assert(false);
 
   fflush(stdout);
+
+#endif
 
   log_function_exit("print_object");
 }
@@ -664,12 +725,50 @@ void print_cons_object(OBJECT_PTR obj)
 {
   log_function_entry("print_cons_object");
 
-  fflush(stdout);
-
   assert(IS_CONS_OBJECT(obj));
 
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
+
+#ifdef GUI
+
+  if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
+  {
+    print_to_transcript("(");
+    print_object(car_obj);
+    print_to_transcript(" . ");
+    print_object(cdr_obj);
+    print_to_transcript( ")");
+  }
+  else
+  {
+    print_to_transcript("(");
+
+    OBJECT_PTR rest = obj;
+
+    while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
+    {
+      print_object(car(rest));
+      print_to_transcript(" ");
+      rest = cdr(rest);
+    }
+
+    if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
+    {
+      print_to_transcript(" . ");
+      print_object(rest);
+      print_to_transcript(")");
+    }
+    else
+    {
+      transcript_backspace();
+      print_to_transcript(")");
+    }
+  }
+
+#else
+
+  fflush(stdout);
 
   if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
   {
@@ -701,6 +800,8 @@ void print_cons_object(OBJECT_PTR obj)
     else
       fprintf(stdout, "\b)");
   }
+
+#endif
 
   log_function_exit("print_cons_object");
 }
@@ -926,7 +1027,14 @@ OBJECT_PTR get_body_object(OBJECT_PTR obj)
 
 void print_closure_object(OBJECT_PTR obj)
 {
+#ifdef GUI
+  char buf[500];
+  memset(buf, '\0', 500);
+  sprintf(buf, "#<CLOSURE #x%08x> ", obj);
+  print_to_transcript(buf);
+#else
   fprintf(stdout, "#<CLOSURE #x%08x> ", obj);
+#endif
 
 #ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
@@ -1124,7 +1232,15 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
 
 void print_macro_object(OBJECT_PTR macro_obj)
 {
+#ifdef GUI
+  char buf[500];
+  memset(buf, '\0', 500);
+  sprintf(buf, "#<MACRO #x%08x> ", macro_obj);
+  print_to_transcript(buf);
+#else
   fprintf(stdout, "#<MACRO #x%08x> ", macro_obj);
+#endif
+
 #ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
   print_object(get_params_object(macro_obj));
@@ -1606,6 +1722,27 @@ void print_array_object(OBJECT_PTR array)
 
   log_function_entry("print_array_object");
 
+#ifdef GUI
+
+  print_to_transcript("[");
+
+  int length = get_int_value(get_heap(array >> OBJECT_SHIFT));
+
+  int i;
+
+  for(i=0; i< length; i++)
+  {
+    print_object(get_heap((array >> OBJECT_SHIFT) + i + 1));
+    print_to_transcript(" ");
+  }
+
+  if(length > 0)
+    transcript_backspace();
+
+  print_to_transcript("]");
+
+#else
+
   fprintf(stdout, "[");
 
   int length = get_int_value(get_heap(array >> OBJECT_SHIFT));
@@ -1623,6 +1760,8 @@ void print_array_object(OBJECT_PTR array)
 
   fprintf(stdout, "]");
 
+#endif
+
   log_function_exit("print_array_object");
 }
 
@@ -1636,12 +1775,33 @@ void print_string(OBJECT_PTR string_object)
 
   int i;
 
+#ifdef GUI
+
+  char buf[500];
+  memset(buf, '\0', 500);
+
+  int length = 0;
+
+  length = sprintf(buf+length, "\"");
+
+  for(i=1; i<=len; i++)
+    length = sprintf(buf+length, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
+
+  length = sprintf(buf+length, "\"");
+
+  print_to_transcript(buf);
+
+#else
+
   fprintf(stdout, "\"");
 
   for(i=1; i<=len; i++)
     fprintf(stdout, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
 
   fprintf(stdout, "\"");
+
+#endif
+
 }
 
 BOOLEAN is_string_object(OBJECT_PTR obj)

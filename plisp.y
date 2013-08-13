@@ -34,6 +34,8 @@ extern void prompt();
 
 extern FILE *yyin;
 
+extern void print_to_workspace();
+
 %}
 
 %union{
@@ -209,7 +211,13 @@ expressions:
 
 int yyerror(char *s)
 {
-  printf("Syntax error in expression\n");
+#ifdef GUI
+  print_to_workspace("Syntax error in expression");
+#else
+  fprintf(stdout, "Syntax error in expression\n");
+#endif
+
+  return 1;
   //prompt();
   //assert(false);
 }

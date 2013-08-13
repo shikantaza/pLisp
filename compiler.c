@@ -19,6 +19,10 @@
 
 #include <stdio.h>
 
+#ifdef GUI
+#include <gtk/gtk.h>
+#endif
+
 #include "plisp.h"
 
 extern OBJECT_PTR NIL;
@@ -69,6 +73,8 @@ OBJECT_PTR debug_execution_stack;
 BOOLEAN in_error;
 
 OBJECT_PTR continuations_map;
+
+BOOLEAN core_library_loaded = false;
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -312,22 +318,30 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
 
 int main(int argc, char **argv)
 {
+#ifdef GUI
+
+  gtk_init(&argc, &argv);
+    
+  create_transcript_window();
+
+#endif
+
+  initialize();
+
+  if(load_core_library())
+  {
+    cleanup();
+    exit(1);
+  }
+
+#ifdef GUI
+  gtk_main();
+#else
+
   print_copyright_notice();
 
-  if(argc == 1)
-  {
-    initialize();
-
-    if(load_core_library())
-    {
-      cleanup();
-      exit(1);
-    }
-  }
-  else
-  {
+  if(argc == 2)
     load_from_image(argv[1]);
-  }
 
   welcome();
 
@@ -337,6 +351,10 @@ int main(int argc, char **argv)
     yyparse();
     repl();
   }
+
+#endif
+
+  return 0;
 }
 
 int repl()
@@ -348,7 +366,9 @@ int repl()
 				 !strcmp(g_expr->atom_value,"EXIT") ||
 				 !strcmp(g_expr->atom_value,"Q") ))
   {
+#ifndef GUI
     fprintf(stdout, "Bye.\n");
+#endif
     cleanup();
     exit(0);
   }
@@ -433,8 +453,13 @@ int repl()
         return 1;
     }
 
+#ifdef GUI
+    if(!in_error && core_library_loaded)
+      print_object(reg_accumulator);
+#else
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);
+#endif
 
     //reset the EXCEPTION-HANDLERS variable
     update_environment(cons(top_level_env, NIL),
@@ -460,8 +485,13 @@ int repl()
 
 int load_core_library()
 {
+
+#ifdef GUI
+  print_to_transcript("Loading core library...");
+#else
   fprintf(stdout, "Loading core library...");
   fflush(stdout);
+#endif
   
   reg_accumulator       = NIL;
 
@@ -502,8 +532,14 @@ int load_core_library()
 
   //gc();
 
+  core_library_loaded = true;
+
+#ifdef GUI
+  print_to_transcript(" done\n");
+#else
   //hack to prevent message being overwritten
   fprintf(stdout, "Loading core library... done\n");
+#endif
 
   return 0;  
 }
