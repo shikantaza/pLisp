@@ -33,6 +33,18 @@ char *convert_to_upper_case(char *str)
   return str;
 }
 
+char *convert_to_lower_case(char *str)
+{
+  char *ptr = NULL;
+
+  for(ptr=str;*ptr;ptr++) 
+  { 
+    *ptr=tolower(*ptr); 
+  } 
+
+  return str;
+}
+
 void log_function_entry(char *fn)
 {
 #ifdef DEBUG

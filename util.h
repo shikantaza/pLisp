@@ -21,6 +21,7 @@
 #define UTIL_H 
 
 char *convert_to_upper_case(char *);
+char *convert_to_lower_case(char *);
 
 void log_function_entry(char *);
 void log_function_exit(char *);

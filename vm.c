@@ -194,13 +194,13 @@ void eval()
   }
   else if(opcode == CLOSE)
   {
-    reg_accumulator = create_closure_object(reg_current_env, CADR(exp), CADDR(exp));
-    reg_next_expression = CADDDR(exp);
+    reg_accumulator = create_closure_object(reg_current_env, CADR(exp), CADDR(exp), CADDDR(exp));
+    reg_next_expression = CADDDDR(exp);
   }
   else if(opcode == MACRO)
   {
-    reg_accumulator = create_macro_object(reg_current_env, CADR(exp), CADDR(exp));
-    reg_next_expression = CADDDR(exp);
+    reg_accumulator = create_macro_object(reg_current_env, CADR(exp), CADDR(exp), CADDDR(exp));
+    reg_next_expression = CADDDDR(exp);
   }
   else if(opcode == TEST)
   {

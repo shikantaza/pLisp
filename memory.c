@@ -299,6 +299,18 @@ void gc()
 	remove_node(white, body_obj);
 #endif
       }
+
+      OBJECT_PTR source_obj = get_source_object(obj);
+      if(is_dynamic_memory_object(source_obj))
+      {
+	insert_node(GREY, source_obj);
+#ifdef CUSTOM_BST
+	remove_node(&white, source_obj);
+#else
+	remove_node(white, source_obj);
+#endif
+      }
+
     }
     else if(IS_ARRAY_OBJECT(obj))
     {

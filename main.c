@@ -188,6 +188,7 @@ inline OBJECT_PTR CDDDR(x)  { return cdr(cdr(cdr(x))); }
 inline OBJECT_PTR CADDDR(x) { return car(cdr(cdr(cdr(x)))); }
 inline OBJECT_PTR CADDAR(x) { return car(cdr(cdr(car(x)))); }
 inline OBJECT_PTR CADADR(x) { return car(cdr(car(cdr(x)))); }
+inline OBJECT_PTR CADDDDR(x) { return car(cdr(cdr(cdr(cdr(x))))); }
 
 inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG; }
 inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CONS_TAG; }
@@ -517,6 +518,52 @@ void welcome()
   fprintf(stdout, "Welcome to pLisp's top level. Type 'quit' to exit.");
 }
 
+int print_object_to_string(OBJECT_PTR obj_ptr, char *buf)
+{
+  int length = 0;
+
+  if(IS_SYMBOL_OBJECT(obj_ptr))
+  {
+    int package_index = obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+    if(package_index == current_package)
+      length += sprintf(buf+length, "%s", get_symbol_name(obj_ptr));
+    else
+    {
+      char buf1[SYMBOL_STRING_SIZE];
+      print_symbol(obj_ptr, buf1);
+      length += sprintf(buf+length, "%s", buf1);
+    }
+  }
+  else if(IS_CONS_OBJECT(obj_ptr))
+    length += print_cons_object_to_string(obj_ptr, buf+length);
+  else if(IS_CLOSURE_OBJECT(obj_ptr))
+    length += print_closure_object_to_string(obj_ptr, buf+length);
+  else if(IS_CONTINUATION_OBJECT(obj_ptr))
+    length += sprintf(buf+length, "#<CONTINUATION #x%08x> ", obj_ptr);
+  else if(IS_MACRO_OBJECT(obj_ptr))
+    length += print_macro_object_to_string(obj_ptr, buf+length);
+  else if(IS_INTEGER_OBJECT(obj_ptr))
+    length += sprintf(buf+length, "%d", get_int_value(obj_ptr));
+  else if(IS_FLOAT_OBJECT(obj_ptr))
+    length += sprintf(buf+length, "%f", get_float_value(obj_ptr));
+  else if(IS_STRING_LITERAL_OBJECT(obj_ptr))
+    length += sprintf(buf+length, "\"%s\"", strings[obj_ptr >> OBJECT_SHIFT]);
+  else if(IS_CHAR_OBJECT(obj_ptr))
+    length += sprintf(buf+length, "#\\%c", obj_ptr >> OBJECT_SHIFT);
+  else if(IS_ARRAY_OBJECT(obj_ptr))
+  {
+    if(is_string_object(obj_ptr))
+      length += print_string_to_string(obj_ptr, buf+length);
+    else
+      length += print_array_object_to_string(obj_ptr, buf+length);
+  }
+  else
+    assert(false);
+
+  return length;
+}
+
 void print_object(OBJECT_PTR obj_ptr)
 {
   log_function_entry("print_object");
@@ -719,6 +766,51 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   log_function_exit("cdr");
 
   return ret;
+}
+
+int print_cons_object_to_string(OBJECT_PTR obj, char *buf)
+{
+  assert(IS_CONS_OBJECT(obj));
+
+  OBJECT_PTR car_obj = car(obj);
+  OBJECT_PTR cdr_obj = cdr(obj);
+
+  int length = 0;
+
+  if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
+  {
+    length += sprintf(buf+length,"(");
+    length += print_object_to_string(car_obj, buf+length);
+    length += sprintf(buf+length, " . ");
+    length += print_object_to_string(cdr_obj, buf+length);
+    length += sprintf(buf+length, ")");
+  }
+  else
+  {
+    length += sprintf(buf+length, "(");
+
+    OBJECT_PTR rest = obj;
+
+    while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
+    {
+      length += print_object_to_string(car(rest), buf+length);
+      length += sprintf(buf+length, " ");
+      rest = cdr(rest);
+    }
+
+    if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
+    {
+      length += sprintf(buf+length, " . ");
+      length += print_object_to_string(rest, buf+length);
+      length += sprintf(buf+length, ")");
+    }
+    else
+    {
+      length += sprintf(buf+length-1, ")") - 1;
+    }
+  }
+
+  return length;
 }
 
 void print_cons_object(OBJECT_PTR obj)
@@ -943,13 +1035,14 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
   return ret;
 }
 
-OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
+OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body, OBJECT_PTR source)
 {
-  RAW_PTR ptr = object_alloc(3, CLOSURE_TAG);
+  RAW_PTR ptr = object_alloc(4, CLOSURE_TAG);
 
   set_heap(ptr, env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
+  set_heap(ptr + 3, source);
   
   return (ptr << OBJECT_SHIFT) + CLOSURE_TAG;
 }
@@ -974,11 +1067,13 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
     else if(IS_CLOSURE_OBJECT(obj))
       ret = create_closure_object(clone_object(get_env_list(obj)),
                                   clone_object(get_params_object(obj)), 
-                                  clone_object(get_body_object(obj)));
+                                  clone_object(get_body_object(obj)),
+                                  clone_object(get_source_object(obj)));
     else if(IS_MACRO_OBJECT(obj))
       ret = create_macro_object(clone_object(get_env_list(obj)),
 				clone_object(get_params_object(obj)), 
-				clone_object(get_body_object(obj)));
+				clone_object(get_body_object(obj)),
+                                clone_object(get_source_object(obj)));
     else if(IS_ARRAY_OBJECT(obj))
     {
       RAW_PTR ptr = obj >> OBJECT_SHIFT;
@@ -1023,6 +1118,18 @@ OBJECT_PTR get_body_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
   return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? OBJECT_SHIFT : OBJECT_SHIFT)) + 2);
+}
+
+OBJECT_PTR get_source_object(OBJECT_PTR obj)
+{
+  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
+  return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? OBJECT_SHIFT : OBJECT_SHIFT)) + 3);
+}
+
+
+int print_closure_object_to_string(OBJECT_PTR obj, char *buf)
+{
+  return sprintf(buf, "#<CLOSURE #x%08x> ", obj);
 }
 
 void print_closure_object(OBJECT_PTR obj)
@@ -1219,15 +1326,21 @@ BOOLEAN is_special_form(OBJECT_PTR form)
   return false;
 }
 
-OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body)
+OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body, OBJECT_PTR source)
 {
-  RAW_PTR ptr = object_alloc(3, MACRO_TAG);
+  RAW_PTR ptr = object_alloc(4, MACRO_TAG);
 
   set_heap(ptr, env_list);
   set_heap(ptr + 1, params);
   set_heap(ptr + 2, body);
+  set_heap(ptr + 3, source);
 
   return (ptr << OBJECT_SHIFT) + MACRO_TAG;
+}
+
+int print_macro_object_to_string(OBJECT_PTR macro_obj, char *buf)
+{
+  return sprintf(buf, "#<MACRO #x%08x> ", macro_obj);
 }
 
 void print_macro_object(OBJECT_PTR macro_obj)
@@ -1717,6 +1830,30 @@ OBJECT_PTR convert_float_to_object(float v)
   
 }
 
+int print_array_object_to_string(OBJECT_PTR array, char *buf)
+{
+  int len = 0;
+
+  len += sprintf(buf, "[");
+
+  int length = get_int_value(get_heap(array >> OBJECT_SHIFT));
+
+  int i;
+
+  for(i=0; i< length; i++)
+  {
+    len += print_object_to_string(get_heap((array >> OBJECT_SHIFT) + i + 1), buf+len);
+    len += sprintf(buf+len, " ");
+  }
+
+  if(length > 0)
+    len += sprintf(buf+len-1, "]") - 1;
+  else
+    len += sprintf(buf+len, "]");
+
+  return len;
+}
+
 void print_array_object(OBJECT_PTR array)
 {
 
@@ -1763,6 +1900,26 @@ void print_array_object(OBJECT_PTR array)
 #endif
 
   log_function_exit("print_array_object");
+}
+
+void print_string_to_string(OBJECT_PTR string_object, char *buf)
+{
+  RAW_PTR ptr = string_object >> OBJECT_SHIFT;
+
+  int len = get_int_value(get_heap(ptr));
+
+  int i;
+
+  int length = 0;
+
+  length += sprintf(buf, "\"");
+
+  for(i=1; i<=len; i++)
+    length += sprintf(buf+length, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
+
+  length += sprintf(buf+length, "\"");
+
+  return length;
 }
 
 void print_string(OBJECT_PTR string_object)
@@ -1969,3 +2126,4 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_o
 
   return ret;
 }
+

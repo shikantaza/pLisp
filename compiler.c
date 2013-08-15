@@ -76,6 +76,8 @@ OBJECT_PTR continuations_map;
 
 BOOLEAN core_library_loaded = false;
 
+char *loaded_image_file_name = NULL;
+
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -144,7 +146,9 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
         return ERROR;
       }
       else
-        return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(next, NIL)))),
+        /* return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(next, NIL)))), */
+        /*             exp); */
+        return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(CADDR(exp), cons(next, NIL))  ))),
                     exp);
     }
 
@@ -158,7 +162,9 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
         return ERROR;
       }
       else
-        return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(next, NIL)))),
+        /* return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(next, NIL)))), */
+        /*             exp); */
+        return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(CADDR(exp), cons(next, NIL))  ))),
                     exp);
     }
 
@@ -319,19 +325,25 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
 int main(int argc, char **argv)
 {
 #ifdef GUI
-
   gtk_init(&argc, &argv);
-    
   create_transcript_window();
-
 #endif
 
-  initialize();
-
-  if(load_core_library())
+  if(argc == 2)
   {
-    cleanup();
-    exit(1);
+    core_library_loaded = true;
+    load_from_image(argv[1]);
+    loaded_image_file_name = strdup(argv[1]);
+  }
+  else
+  {
+    initialize();
+
+    if(load_core_library())
+    {
+      cleanup();
+      exit(1);
+    }
   }
 
 #ifdef GUI
@@ -339,9 +351,6 @@ int main(int argc, char **argv)
 #else
 
   print_copyright_notice();
-
-  if(argc == 2)
-    load_from_image(argv[1]);
 
   welcome();
 
@@ -455,7 +464,10 @@ int repl()
 
 #ifdef GUI
     if(!in_error && core_library_loaded)
+    {
       print_object(reg_accumulator);
+      print_to_transcript("\n");
+    }
 #else
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);

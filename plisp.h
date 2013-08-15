@@ -148,7 +148,7 @@ int convert_expression_to_object(expression_t *, OBJECT_PTR *);
 
 BOOLEAN equal(OBJECT_PTR, OBJECT_PTR);
 
-OBJECT_PTR create_closure_object(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR create_closure_object(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 
 OBJECT_PTR invoke_function(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 
@@ -157,6 +157,7 @@ OBJECT_PTR clone_object(OBJECT_PTR);
 OBJECT_PTR get_env_list(OBJECT_PTR);
 OBJECT_PTR get_params_object(OBJECT_PTR);
 OBJECT_PTR get_body_object(OBJECT_PTR);
+OBJECT_PTR get_source_object(OBJECT_PTR);
 
 void print_closure_object(OBJECT_PTR);
 
@@ -169,7 +170,7 @@ void add_to_top_level_environment(OBJECT_PTR, OBJECT_PTR);
 BOOLEAN is_special_form(OBJECT_PTR);
 
 OBJECT_PTR invoke_macro(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, BOOLEAN);
-OBJECT_PTR create_macro_object(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR create_macro_object(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 void print_macro_object(OBJECT_PTR);
 
 BOOLEAN form_contains_comma_at(OBJECT_PTR);
@@ -263,3 +264,10 @@ void print_copyright_notice();
 
 void throw_generic_exception(char *);
 void throw_exception(char *, char *);
+
+int print_object_to_string(OBJECT_PTR, char *);
+int print_cons_object_to_string(OBJECT_PTR, char *);
+int print_closure_object_to_string(OBJECT_PTR, char *);
+int print_macro_object_to_string(OBJECT_PTR, char *);
+int print_array_object_to_string(OBJECT_PTR, char *);
+int print_string_object_to_string(OBJECT_PTR, char *);
