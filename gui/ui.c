@@ -17,59 +17,40 @@ GtkWindow *system_browser_window;
 GtkTreeView *packages_list;
 GtkTreeView *symbols_list;
 
-extern char *loaded_image_file_name;
+GtkTextBuffer *system_browser_buffer;
+
+BOOLEAN new_symbol_being_created;
 
 extern unsigned int nof_packages;
 extern package_t *packages;
 
-extern OBJECT_PTR NIL;
-extern OBJECT_PTR top_level_env;
-
-GtkTextBuffer *system_browser_buffer;
+/* event handler function definitions begin */
+extern gboolean delete_event(GtkWidget *,
+                             GdkEvent *,
+                             gpointer);
+extern void quit(GtkWidget *, gpointer);
+extern void new_package(GtkWidget *, gpointer);
+extern void new_symbol(GtkWidget *, gpointer);
+extern void accept(GtkWidget *, gpointer);
+extern void delete_pkg_or_sym(GtkWidget *, gpointer);
+extern void close_window(GtkWidget *, gpointer);
+extern gboolean handle_key_press_events(GtkWidget *, 
+                                        GdkEventKey *,
+                                        gpointer);
+extern void load_source_file(GtkWidget *, gpointer);
+extern void show_workspace_window(GtkWidget *, gpointer);
+extern void load_image_file(GtkWidget *, gpointer);
+extern void save_image_file(GtkWidget *, gpointer);
+extern void show_system_browser_window(GtkWidget *, gpointer);
+extern void fetch_package_members(GtkWidget *, gpointer);
+extern void fetch_symbol_value(GtkWidget *, gpointer);
+extern void eval_expression(GtkWidget *, gpointer);
+/* event handler function definitions end */
 
 typedef struct
 {
-  GtkWidget *entry, *textview;
+  GtkWidget *textview;
 } Widgets;
-
-static gboolean delete_event( GtkWidget *widget,
-                              GdkEvent  *event,
-                              gpointer   data )
-{
-  if(widget == (GtkWidget *)workspace_window)
-    workspace_window = NULL;
-  else if(widget == (GtkWidget *)system_browser_window)
-    system_browser_window = NULL;
-
-  return FALSE;
-}
-
-/* Another callback */
-static void destroy( GtkWidget *widget,
-                     gpointer   data )
-{
-  GtkWidget *dialog = gtk_message_dialog_new ((GtkWindow *)transcript_window,
-                                              GTK_DIALOG_DESTROY_WITH_PARENT,
-                                              GTK_MESSAGE_QUESTION,
-                                              GTK_BUTTONS_YES_NO,
-                                              "Do you really want to quit?");
-
-  if(gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
-  {
-    gtk_widget_destroy((GtkWidget *)dialog);
-
-    //uncomment this if we want to
-    //auto save image on quit
-    //if(loaded_image_file_name != NULL)
-    //  save_image();
-
-    g_free(loaded_image_file_name);
-
-    gtk_main_quit();
-  }
-  else
-    gtk_widget_destroy((GtkWidget *)dialog);
-}
 
 void set_workspace_window_title(char *title)
 {
@@ -114,159 +95,51 @@ void print_ui_copyright_notice()
   print_to_transcript("(entered in the workspace window) will be displayed here.\n\n");
 }
 
-gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+GtkToolbar *create_workspace_toolbar()
 {
-  if(widget == workspace_window && event->keyval == GDK_F5)
-  {
-    GtkTextBuffer *buf;
-    GtkTextIter start_sel, end_sel;
-    gboolean selected;
+  GtkWidget *toolbar;
 
-    buf = workspace_buffer;
-    selected = gtk_text_buffer_get_selection_bounds(buf, &start_sel, &end_sel);
+  GtkWidget *load_icon = gtk_image_new_from_file ("icons/load_file.png");
+  GtkWidget *eval_icon = gtk_image_new_from_file ("icons/evaluate.png");
+  GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
-    if(selected)
-    {
-      yy_scan_string((char *) gtk_text_buffer_get_text(buf, &start_sel, &end_sel, FALSE));
-    }
-    else
-    {
-      GtkTextIter line_start, line_end, iter;
-      gtk_text_buffer_get_iter_at_mark(buf, &iter, gtk_text_buffer_get_insert(buf));
-      gint line_number = gtk_text_iter_get_line(&iter);
+  toolbar = gtk_toolbar_new ();
+  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
 
-      gint line_count = gtk_text_buffer_get_line_count(buf);
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Load file (Ctrl-O)",                   /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           load_icon,                              /* icon widget */
+                           GTK_SIGNAL_FUNC(load_source_file),      /* a signal */
+                           NULL);
 
-      if(line_count == (line_number+1))
-      {
-        gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number-1);
-        gtk_text_buffer_get_end_iter (buf, &line_end);
-      }
-      else
-      {
-        gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number);
-        gtk_text_buffer_get_iter_at_line(buf, &line_end, line_number+1);
-      }
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Evaluate (F5)",                        /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           eval_icon,                              /* icon widget */
+                           GTK_SIGNAL_FUNC(eval_expression),       /* a signal */
+                           (GtkWidget *)workspace_window);
 
-      yy_scan_string((char *)gtk_text_buffer_get_text(buf, &line_start, &line_end, FALSE));
-    }
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Close (Ctrl-W)",                       /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           exit_icon,                              /* icon widget */
+                           GTK_SIGNAL_FUNC(close_window),          /* a signal */
+                           (GtkWidget *)workspace_window);
 
-    if(!yyparse())
-    {
-      if(!repl())
-        prompt();
-    }
-  }
-  else if(widget == transcript_window && event->keyval == GDK_F7)
-    create_workspace_window();
-  else if(widget == transcript_window && event->keyval == GDK_F9)
-    create_system_browser_window();
-
-
-  return FALSE;
+  return (GtkToolbar *)toolbar;
 }
-
-//Ensure that evaluate() is called only from the workspace window;
-//only then will be user_data be a 'GtkTextBuffer *' object
-gboolean evaluate(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
-{
-  GtkTextBuffer *buf;
-  GtkTextIter start_sel, end_sel;
-  gboolean selected;
-
-  switch (event->keyval)
-  {
-    case GDK_F5:
-      //buf = (GtkTextBuffer *)user_data;
-      buf = workspace_buffer;
-      selected = gtk_text_buffer_get_selection_bounds(buf, &start_sel, &end_sel);
-
-      if(selected)
-      {
-        yy_scan_string((char *) gtk_text_buffer_get_text(buf, &start_sel, &end_sel, FALSE));
-      }
-      else
-      {
-        GtkTextIter line_start, line_end, iter;
-        gtk_text_buffer_get_iter_at_mark(buf, &iter, gtk_text_buffer_get_insert(buf));
-        gint line_number = gtk_text_iter_get_line(&iter);
-
-        gint line_count = gtk_text_buffer_get_line_count(buf);
-
-        if(line_count == (line_number+1))
-        {
-          gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number-1);
-          gtk_text_buffer_get_end_iter (buf, &line_end);
-        }
-        else
-        {
-          gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number);
-          gtk_text_buffer_get_iter_at_line(buf, &line_end, line_number+1);
-        }
-
-        yy_scan_string((char *)gtk_text_buffer_get_text(buf, &line_start, &line_end, FALSE));
-      }
-
-      if(!yyparse())
-      {
-        if(!repl())
-          prompt();
-      }
-
-      break;
-  default:
-    return FALSE;
-  }
-
-  return FALSE;
-}
-
-void load_source_file(GtkWidget *widget,
-                     gpointer data)
-{
-  GtkWidget *dialog;
-
-  dialog = gtk_file_chooser_dialog_new ("Load pLisp source file",
-                                        (GtkWindow *)workspace_window,
-                                        GTK_FILE_CHOOSER_ACTION_OPEN,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-                                        NULL);
-
-  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
-  {
-
-    char *loaded_source_file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-
-    gtk_widget_destroy (dialog);
-
-    char buf[MAX_STRING_LENGTH];
-    memset(buf, '\0', MAX_STRING_LENGTH);
-
-    sprintf(buf, "(load-file \"%s\")", loaded_source_file_name);
-
-    yy_scan_string(buf);
-
-    if(!yyparse())
-    {
-      if(!repl())
-      {
-        prompt();
-
-        print_to_transcript("Source file ");
-        print_to_transcript(loaded_source_file_name);
-        print_to_transcript(" loaded successfully\n");
-      }
-      else
-        print_to_transcript("Error loading source file\n");
-    }
-  }
-}
-
 
 void create_workspace_window()
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  workspace_window = (GtkWindow *)win;
 
   gtk_window_set_default_size((GtkWindow *)win, 600, 400);
   gtk_window_move((GtkWindow *)win, 650, 200); 
@@ -276,15 +149,14 @@ void create_workspace_window()
 
   gtk_container_set_border_width (GTK_CONTAINER (win), 10);
 
-  Widgets *w = g_slice_new (Widgets);
+  //Widgets *w = g_slice_new (Widgets);
   GtkWidget *scrolled_win, *vbox;
 
-  w->textview = gtk_text_view_new ();
-  w->entry = gtk_entry_new ();
+  GtkWidget *textview = gtk_text_view_new ();
 
-  gtk_widget_modify_font(GTK_WIDGET(w->textview), pango_font_description_from_string(FONT));
+  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 
-  workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)w->textview);
+  workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
   print_to_workspace("; This is the workspace; type pLisp expressions here.\n");
   print_to_workspace("; Select an expression and press F5 to evaluate it.\n");
@@ -297,73 +169,20 @@ void create_workspace_window()
                    NULL);
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (scrolled_win), w->textview);
-
-  GtkWidget *toolbar;
-
-  GtkWidget *load_icon = gtk_image_new_from_file ("icons/load_file.png");
-
-  toolbar = gtk_toolbar_new ();
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
-  gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
-
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Load file",                            /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           load_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(load_source_file),      /* a signal */
-                           NULL);
-
+  gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
   vbox = gtk_vbox_new (FALSE, 5);
-  gtk_box_pack_start (GTK_BOX (vbox), toolbar, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_workspace_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
   gtk_widget_show_all(win);
 
-  workspace_window = (GtkWindow *)win;
-
   prompt();
+
+  gtk_widget_grab_focus(textview);
 }
-
-void show_workspace_window(GtkWidget *widget,
-                           gpointer  data)
-{
-  if(workspace_window == NULL)
-    create_workspace_window();
-}
-
-void load_image_file(GtkWidget *widget,
-                     gpointer data)
-{
-  GtkWidget *dialog;
-
-  dialog = gtk_file_chooser_dialog_new ("Load pLisp Image",
-                                        (GtkWindow *)transcript_window,
-                                        GTK_FILE_CHOOSER_ACTION_OPEN,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-                                        NULL);
-
-  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
-  {
-
-    loaded_image_file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-
-    load_from_image(loaded_image_file_name);
-
-    print_to_transcript("Image ");
-    print_to_transcript(loaded_image_file_name);
-    print_to_transcript(" loaded successfully\n");
-  }
-
-  gtk_widget_destroy (dialog);
-}
-
 
 void show_error_dialog_for_window(char *msg, GtkWindow *win)
 {
@@ -374,41 +193,6 @@ void show_error_dialog_for_window(char *msg, GtkWindow *win)
                                               msg);
   gtk_dialog_run(GTK_DIALOG (dialog));
   gtk_widget_destroy((GtkWidget *)dialog);
-}
-
-void save_image()
-{
-  char exp[MAX_STRING_LENGTH];
-  memset(exp, '\0', MAX_STRING_LENGTH);
-
-  sprintf(exp,"(create-image \"%s\")", loaded_image_file_name);
-
-  yy_scan_string(exp);
-
-  if(!yyparse())
-    repl();
-  prompt();
-}
-
-void save_image_file(GtkWidget *widget,
-                     gpointer data)
-{
-  if(loaded_image_file_name == NULL)
-  {
-    show_error_dialog_for_window("No image has been loaded", transcript_window);
-    return;
-  }
-
-  save_image();
-
-  print_to_transcript("Image saved successfully\n");
-}
-
-void show_system_browser_window(GtkWidget *widget,
-                                gpointer  data)
-{
-  if(system_browser_window == NULL)
-    create_system_browser_window();
 }
 
 void initialize_packages_list(GtkTreeView *list)
@@ -491,106 +275,71 @@ void remove_all_from_list(GtkTreeView *list)
   gtk_list_store_clear(store);
 }
 
-void fetch_package_members(GtkWidget *list, gpointer selection)
+
+GtkToolbar *create_system_browser_toolbar()
 {
-  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
-  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
-  GtkTreeIter  iter;
+  GtkWidget *toolbar;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), &model, &iter))
-  {
-    gint id;
+  GtkWidget *new_package_icon = gtk_image_new_from_file ("icons/new_package.png");
+  GtkWidget *new_symbol_icon = gtk_image_new_from_file ("icons/new_symbol.png");
+  GtkWidget *accept_icon = gtk_image_new_from_file ("icons/accept.png");
+  GtkWidget *delete_icon = gtk_image_new_from_file ("icons/delete.png");
+  GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
-    gtk_tree_model_get(store, &iter,
-                       1, &id,
-                       -1);
+  toolbar = gtk_toolbar_new ();
+  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
 
-    remove_all_from_list(symbols_list);
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "New package (Ctrl-K)",                 /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           new_package_icon,                       /* icon widget */
+                           GTK_SIGNAL_FUNC(new_package),            /* a signal */
+                           NULL);
 
-    GtkListStore *store2;
-    GtkTreeIter  iter2;
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "New symbol (Ctrl-N)",                  /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           new_symbol_icon,                        /* icon widget */
+                           GTK_SIGNAL_FUNC(new_symbol),            /* a signal */
+                           NULL);
 
-    store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Accept (Ctrl-S)",                      /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           accept_icon,                            /* icon widget */
+                           GTK_SIGNAL_FUNC(accept),                /* a signal */
+                           NULL);
 
-    OBJECT_PTR rest = top_level_env;
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Delete (Ctrl-X)",                      /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           delete_icon,                            /* icon widget */
+                           GTK_SIGNAL_FUNC(delete_pkg_or_sym),     /* a signal */
+                           NULL);
 
-    while(rest != NIL)
-    {
-      OBJECT_PTR sym = CAAR(rest);
 
-      if((sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
-      {
-        gtk_list_store_append(store2, &iter2);
-        gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
-        gtk_list_store_set(store2, &iter2, 1, sym, -1);
-      }
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Close (Ctrl-W)",                       /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           exit_icon,                              /* icon widget */
+                           GTK_SIGNAL_FUNC(close_window),          /* a signal */
+                           (GtkWidget *)system_browser_window);
 
-      rest = cdr(rest);
-    }
-  }
-
-  gtk_text_buffer_set_text(system_browser_buffer, "", -1);
-}
-
-void fetch_symbol_value(GtkWidget *list, gpointer data)
-{
-  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
-  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
-  GtkTreeIter  iter;
-
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), &model, &iter))
-  {
-    gint ptr;
-
-    gtk_tree_model_get(store, &iter,
-                       1, &ptr,
-                       -1);
-
-    char buf[MAX_STRING_LENGTH];
-    memset(buf, '\0', MAX_STRING_LENGTH);
-
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env(ptr, top_level_env));
-
-    if(IS_CLOSURE_OBJECT(obj))
-    {
-      gtk_text_buffer_set_text(system_browser_buffer, "(lambda ", -1);
-
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_params_object(obj), buf);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n  ", -1);
-
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_source_object(obj), buf);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
-    }
-    else if(IS_MACRO_OBJECT(obj))
-    {
-      gtk_text_buffer_set_text(system_browser_buffer, "(macro ", -1);
-
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_params_object(obj), buf);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n  ", -1);
-
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_source_object(obj), buf);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
-    }
-    else
-    {
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(obj, buf);
-      gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
-    }
-  }
+  return (GtkToolbar *)toolbar;
 }
 
 void create_system_browser_window()
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  system_browser_window = (GtkWindow *)win;
 
   GtkWidget *scrolled_win1, *scrolled_win2;
   GtkWidget *vbox, *hbox;
@@ -602,12 +351,17 @@ void create_system_browser_window()
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
 
+  g_signal_connect(G_OBJECT(win), 
+                   "key_press_event", 
+                   G_CALLBACK (handle_key_press_events), 
+                   NULL);
+
   gtk_container_set_border_width (GTK_CONTAINER (win), 10);
 
   scrolled_win1 = gtk_scrolled_window_new(NULL, NULL);
   scrolled_win2 = gtk_scrolled_window_new(NULL, NULL);
 
-  packages_list = gtk_tree_view_new();
+  packages_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(packages_list), TRUE);
   gtk_widget_modify_font(GTK_WIDGET(packages_list), pango_font_description_from_string(FONT));
 
@@ -615,7 +369,7 @@ void create_system_browser_window()
 
   gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(packages_list, 0), 0); 
 
-  symbols_list = gtk_tree_view_new();
+  symbols_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(symbols_list), TRUE);
   gtk_widget_modify_font(GTK_WIDGET(symbols_list), pango_font_description_from_string(FONT));
 
@@ -630,28 +384,27 @@ void create_system_browser_window()
   g_signal_connect(G_OBJECT(symbols_list), "cursor-changed",
                    G_CALLBACK(fetch_symbol_value), NULL);
 
-  gtk_container_add(GTK_CONTAINER (scrolled_win1), packages_list);
-  gtk_container_add(GTK_CONTAINER (scrolled_win2), symbols_list);
+  gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)packages_list);
+  gtk_container_add(GTK_CONTAINER (scrolled_win2), (GtkWidget *)symbols_list);
 
   hbox = gtk_hbox_new (FALSE, 5);
   gtk_box_pack_start_defaults (GTK_BOX (hbox), scrolled_win1);
   gtk_box_pack_start_defaults (GTK_BOX (hbox), scrolled_win2);
 
-  Widgets *w = g_slice_new (Widgets);
   GtkWidget *scrolled_win;
 
-  w->textview = gtk_text_view_new ();
-  w->entry = gtk_entry_new ();
+  GtkWidget *textview = gtk_text_view_new ();
 
-  gtk_widget_modify_font(GTK_WIDGET(w->textview), pango_font_description_from_string(FONT));
-  gtk_text_view_set_editable((GtkTextView *)w->textview, FALSE);
+  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
 
-  system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)w->textview);
+  system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (scrolled_win), w->textview);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
   vbox = gtk_vbox_new (FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_system_browser_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   
@@ -659,50 +412,13 @@ void create_system_browser_window()
 
   gtk_widget_show_all(win);
 
-  system_browser_window = (GtkWindow *)win;
+  gtk_widget_grab_focus(packages_list);
+
+  new_symbol_being_created = false;
 }
 
-void create_transcript_window()
+GtkToolbar *create_transcript_toolbar()
 {
-  GtkWidget *scrolled_win, *vbox;
-  Widgets *w = g_slice_new (Widgets);
-
-  transcript_window = (GtkWindow *)gtk_window_new (GTK_WINDOW_TOPLEVEL);
-
-  gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
-  gtk_window_set_default_size((GtkWindow *)transcript_window, 600, 400);
-  gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
-    
-  g_signal_connect (transcript_window, "delete-event",
-                    G_CALLBACK (delete_event), NULL);
-    
-  g_signal_connect (transcript_window, "destroy",
-		      G_CALLBACK (destroy), NULL);
-
-  g_signal_connect(transcript_window, 
-                   "key_press_event", 
-                   G_CALLBACK (handle_key_press_events), 
-                   NULL);
-
-    
-  gtk_container_set_border_width (GTK_CONTAINER (transcript_window), 10);
-  
-  w->textview = gtk_text_view_new ();
-  w->entry = gtk_entry_new ();
-  gtk_text_view_set_editable((GtkTextView *)w->textview, FALSE);
-  gtk_text_view_set_cursor_visible((GtkTextView *)w->textview, FALSE);
-
-  gtk_widget_modify_font(GTK_WIDGET(w->textview), pango_font_description_from_string(FONT));
-
-  transcript_buffer = gtk_text_view_get_buffer((GtkTextView *)w->textview);
-
-  print_ui_copyright_notice();
-
-  scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (scrolled_win), w->textview);
-
-  vbox = gtk_vbox_new (FALSE, 5);
-
   GtkWidget *toolbar;
 
   GtkWidget *load_icon = gtk_image_new_from_file ("icons/load_image.png");
@@ -719,7 +435,7 @@ void create_transcript_window()
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
-                           "Load image",                           /* button's tooltip */
+                           "Load image (Ctrl-L)",                  /* button's tooltip */
                            "Private",                              /* tooltip private info */
                            load_icon,                              /* icon widget */
                            GTK_SIGNAL_FUNC(load_image_file),       /* a signal */
@@ -727,7 +443,7 @@ void create_transcript_window()
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
-                           "Save image",                           /* button's tooltip */
+                           "Save image (Ctrl-S)",                  /* button's tooltip */
                            "Private",                              /* tooltip private info */
                            save_icon,                              /* icon widget */
                            GTK_SIGNAL_FUNC(save_image_file),       /* a signal */
@@ -752,13 +468,56 @@ void create_transcript_window()
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
-                           "Exit",                                 /* button's tooltip */
+                           "Exit (Ctrl-W)",                        /* button's tooltip */
                            "Private",                              /* tooltip private info */
                            exit_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(destroy),               /* a signal */
+                           GTK_SIGNAL_FUNC(quit),                  /* a signal */
                            NULL);
 
-  gtk_box_pack_start (GTK_BOX (vbox), toolbar, FALSE, FALSE, 0);
+  return (GtkToolbar *)toolbar;
+}
+
+void create_transcript_window()
+{
+  GtkWidget *scrolled_win, *vbox;
+
+  transcript_window = (GtkWindow *)gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
+  gtk_window_set_default_size((GtkWindow *)transcript_window, 600, 400);
+  gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
+    
+  g_signal_connect (transcript_window, "delete-event",
+                    G_CALLBACK (delete_event), NULL);
+    
+  g_signal_connect (transcript_window, "destroy",
+		      G_CALLBACK (quit), NULL);
+
+  g_signal_connect(transcript_window, 
+                   "key_press_event", 
+                   G_CALLBACK (handle_key_press_events), 
+                   NULL);
+
+    
+  gtk_container_set_border_width (GTK_CONTAINER (transcript_window), 10);
+  
+  GtkWidget *textview = gtk_text_view_new ();
+
+  gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
+  gtk_text_view_set_cursor_visible((GtkTextView *)textview, FALSE);
+
+  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+
+  transcript_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
+
+  print_ui_copyright_notice();
+
+  scrolled_win = gtk_scrolled_window_new (NULL, NULL);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
+
+  vbox = gtk_vbox_new (FALSE, 5);
+
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_transcript_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   
   gtk_container_add (GTK_CONTAINER (transcript_window), vbox);
@@ -781,7 +540,6 @@ void show_error_dialog(char *msg)
 void error_window(char *msg)
 {
   GtkWidget *window, *scrolled_win, *hbox, *vbox, *ok;
-  Widgets *w = g_slice_new (Widgets);
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (window), "Error");
@@ -789,10 +547,10 @@ void error_window(char *msg)
   gtk_window_set_default_size((GtkWindow *)window, 400, 50);
   gtk_window_move((GtkWindow *)window, 500, 200); 
 
-  w->textview = gtk_text_view_new ();
+  GtkWidget *textview = gtk_text_view_new ();
 
-  gtk_widget_modify_font(GTK_WIDGET(w->textview), pango_font_description_from_string(FONT));
-  gtk_text_buffer_insert_at_cursor(gtk_text_view_get_buffer((GtkTextView *)w->textview), msg, -1);
+  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_text_buffer_insert_at_cursor(gtk_text_view_get_buffer((GtkTextView *)textview), msg, -1);
 
   ok = gtk_button_new_with_label("OK");
 
@@ -801,7 +559,7 @@ void error_window(char *msg)
                             window);
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (scrolled_win), w->textview);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
   hbox = gtk_hbox_new (FALSE, 5);
   gtk_box_pack_start_defaults (GTK_BOX (hbox), ok);

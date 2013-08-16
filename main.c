@@ -1902,7 +1902,7 @@ void print_array_object(OBJECT_PTR array)
   log_function_exit("print_array_object");
 }
 
-void print_string_to_string(OBJECT_PTR string_object, char *buf)
+int print_string_to_string(OBJECT_PTR string_object, char *buf)
 {
   RAW_PTR ptr = string_object >> OBJECT_SHIFT;
 

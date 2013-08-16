@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o mmap.o red_black_tree.o stack.o misc.o ui.o
+OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o mmap.o red_black_tree.o stack.o misc.o ui.o event_handlers.o
 
 CC	= gcc
 CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
@@ -88,6 +88,10 @@ ffi.o:		ffi.c
 ui.o:		./gui/ui.c
 		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/ui.c -o ui.o
 
+event_handlers.o:	./gui/event_handlers.c
+		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/event_handlers.c -o event_handlers.o
+
+
 bison.o		: plisp.tab.c plisp.h util.h
 lex.o		: plisp.tab.h plisp.h
 main.o		: plisp.h memory.h
@@ -101,7 +105,9 @@ memory.o	: plisp.h memory.h
 tpl.o		: tpl/tpl.h
 mmap.o		: tpl/win/mman.h
 
-ui.o		:plisp.h
+ui.o		: plisp.h
+
+event_handlers.o	: plisp.h
 
 clean:
 	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump
