@@ -20,7 +20,7 @@ OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o
 CC	= gcc
 CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
 
-all:	plispgui plisp libplisp.so libtest.so
+all:	plisp libplisp.so libtest.so
 
 libplisp.so:	plisp_utils_ffi.o
 		$(CC) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o

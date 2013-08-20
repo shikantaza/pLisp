@@ -11,11 +11,13 @@ extern GtkTextBuffer *workspace_buffer;
 extern GtkWindow *transcript_window;
 extern GtkWindow *workspace_window;
 extern GtkWindow *system_browser_window;
+extern GtkWindow *debugger_window;
 
 extern GtkTreeView *packages_list;
 extern GtkTreeView *symbols_list;
 
 extern GtkTextBuffer *system_browser_buffer;
+extern GtkTextView *system_browser_textview;
 
 extern char *loaded_image_file_name;
 
@@ -24,8 +26,56 @@ extern package_t *packages;
 
 extern OBJECT_PTR NIL;
 extern OBJECT_PTR top_level_env;
+extern OBJECT_PTR LAMBDA;
+extern OBJECT_PTR MACRO;
+extern OBJECT_PTR DEFINE;
 
 extern BOOLEAN new_symbol_being_created;
+
+extern GtkWindow *action_triggering_window;
+
+extern GtkTreeView *frames_list;
+extern GtkTreeView *variables_list;
+
+extern GtkStatusbar *system_browser_statusbar;
+
+extern BOOLEAN debug_mode;
+
+extern OBJECT_PTR build_list(int, ...);
+
+extern void refresh_system_browser();
+
+BOOLEAN system_changed;
+
+int call_repl(char *expression)
+{
+  yy_scan_string(expression);
+  if(!yyparse())
+  {
+    if(repl())
+      return -1;
+
+    return 0;
+  }
+  else
+    return -1;
+}
+
+void update_transcript_title()
+{
+  if(transcript_window)
+  {
+    if(loaded_image_file_name == NULL)
+      gtk_window_set_title(transcript_window, "pLisp Transcript");
+    else
+    {
+      char buf[MAX_STRING_LENGTH];
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      sprintf(buf,"pLisp Transcript - %s", loaded_image_file_name);
+      gtk_window_set_title(transcript_window, buf);
+    }
+  }
+}
 
 void update_workspace_title()
 {
@@ -41,6 +91,12 @@ gboolean delete_event( GtkWidget *widget,
     workspace_window = NULL;
   else if(widget == (GtkWidget *)system_browser_window)
     system_browser_window = NULL;
+  else if(widget == (GtkWidget *)debugger_window)
+  {
+    debugger_window = NULL;
+    //debug_mode = false;
+    call_repl("(RESUME)");
+  }
 
   return FALSE;
 }
@@ -61,6 +117,22 @@ void quit_application()
     //auto save image on quit
     //if(loaded_image_file_name != NULL)
     //  save_image();
+    if(system_changed && loaded_image_file_name)
+    {
+      GtkWidget *dialog1 = gtk_message_dialog_new ((GtkWindow *)transcript_window,
+                                                   GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                   GTK_MESSAGE_QUESTION,
+                                                   GTK_BUTTONS_YES_NO,
+                                                   "System has changed; save image?");
+
+      gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_YES));
+
+      if(gtk_dialog_run(GTK_DIALOG (dialog1)) == GTK_RESPONSE_YES)
+      {
+        gtk_widget_destroy((GtkWidget *)dialog1);
+        save_image();
+      }
+    }
 
     g_free(loaded_image_file_name);
 
@@ -101,6 +173,9 @@ void create_new_symbol()
   new_symbol_being_created = true;
 
   gtk_text_buffer_set_text(system_browser_buffer, "", -1);
+  gtk_statusbar_remove_all(system_browser_statusbar, 0);
+
+  gtk_widget_grab_focus(system_browser_textview);
 }
 
 void delete_package_or_symbol()
@@ -114,10 +189,69 @@ void delete_pkg_or_sym(GtkWidget *widget,
   delete_package_or_symbol();
 }
 
+int get_new_package_name(char *buf)
+{
+  GtkWidget *dialog;
+  GtkWidget *entry;
+  GtkWidget *content_area;
+
+  dialog = gtk_dialog_new_with_buttons("Create Package",
+                                       action_triggering_window,
+                                       GTK_DIALOG_DESTROY_WITH_PARENT, 
+                                       GTK_STOCK_OK,
+                                       GTK_RESPONSE_ACCEPT,
+                                       GTK_STOCK_CANCEL,
+                                       GTK_RESPONSE_REJECT,
+                                       NULL);
+
+  gtk_window_set_resizable((GtkWindow *)dialog, FALSE);
+
+  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
+
+  content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  entry = gtk_entry_new();
+  gtk_container_add(GTK_CONTAINER(content_area), entry);
+
+  gtk_widget_show_all(dialog);
+  gint result = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  if(result == GTK_RESPONSE_ACCEPT)
+    strcpy(buf, gtk_entry_get_text(GTK_ENTRY(entry)));
+
+  gtk_widget_destroy(dialog);
+  
+  return result;
+    
+}
 
 void create_new_package()
 {
-  printf("New package\n");
+  char buf[MAX_STRING_LENGTH];
+  memset(buf, '\0', MAX_STRING_LENGTH);
+
+  int result = GTK_RESPONSE_ACCEPT;
+
+  while(result == GTK_RESPONSE_ACCEPT && strlen(buf) == 0)
+  {
+    result = get_new_package_name(buf);
+    if(strlen(buf) == 0 && result == GTK_RESPONSE_ACCEPT)
+      show_error_dialog("Please enter a package name\n");
+  }
+
+  if(result == GTK_RESPONSE_ACCEPT)
+  {
+    char buf1[MAX_STRING_LENGTH];
+    memset(buf1, '\0', MAX_STRING_LENGTH);
+
+    sprintf(buf1, "(create-package \"%s\")", buf);
+
+    if(!call_repl(buf1))
+    {
+      refresh_system_browser();
+      system_changed = true;
+      gtk_statusbar_push(system_browser_statusbar, 0, "Package created");
+    }
+  }
 }
 
 void new_package(GtkWidget *widget,
@@ -130,6 +264,7 @@ void new_package(GtkWidget *widget,
 void new_symbol(GtkWidget *widget,
                 gpointer data)
 {
+  action_triggering_window = (GtkWindow *)data;
   create_new_symbol();
 }
 
@@ -155,15 +290,10 @@ void system_browser_accept()
 
     sprintf(buf, "(in-package \"%s\")", package_name);
 
-    yy_scan_string(buf);
-
-    if(!yyparse())
+    if(call_repl(buf))
     {
-      if(repl())
-      {
         show_error_dialog("Evaluation failed\n");
         return;
-      }
     }
 
     GtkTextIter start, end;
@@ -171,12 +301,15 @@ void system_browser_accept()
     gtk_text_buffer_get_start_iter(system_browser_buffer, &start);
     gtk_text_buffer_get_end_iter (system_browser_buffer, &end);
 
-    yy_scan_string(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE));
-
-    if(!yyparse())
+    if(!call_repl(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE)))
     {
-      if(!repl())
-        update_workspace_title();
+      update_workspace_title();
+      refresh_system_browser();
+      system_changed = true;
+
+      //the newly added symbol will be the last row
+      set_focus_to_last_row(symbols_list);
+
     }
 
     new_symbol_being_created = false;
@@ -201,43 +334,35 @@ void system_browser_accept()
 
       sprintf(buf, "(in-package \"%s\")", package_name);
 
-      yy_scan_string(buf);
-
-      if(!yyparse())
-        if(repl())
-          return;
+      if(call_repl(buf))
+        return;
 
       GtkTextIter start, end;
 
       gtk_text_buffer_get_start_iter(system_browser_buffer, &start);
       gtk_text_buffer_get_end_iter (system_browser_buffer, &end);
 
-      char *text = gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE);
-
-      memset(buf, '\0', MAX_STRING_LENGTH);
-
-      sprintf(buf, "(set %s %s)", symbol_name, (text == NULL) ? "nil" : text);
-
-      yy_scan_string(buf);
-
-      if(!yyparse())
+      if(!call_repl(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE)))
       {
-        if(!repl())
-          update_workspace_title();
+        update_workspace_title();
+        system_changed = true;
       }
     }
   }
+  gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
 }
 
 void accept(GtkWidget *widget,
             gpointer data)
 {
+  action_triggering_window = (GtkWindow *)data;
   system_browser_accept();
 }
 
 void eval_expression(GtkWidget *widget,
                      gpointer data)
 {
+  action_triggering_window = (GtkWindow *)data;
   evaluate();
 }
 
@@ -259,9 +384,11 @@ void evaluate()
   buf = workspace_buffer;
   selected = gtk_text_buffer_get_selection_bounds(buf, &start_sel, &end_sel);
 
+  char *expression;
+
   if(selected)
   {
-    yy_scan_string((char *) gtk_text_buffer_get_text(buf, &start_sel, &end_sel, FALSE));
+    expression = (char *) gtk_text_buffer_get_text(buf, &start_sel, &end_sel, FALSE);
   }
   else
   {
@@ -282,14 +409,11 @@ void evaluate()
       gtk_text_buffer_get_iter_at_line(buf, &line_end, line_number+1);
     }
 
-    yy_scan_string((char *)gtk_text_buffer_get_text(buf, &line_start, &line_end, FALSE));
+    expression = (char *)gtk_text_buffer_get_text(buf, &line_start, &line_end, FALSE);
   }
 
-  if(!yyparse())
-  {
-    if(!repl())
-      update_workspace_title();
-  }
+  if(!call_repl(expression))
+    update_workspace_title();
 }
 
 void load_source()
@@ -315,21 +439,16 @@ void load_source()
 
     sprintf(buf, "(load-file \"%s\")", loaded_source_file_name);
 
-    yy_scan_string(buf);
-
-    if(!yyparse())
+    if(!call_repl(buf))
     {
-      if(!repl())
-      {
-        update_workspace_title();
+      update_workspace_title();
 
-        print_to_transcript("Source file ");
-        print_to_transcript(loaded_source_file_name);
-        print_to_transcript(" loaded successfully\n");
-      }
-      else
-        print_to_transcript("Error loading source file\n");
+      print_to_transcript("Source file ");
+      print_to_transcript(loaded_source_file_name);
+      print_to_transcript(" loaded successfully\n");
     }
+    else
+      print_to_transcript("Error loading source file\n");
   }
   else
     gtk_widget_destroy (dialog);
@@ -346,15 +465,24 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_l)
     load_source();
   else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
+  {
+    action_triggering_window = workspace_window;
     evaluate();
+  }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
     close_application_window(&workspace_window);
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_k)
     create_new_package();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_n)
+  {
+    action_triggering_window = system_browser_window;
     create_new_symbol();
+  }
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_s)
+  {
+    action_triggering_window = system_browser_window;
     system_browser_accept();
+  }
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_x)
     delete_package_or_symbol();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
@@ -407,6 +535,8 @@ void load_image()
     print_to_transcript("Image ");
     print_to_transcript(loaded_image_file_name);
     print_to_transcript(" loaded successfully\n");
+
+    update_transcript_title();
   }
 
   gtk_widget_destroy (dialog);
@@ -421,15 +551,7 @@ void load_image_file(GtkWidget *widget,
 void save_image_file(GtkWidget *widget,
                      gpointer data)
 {
-  if(loaded_image_file_name == NULL)
-  {
-    show_error_dialog_for_window("No image has been loaded", transcript_window);
-    return;
-  }
-
   save_image();
-
-  print_to_transcript("Image saved successfully\n");
 }
 
 void show_system_browser_window(GtkWidget *widget,
@@ -439,13 +561,13 @@ void show_system_browser_window(GtkWidget *widget,
     create_system_browser_window();
 }
 
-void fetch_package_members(GtkWidget *list, gpointer selection)
+void fetch_package_symbols()
 {
-  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
-  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
+  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
+  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
   GtkTreeIter  iter;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), &model, &iter))
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list)), &model, &iter))
   {
     gint id;
 
@@ -478,6 +600,12 @@ void fetch_package_members(GtkWidget *list, gpointer selection)
   }
 
   gtk_text_buffer_set_text(system_browser_buffer, "", -1);
+  gtk_statusbar_remove_all(system_browser_statusbar, 0);
+}
+
+void fetch_package_members(GtkWidget *list, gpointer selection)
+{
+  fetch_package_symbols();
 }
 
 void fetch_symbol_value(GtkWidget *list, gpointer data)
@@ -488,7 +616,12 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
 
   if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), &model, &iter))
   {
+    gchar *symbol_name;
     gint ptr;
+
+    gtk_tree_model_get(store, &iter,
+                       0, &symbol_name,
+                       -1);
 
     gtk_tree_model_get(store, &iter,
                        1, &ptr,
@@ -499,41 +632,57 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
 
     OBJECT_PTR obj = cdr(get_symbol_value_from_env(ptr, top_level_env));
 
+    gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
+
     if(IS_CLOSURE_OBJECT(obj))
     {
-      gtk_text_buffer_set_text(system_browser_buffer, "(lambda ", -1);
-
       memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_params_object(obj), buf);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n  ", -1);
+      /* print_object_to_string(cons(DEFINE, */
+      /*                             cons(ptr, */
+      /*                                  cons(cons(LAMBDA, */
+      /*                                            cons(get_params_object(obj), */
+      /*                                                 cons(get_source_object(obj),NIL))), */
+      /*                                       NIL))), buf, 0);                        */
+      print_object_to_string(cons(DEFINE,
+                                  cons(ptr,
+                                       cons(cons(LAMBDA,
+                                                 cons(get_params_object(obj),
+                                                      get_source_object(obj))),
+                                            NIL))), buf, 0);
 
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_source_object(obj), buf);
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
     }
     else if(IS_MACRO_OBJECT(obj))
     {
-      gtk_text_buffer_set_text(system_browser_buffer, "(macro ", -1);
-
       memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_params_object(obj), buf);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n  ", -1);
+      /* print_object_to_string(cons(DEFINE, */
+      /*                             cons(ptr, */
+      /*                                  cons(cons(MACRO, */
+      /*                                            cons(get_params_object(obj), */
+      /*                                                 cons(get_source_object(obj),NIL))), */
+      /*                                       NIL))), buf, 0); */
+      print_object_to_string(cons(DEFINE,
+                                  cons(ptr,
+                                       cons(cons(MACRO,
+                                                 cons(get_params_object(obj),
+                                                      get_source_object(obj))),
+                                            NIL))), buf, 0);
 
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(get_source_object(obj), buf);
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
+
     }
     else
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(obj, buf);
-      gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
+      print_object_to_string(cons(DEFINE,
+                                  cons(ptr, cons(obj, NIL))), buf, 0);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
     }
+
+    gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
   }
+
+  gtk_statusbar_push(system_browser_statusbar, 0, "");
 }
 
 void save_image()
@@ -541,12 +690,113 @@ void save_image()
   char exp[MAX_STRING_LENGTH];
   memset(exp, '\0', MAX_STRING_LENGTH);
 
+  if(loaded_image_file_name == NULL)
+  {
+    GtkWidget *dialog;
+
+    dialog = gtk_file_chooser_dialog_new ("Save pLisp Image",
+                                          (GtkWindow *)transcript_window,
+                                          GTK_FILE_CHOOSER_ACTION_SAVE,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                          NULL);
+
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+      loaded_image_file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+    }
+
+    gtk_widget_destroy (dialog);
+  }
+
   sprintf(exp,"(create-image \"%s\")", loaded_image_file_name);
+ 
+  GdkWindow *win = gtk_widget_get_window(transcript_window);
 
-  yy_scan_string(exp);
+  GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
 
-  if(!yyparse())
-    repl();
-  update_workspace_title();
+  gdk_window_set_cursor(win, cursor);
+
+  gdk_cursor_unref(cursor);
+  while( gtk_events_pending() )
+    gtk_main_iteration();
+
+  if(!call_repl(exp))
+  {
+     update_workspace_title();
+     print_to_transcript("Image saved successfully\n");
+
+     update_transcript_title();
+     system_changed = false;
+  }
+
+  gdk_window_set_cursor(win, NULL);
+
 }
 
+void fetch_variables(GtkWidget *list, gpointer data)
+{
+  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
+  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
+  GtkTreeIter  iter;
+
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), &model, &iter))
+  {
+    gint env_list_ptr;
+
+    gtk_tree_model_get(model, &iter,
+                       1, &env_list_ptr,
+                       -1);
+
+    remove_all_from_list(variables_list);
+
+    GtkListStore *store2;
+    GtkTreeIter  iter2;
+
+    store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(variables_list)));
+
+    OBJECT_PTR rest1 = env_list_ptr;
+
+    while(rest1 != NIL)
+    {
+      OBJECT_PTR rest2 = car(rest1);
+
+      while(rest2 != NIL)
+      {
+        OBJECT_PTR binding_cons = car(rest2);
+
+        char buf[MAX_STRING_LENGTH];
+
+        gtk_list_store_append(store2, &iter2);
+
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(car(binding_cons), buf, 0);
+        gtk_list_store_set(store2, &iter2, 0, buf, -1);  
+
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(cdr(binding_cons), buf, 0);
+        gtk_list_store_set(store2, &iter2, 1, buf, -1);
+
+        rest2 = cdr(rest2);
+      }
+
+      rest1 = cdr(rest1);
+    }
+
+  }
+
+}
+
+void set_focus_to_last_row(GtkTreeView *list)
+{
+  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
+  gint rows = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(model), NULL);
+
+  if(rows == 0)
+    return;
+
+  GtkTreePath *path = gtk_tree_path_new_from_indices(rows - 1, -1);
+
+  gtk_tree_view_set_cursor(list, path, NULL, false);
+
+}

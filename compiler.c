@@ -148,8 +148,11 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       else
         /* return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(next, NIL)))), */
         /*             exp); */
-        return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(CADDR(exp), cons(next, NIL))  ))),
+        /* return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(CADDR(exp), cons(next, NIL))  ))), */
+        /*             exp); */
+        return cons(list(5, CLOSE, second(exp), temp, CDDR(exp), next),
                     exp);
+      
     }
 
     if(car_obj == MACRO)
@@ -164,7 +167,9 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       else
         /* return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(next, NIL)))), */
         /*             exp); */
-        return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(CADDR(exp), cons(next, NIL))  ))),
+        /* return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(CADDR(exp), cons(next, NIL))  ))), */
+        /*             exp); */
+        return cons(list(5, MACRO, second(exp), temp, CDDR(exp), next),
                     exp);
     }
 
@@ -257,6 +262,12 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
 
           in_error = false;
 
+          //TODO: check this;
+          //existing continuations_map needs
+          //to be preserved (if macro 
+          //invoked in the middle of an evaluation?
+          continuations_map = NIL;
+
           eval();
 
           if(in_error)
@@ -286,6 +297,12 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           /* reg_next_expression = cons(APPLY, NIL); */
           
           in_error = false;
+
+          //TODO: check this;
+          //existing continuations_map needs
+          //to be preserved (if macro 
+          //invoked in the middle of an evaluation?
+          continuations_map = NIL;
 
           //evaluate the macro invocation
           while(car(reg_next_expression) != NIL)
@@ -326,7 +343,6 @@ int main(int argc, char **argv)
 {
 #ifdef GUI
   gtk_init(&argc, &argv);
-  create_transcript_window();
 #endif
 
   if(argc == 2)
@@ -334,10 +350,31 @@ int main(int argc, char **argv)
     core_library_loaded = true;
     load_from_image(argv[1]);
     loaded_image_file_name = strdup(argv[1]);
+
+    //create_transcript_window() is called in both
+    //if and else clauses because if we do it
+    //before, the trancript window's
+    //title, which depends on the loaded file's
+    //name, will not be updated. If we do it
+    //after, the "Loading core library..."
+    //message cannot be sent to the transcript,
+    //as the transcript window has not
+    //been created yet.
+
+#ifdef GUI
+  create_transcript_window();
+  if(debug_mode)
+    create_debug_window();
+#endif
+
   }
   else
   {
     initialize();
+
+#ifdef GUI
+  create_transcript_window();
+#endif
 
     if(load_core_library())
     {
@@ -424,8 +461,13 @@ int repl()
       }
     }
 
+#ifdef GUI
+    if(!in_error)
+      print_object(reg_accumulator);
+#else
     if(yyin == stdin && !in_error)
       print_object(reg_accumulator);
+#endif
 
     //delete_expression(g_expr);
     //g_expr = NULL;
@@ -463,13 +505,13 @@ int repl()
     }
 
 #ifdef GUI
-    if(!in_error && core_library_loaded)
+    if(!in_error && core_library_loaded && !debug_mode)
     {
       print_object(reg_accumulator);
       print_to_transcript("\n");
     }
 #else
-    if(yyin == stdin && !in_error)
+    if(yyin == stdin && !in_error  && !debug_mode)
       print_object(reg_accumulator);
 #endif
 

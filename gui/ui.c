@@ -13,16 +13,28 @@ GtkTextBuffer *workspace_buffer;
 GtkWindow *transcript_window;
 GtkWindow *workspace_window;
 GtkWindow *system_browser_window;
+GtkWindow *debugger_window;
 
 GtkTreeView *packages_list;
 GtkTreeView *symbols_list;
 
 GtkTextBuffer *system_browser_buffer;
+GtkTextView *system_browser_textview;
 
 BOOLEAN new_symbol_being_created;
 
+GtkWindow *action_triggering_window;
+
+GtkTreeView *frames_list;
+GtkTreeView *variables_list;
+
+GtkStatusbar *system_browser_statusbar;
+
 extern unsigned int nof_packages;
 extern package_t *packages;
+
+extern OBJECT_PTR debug_execution_stack;
+extern OBJECT_PTR NIL;
 
 /* event handler function definitions begin */
 extern gboolean delete_event(GtkWidget *,
@@ -45,6 +57,7 @@ extern void show_system_browser_window(GtkWidget *, gpointer);
 extern void fetch_package_members(GtkWidget *, gpointer);
 extern void fetch_symbol_value(GtkWidget *, gpointer);
 extern void eval_expression(GtkWidget *, gpointer);
+extern void fetch_variables(GtkWidget *, gpointer);
 /* event handler function definitions end */
 
 typedef struct
@@ -243,12 +256,12 @@ void initialize_symbols_list(GtkTreeView *list)
   g_object_unref(store);  
 }
 
-void populate_packages_list(GtkTreeView *list)
+void populate_packages_list()
 {
   GtkListStore *store;
   GtkTreeIter  iter;
 
-  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
 
   int i;
 
@@ -305,7 +318,7 @@ GtkToolbar *create_system_browser_toolbar()
                            "Private",                              /* tooltip private info */
                            new_symbol_icon,                        /* icon widget */
                            GTK_SIGNAL_FUNC(new_symbol),            /* a signal */
-                           NULL);
+                           (GtkWidget *)system_browser_window);
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
@@ -313,7 +326,7 @@ GtkToolbar *create_system_browser_toolbar()
                            "Private",                              /* tooltip private info */
                            accept_icon,                            /* icon widget */
                            GTK_SIGNAL_FUNC(accept),                /* a signal */
-                           NULL);
+                           (GtkWidget *)system_browser_window);
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
@@ -376,7 +389,7 @@ void create_system_browser_window()
   initialize_symbols_list((GtkTreeView *)symbols_list);
   gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(symbols_list, 0), 0);
 
-  populate_packages_list((GtkTreeView *)packages_list);
+  populate_packages_list();
 
   g_signal_connect(G_OBJECT(packages_list), "cursor-changed",
           G_CALLBACK(fetch_package_members), NULL);
@@ -395,6 +408,8 @@ void create_system_browser_window()
 
   GtkWidget *textview = gtk_text_view_new ();
 
+  system_browser_textview = textview;
+
   gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
   //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
 
@@ -407,7 +422,11 @@ void create_system_browser_window()
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_system_browser_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
-  
+
+  //uncomment this to add status bar
+  system_browser_statusbar = gtk_statusbar_new();
+  gtk_box_pack_start (GTK_BOX (vbox), system_browser_statusbar, FALSE, FALSE, 0);  
+
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
   gtk_widget_show_all(win);
@@ -415,6 +434,13 @@ void create_system_browser_window()
   gtk_widget_grab_focus(packages_list);
 
   new_symbol_being_created = false;
+}
+
+void refresh_system_browser()
+{
+  populate_packages_list();
+  fetch_package_symbols();
+  gtk_widget_grab_focus(packages_list);
 }
 
 GtkToolbar *create_transcript_toolbar()
@@ -483,7 +509,9 @@ void create_transcript_window()
 
   transcript_window = (GtkWindow *)gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
-  gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
+  //gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
+  update_transcript_title();
+
   gtk_window_set_default_size((GtkWindow *)transcript_window, 600, 400);
   gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
     
@@ -527,7 +555,7 @@ void create_transcript_window()
 
 void show_error_dialog(char *msg)
 {
-  GtkWidget *dialog = gtk_message_dialog_new ((GtkWindow *)workspace_window,
+  GtkWidget *dialog = gtk_message_dialog_new (action_triggering_window,
                                               GTK_DIALOG_DESTROY_WITH_PARENT,
                                               GTK_MESSAGE_ERROR,
                                               GTK_BUTTONS_CLOSE,
@@ -572,3 +600,159 @@ void error_window(char *msg)
   gtk_widget_show_all (window);
 }
 
+void initialize_frames_list(GtkTreeView *list)
+{
+  GtkCellRenderer    *renderer;
+  GtkTreeViewColumn  *column1, *column2;
+  GtkListStore       *store;
+
+  renderer = gtk_cell_renderer_text_new();
+
+  column1 = gtk_tree_view_column_new_with_attributes("Stack Frames",
+                                                     renderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
+
+  /* column2 = gtk_tree_view_column_new_with_attributes("ID", */
+  /*                                                    renderer, "text", 1, NULL); */
+  /* gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2); */
+
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+
+  gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
+                          GTK_TREE_MODEL(store));
+
+  g_object_unref(store);  
+}
+
+void initialize_variables_list(GtkTreeView *list)
+{
+  GtkCellRenderer    *renderer;
+  GtkTreeViewColumn  *column1, *column2;
+  GtkListStore       *store;
+
+  renderer = gtk_cell_renderer_text_new();
+
+  column1 = gtk_tree_view_column_new_with_attributes("Symbol",
+                                                     renderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
+
+  column2 = gtk_tree_view_column_new_with_attributes("Value",
+                                                     renderer, "text", 1, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2);
+
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
+
+  gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
+                          GTK_TREE_MODEL(store));
+
+  g_object_unref(store);  
+}
+
+void populate_frames_list(GtkTreeView *list)
+{
+  GtkListStore *store;
+  GtkTreeIter  iter;
+
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
+
+  /* int i; */
+
+  /* for(i=0; i<nof_packages; i++) */
+  /* { */
+  /*   gtk_list_store_append(store, &iter); */
+  /*   gtk_list_store_set(store, &iter, 0, strdup(packages[i].name), -1);   */
+  /*   gtk_list_store_set(store, &iter, 1, i, -1); */
+  /* } */
+
+  OBJECT_PTR rest = debug_execution_stack;
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR frame = car(rest);
+
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+
+    sprintf(buf, "#<Frame #x%08x> ", frame);
+
+    OBJECT_PTR env = get_heap((frame >> OBJECT_SHIFT) + 2);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, buf, -1);
+    gtk_list_store_set(store, &iter, 1, env, -1);
+
+    rest = cdr(rest);
+  }
+}
+
+void create_debug_window()
+{
+  GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  debugger_window = (GtkWindow *)win;
+
+  GtkWidget *scrolled_win1, *scrolled_win2;
+  GtkWidget *vbox, *hbox1, *hbox2;
+
+  gtk_window_set_title((GtkWindow *)win, "pLisp Debugger");
+  gtk_window_set_default_size((GtkWindow *)win, 600, 400);
+  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+
+  g_signal_connect (win, "delete-event",
+                    G_CALLBACK (delete_event), NULL);
+
+  g_signal_connect(G_OBJECT(win), 
+                   "key_press_event", 
+                   G_CALLBACK (handle_key_press_events), 
+                   NULL);
+
+  gtk_container_set_border_width (GTK_CONTAINER (win), 10);
+
+  scrolled_win1 = gtk_scrolled_window_new(NULL, NULL);
+  scrolled_win2 = gtk_scrolled_window_new(NULL, NULL);
+
+  frames_list = (GtkTreeView *)gtk_tree_view_new();
+  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(frames_list), TRUE);
+  gtk_widget_modify_font(GTK_WIDGET(frames_list), pango_font_description_from_string(FONT));
+
+  initialize_frames_list((GtkTreeView *)frames_list);
+
+  //frames should NOT be sorted
+  //gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(frames_list, 0), 0); 
+
+  variables_list = (GtkTreeView *)gtk_tree_view_new();
+  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(variables_list), TRUE);
+  gtk_widget_modify_font(GTK_WIDGET(variables_list), pango_font_description_from_string(FONT));
+
+  initialize_variables_list((GtkTreeView *)variables_list);
+  gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(variables_list, 0), 0);
+
+  populate_frames_list((GtkTreeView *)frames_list);
+
+  g_signal_connect(G_OBJECT(frames_list), "cursor-changed",
+          G_CALLBACK(fetch_variables), NULL);
+
+  gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)frames_list);
+  gtk_container_add(GTK_CONTAINER (scrolled_win2), (GtkWidget *)variables_list);
+
+  hbox1 = gtk_hbox_new (FALSE, 5);
+  hbox2 = gtk_hbox_new (FALSE, 5);
+
+  gtk_box_pack_start_defaults (GTK_BOX (hbox1), scrolled_win1);
+  gtk_box_pack_start_defaults (GTK_BOX (hbox2), scrolled_win2);
+
+  vbox = gtk_vbox_new (FALSE, 5);
+  //uncomment this when adding debugger toolbar
+  //gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox2, TRUE, TRUE, 0);
+
+  //uncomment this to add status bar
+  //gtk_box_pack_start (GTK_BOX (vbox), gtk_statusbar_new(), FALSE, FALSE, 0);  
+
+  gtk_container_add (GTK_CONTAINER (win), vbox);
+
+  gtk_widget_show_all(win);
+
+  gtk_widget_grab_focus(frames_list);
+}

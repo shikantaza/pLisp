@@ -265,9 +265,11 @@ void print_copyright_notice();
 void throw_generic_exception(char *);
 void throw_exception(char *, char *);
 
-int print_object_to_string(OBJECT_PTR, char *);
-int print_cons_object_to_string(OBJECT_PTR, char *);
-int print_closure_object_to_string(OBJECT_PTR, char *);
-int print_macro_object_to_string(OBJECT_PTR, char *);
-int print_array_object_to_string(OBJECT_PTR, char *);
-int print_string_object_to_string(OBJECT_PTR, char *);
+int print_object_to_string(OBJECT_PTR, char *, int);
+int print_cons_object_to_string(OBJECT_PTR, char *, int);
+int print_closure_object_to_string(OBJECT_PTR, char *, int);
+int print_macro_object_to_string(OBJECT_PTR, char *, int);
+int print_array_object_to_string(OBJECT_PTR, char *, int);
+int print_string_object_to_string(OBJECT_PTR, char *, int);
+
+OBJECT_PTR list(int, ...);

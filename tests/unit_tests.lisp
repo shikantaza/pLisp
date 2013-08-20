@@ -843,7 +843,7 @@
 
 (test-exception 310 (symbol-name 1) 'invalid-argument)
 
-(test-condition 311 (eq (symbol-name 'abc) "USER:ABC"))
+(test-condition 311 (eq (symbol-name 'abc) "ABC"))
 ;end symbol-name
 
 ;symbol not bound

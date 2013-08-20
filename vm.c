@@ -194,8 +194,10 @@ void eval()
   }
   else if(opcode == CLOSE)
   {
-    reg_accumulator = create_closure_object(reg_current_env, CADR(exp), CADDR(exp), CADDDR(exp));
-    reg_next_expression = CADDDDR(exp);
+    /* reg_accumulator = create_closure_object(reg_current_env, CADR(exp), CADDR(exp), CADDDR(exp)); */
+    /* reg_next_expression = CADDDDR(exp); */
+    reg_accumulator = create_closure_object(reg_current_env, second(exp), third(exp), fourth(exp));
+    reg_next_expression = fifth(exp);
   }
   else if(opcode == MACRO)
   {
@@ -1503,6 +1505,9 @@ void eval()
 
         debug_execution_stack = reg_current_stack;
 
+#ifdef GUI
+        create_debug_window();
+#endif
       }
       else if(operator == RESUME)
       {

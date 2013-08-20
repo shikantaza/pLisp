@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "plisp.h"
 #include "util.h"
@@ -153,10 +154,15 @@ OBJECT_PTR FLOAT_POINTER = (86 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR CHAR_POINTER  = (87 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols useful in FFI */
 
+OBJECT_PTR LET           = (88 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COND          = (89 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DOTIMES       = (90 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DOLIST        = (91 << OBJECT_SHIFT) + SYMBOL_TAG;
+
 extern FILE *yyin;
 
 #define NOF_SPECIAL_SYMBOLS     69
-#define NOF_NON_SPECIAL_SYMBOLS 19
+#define NOF_NON_SPECIAL_SYMBOLS 23
 
 BOOLEAN in_exception = false;
 OBJECT_PTR execution_stack;
@@ -176,19 +182,25 @@ OBJECT_PTR root_form;
 int nof_dl_handles = 0;
 void **dl_handles = NULL;
 
-inline OBJECT_PTR CAAR(x)   { return car(car(x)); }
-inline OBJECT_PTR CDAR(x)   { return cdr(car(x)); }
-inline OBJECT_PTR CADR(x)   { return car(cdr(x)); }
-inline OBJECT_PTR CDDR(x)   { return cdr(cdr(x)); }
-inline OBJECT_PTR CDDAR(x)  { return cdr(cdr(car(x))); }
-inline OBJECT_PTR CAADR(x)  { return car(car(cdr(x))); }
-inline OBJECT_PTR CADAR(x)  { return car(cdr(car(x))); }
-inline OBJECT_PTR CADDR(x)  { return car(cdr(cdr(x))); }
-inline OBJECT_PTR CDDDR(x)  { return cdr(cdr(cdr(x))); }
-inline OBJECT_PTR CADDDR(x) { return car(cdr(cdr(cdr(x)))); }
-inline OBJECT_PTR CADDAR(x) { return car(cdr(cdr(car(x)))); }
-inline OBJECT_PTR CADADR(x) { return car(cdr(car(cdr(x)))); }
+inline OBJECT_PTR CAAR(x)    { return car(car(x)); }
+inline OBJECT_PTR CDAR(x)    { return cdr(car(x)); }
+inline OBJECT_PTR CADR(x)    { return car(cdr(x)); }
+inline OBJECT_PTR CDDR(x)    { return cdr(cdr(x)); }
+inline OBJECT_PTR CDDAR(x)   { return cdr(cdr(car(x))); }
+inline OBJECT_PTR CAADR(x)   { return car(car(cdr(x))); }
+inline OBJECT_PTR CADAR(x)   { return car(cdr(car(x))); }
+inline OBJECT_PTR CADDR(x)   { return car(cdr(cdr(x))); }
+inline OBJECT_PTR CDDDR(x)   { return cdr(cdr(cdr(x))); }
+inline OBJECT_PTR CADDDR(x)  { return car(cdr(cdr(cdr(x)))); }
+inline OBJECT_PTR CADDAR(x)  { return car(cdr(cdr(car(x)))); }
+inline OBJECT_PTR CADADR(x)  { return car(cdr(car(cdr(x)))); }
 inline OBJECT_PTR CADDDDR(x) { return car(cdr(cdr(cdr(cdr(x))))); }
+
+inline OBJECT_PTR first(x)  { return car(x); }
+inline OBJECT_PTR second(x) { return car(cdr(x)); }
+inline OBJECT_PTR third(x)  { return car(cdr(cdr(x))); } 
+inline OBJECT_PTR fourth(x) { return car(cdr(cdr(cdr(x)))); } 
+inline OBJECT_PTR fifth(x)  { return car(cdr(cdr(cdr(cdr(x))))); } 
 
 inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG; }
 inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CONS_TAG; }
@@ -461,7 +473,11 @@ void prompt()
 #endif
   }
   else
+  {
+#ifndef GUI
     fprintf(stdout, "\nDEBUG> ");
+#endif
+  }
 }
 
 void cleanup()
@@ -518,7 +534,7 @@ void welcome()
   fprintf(stdout, "Welcome to pLisp's top level. Type 'quit' to exit.");
 }
 
-int print_object_to_string(OBJECT_PTR obj_ptr, char *buf)
+int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
 {
   int length = 0;
 
@@ -527,36 +543,36 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf)
     int package_index = obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
 
     if(package_index == current_package)
-      length += sprintf(buf+length, "%s", get_symbol_name(obj_ptr));
+      length += sprintf(buf+filled_buf_len+length, "%s", get_symbol_name(obj_ptr));
     else
     {
       char buf1[SYMBOL_STRING_SIZE];
       print_symbol(obj_ptr, buf1);
-      length += sprintf(buf+length, "%s", buf1);
+      length += sprintf(buf+filled_buf_len+length, "%s", buf1);
     }
   }
   else if(IS_CONS_OBJECT(obj_ptr))
-    length += print_cons_object_to_string(obj_ptr, buf+length);
+    length += print_cons_object_to_string(obj_ptr, buf, filled_buf_len + length);
   else if(IS_CLOSURE_OBJECT(obj_ptr))
-    length += print_closure_object_to_string(obj_ptr, buf+length);
+    length += print_closure_object_to_string(obj_ptr, buf, filled_buf_len + length);
   else if(IS_CONTINUATION_OBJECT(obj_ptr))
-    length += sprintf(buf+length, "#<CONTINUATION #x%08x> ", obj_ptr);
+    length += sprintf(buf+filled_buf_len+length, "#<CONTINUATION #x%08x> ", obj_ptr);
   else if(IS_MACRO_OBJECT(obj_ptr))
-    length += print_macro_object_to_string(obj_ptr, buf+length);
+    length += print_macro_object_to_string(obj_ptr, buf, filled_buf_len+length);
   else if(IS_INTEGER_OBJECT(obj_ptr))
-    length += sprintf(buf+length, "%d", get_int_value(obj_ptr));
+    length += sprintf(buf+filled_buf_len+length, "%d", get_int_value(obj_ptr));
   else if(IS_FLOAT_OBJECT(obj_ptr))
-    length += sprintf(buf+length, "%f", get_float_value(obj_ptr));
+    length += sprintf(buf+filled_buf_len+length, "%f", get_float_value(obj_ptr));
   else if(IS_STRING_LITERAL_OBJECT(obj_ptr))
-    length += sprintf(buf+length, "\"%s\"", strings[obj_ptr >> OBJECT_SHIFT]);
+    length += sprintf(buf+filled_buf_len+length, "\"%s\"", strings[obj_ptr >> OBJECT_SHIFT]);
   else if(IS_CHAR_OBJECT(obj_ptr))
-    length += sprintf(buf+length, "#\\%c", obj_ptr >> OBJECT_SHIFT);
+    length += sprintf(buf+filled_buf_len+length, "#\\%c", obj_ptr >> OBJECT_SHIFT);
   else if(IS_ARRAY_OBJECT(obj_ptr))
   {
     if(is_string_object(obj_ptr))
-      length += print_string_to_string(obj_ptr, buf+length);
+      length += print_string_to_string(obj_ptr, buf, filled_buf_len+length);
     else
-      length += print_array_object_to_string(obj_ptr, buf+length);
+      length += print_array_object_to_string(obj_ptr, buf, filled_buf_len+length);
   }
   else
     assert(false);
@@ -768,7 +784,7 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   return ret;
 }
 
-int print_cons_object_to_string(OBJECT_PTR obj, char *buf)
+int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
   assert(IS_CONS_OBJECT(obj));
 
@@ -777,36 +793,209 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf)
 
   int length = 0;
 
+  //to determine the location of the
+  //last newline and calculate
+  //the number of indents
+  char *ptr;
+  int indents = 0;
+  for(ptr=buf+filled_buf_len; ptr>=buf; ptr--)
+  {
+    if(*ptr == '\n')
+      break;
+    indents++;
+  }
+
+  if(car_obj == LAMBDA  || 
+     car_obj == MACRO   || 
+     car_obj == LET     ||
+     car_obj == WHILE   ||
+     car_obj == DOTIMES ||
+     car_obj == DOLIST)
+  {
+    if(car_obj == LAMBDA)
+      length += sprintf(buf+filled_buf_len+length, "(lambda ");
+    else if(car_obj == MACRO)
+      length += sprintf(buf+filled_buf_len+length, "(macro ");
+    else if(car_obj == LET)
+      length += sprintf(buf+filled_buf_len+length, "(let ");
+    else if(car_obj == WHILE)
+      length += sprintf(buf+filled_buf_len+length, "(while ");
+    else if(car_obj == DOTIMES)
+      length += sprintf(buf+filled_buf_len+length, "(dotimes ");
+    else if(car_obj == DOLIST)
+      length += sprintf(buf+filled_buf_len+length, "(dolist ");
+
+    if(car_obj != LET)
+      length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+    else
+    {
+      //LET specs
+      OBJECT_PTR specs = CADR(obj);
+
+      length += sprintf(buf+filled_buf_len+length, "(");
+
+      length += print_object_to_string(car(specs), buf, filled_buf_len+length);
+
+      OBJECT_PTR rest = cdr(specs);
+
+      while(rest != NIL)
+      {
+
+        length += sprintf(buf+filled_buf_len+length, "\n");
+
+        int i;
+        for(i=1; i<indents; i++)
+          length += sprintf(buf+filled_buf_len+length, " ");
+
+        length += sprintf(buf+filled_buf_len+length, "      ");        
+
+        length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+
+        rest = cdr(rest);
+      }
+
+      length += sprintf(buf+filled_buf_len+length, ")");
+    }
+
+    OBJECT_PTR rest = CDDR(obj);
+
+    while(rest != NIL)
+    {
+      length += sprintf(buf+filled_buf_len+length, "\n");
+
+      int i;
+      for(i=1; i<indents; i++)
+        length += sprintf(buf+filled_buf_len+length, " ");
+
+      length += sprintf(buf+filled_buf_len+length, "  ");
+
+      length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+
+      rest = cdr(rest);
+    }
+
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
+  if(car_obj == PROGN || car_obj == COND)
+  {
+    if(car_obj == PROGN)
+      length += sprintf(buf+filled_buf_len+length, "(progn ");
+    else if(car_obj == COND)
+      length += sprintf(buf+filled_buf_len+length, "(cond ");
+
+    length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+
+    OBJECT_PTR rest = cdr(cdr_obj);
+
+    while(rest != NIL)
+    {
+      length += sprintf(buf+filled_buf_len+length, "\n");
+
+      int i;
+      for(i=1; i<indents; i++)
+        length += sprintf(buf+filled_buf_len+length, " ");
+
+      if(car_obj == PROGN)
+        length += sprintf(buf+filled_buf_len+length, "       ");
+      else
+        length += sprintf(buf+filled_buf_len+length, "      ");
+      
+      length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+
+      rest = cdr(rest);
+    }
+
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
+  if(car_obj == IF)
+  {
+    length += sprintf(buf+filled_buf_len+length, "(if ");
+    length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+
+    length += sprintf(buf+filled_buf_len+length, "\n");
+
+    int i;
+    for(i=1; i<indents; i++)
+      length += sprintf(buf+filled_buf_len+length, " ");
+
+    length += sprintf(buf+filled_buf_len+length, "    ");
+
+    length += print_object_to_string(CADDR(obj), buf, filled_buf_len+length);
+
+    if(fourth(obj) != NIL)
+    {
+      length += sprintf(buf+filled_buf_len+length, "\n");
+
+      for(i=1; i<indents; i++)
+        length += sprintf(buf+filled_buf_len+length, " ");
+
+      length += sprintf(buf+filled_buf_len+length, "  ");
+      length += print_object_to_string(CADDDR(obj), buf, filled_buf_len+length);
+    }
+
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
+
+  BOOLEAN macro_form = false;
+
+  if(car_obj == BACKQUOTE || car_obj == COMMA || car_obj == COMMA_AT || car_obj == QUOTE)
+    macro_form = true;
+ 
   if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
   {
-    length += sprintf(buf+length,"(");
-    length += print_object_to_string(car_obj, buf+length);
-    length += sprintf(buf+length, " . ");
-    length += print_object_to_string(cdr_obj, buf+length);
-    length += sprintf(buf+length, ")");
+    if(macro_form)
+      length += sprintf(buf+filled_buf_len+length, "%s", (car_obj == BACKQUOTE) ? "`" : ((car_obj == COMMA) ? "," : ((car_obj == QUOTE) ? "'" : ",@")));
+    else
+    {
+      length += sprintf(buf+filled_buf_len+length,"(");
+      length += print_object_to_string(car_obj, buf, filled_buf_len+length);
+    }
+
+    length += sprintf(buf+filled_buf_len+length, " . ");
+    length += print_object_to_string(cdr_obj, buf, filled_buf_len+length);
+
+    if(!macro_form)
+      length += sprintf(buf+filled_buf_len+length, ")");
   }
   else
   {
-    length += sprintf(buf+length, "(");
+    if(macro_form)
+      length += sprintf(buf+filled_buf_len+length, "%s", (car_obj == BACKQUOTE) ? "`" : ((car_obj == COMMA) ? "," : ((car_obj == QUOTE) ? "'" : ",@")));
+    else
+      length += sprintf(buf+filled_buf_len+length, "(");
 
-    OBJECT_PTR rest = obj;
+    OBJECT_PTR rest = macro_form ? cdr(obj) : obj;
 
     while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
     {
-      length += print_object_to_string(car(rest), buf+length);
-      length += sprintf(buf+length, " ");
+      length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+      length += sprintf(buf+filled_buf_len+length, " ");
       rest = cdr(rest);
     }
 
     if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
     {
-      length += sprintf(buf+length, " . ");
-      length += print_object_to_string(rest, buf+length);
-      length += sprintf(buf+length, ")");
+      length += sprintf(buf+filled_buf_len+length, " . ");
+      length += print_object_to_string(rest, buf, filled_buf_len+length);
+
+      if(!macro_form)
+        length += sprintf(buf+filled_buf_len+length, ")");
     }
     else
     {
-      length += sprintf(buf+length-1, ")") - 1;
+      if(!macro_form)
+        length += sprintf(buf+filled_buf_len+length-1, ")") - 1;
+      else
+        length += sprintf(buf+filled_buf_len+length-1, "") - 1;
     }
   }
 
@@ -1126,10 +1315,9 @@ OBJECT_PTR get_source_object(OBJECT_PTR obj)
   return get_heap((obj >> (IS_CLOSURE_OBJECT(obj) ? OBJECT_SHIFT : OBJECT_SHIFT)) + 3);
 }
 
-
-int print_closure_object_to_string(OBJECT_PTR obj, char *buf)
+int print_closure_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
-  return sprintf(buf, "#<CLOSURE #x%08x> ", obj);
+  return sprintf(buf+filled_buf_len, "#<CLOSURE #x%08x> ", obj);
 }
 
 void print_closure_object(OBJECT_PTR obj)
@@ -1338,9 +1526,9 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
   return (ptr << OBJECT_SHIFT) + MACRO_TAG;
 }
 
-int print_macro_object_to_string(OBJECT_PTR macro_obj, char *buf)
+int print_macro_object_to_string(OBJECT_PTR macro_obj, char *buf, int filled_buf_len)
 {
-  return sprintf(buf, "#<MACRO #x%08x> ", macro_obj);
+  return sprintf(buf+filled_buf_len, "#<MACRO #x%08x> ", macro_obj);
 }
 
 void print_macro_object(OBJECT_PTR macro_obj)
@@ -1428,7 +1616,7 @@ void create_package(char *name)
 
 void initialize_core_package()
 {
-  /* There are 19 symbols (12 assembler mnemonics and seven FFI types) 
+  /* There are 23 symbols (12 assembler mnemonics, seven FFI types, and LET,COND,DOTIMES, DOLIST)
      that are defined for convenience in addtion to the special symbols. These 
      mnemonics are not special, i.e., it doesn't matter if the user source code uses them */
   packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS + NOF_NON_SPECIAL_SYMBOLS; 
@@ -1532,6 +1720,11 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[86] = strdup("FLOAT-POINTER");
   packages[CORE_PACKAGE_INDEX].symbols[87] = strdup("CHARACTER-POINTER");
   /* end symbols for FFI */
+
+  packages[CORE_PACKAGE_INDEX].symbols[88] = strdup("LET");
+  packages[CORE_PACKAGE_INDEX].symbols[89] = strdup("COND");
+  packages[CORE_PACKAGE_INDEX].symbols[90] = strdup("DOTIMES");
+  packages[CORE_PACKAGE_INDEX].symbols[91] = strdup("DOLIST");
 }
 
 int find_package(char* package_name)
@@ -1597,9 +1790,9 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
   if(symbol_index < 0 || symbol_index >= packages[package_index].nof_symbols)
     assert(false);
 
-  if(package_index != 0)
-    sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]);
-  else
+  /* if(package_index != 0) */
+  /*   sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]); */
+  /* else */
     sprintf(buf, "%s", packages[package_index].symbols[symbol_index]);
 
   log_function_exit("print_symbol");
@@ -1830,11 +2023,11 @@ OBJECT_PTR convert_float_to_object(float v)
   
 }
 
-int print_array_object_to_string(OBJECT_PTR array, char *buf)
+int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len)
 {
   int len = 0;
 
-  len += sprintf(buf, "[");
+  len += sprintf(buf+filled_buf_len, "[");
 
   int length = get_int_value(get_heap(array >> OBJECT_SHIFT));
 
@@ -1842,14 +2035,14 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf)
 
   for(i=0; i< length; i++)
   {
-    len += print_object_to_string(get_heap((array >> OBJECT_SHIFT) + i + 1), buf+len);
-    len += sprintf(buf+len, " ");
+    len += print_object_to_string(get_heap((array >> OBJECT_SHIFT) + i + 1), buf, filled_buf_len+len);
+    len += sprintf(buf+filled_buf_len+len, " ");
   }
 
   if(length > 0)
-    len += sprintf(buf+len-1, "]") - 1;
+    len += sprintf(buf+filled_buf_len+len-1, "]") - 1;
   else
-    len += sprintf(buf+len, "]");
+    len += sprintf(buf+filled_buf_len+len, "]");
 
   return len;
 }
@@ -1902,7 +2095,7 @@ void print_array_object(OBJECT_PTR array)
   log_function_exit("print_array_object");
 }
 
-int print_string_to_string(OBJECT_PTR string_object, char *buf)
+int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_len)
 {
   RAW_PTR ptr = string_object >> OBJECT_SHIFT;
 
@@ -1912,12 +2105,12 @@ int print_string_to_string(OBJECT_PTR string_object, char *buf)
 
   int length = 0;
 
-  length += sprintf(buf, "\"");
+  length += sprintf(buf+filled_buf_len, "\"");
 
   for(i=1; i<=len; i++)
-    length += sprintf(buf+length, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
+    length += sprintf(buf+filled_buf_len+length, "%c", get_heap(ptr + i) >> OBJECT_SHIFT);
 
-  length += sprintf(buf+length, "\"");
+  length += sprintf(buf+filled_buf_len+length, "\"");
 
   return length;
 }
@@ -2127,3 +2320,23 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_o
   return ret;
 }
 
+OBJECT_PTR list(int count, ...)
+{
+  if(!count)
+    return NIL;
+
+  va_list ap;
+
+  va_start(ap, count);
+
+  OBJECT_PTR ret = cons(va_arg(ap, int), NIL);
+
+  int i;
+
+  for(i=1; i<count; i++)
+    set_heap((last_cell(ret) >> OBJECT_SHIFT) + 1, cons(va_arg(ap, int), NIL));
+
+  va_end(ap);
+
+  return ret;
+}
