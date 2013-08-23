@@ -197,14 +197,18 @@ void eval()
       /* else */
       /*   symbol_to_be_used = symbol_given; */
 
-      OBJECT_PTR res = get_symbol_value(CADR(exp), 
+      OBJECT_PTR symbol_to_be_used = CADR(exp);
+
+      OBJECT_PTR res = get_symbol_value(symbol_to_be_used,
                                         debug_mode ? debug_env : reg_current_env);
 
       if(car(res) != NIL)
         reg_accumulator = cdr(res);
       else
       {
-        OBJECT_PTR res1 = get_symbol_value(cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp)))),
+        symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp))));
+
+        OBJECT_PTR res1 = get_symbol_value(symbol_to_be_used,
                                            debug_mode ? debug_env : reg_current_env);
 
         if(car(res1) != NIL)
@@ -212,7 +216,7 @@ void eval()
         else
         {
           char buf[SYMBOL_STRING_SIZE];
-          print_qualified_symbol(CADR(exp), buf);
+          print_qualified_symbol(symbol_to_be_used, buf);
           sprintf(err_buf, "Symbol not bound(1): %s", buf);
           throw_exception("SYMBOL-NOT-BOUND", err_buf);
           return;
@@ -291,31 +295,20 @@ void eval()
   }
   else if(opcode == ASSIGN)
   {
-    OBJECT_PTR symbol_given = CADR(exp);
-    OBJECT_PTR symbol_to_be_used;
-
-    int package_index = symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
-
-    if(package_index != current_package)
-    {
-      if(package_index == CORE_PACKAGE_INDEX)
-        symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given)));
-      else
-      {
-        throw_exception("ACCESS-VIOLATION", "Attempt to update symbol in a package while in a different package");
-        return;
-      }
-    }
-    else
-      symbol_to_be_used = symbol_given;
+    OBJECT_PTR symbol_to_be_used = CADR(exp);
 
     if(update_environment(reg_current_env, symbol_to_be_used, reg_accumulator) == NIL)
     {
-      char buf[SYMBOL_STRING_SIZE];
-      print_qualified_symbol(CADR(exp), buf);
-      sprintf(err_buf, "Symbol not bound(2): %s", buf);
-      throw_exception("SYMBOL-NOT-BOUND", err_buf);
-      return;
+      symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp))));
+
+      if(update_environment(reg_current_env, symbol_to_be_used, reg_accumulator) == NIL)
+      {
+        char buf[SYMBOL_STRING_SIZE];
+        print_qualified_symbol(symbol_to_be_used, buf);
+        sprintf(err_buf, "Symbol not bound(2): %s", buf);
+        throw_exception("SYMBOL-NOT-BOUND", err_buf);
+        return;
+      }
     }
     reg_next_expression = CADDR(exp);
   }
@@ -331,10 +324,7 @@ void eval()
       if(package_index == CORE_PACKAGE_INDEX)
         symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given)));
       else
-      {
-        throw_exception("ACCESS-VIOLATION", "Attempt to define symbol in a package while in a different package");
-        return;
-      }
+        symbol_to_be_used = symbol_given;
     }
     else
       symbol_to_be_used = symbol_given;
