@@ -327,6 +327,16 @@
 (defun exception (excp desc)
   (cons excp desc))
 
+(defun concat-strings (str1 str2)
+  (let ((l1 (array-length str1))
+        (l2 (array-length str2)))
+    (let ((str (make-array (+ l1 l2) nil)))
+      (dotimes (i l1)
+        (array-set str i (array-get str1 i)))
+      (dotimes (i l2)
+        (array-set str (+ i l1) (array-get str2 i)))
+      str)))
+
 (defun throw (e)
   (if (null exception-handlers)
       (let ((err-str (concat-strings "Uncaught exception: " (symbol-name (car e)))))
@@ -415,5 +425,6 @@
 (create-package "user")
 
 (in-package "user")
+
 
 ;(load-file "tests/unit_tests.lisp")

@@ -107,16 +107,6 @@
     (let ((res (split lst)))
       (merge (sort (car res) compare-fn) (sort (cdr res) compare-fn) compare-fn))))
 
-(defun concat-strings (str1 str2)
-  (let ((l1 (array-length str1))
-        (l2 (array-length str2)))
-    (let ((str (make-array (+ l1 l2) nil)))
-      (dotimes (i l1)
-        (array-set str i (array-get str1 i)))
-      (dotimes (i l2)
-        (array-set str (+ i l1) (array-get str2 i)))
-      str)))
-
 (defun convert-list-to-array (lst)
   (let ((m (make-array (length lst) nil)))
     (dotimes (i (length lst))

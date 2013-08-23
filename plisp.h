@@ -72,6 +72,8 @@
 
 #define SYMBOL_STRING_SIZE 100
 
+#define CORE_PACKAGE_INDEX 0
+
 typedef unsigned int RAW_PTR;
 typedef unsigned int OBJECT_PTR;
 
@@ -188,6 +190,7 @@ int find_qualified_symbol(int, char *);
 OBJECT_PTR get_qualified_symbol_object(char *, char *);
 
 void print_symbol(OBJECT_PTR, char *);
+void print_qualified_symbol(OBJECT_PTR, char *);
 int add_qualified_symbol(char *, char *);
 int find_symbol(char *, int);
 
@@ -273,3 +276,5 @@ int print_array_object_to_string(OBJECT_PTR, char *, int);
 int print_string_object_to_string(OBJECT_PTR, char *, int);
 
 OBJECT_PTR list(int, ...);
+
+OBJECT_PTR convert_symbol_to_core_package_symbol(OBJECT_PTR);

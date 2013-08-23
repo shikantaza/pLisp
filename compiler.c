@@ -78,6 +78,8 @@ BOOLEAN core_library_loaded = false;
 
 char *loaded_image_file_name = NULL;
 
+extern unsigned int current_package;
+
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -363,6 +365,7 @@ int main(int argc, char **argv)
 
 #ifdef GUI
   create_transcript_window();
+  print_to_transcript("Image loaded successfully\n");
   if(debug_mode)
     create_debug_window();
 #endif

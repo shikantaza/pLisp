@@ -9,6 +9,7 @@
 
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;
+GtkTextBuffer *system_browser_buffer;
 
 GtkWindow *transcript_window;
 GtkWindow *workspace_window;
@@ -18,7 +19,7 @@ GtkWindow *debugger_window;
 GtkTreeView *packages_list;
 GtkTreeView *symbols_list;
 
-GtkTextBuffer *system_browser_buffer;
+GtkTextView *transcript_textview;
 GtkTextView *system_browser_textview;
 
 BOOLEAN new_symbol_being_created;
@@ -45,15 +46,16 @@ extern void new_package(GtkWidget *, gpointer);
 extern void new_symbol(GtkWidget *, gpointer);
 extern void accept(GtkWidget *, gpointer);
 extern void delete_pkg_or_sym(GtkWidget *, gpointer);
+extern void refresh_sys_browser(GtkWidget *, gpointer);
 extern void close_window(GtkWidget *, gpointer);
 extern gboolean handle_key_press_events(GtkWidget *, 
                                         GdkEventKey *,
                                         gpointer);
 extern void load_source_file(GtkWidget *, gpointer);
-extern void show_workspace_window(GtkWidget *, gpointer);
+extern void show_workspace_win(GtkWidget *, gpointer);
 extern void load_image_file(GtkWidget *, gpointer);
 extern void save_image_file(GtkWidget *, gpointer);
-extern void show_system_browser_window(GtkWidget *, gpointer);
+extern void show_system_browser_win(GtkWidget *, gpointer);
 extern void fetch_package_members(GtkWidget *, gpointer);
 extern void fetch_symbol_value(GtkWidget *, gpointer);
 extern void eval_expression(GtkWidget *, gpointer);
@@ -80,6 +82,12 @@ void transcript_backspace()
 void print_to_transcript(char * str)
 {
   gtk_text_buffer_insert_at_cursor(transcript_buffer, str, -1);
+
+  //scroll to the end of the text
+  GtkTextIter iter;
+  gtk_text_buffer_get_end_iter (transcript_buffer, &iter);
+  gtk_text_view_scroll_to_iter(transcript_textview,
+                               &iter, 0.0, FALSE, 0, 0);
 }
 
 void print_to_workspace(char * str)
@@ -297,6 +305,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkWidget *new_symbol_icon = gtk_image_new_from_file ("icons/new_symbol.png");
   GtkWidget *accept_icon = gtk_image_new_from_file ("icons/accept.png");
   GtkWidget *delete_icon = gtk_image_new_from_file ("icons/delete.png");
+  GtkWidget *refresh_icon = gtk_image_new_from_file ("icons/refresh.png");
   GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
   toolbar = gtk_toolbar_new ();
@@ -330,12 +339,19 @@ GtkToolbar *create_system_browser_toolbar()
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
-                           "Delete (Ctrl-X)",                      /* button's tooltip */
+                           "Delete symbol (Ctrl-X)",               /* button's tooltip */
                            "Private",                              /* tooltip private info */
                            delete_icon,                            /* icon widget */
                            GTK_SIGNAL_FUNC(delete_pkg_or_sym),     /* a signal */
                            NULL);
 
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Refresh (F5)",                         /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           refresh_icon,                           /* icon widget */
+                           GTK_SIGNAL_FUNC(refresh_sys_browser),   /* a signal */
+                           NULL);
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
@@ -481,7 +497,7 @@ GtkToolbar *create_transcript_toolbar()
                            "Show workspace window (F7)",           /* button's tooltip */
                            "Private",                              /* tooltip private info */
                            workspace_icon,                         /* icon widget */
-                           GTK_SIGNAL_FUNC(show_workspace_window), /* a signal */
+                           GTK_SIGNAL_FUNC(show_workspace_win),    /* a signal */
                            NULL);
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
@@ -489,7 +505,7 @@ GtkToolbar *create_transcript_toolbar()
                            "System Browser (F9)",                       /* button's tooltip */
                            "Private",                                   /* tooltip private info */
                            browser_icon,                                /* icon widget */
-                           GTK_SIGNAL_FUNC(show_system_browser_window), /* a signal */
+                           GTK_SIGNAL_FUNC(show_system_browser_win),    /* a signal */
                            NULL);
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
@@ -531,8 +547,11 @@ void create_transcript_window()
   
   GtkWidget *textview = gtk_text_view_new ();
 
+  transcript_textview = textview;
+
   gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
   gtk_text_view_set_cursor_visible((GtkTextView *)textview, FALSE);
+  gtk_widget_set_sensitive(textview, FALSE);
 
   gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 

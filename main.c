@@ -124,44 +124,45 @@ OBJECT_PTR COMPILE               = (66 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR RETURN_FROM           = (67 << OBJECT_SHIFT) + SYMBOL_TAG;
 OBJECT_PTR SYMBL                 = (68 << OBJECT_SHIFT) + SYMBOL_TAG; //SYMBOL already taken
 OBJECT_PTR SYMBOL_NAME           = (69 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR UNBIND                = (70 << OBJECT_SHIFT) + SYMBOL_TAG;
 
 //end of standard object definition
 
 /* symbols corresponding to assembler mnemonics */
-OBJECT_PTR HALT     = (70 << OBJECT_SHIFT) + SYMBOL_TAG;                  
-OBJECT_PTR REFER    = (71 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CONSTANT = (72 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CLOSE    = (73 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR TEST     = (74 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ASSIGN   = (75 << OBJECT_SHIFT) + SYMBOL_TAG;         
-OBJECT_PTR CONTI    = (76 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR NUATE    = (77 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FRAME    = (78 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR ARGUMENT = (79 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR HALT     = (71 << OBJECT_SHIFT) + SYMBOL_TAG;                  
+OBJECT_PTR REFER    = (72 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CONSTANT = (73 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CLOSE    = (74 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR TEST     = (75 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ASSIGN   = (76 << OBJECT_SHIFT) + SYMBOL_TAG;         
+OBJECT_PTR CONTI    = (77 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR NUATE    = (78 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FRAME    = (79 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR ARGUMENT = (80 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* APPLY already defined as a special symbol */
 /* RETURN already defined as a special symbol */
 /* DEFINE already defind as a special symbol */
-OBJECT_PTR MACRO    = (80 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR MACRO    = (81 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols corresponding to assembler mnemonics */
 
 /* symbols useful in FFI */
-OBJECT_PTR INTEGR        = (81 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FLOT          = (82 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CHAR          = (83 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR VOID          = (84 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR INT_POINTER   = (85 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR FLOAT_POINTER = (86 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR CHAR_POINTER  = (87 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR INTEGR        = (82 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FLOT          = (83 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CHAR          = (84 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR VOID          = (85 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR INT_POINTER   = (86 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR FLOAT_POINTER = (87 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR CHAR_POINTER  = (88 << OBJECT_SHIFT) + SYMBOL_TAG;
 /* end symbols useful in FFI */
 
-OBJECT_PTR LET           = (88 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR COND          = (89 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DOTIMES       = (90 << OBJECT_SHIFT) + SYMBOL_TAG;
-OBJECT_PTR DOLIST        = (91 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR LET           = (89 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR COND          = (90 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DOTIMES       = (91 << OBJECT_SHIFT) + SYMBOL_TAG;
+OBJECT_PTR DOLIST        = (92 << OBJECT_SHIFT) + SYMBOL_TAG;
 
 extern FILE *yyin;
 
-#define NOF_SPECIAL_SYMBOLS     69
+#define NOF_SPECIAL_SYMBOLS     70
 #define NOF_NON_SPECIAL_SYMBOLS 23
 
 BOOLEAN in_exception = false;
@@ -169,8 +170,6 @@ OBJECT_PTR execution_stack;
 char err_buf[500];
 
 #define SYMBOL_STRING_SIZE 100
-
-#define CORE_PACKAGE_INDEX 0
 
 BOOLEAN debug_mode = false;
 
@@ -221,6 +220,8 @@ OBJECT_PTR reg_current_value_rib;
 OBJECT_PTR reg_current_stack;
 
 extern void print_stack();
+
+BOOLEAN system_changed;
 
 void initialize()
 {
@@ -305,7 +306,7 @@ int find_string(char *str)
 int find_symbol(char *sym, int package_index)
 {
   log_function_entry("find_symbol");
-  OBJECT_PTR ret;
+  int ret;
   BOOLEAN found = false;
 
   int i;
@@ -717,6 +718,8 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
 {
   log_function_entry("get_symbol_object");
 
+  OBJECT_PTR retval;
+
   int i;
   int package_index = current_package;
 
@@ -730,9 +733,7 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   }
 
   int index = find_symbol(symbol_name, package_index);
-
-  OBJECT_PTR retval;
-
+    
   if(index != NOT_FOUND) //symbol exists in symbol table
     retval = (package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG;
   else
@@ -1110,19 +1111,39 @@ int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
 
   if(e->type == SYMBOL)
   {
-    if(e->package_name == NULL)
-      *out_val = get_symbol_object(e->atom_value);
-    else
+    /* if(e->package_name == NULL) */
+    /*   *out_val = get_symbol_object(e->atom_value); */
+    /* else */
+    /* { */
+    /*   OBJECT_PTR val = get_qualified_symbol_object(e->package_name, e->atom_value); */
+    /*   if(car(val) == NIL) */
+    /*   { */
+    /*     fprintf(stdout, "Packgage %s does not exist\n", e->package_name); */
+    /*     *out_val = NIL; */
+    /*     ret = -1; */
+    /*   } */
+    /*   else */
+    /*     *out_val = cdr(val); */
+    /* } */
+
+    if(e->package_name != NULL)
     {
-      OBJECT_PTR val = get_qualified_symbol_object(e->package_name, e->atom_value);
-      if(val == NIL)
+      if(find_package(e->package_name) == NOT_FOUND)
       {
+        //TODO: convert this into throw_exception()
         fprintf(stdout, "Packgage %s does not exist\n", e->package_name);
         *out_val = NIL;
-        ret = -1;
+        return -1;
       }
+
+      *out_val = cdr(get_qualified_symbol_object(e->package_name, e->atom_value));
+    }
+    else
+    {
+      if(find_symbol(e->atom_value, CORE_PACKAGE_INDEX) != NOT_FOUND)
+        *out_val = cdr(get_qualified_symbol_object("CORE", e->atom_value));
       else
-        *out_val = val;
+        *out_val = cdr(get_qualified_symbol_object(packages[current_package].name, e->atom_value));
     }
   }
   else if(e->type == INTEGER)
@@ -1461,6 +1482,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     if(equal(CAAR(rest2),symbol_obj))
     {
       set_heap((car(rest2) >> OBJECT_SHIFT) + 1, val);
+      system_changed = true;
       return symbol_obj;
     }
 
@@ -1478,6 +1500,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
   {
     top_level_env = cons(cons(symbol_obj,val), 
                          NIL);
+    system_changed = true;
     return;
   }
   else
@@ -1492,6 +1515,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
       if(equal(CAAR(rest),symbol_obj))
       {
         set_heap((car(rest) >> OBJECT_SHIFT) + 1, val);
+        system_changed = true;
         return;
       }
       rest = cdr(rest);
@@ -1499,6 +1523,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
 
     //symbol does not exist in the environment
     set_heap((last_cell(top_level_env) >> OBJECT_SHIFT) + 1, cons(cons(symbol_obj, val), NIL));
+    system_changed = true;
   }
 }
 
@@ -1612,6 +1637,8 @@ void create_package(char *name)
   packages[nof_packages - 1].name = strdup(name);
   packages[nof_packages - 1].symbols = NULL;
   packages[nof_packages - 1].nof_symbols = 0;
+
+  system_changed = true;
 }
 
 void initialize_core_package()
@@ -1693,38 +1720,39 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[67] = strdup("RETURN-FROM");
   packages[CORE_PACKAGE_INDEX].symbols[68] = strdup("SYMBOL");
   packages[CORE_PACKAGE_INDEX].symbols[69] = strdup("SYMBOL-NAME");
+  packages[CORE_PACKAGE_INDEX].symbols[70] = strdup("UNBIND");
 
   /* symbols corresponding to assembler mnemonics */
-  packages[CORE_PACKAGE_INDEX].symbols[70] =  strdup("HALT");
-  packages[CORE_PACKAGE_INDEX].symbols[71] =  strdup("REFER");
-  packages[CORE_PACKAGE_INDEX].symbols[72] =  strdup("CONSTANT");
-  packages[CORE_PACKAGE_INDEX].symbols[73] =  strdup("CLOSE");
-  packages[CORE_PACKAGE_INDEX].symbols[74] =  strdup("TEST");
-  packages[CORE_PACKAGE_INDEX].symbols[75] =  strdup("ASSIGN");         
-  packages[CORE_PACKAGE_INDEX].symbols[76] =  strdup("CONTI");
-  packages[CORE_PACKAGE_INDEX].symbols[77] =  strdup("NUATE");
-  packages[CORE_PACKAGE_INDEX].symbols[78] =  strdup("FRAME");
-  packages[CORE_PACKAGE_INDEX].symbols[79] =  strdup("ARGUMENT");
+  packages[CORE_PACKAGE_INDEX].symbols[71] =  strdup("HALT");
+  packages[CORE_PACKAGE_INDEX].symbols[72] =  strdup("REFER");
+  packages[CORE_PACKAGE_INDEX].symbols[73] =  strdup("CONSTANT");
+  packages[CORE_PACKAGE_INDEX].symbols[74] =  strdup("CLOSE");
+  packages[CORE_PACKAGE_INDEX].symbols[75] =  strdup("TEST");
+  packages[CORE_PACKAGE_INDEX].symbols[76] =  strdup("ASSIGN");         
+  packages[CORE_PACKAGE_INDEX].symbols[77] =  strdup("CONTI");
+  packages[CORE_PACKAGE_INDEX].symbols[78] =  strdup("NUATE");
+  packages[CORE_PACKAGE_INDEX].symbols[79] =  strdup("FRAME");
+  packages[CORE_PACKAGE_INDEX].symbols[80] =  strdup("ARGUMENT");
   /* APPLY already defined as a special symbol */
   /* RETURN already defined as a special symbol */
   /* DEFINE already defined as a special symbol */
-  packages[CORE_PACKAGE_INDEX].symbols[80] = strdup("MACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[81] = strdup("MACRO");
   /* end symbols corresponding to assembler mnemonics */
 
   /* symbols for FFI */
-  packages[CORE_PACKAGE_INDEX].symbols[81] = strdup("INTEGER");
-  packages[CORE_PACKAGE_INDEX].symbols[82] = strdup("FLOAT");
-  packages[CORE_PACKAGE_INDEX].symbols[83] = strdup("CHARACTER");
-  packages[CORE_PACKAGE_INDEX].symbols[84] = strdup("VOID");
-  packages[CORE_PACKAGE_INDEX].symbols[85] = strdup("INTEGER-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[86] = strdup("FLOAT-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[87] = strdup("CHARACTER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[82] = strdup("INTEGER");
+  packages[CORE_PACKAGE_INDEX].symbols[83] = strdup("FLOAT");
+  packages[CORE_PACKAGE_INDEX].symbols[84] = strdup("CHARACTER");
+  packages[CORE_PACKAGE_INDEX].symbols[85] = strdup("VOID");
+  packages[CORE_PACKAGE_INDEX].symbols[86] = strdup("INTEGER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[87] = strdup("FLOAT-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[88] = strdup("CHARACTER-POINTER");
   /* end symbols for FFI */
 
-  packages[CORE_PACKAGE_INDEX].symbols[88] = strdup("LET");
-  packages[CORE_PACKAGE_INDEX].symbols[89] = strdup("COND");
-  packages[CORE_PACKAGE_INDEX].symbols[90] = strdup("DOTIMES");
-  packages[CORE_PACKAGE_INDEX].symbols[91] = strdup("DOLIST");
+  packages[CORE_PACKAGE_INDEX].symbols[89] = strdup("LET");
+  packages[CORE_PACKAGE_INDEX].symbols[90] = strdup("COND");
+  packages[CORE_PACKAGE_INDEX].symbols[91] = strdup("DOTIMES");
+  packages[CORE_PACKAGE_INDEX].symbols[92] = strdup("DOLIST");
 }
 
 int find_package(char* package_name)
@@ -1758,7 +1786,10 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
   int package_index = find_package(package_name);
 
   if(package_index == NOT_FOUND)
-    return NIL;
+  {
+    printf("Not found for %s\n", package_name);
+    return cons(NIL, NIL);
+  }
 
   int symbol_index = find_qualified_symbol(package_index, symbol_name);
 
@@ -1769,7 +1800,25 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
   else
     retval = (package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_qualified_symbol(package_name, symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG;
 
-  return retval;
+  return cons(TRUE, retval);
+}
+
+void print_qualified_symbol(OBJECT_PTR ptr, char *buf)
+{
+  assert(IS_SYMBOL_OBJECT(ptr));
+
+  memset(buf,'\0',SYMBOL_STRING_SIZE);
+
+  int package_index = ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int symbol_index =  (ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+
+  if(package_index < 0 || package_index >= nof_packages)
+    assert(false);
+
+  if(symbol_index < 0 || symbol_index >= packages[package_index].nof_symbols)
+    assert(false);
+
+  sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]);
 }
 
 void print_symbol(OBJECT_PTR ptr, char *buf)
@@ -2339,4 +2388,19 @@ OBJECT_PTR list(int count, ...)
   va_end(ap);
 
   return ret;
+}
+
+OBJECT_PTR convert_symbol_to_core_package_symbol(OBJECT_PTR sym)
+{
+  char *symbol_name = get_symbol_name(sym);
+
+  int i;
+
+  for(i=0; i<packages[CORE_PACKAGE_INDEX].nof_symbols; i++)
+  {
+    if(!strcmp(packages[CORE_PACKAGE_INDEX].symbols[i], symbol_name))
+      return cons(TRUE, (i << OBJECT_SHIFT) + SYMBOL_TAG);
+  }
+
+  return cons(NIL, NIL);
 }

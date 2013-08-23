@@ -45,20 +45,20 @@ extern OBJECT_PTR build_list(int, ...);
 
 extern void refresh_system_browser();
 
-BOOLEAN system_changed;
+extern BOOLEAN system_changed;
 
 int call_repl(char *expression)
 {
   yy_scan_string(expression);
-  if(!yyparse())
+  while(yyparse() != -1)
   {
     if(repl())
       return -1;
-
-    return 0;
   }
-  else
-    return -1;
+
+  return 0;
+  /* else */
+  /*   return -1; */
 }
 
 void update_transcript_title()
@@ -180,7 +180,60 @@ void create_new_symbol()
 
 void delete_package_or_symbol()
 {
-  printf("Delete package/symbol\n");
+  gchar *symbol_name;
+
+  GtkListStore *store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+  GtkTreeModel *model2 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+  GtkTreeIter  iter2;
+
+  if(!gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list)), &model2, &iter2))
+  {
+    show_error_dialog("Please select a symbol to delete\n");
+    return;
+  }
+
+  GtkWidget *dialog = gtk_message_dialog_new ((GtkWindow *)system_browser_window,
+                                              GTK_DIALOG_DESTROY_WITH_PARENT,
+                                              GTK_MESSAGE_QUESTION,
+                                              GTK_BUTTONS_YES_NO,
+                                              "Confirm delete");
+
+  if(gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
+  {
+    gtk_widget_destroy((GtkWidget *)dialog);
+
+    gchar *package_name;
+
+    GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
+    GtkTreeModel *model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+    GtkTreeIter  iter1;
+
+    if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list)), &model1, &iter1))
+    {
+      gtk_tree_model_get(model1, &iter1,
+                         0, &package_name,
+                         -1);
+    }
+
+    gtk_tree_model_get(model2, &iter2,
+                       0, &symbol_name,
+                       -1);
+
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+
+    sprintf(buf, "(progn (in-package \"%s\") (unbind '%s:%s))", package_name, package_name, symbol_name);
+    //sprintf(buf, "(unbind '%s)", symbol_name);
+
+    if(!call_repl(buf))
+    {
+      refresh_system_browser();
+      gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
+    }
+  
+  }
+  else
+    gtk_widget_destroy((GtkWidget *)dialog);  
 }
 
 void delete_pkg_or_sym(GtkWidget *widget,
@@ -248,10 +301,15 @@ void create_new_package()
     if(!call_repl(buf1))
     {
       refresh_system_browser();
-      system_changed = true;
       gtk_statusbar_push(system_browser_statusbar, 0, "Package created");
     }
   }
+}
+
+void refresh_sys_browser(GtkWidget *widget,
+                         gpointer data)
+{
+  refresh_system_browser();
 }
 
 void new_package(GtkWidget *widget,
@@ -270,6 +328,9 @@ void new_symbol(GtkWidget *widget,
 
 void system_browser_accept()
 {
+  if(!gtk_text_view_get_editable(system_browser_textview))
+    return;
+
   gchar *package_name, *symbol_name;
 
   GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
@@ -305,7 +366,6 @@ void system_browser_accept()
     {
       update_workspace_title();
       refresh_system_browser();
-      system_changed = true;
 
       //the newly added symbol will be the last row
       set_focus_to_last_row(symbols_list);
@@ -345,7 +405,6 @@ void system_browser_accept()
       if(!call_repl(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE)))
       {
         update_workspace_title();
-        system_changed = true;
       }
     }
   }
@@ -485,6 +544,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   }
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_x)
     delete_package_or_symbol();
+  else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_F5)
+    refresh_system_browser();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
     close_application_window(&system_browser_window);
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_l)
@@ -492,7 +553,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_s)
     save_image();
   else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_F7)
-    create_workspace_window();
+    show_workspace_window();
   else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_F9)
     create_system_browser_window();
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
@@ -507,11 +568,20 @@ void load_source_file(GtkWidget *widget,
   load_source();
 }
 
-void show_workspace_window(GtkWidget *widget,
-                           gpointer  data)
+void show_workspace_window()
 {
   if(workspace_window == NULL)
     create_workspace_window();
+  else
+  {
+    gtk_window_present(workspace_window);
+  }
+}
+
+void show_workspace_win(GtkWidget *widget,
+                           gpointer  data)
+{
+  show_workspace_window();
 }
 
 void load_image()
@@ -554,11 +624,18 @@ void save_image_file(GtkWidget *widget,
   save_image();
 }
 
-void show_system_browser_window(GtkWidget *widget,
-                                gpointer  data)
+void show_system_browser_window()
 {
   if(system_browser_window == NULL)
     create_system_browser_window();
+  else
+    gtk_window_present(system_browser_window);
+}
+
+void show_system_browser_win(GtkWidget *widget,
+                                gpointer  data)
+{
+  show_system_browser_window();
 }
 
 void fetch_package_symbols()
@@ -634,6 +711,8 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
 
     gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
+    gtk_text_view_set_editable(system_browser_textview, FALSE);
+
     if(IS_CLOSURE_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
@@ -651,6 +730,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
                                             NIL))), buf, 0);
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
+      gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
     else if(IS_MACRO_OBJECT(obj))
     {
@@ -669,7 +749,13 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
                                             NIL))), buf, 0);
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
-
+      gtk_text_view_set_editable(system_browser_textview, TRUE);
+    }
+    else if(IS_CONTINUATION_OBJECT(obj))
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      print_object_to_string(obj, buf, 0);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
     }
     else
     {
@@ -677,6 +763,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
       print_object_to_string(cons(DEFINE,
                                   cons(ptr, cons(obj, NIL))), buf, 0);
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
+      gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
 
     gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
@@ -727,7 +814,6 @@ void save_image()
      print_to_transcript("Image saved successfully\n");
 
      update_transcript_title();
-     system_changed = false;
   }
 
   gdk_window_set_cursor(win, NULL);

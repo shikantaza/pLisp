@@ -127,6 +127,7 @@ extern OBJECT_PTR COMPILE;
 extern OBJECT_PTR RETURN_FROM;
 extern OBJECT_PTR SYMBL;
 extern OBJECT_PTR SYMBOL_NAME;
+extern OBJECT_PTR UNBIND;
 
 extern OBJECT_PTR top_level_env;
 
@@ -154,6 +155,8 @@ extern FILE *yyin;
 
 extern OBJECT_PTR continuations_map;
 
+extern BOOLEAN system_changed;
+
 void eval()
 {
   //print_object(car(reg_next_expression)); fprintf(stdout, "\n");
@@ -170,19 +173,50 @@ void eval()
   else if(opcode == REFER)
   {
     if(is_special_form(CADR(exp)))
+    {
       reg_accumulator = CADR(exp);
+    }
     else
     {
-      OBJECT_PTR res = get_symbol_value(CADR(exp), debug_mode ? debug_env : reg_current_env);
+      /* OBJECT_PTR symbol_given = CADR(exp); */
+      /* OBJECT_PTR symbol_to_be_used; */
+
+      /* int package_index = symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT); */
+
+      /* if(package_index != current_package) */
+      /* { */
+      /*   if(package_index == CORE_PACKAGE_INDEX) */
+      /*     symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given))); */
+      /*   else */
+      /*   { */
+      /*     //throw_exception("ACCESS-VIOLATION", "Attempt to define symbol in a package while in a different package"); */
+      /*     //return; */
+      /*     symbol_to_be_used = symbol_given; */
+      /*   } */
+      /* } */
+      /* else */
+      /*   symbol_to_be_used = symbol_given; */
+
+      OBJECT_PTR res = get_symbol_value(CADR(exp), 
+                                        debug_mode ? debug_env : reg_current_env);
+
       if(car(res) != NIL)
         reg_accumulator = cdr(res);
       else
       {
-	char buf[SYMBOL_STRING_SIZE];
-	print_symbol(CADR(exp), buf);
-	sprintf(err_buf, "Symbol not bound(1): %s", buf);
-        throw_exception("SYMBOL-NOT-BOUND", err_buf);
-        return;
+        OBJECT_PTR res1 = get_symbol_value(cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp)))),
+                                           debug_mode ? debug_env : reg_current_env);
+
+        if(car(res1) != NIL)
+          reg_accumulator = cdr(res1);
+        else
+        {
+          char buf[SYMBOL_STRING_SIZE];
+          print_qualified_symbol(CADR(exp), buf);
+          sprintf(err_buf, "Symbol not bound(1): %s", buf);
+          throw_exception("SYMBOL-NOT-BOUND", err_buf);
+          return;
+        }
       }
     }
     reg_next_expression = CADDR(exp);
@@ -257,10 +291,28 @@ void eval()
   }
   else if(opcode == ASSIGN)
   {
-    if( update_environment(reg_current_env, CADR(exp), reg_accumulator) == NIL)
+    OBJECT_PTR symbol_given = CADR(exp);
+    OBJECT_PTR symbol_to_be_used;
+
+    int package_index = symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+    if(package_index != current_package)
+    {
+      if(package_index == CORE_PACKAGE_INDEX)
+        symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given)));
+      else
+      {
+        throw_exception("ACCESS-VIOLATION", "Attempt to update symbol in a package while in a different package");
+        return;
+      }
+    }
+    else
+      symbol_to_be_used = symbol_given;
+
+    if(update_environment(reg_current_env, symbol_to_be_used, reg_accumulator) == NIL)
     {
       char buf[SYMBOL_STRING_SIZE];
-      print_symbol(CADR(exp), buf);
+      print_qualified_symbol(CADR(exp), buf);
       sprintf(err_buf, "Symbol not bound(2): %s", buf);
       throw_exception("SYMBOL-NOT-BOUND", err_buf);
       return;
@@ -269,8 +321,27 @@ void eval()
   }
   else if(opcode == DEFINE)
   {
-    add_to_top_level_environment(CADR(exp), reg_accumulator);
-    reg_accumulator = CADR(exp);
+    OBJECT_PTR symbol_given = CADR(exp);
+    OBJECT_PTR symbol_to_be_used;
+
+    int package_index = symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+    if(package_index != current_package)
+    {
+      if(package_index == CORE_PACKAGE_INDEX)
+        symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given)));
+      else
+      {
+        throw_exception("ACCESS-VIOLATION", "Attempt to define symbol in a package while in a different package");
+        return;
+      }
+    }
+    else
+      symbol_to_be_used = symbol_given;
+
+    add_to_top_level_environment(symbol_to_be_used, reg_accumulator);
+
+    reg_accumulator = symbol_to_be_used;
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CONTI)
@@ -1261,6 +1332,8 @@ void eval()
         else
           create_image(strings[file_name >> OBJECT_SHIFT]);
 
+        system_changed = false;
+
         reg_accumulator = NIL;
 
         reg_current_value_rib = NIL;
@@ -1389,7 +1462,7 @@ void eval()
             if(car(res) == NIL)
             {
               char buf[SYMBOL_STRING_SIZE];
-              print_symbol(val, buf);
+              print_qualified_symbol(val, buf);
               sprintf(err_buf, "Symbol not bound(3): %s", buf);
               throw_exception("SYMBOL-NOT-BOUND", err_buf);
               return;
@@ -1872,10 +1945,68 @@ void eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
+      else if(operator == UNBIND)
+      {
+        /* if(current_package == 0) */
+        /* { */
+        /*   throw_exception("ACCESS-VIOLATION","Core package cannot be updated"); */
+        /*   return; */
+        /* } */
+
+        if(length(reg_current_value_rib) != 1)
+        {
+          throw_exception("ARG-MISMATCH", "UNBIND requires exactly one argument, a symbol object");
+          return;
+        }
+
+        OBJECT_PTR sym = car(reg_current_value_rib);
+        /* OBJECT_PTR sym = cdr(get_qualified_symbol_object(packages[current_package].name, */
+        /*                                                  get_symbol_name(car(reg_current_value_rib)))); */
+
+        if(!IS_SYMBOL_OBJECT(sym))
+        {
+          throw_exception("INVALID-ARGUMENT", "Parameter to UNBIND should be a symbol object");
+          return;
+        }
+
+        OBJECT_PTR rest = top_level_env;
+        OBJECT_PTR prev = NIL;
+        BOOLEAN symbol_exists = false;
+
+        while(rest != NIL)
+        {
+
+          if(CAAR(rest) == sym)
+          {
+            symbol_exists = true;
+            if(prev == NIL)
+              top_level_env = cdr(top_level_env);
+            else
+              set_heap((prev >> OBJECT_SHIFT) + 1, cdr(rest));
+            break;
+          }
+
+          prev = rest;
+          rest = cdr(rest);
+        }
+
+        if(!symbol_exists)
+        {
+          char buf[SYMBOL_STRING_SIZE];
+          print_qualified_symbol(sym, buf);
+          sprintf(err_buf, "Symbol not bound(5): %s", buf);
+          throw_exception("SYMBOL-NOT-BOUND", err_buf);
+          return;
+        }
+
+        reg_accumulator = NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
       else
       {
 	char buf[SYMBOL_STRING_SIZE];
-	print_symbol(operator, buf);
+	print_qualified_symbol(operator, buf);
 	sprintf(err_buf, "Symbol not bound(4): %s", buf);
         throw_exception("SYMBOL-NOT-BOUND", err_buf);
         return;
@@ -2345,16 +2476,21 @@ OBJECT_PTR get_continuation_for_return(OBJECT_PTR obj)
 
 void throw_generic_exception(char *err_str)
 {
-  reg_current_value_rib = cons(cons(get_symbol_object("EXCEPTION"), get_string_object(err_str)), NIL);
+  /* reg_current_value_rib = cons(cons(get_symbol_object("EXCEPTION"), get_string_object(err_str)), NIL); */
 
-  //basically (REFER THROW (APPLY))
-  reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL);
+  /* //basically (REFER THROW (APPLY)) */
+  /* reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL); */
+
+  throw_exception("EXCEPTION", err_str);
 }
 
 void throw_exception(char *excp, char *err_str)
 {
+  //printf("In throw_exception() %s %s\n", excp, err_str);
+  //getchar();
   reg_current_value_rib = cons(cons(get_symbol_object(excp), get_string_object(err_str)), NIL);
 
   //basically (REFER THROW (APPLY))
   reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL);
+
 }
