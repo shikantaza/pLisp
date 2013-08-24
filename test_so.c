@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /**
 commands to build .so file:
@@ -69,7 +70,8 @@ char *fn_ret_char_ptr(int i, float f, char c, char *s)
   char *ret = (char *)malloc(10 * sizeof(char));
 
   memset(ret, 'a', 10);
-  ret[10] = (char)NULL;
+  //ret[10] = (char)NULL;
+  ret[10] = '\0';
 
   return ret;
 }

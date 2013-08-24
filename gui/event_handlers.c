@@ -47,6 +47,13 @@ extern void refresh_system_browser();
 
 extern BOOLEAN system_changed;
 
+void evaluate();
+void close_application_window(GtkWidget **);
+void show_workspace_window();
+void load_image();
+void save_image();
+void set_focus_to_last_row(GtkTreeView *);
+
 int call_repl(char *expression)
 {
   yy_scan_string(expression);
@@ -175,7 +182,7 @@ void create_new_symbol()
   gtk_text_buffer_set_text(system_browser_buffer, "", -1);
   gtk_statusbar_remove_all(system_browser_statusbar, 0);
 
-  gtk_widget_grab_focus(system_browser_textview);
+  gtk_widget_grab_focus((GtkWidget *)system_browser_textview);
 }
 
 void delete_package_or_symbol()
@@ -429,9 +436,9 @@ void close_window(GtkWidget *widget,
                   gpointer data)
 {
   if((GtkWidget *)data == (GtkWidget *)workspace_window)
-    close_application_window(&workspace_window);
+    close_application_window((GtkWidget **)&workspace_window);
   else if((GtkWidget *)data == (GtkWidget *)system_browser_window)
-    close_application_window(&system_browser_window);
+    close_application_window((GtkWidget **)&system_browser_window);
 }
 
 void evaluate()
@@ -529,7 +536,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     evaluate();
   }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
-    close_application_window(&workspace_window);
+    close_application_window((GtkWidget **)&workspace_window);
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_k)
     create_new_package();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_n)
@@ -547,7 +554,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_F5)
     refresh_system_browser();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
-    close_application_window(&system_browser_window);
+    close_application_window((GtkWidget **)&system_browser_window);
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_l)
     load_image();
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_s)
@@ -696,11 +703,11 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     gchar *symbol_name;
     gint ptr;
 
-    gtk_tree_model_get(store, &iter,
+    gtk_tree_model_get(model, &iter,
                        0, &symbol_name,
                        -1);
 
-    gtk_tree_model_get(store, &iter,
+    gtk_tree_model_get(model, &iter,
                        1, &ptr,
                        -1);
 
@@ -729,7 +736,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
                                                       get_source_object(obj))),
                                             NIL))), buf, 0);
 
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
     else if(IS_MACRO_OBJECT(obj))
@@ -748,21 +755,21 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
                                                       get_source_object(obj))),
                                             NIL))), buf, 0);
 
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
     else if(IS_CONTINUATION_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       print_object_to_string(obj, buf, 0);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
     }
     else
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       print_object_to_string(cons(DEFINE,
                                   cons(ptr, cons(obj, NIL))), buf, 0);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
 
@@ -798,7 +805,7 @@ void save_image()
 
   sprintf(exp,"(create-image \"%s\")", loaded_image_file_name);
  
-  GdkWindow *win = gtk_widget_get_window(transcript_window);
+  GdkWindow *win = gtk_widget_get_window((GtkWidget *)transcript_window);
 
   GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
 

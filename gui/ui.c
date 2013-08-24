@@ -424,7 +424,7 @@ void create_system_browser_window()
 
   GtkWidget *textview = gtk_text_view_new ();
 
-  system_browser_textview = textview;
+  system_browser_textview = (GtkTextView *)textview;
 
   gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
   //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
@@ -439,15 +439,14 @@ void create_system_browser_window()
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
 
-  //uncomment this to add status bar
-  system_browser_statusbar = gtk_statusbar_new();
-  gtk_box_pack_start (GTK_BOX (vbox), system_browser_statusbar, FALSE, FALSE, 0);  
+  system_browser_statusbar = (GtkStatusbar *)gtk_statusbar_new();
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)system_browser_statusbar, FALSE, FALSE, 0);  
 
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
   gtk_widget_show_all(win);
 
-  gtk_widget_grab_focus(packages_list);
+  gtk_widget_grab_focus((GtkWidget *)packages_list);
 
   new_symbol_being_created = false;
 }
@@ -456,7 +455,7 @@ void refresh_system_browser()
 {
   populate_packages_list();
   fetch_package_symbols();
-  gtk_widget_grab_focus(packages_list);
+  gtk_widget_grab_focus((GtkWidget *)packages_list);
 }
 
 GtkToolbar *create_transcript_toolbar()
@@ -547,7 +546,7 @@ void create_transcript_window()
   
   GtkWidget *textview = gtk_text_view_new ();
 
-  transcript_textview = textview;
+  transcript_textview = (GtkTextView *)textview;
 
   gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
   gtk_text_view_set_cursor_visible((GtkTextView *)textview, FALSE);
@@ -627,7 +626,7 @@ void initialize_frames_list(GtkTreeView *list)
 
   renderer = gtk_cell_renderer_text_new();
 
-  column1 = gtk_tree_view_column_new_with_attributes("Stack Frames",
+  column1 = gtk_tree_view_column_new_with_attributes("Frame",
                                                      renderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
 
@@ -783,5 +782,5 @@ void create_debug_window()
 
   gtk_widget_show_all(win);
 
-  gtk_widget_grab_focus(frames_list);
+  gtk_widget_grab_focus((GtkWidget *)frames_list);
 }

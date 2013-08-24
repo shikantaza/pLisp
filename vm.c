@@ -1888,7 +1888,7 @@ void eval()
 
         if(IS_STRING_LITERAL_OBJECT(str))
         {
-          reg_accumulator = get_symbol_object(convert_to_upper_case(strdup(strings[str >> OBJECT_SHIFT])));
+          reg_accumulator = get_symbol_object((char *)convert_to_upper_case(strdup(strings[str >> OBJECT_SHIFT])));
         }
         else if(is_string_object(str))
         {
@@ -1905,7 +1905,7 @@ void eval()
           for(i=1; i <= len; i++)
             msg[i-1] = get_heap(ptr + i) >> OBJECT_SHIFT;
 
-          reg_accumulator = get_symbol_object(convert_to_upper_case(msg));
+          reg_accumulator = get_symbol_object((char *)convert_to_upper_case(msg));
         }
 
         reg_current_value_rib = NIL;
