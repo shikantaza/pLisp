@@ -831,7 +831,7 @@ void fetch_variables(GtkWidget *list, gpointer data)
     gint env_list_ptr;
 
     gtk_tree_model_get(model, &iter,
-                       1, &env_list_ptr,
+                       2, &env_list_ptr,
                        -1);
 
     remove_all_from_list(variables_list);

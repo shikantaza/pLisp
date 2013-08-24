@@ -228,6 +228,7 @@ void print_continuation_object(OBJECT_PTR);
 
 OBJECT_PTR create_call_frame(OBJECT_PTR,
                              OBJECT_PTR,
+                             OBJECT_PTR,
                              OBJECT_PTR);
 OBJECT_PTR add_call_frame_to_stack(OBJECT_PTR, OBJECT_PTR);
 

@@ -631,11 +631,15 @@ void initialize_frames_list(GtkTreeView *list)
                                                      renderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
 
-  /* column2 = gtk_tree_view_column_new_with_attributes("ID", */
-  /*                                                    renderer, "text", 1, NULL); */
-  /* gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2); */
+  column2 = gtk_tree_view_column_new_with_attributes("Function",
+                                                     renderer, "text", 1, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2);
 
-  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+  /* column3 = gtk_tree_view_column_new_with_attributes("ID", */
+  /*                                                    renderer, "text", 1, NULL); */
+  /* gtk_tree_view_append_column(GTK_TREE_VIEW (list), column3); */
+
+  store = gtk_list_store_new (3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
 
   gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
                           GTK_TREE_MODEL(store));
@@ -695,10 +699,16 @@ void populate_frames_list(GtkTreeView *list)
     sprintf(buf, "#<Frame #x%08x> ", frame);
 
     OBJECT_PTR env = get_heap((frame >> OBJECT_SHIFT) + 2);
+    OBJECT_PTR source_expression  = get_heap((frame >> OBJECT_SHIFT) + 4);    
 
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter, 0, buf, -1);
-    gtk_list_store_set(store, &iter, 1, env, -1);
+
+    memset(buf, '\0', MAX_STRING_LENGTH);
+    print_object_to_string(car(source_expression), buf, 0);
+    gtk_list_store_set(store, &iter, 1, buf, -1);
+
+    gtk_list_store_set(store, &iter, 2, env, -1);
 
     rest = cdr(rest);
   }

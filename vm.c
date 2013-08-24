@@ -351,7 +351,8 @@ void eval()
   {
     reg_current_stack = cons(create_call_frame(CADR(exp),
                                                reg_current_env,
-                                               reg_current_value_rib),
+                                               reg_current_value_rib,
+                                               cdr(reg_next_expression)),
                              reg_current_stack);
 
     reg_current_value_rib = NIL;
@@ -2096,16 +2097,18 @@ void eval()
 
 OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
                              OBJECT_PTR env,
-                             OBJECT_PTR rib)
+                             OBJECT_PTR rib,
+                             OBJECT_PTR source_expression)
 {
   log_function_entry("create_call_frame");
 
-  RAW_PTR ptr = object_alloc(4, ARRAY_TAG);
+  RAW_PTR ptr = object_alloc(5, ARRAY_TAG);
 
-  set_heap(ptr, convert_int_to_object(3));
+  set_heap(ptr, convert_int_to_object(4));
   set_heap(ptr+1, next_expression);
   set_heap(ptr+2, env);
   set_heap(ptr+3, rib);
+  set_heap(ptr+4, source_expression);
 
   log_function_exit("create_call_frame");
 
