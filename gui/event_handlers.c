@@ -95,13 +95,13 @@ gboolean delete_event( GtkWidget *widget,
                               gpointer   data )
 {
   if(widget == (GtkWidget *)workspace_window)
-    workspace_window = NULL;
+    close_application_window((GtkWidget **)&workspace_window);
   else if(widget == (GtkWidget *)system_browser_window)
-    system_browser_window = NULL;
+    close_application_window((GtkWidget **)&system_browser_window);
   else if(widget == (GtkWidget *)debugger_window)
   {
-    debugger_window = NULL;
-    //debug_mode = false;
+    close_application_window((GtkWidget **)&debugger_window);
+    debug_mode = false;
     call_repl("(RESUME)");
   }
 

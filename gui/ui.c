@@ -630,7 +630,7 @@ void initialize_frames_list(GtkTreeView *list)
                                                      renderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
 
-  column2 = gtk_tree_view_column_new_with_attributes("Function",
+  column2 = gtk_tree_view_column_new_with_attributes("Expression",
                                                      renderer, "text", 1, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2);
 
@@ -704,8 +704,8 @@ void populate_frames_list(GtkTreeView *list)
     gtk_list_store_set(store, &iter, 0, buf, -1);
 
     memset(buf, '\0', MAX_STRING_LENGTH);
-    print_object_to_string(car(source_expression), buf, 0);
-    gtk_list_store_set(store, &iter, 1, buf, -1);
+    print_object_to_string(source_expression, buf, 0);
+    gtk_list_store_set(store, &iter, 1, convert_to_upper_case(buf), -1);
 
     gtk_list_store_set(store, &iter, 2, env, -1);
 

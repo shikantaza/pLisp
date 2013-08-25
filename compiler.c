@@ -318,7 +318,11 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           }
 
           //compile the output of the macro invocation
-          return compile(reg_accumulator, next);
+          //we return the original source expression
+          //that was compiled to facilitate debugging
+          
+          //return compile(reg_accumulator, next);
+          return cons(car(compile(reg_accumulator, next)), exp);
 
         } /* end of if(IS_MACRO_OBJECT(cdr(res))) */
       }

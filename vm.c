@@ -249,6 +249,9 @@ void eval()
     else
       reg_next_expression = CADDR(exp);
   }
+  //Not using this WHILE; reverting 
+  //to macro definition, as this
+  //version doesn't handle (BREAK)
   else if(opcode == WHILE)
   {
     OBJECT_PTR cond = CADR(exp);
@@ -260,7 +263,6 @@ void eval()
     {
       reg_next_expression = cond;
 
-      //print_object(create_current_continuation()); printf("\n");
       OBJECT_PTR temp = reg_current_stack;
 
       while(car(reg_next_expression) != NIL)
@@ -702,7 +704,11 @@ void eval()
       else if(operator == PRINT)
       {
         print_object(car(reg_current_value_rib));
+#ifdef GUI
+        print_to_transcript("\n");
+#else
         fprintf(stdout, "\n");
+#endif
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));

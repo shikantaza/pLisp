@@ -1712,7 +1712,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[59] = strdup("MACROP");
   packages[CORE_PACKAGE_INDEX].symbols[60] = strdup("CONTINUATIONP");
   packages[CORE_PACKAGE_INDEX].symbols[61] = strdup("LAMBDA-EXPRESSION");
-  packages[CORE_PACKAGE_INDEX].symbols[62] = strdup("WHILE");
+  packages[CORE_PACKAGE_INDEX].symbols[62] = strdup("WHILE1"); //reverting to macro WHILE
   packages[CORE_PACKAGE_INDEX].symbols[63] = strdup("FORMAT");
   packages[CORE_PACKAGE_INDEX].symbols[64] = strdup("CLONE");
   packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("RETURN");

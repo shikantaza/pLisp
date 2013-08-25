@@ -73,6 +73,11 @@
       (cons (list (car x) (car y))
 	    (pair (cdr x) (cdr y)))))
 
+(defmacro while (condition &rest body)
+  `(((lambda (f) (set f (lambda ()
+                          (if ,condition
+                              (progn ,@body (f)))))) '())))
+
 (defmacro rec (var exp)
   `(let ((,var '()))
      (set ,var ,exp)))
