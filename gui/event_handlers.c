@@ -3,8 +3,6 @@
 
 #include "../plisp.h"
 
-#define MAX_STRING_LENGTH 8096
-
 extern GtkTextBuffer *transcript_buffer;
 extern GtkTextBuffer *workspace_buffer;
 
@@ -54,6 +52,8 @@ void load_image();
 void save_image();
 void set_focus_to_last_row(GtkTreeView *);
 
+extern BOOLEAN in_error;
+
 int call_repl(char *expression)
 {
   yy_scan_string(expression);
@@ -102,7 +102,8 @@ gboolean delete_event( GtkWidget *widget,
   {
     close_application_window((GtkWidget **)&debugger_window);
     debug_mode = false;
-    call_repl("(RESUME)");
+    if(!in_error)
+      call_repl("(RESUME)");
   }
 
   return FALSE;
@@ -723,12 +724,6 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     if(IS_CLOSURE_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
-      /* print_object_to_string(cons(DEFINE, */
-      /*                             cons(ptr, */
-      /*                                  cons(cons(LAMBDA, */
-      /*                                            cons(get_params_object(obj), */
-      /*                                                 cons(get_source_object(obj),NIL))), */
-      /*                                       NIL))), buf, 0);                        */
       print_object_to_string(cons(DEFINE,
                                   cons(ptr,
                                        cons(cons(LAMBDA,
@@ -737,17 +732,12 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
                                             NIL))), buf, 0);
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
     else if(IS_MACRO_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
-      /* print_object_to_string(cons(DEFINE, */
-      /*                             cons(ptr, */
-      /*                                  cons(cons(MACRO, */
-      /*                                            cons(get_params_object(obj), */
-      /*                                                 cons(get_source_object(obj),NIL))), */
-      /*                                       NIL))), buf, 0); */
       print_object_to_string(cons(DEFINE,
                                   cons(ptr,
                                        cons(cons(MACRO,

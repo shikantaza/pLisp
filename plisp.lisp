@@ -119,8 +119,8 @@
       nil
     (append (reverse (cdr lst)) (list (car lst)))))
 
-(defmacro < (x y)
-  `(not (or (> ,x ,y) (eq ,x ,y))))
+(defun < (x y)
+  (not (or (> x y) (eq x y))))
 
 (defmacro <= (x y)
   `(or (< ,x ,y) (eq ,x ,y)))
@@ -247,6 +247,9 @@
 (defmacro first (lst)
   `(car ,lst))
 
+(defmacro second (lst)
+  `(car (cdr ,lst)))
+
 (defmacro rest (lst)
   `(cdr ,lst))
 
@@ -292,10 +295,17 @@
         (cons (car lst) (remove-if pred (cdr lst)))
       (remove-if pred (cdr lst)))))
 
+(defmacro remove-if-not (pred lst)
+  (let ((x (gensym)))
+    `(remove-if (lambda (,x) (not (,pred ,x))) ,lst))) 
+
 (defun sublist (lst start len)
   (let ((res))
     (for (i start (< i (+ start len)) (incf i) res)
          (set res (append res (list (nth i lst)))))))
+
+(defun last-n (lst n)
+  (sublist lst (- (length lst) n) n))
 
 (defun butlast (lst n)
   (sublist lst 0 (- (length lst) n)))
@@ -430,6 +440,5 @@
 (create-package "user")
 
 (in-package "user")
-
 
 ;(load-file "tests/unit_tests.lisp")

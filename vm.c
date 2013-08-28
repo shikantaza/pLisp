@@ -129,6 +129,8 @@ extern OBJECT_PTR SYMBL;
 extern OBJECT_PTR SYMBOL_NAME;
 extern OBJECT_PTR UNBIND;
 
+extern OBJECT_PTR NEWLINE;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -704,6 +706,17 @@ void eval()
       else if(operator == PRINT)
       {
         print_object(car(reg_current_value_rib));
+#ifdef GUI
+        print_to_transcript("\n");
+#else
+        fprintf(stdout, "\n");
+#endif
+        reg_accumulator = car(reg_current_value_rib);
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == NEWLINE)
+      {
 #ifdef GUI
         print_to_transcript("\n");
 #else
@@ -1814,7 +1827,11 @@ void eval()
           rest = cdr(rest);
         }
 
+#ifdef GUI
+        if(format_for_gui(reg_current_value_rib) == -1)
+#else
         if(format(reg_current_value_rib) == -1)
+#endif
         {
           //error message would have been set in format()
           return;
@@ -2131,6 +2148,15 @@ void raise_error(char *err_str)
 
 #ifdef GUI
   show_error_dialog(err_str);
+
+  debug_mode = true;
+  debug_continuation = create_current_continuation();
+  debug_env = reg_current_env;
+  reg_next_expression = NIL;
+
+  debug_execution_stack = reg_current_stack;
+
+  create_debug_window();
 #else
   fprintf(stdout, "%s\n", err_str);
 #endif

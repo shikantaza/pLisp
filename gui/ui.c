@@ -5,8 +5,6 @@
 
 #define FONT "Courier Bold 9"
 
-#define MAX_STRING_LENGTH 8096
-
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;
 GtkTextBuffer *system_browser_buffer;

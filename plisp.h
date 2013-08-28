@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_STRING_LENGTH 16192
+
 #define YY_NO_INPUT
 
 #define SYMBOL 1
@@ -259,6 +261,10 @@ int load_core_library();
 void print_state();
 
 int format(OBJECT_PTR);
+
+#ifdef GUI
+int format_for_gui(OBJECT_PTR);
+#endif
 
 OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR get_symbol_from_value(OBJECT_PTR, OBJECT_PTR);

@@ -450,3 +450,106 @@ void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args
     rest = cdr(rest);
   }
 }
+
+#ifdef GUI
+int format_for_gui(OBJECT_PTR args)
+{
+  int nof_args = length(args) + 1;
+  int i;
+
+  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  if(!arg_types)
+  {
+    throw_generic_exception("Unable to allocate memory for argument types buffer");
+    return -1;
+  }
+
+  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  if(!arg_values)
+  {
+    throw_generic_exception("Unable to allocate memory for argument values buffer");
+    free(arg_types);
+    return -1;
+  }
+
+  char buf[MAX_STRING_LENGTH];
+  memset(buf, '\0', MAX_STRING_LENGTH);
+
+  arg_types[0] = &ffi_type_pointer;
+  arg_values[0] = (char **)malloc(sizeof(char *));
+  *(char **)arg_values[0] = buf;
+
+  OBJECT_PTR rest_args = args;
+
+  i=1;
+
+  int   i_val, *i_val_ptr;
+  double d_val, *d_val_ptr;
+  char  c_val, *c_val_ptr;
+
+  while(rest_args != NIL)
+  {
+    OBJECT_PTR val = car(rest_args);
+
+    if(IS_INTEGER_OBJECT(val))
+    {
+      arg_types[i] = &ffi_type_sint;
+      i_val = get_int_value(val);
+      arg_values[i] = (int *)malloc(sizeof(int));
+      *(int *)arg_values[i] = i_val;
+    }
+    else if(IS_FLOAT_OBJECT(val))
+    {
+      arg_types[i] = &ffi_type_double;
+      d_val = get_float_value(val);
+      arg_values[i] = (double *)malloc(sizeof(double));
+      *(double *)arg_values[i] = d_val;
+    }
+    else if(IS_CHAR_OBJECT(val))
+    {
+      arg_types[i] = &ffi_type_schar;
+      c_val = val >> OBJECT_SHIFT;
+      arg_values[i] = (char *)malloc(sizeof(char));
+      *(char *)arg_values[i] = c_val;
+    }
+    else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
+    {
+      arg_types[i] = &ffi_type_pointer;
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[val >> OBJECT_SHIFT]) : get_string(val);
+      arg_values[i] = (char **)malloc(sizeof(char *));
+      *(char **)arg_values[i] = c_val_ptr;
+    }
+
+    i++;
+    rest_args = cdr(rest_args);
+  }
+ 
+  ffi_cif cif;
+  ffi_status status;
+
+  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_void, arg_types);
+
+  if(status != FFI_OK)
+  {
+    throw_generic_exception("format(): ffi_prep_cif() failed");
+    free_arg_values(arg_types, arg_values, args, nof_args);
+    free(arg_values);
+    free(arg_types);
+    return -1;
+  }
+
+  ffi_arg ret_val;
+
+  ffi_call(&cif, (void *)sprintf, &ret_val, arg_values);
+
+  free_arg_values_for_format(arg_types+1, arg_values+1, args, nof_args-1);
+
+  free(arg_values);
+  free(arg_types);
+
+  print_to_transcript(buf);
+
+  return 0;
+}
+
+#endif
