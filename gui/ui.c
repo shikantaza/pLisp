@@ -58,6 +58,17 @@ extern void fetch_package_members(GtkWidget *, gpointer);
 extern void fetch_symbol_value(GtkWidget *, gpointer);
 extern void eval_expression(GtkWidget *, gpointer);
 extern void fetch_variables(GtkWidget *, gpointer);
+
+extern void handle_code_edit_cursor_move(GtkTextView *,
+                                         GtkMovementStep,
+                                         gint,
+                                         gboolean,
+                                         gpointer);
+
+extern gboolean handle_code_edit_key_press(GtkWidget *, 
+                                           GdkEventKey *,
+                                           gpointer);
+
 /* event handler function definitions end */
 
 typedef struct
@@ -201,6 +212,21 @@ void create_workspace_window()
   prompt();
 
   gtk_widget_grab_focus(textview);
+
+  gtk_text_buffer_create_tag(workspace_buffer, "cyan_bg", 
+                             "background", "cyan", NULL); 
+
+  gtk_text_buffer_create_tag(workspace_buffer, "white_bg", 
+                             "background", "white", NULL); 
+
+
+  g_signal_connect ((GtkWidget *)textview, "move-cursor",
+                    G_CALLBACK (handle_code_edit_cursor_move), NULL);
+
+
+  g_signal_connect((GtkWidget *)textview, "key_press_event",
+                   G_CALLBACK(handle_code_edit_key_press), NULL);
+
 }
 
 void show_error_dialog_for_window(char *msg, GtkWindow *win)
@@ -447,6 +473,22 @@ void create_system_browser_window()
   gtk_widget_grab_focus((GtkWidget *)packages_list);
 
   new_symbol_being_created = false;
+
+  gtk_text_buffer_create_tag(system_browser_buffer, "cyan_bg", 
+                             "background", "cyan", NULL); 
+
+  gtk_text_buffer_create_tag(system_browser_buffer, "white_bg", 
+                             "background", "white", NULL); 
+
+
+  g_signal_connect ((GtkWidget *)system_browser_textview, "move-cursor",
+                    G_CALLBACK (handle_code_edit_cursor_move), NULL);
+
+
+  g_signal_connect((GtkWidget *)system_browser_textview, "key_press_event",
+                   G_CALLBACK(handle_code_edit_key_press), NULL);
+
+
 }
 
 void refresh_system_browser()

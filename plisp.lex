@@ -60,8 +60,10 @@ void pop_yyin()
 
   if(--include_stack_ptr == 0)
   {
+#ifndef GUI
     yyin = stdin;
     yyrestart(yyin);
+#endif
   }
   else
   {

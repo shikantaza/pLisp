@@ -16,7 +16,7 @@
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
 (format "Running unit test cases...")
-(println)
+(newline)
 
 (define passed-cases 0)
 (define failed-cases 0)
@@ -24,21 +24,21 @@
 (defmacro test-condition (id condition)
   `(try (if ,condition 
             (incf passed-cases)
-          (progn (format "Test case #%d failed" ,id) (println) (incf failed-cases)))
+          (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases)))
         (catch (e)
-          (progn (format "Test case #%d failed" ,id) (println) (incf failed-cases)))))
+          (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases)))))
 
 (defmacro test-exception (id body excp)
   `(try ,body
         (catch (e)
           (if (eq (car e) ,excp)
               (incf passed-cases)
-            (progn (format "Test case #%d failed" ,id) (println) (incf failed-cases))))))
+            (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases))))))
 
 (defmacro test-happy-case (id body)
   `(progn (try ,body
                (catch (e)
-                 (progn (format "Test case #%d failed" ,id) (println) (incf failed-cases))))
+                 (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases))))
           (incf passed-cases)))
 
 ;;car
@@ -761,15 +761,15 @@
   (call-cc (lambda (cc) (set cont cc)))
   (test-exception 284(format "%d" cont) 'invalid-argument))
 
-(test-happy-case 285 (progn (format "Diagnostic from test case #285") (println)))
+(test-happy-case 285 (progn (format "Diagnostic from test case #285") (newline)))
 
-(test-happy-case 286 (progn (format "Diagnostic from test case #%d %d" 286 10) (println)))
+(test-happy-case 286 (progn (format "Diagnostic from test case #%d %d" 286 10) (newline)))
 
-(test-happy-case 287 (progn (format "Diagnostic from test case #%d %0.2f" 287 3.1415) (println)))
+(test-happy-case 287 (progn (format "Diagnostic from test case #%d %0.2f" 287 3.1415) (newline)))
 
-(test-happy-case 288 (progn (format "Diagnostic from test case #%d %c" 288 #\a) (println)))
+(test-happy-case 288 (progn (format "Diagnostic from test case #%d %c" 288 #\a) (newline)))
 
-(test-happy-case 289 (progn (format "Diagnostic from test case #%d %s" 289 "abc") (println)))
+(test-happy-case 289 (progn (format "Diagnostic from test case #%d %s" 289 "abc") (newline)))
 ;end-format
 
 ;clone
@@ -858,4 +858,4 @@
 (if (not (eq failed-cases 0))
     (format "ATTENTION! Some unit test cases have failed."))
 
-;(println)
+(newline)
