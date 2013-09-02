@@ -11,12 +11,12 @@ Features currently supported:
 9. A package system
 10. Continuations
 11. A basic but complete object system that supports inheritance, encapsulation, etc.
+12. Graphical IDE
 
 TODO list:
 
 1. Enhancements to the core library
-2. Graphical development environment
-3. Compiler
+2. Compiler
 
 pLisp uses these external libraries:
 
