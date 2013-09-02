@@ -59,15 +59,15 @@ extern void fetch_symbol_value(GtkWidget *, gpointer);
 extern void eval_expression(GtkWidget *, gpointer);
 extern void fetch_variables(GtkWidget *, gpointer);
 
-extern void handle_code_edit_cursor_move(GtkTextView *,
-                                         GtkMovementStep,
-                                         gint,
-                                         gboolean,
-                                         gpointer);
-
 extern gboolean handle_code_edit_key_press(GtkWidget *, 
                                            GdkEventKey *,
                                            gpointer);
+
+extern void handle_code_edit_cursor_move(GtkTextBuffer *,
+                                         GtkTextIter   *,
+                                         GtkTextMark   *,
+                                         gpointer); 
+
 
 /* event handler function definitions end */
 
@@ -220,8 +220,9 @@ void create_workspace_window()
                              "background", "white", NULL); 
 
 
-  g_signal_connect ((GtkWidget *)textview, "move-cursor",
+  g_signal_connect ((GtkWidget *)workspace_buffer, "mark-set",
                     G_CALLBACK (handle_code_edit_cursor_move), NULL);
+
 
 
   g_signal_connect((GtkWidget *)textview, "key_press_event",
@@ -480,10 +481,8 @@ void create_system_browser_window()
   gtk_text_buffer_create_tag(system_browser_buffer, "white_bg", 
                              "background", "white", NULL); 
 
-
-  g_signal_connect ((GtkWidget *)system_browser_textview, "move-cursor",
+  g_signal_connect ((GtkWidget *)system_browser_buffer, "mark-set",
                     G_CALLBACK (handle_code_edit_cursor_move), NULL);
-
 
   g_signal_connect((GtkWidget *)system_browser_textview, "key_press_event",
                    G_CALLBACK(handle_code_edit_key_press), NULL);

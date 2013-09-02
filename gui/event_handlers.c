@@ -956,25 +956,6 @@ void display_matching_parens(GtkTextBuffer *buffer)
                                           &start_match, 
                                           &end_match);
 
-        /* gint col = gtk_text_iter_get_line_offset(&saved_iter); */
-        /* gint line = gtk_text_iter_get_line(&saved_iter); */
-
-        /* GtkTextIter prev_iter; */
-        /* if(col != 0) */
-        /* { */
-        /*   gtk_text_buffer_get_iter_at_line_offset(buffer, &prev_iter, line, col-1); */
-        /* } */
-        /* else */
-        /* { */
-        /*   int prev_line_nof_chars; */
-        /*   GtkTextIter it1, it2; */
-        /*   gtk_text_buffer_get_iter_at_line(buffer, &it1, line); */
-        /*   gtk_text_buffer_get_iter_at_line(buffer, &it2, line); */
-
-        /*   prev_line_nof_chars = strlen(gtk_text_buffer_get_text(buffer, &it2, &it1, FALSE)); */
-
-        /*   gtk_text_buffer_get_iter_at_line_offset(buffer, &prev_iter, line-1, prev_line_nof_chars); */
-        /* } */
         GtkTextIter prev_iter;
         get_prev_iter(buffer, &saved_iter, &prev_iter);
 
@@ -1012,7 +993,7 @@ gboolean handle_code_edit_key_press(GtkWidget *widget, GdkEventKey *event, gpoin
                                   &start_iter,
                                   &end_iter);
   
-  if (event->keyval ==  GDK_KEY_parenright)
+  if(event->keyval ==  GDK_KEY_parenright)
   {
     if (gtk_text_view_im_context_filter_keypress (GTK_TEXT_VIEW (widget), event))
     {
@@ -1024,15 +1005,12 @@ gboolean handle_code_edit_key_press(GtkWidget *widget, GdkEventKey *event, gpoin
   return handle_key_press_events(widget, event, user_data);
 }
 
-void handle_code_edit_cursor_move(GtkTextView * textview,
-                                  GtkMovementStep step,
-                                  gint count,
-                                  gboolean extend_slection,
-                                  gpointer user_data)
+void handle_code_edit_cursor_move(GtkTextBuffer *buffer,
+                                  GtkTextIter   *location,
+                                  GtkTextMark   *mark,
+                                  gpointer       user_data) 
 {
   GtkTextIter start_iter, end_iter;
-
-  GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
 
   gtk_text_buffer_get_start_iter(buffer, &start_iter);
   gtk_text_buffer_get_end_iter(buffer, &end_iter);
@@ -1042,5 +1020,9 @@ void handle_code_edit_cursor_move(GtkTextView * textview,
                                   &start_iter,
                                   &end_iter);
 
-  //display_matching_parens(buffer);
+  GtkTextIter prev;
+  get_prev_iter(buffer, location, &prev);
+
+  if(!strcmp(gtk_text_buffer_get_text(buffer, &prev, location, FALSE), ")"))
+    display_matching_parens(buffer);
 }
