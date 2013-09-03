@@ -956,19 +956,69 @@ void display_matching_parens(GtkTextBuffer *buffer)
                                           &start_match, 
                                           &end_match);
 
-        GtkTextIter prev_iter;
-        get_prev_iter(buffer, &saved_iter, &prev_iter);
-
+        GtkTextIter temp_iter = saved_iter;
+        gtk_text_iter_backward_char(&saved_iter);
         gtk_text_buffer_apply_tag_by_name(buffer, 
                                           "cyan_bg", 
-                                          &prev_iter, 
-                                          &saved_iter);
+                                          &saved_iter, 
+                                          &temp_iter);
         
         break;
       }
       else
       {
         int offset = gtk_text_iter_get_offset(&start_match);
+        gtk_text_buffer_get_iter_at_offset(buffer,
+                                           &curr_iter, 
+                                           offset);
+      }
+    }
+    else
+      break;
+  }      
+}
+
+void display_matching_parens_forward(GtkTextBuffer *buffer)
+{
+  GtkTextIter curr_iter;
+  GtkTextIter start_match, end_match;
+
+  //get the current iter
+  gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter, gtk_text_buffer_get_insert(buffer));
+
+  GtkTextIter saved_iter = curr_iter;
+
+  while(1)
+  {
+    if(gtk_text_iter_forward_search(&curr_iter, 
+                                    ")", 
+                                    GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, 
+                                    &start_match,
+                                    &end_match, 
+                                    NULL))
+    {
+
+      gchar *str = gtk_text_buffer_get_text(buffer, &saved_iter, &end_match, FALSE);
+
+      if(no_unmatched_parens(str))
+      {
+        gtk_text_buffer_apply_tag_by_name(buffer, 
+                                          "cyan_bg", 
+                                          &start_match, 
+                                          &end_match);
+
+        GtkTextIter temp_iter = saved_iter;
+        gtk_text_iter_forward_char(&saved_iter);
+        gtk_text_buffer_apply_tag_by_name(buffer,
+                                          "cyan_bg",
+                                          &temp_iter,
+                                          &saved_iter);
+        
+        break;
+      }
+      else
+      {
+        int offset = gtk_text_iter_get_offset(&end_match);
         gtk_text_buffer_get_iter_at_offset(buffer,
                                            &curr_iter, 
                                            offset);
@@ -1025,4 +1075,6 @@ void handle_code_edit_cursor_move(GtkTextBuffer *buffer,
 
   if(!strcmp(gtk_text_buffer_get_text(buffer, &prev, location, FALSE), ")"))
     display_matching_parens(buffer);
+  else if(gtk_text_iter_get_char(location) == '(')
+    display_matching_parens_forward(buffer);
 }
