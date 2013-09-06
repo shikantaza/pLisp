@@ -686,6 +686,9 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
 {
   log_function_entry("cons");
 
+  assert(is_valid_object(car));
+  assert(is_valid_object(cdr));
+
   RAW_PTR ptr = object_alloc(2, CONS_TAG);
 
   set_heap(ptr, car);
@@ -2246,17 +2249,6 @@ char *get_string(OBJECT_PTR string_object)
   return ret;
 }
 
-#ifndef DEBUG_MEMORY
-inline
-#endif
-void set_heap(RAW_PTR index, OBJECT_PTR val)
-{
-  if(!is_valid_object(val))
-    assert(false);
-
-  heap[index] = val;
-}
-
 BOOLEAN is_valid_object(OBJECT_PTR obj)
 {
 
@@ -2280,25 +2272,6 @@ BOOLEAN is_valid_object(OBJECT_PTR obj)
          IS_CHAR_OBJECT(obj)           ||
          IS_FLOAT_OBJECT(obj)          ||
          IS_CONTINUATION_OBJECT(obj);
-}
-
-#ifndef DEBUG_MEMORY
-inline
-#endif
-OBJECT_PTR get_heap(RAW_PTR ptr)
-{
-  if(ptr == null)
-    assert(false);
-
-  OBJECT_PTR ret = heap[ptr];
-
-  if(!is_valid_object(ret))
-  {
-    printf("%d %d\n", ptr, ret);
-    assert(false);
-  }
-
-  return ret;
 }
 
 OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)

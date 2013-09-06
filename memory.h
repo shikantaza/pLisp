@@ -20,7 +20,15 @@
 #ifndef MEMORY_H
 #define MEMORY_H 
 
-#define HEAP_SIZE 16777216
+#define HEAP_SIZE 33554432
+//#define HEAP_SIZE 8
+
+//since RAW_PTRs can take
+//values from 0 to HEAP_SIZE-1 (inclusive),
+//safe to use HEAP_SIZE as the null pointer
+#define NULL_RAW_PTR HEAP_SIZE
+
+#define GC_FREQUENCY 100
 
 int initialize_memory();
 

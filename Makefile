@@ -17,6 +17,8 @@
 
 OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o mmap.o red_black_tree.o stack.o misc.o ui.o event_handlers.o
 
+#TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
+
 CC	= gcc
 CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
 
@@ -31,8 +33,8 @@ plisp_utils_ffi.o:	plisp_utils_ffi.c
 libtest.so:	test_so.o
 		$(CC) -shared -Wl,-soname,libtest.so -o libtest.so test_so.o
 
-test_so.o:	test_so.c
-		$(CC) -c -fPIC test_so.c -o test_so.o
+#test_memory:	$(TEST_MEMORY_OBJS)
+#		$(CC) $(CFLAGS) $(TEST_MEMORY_OBJS) -o test_memory `pkg-config --libs gtk+-2.0`
 
 plisp:	$(OBJS)
 		$(CC) $(CFLAGS) $(OBJS) -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-2.0`
@@ -91,6 +93,11 @@ ui.o:		./gui/ui.c
 event_handlers.o:	./gui/event_handlers.c
 		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/event_handlers.c -o event_handlers.o
 
+test_so.o:	test_so.c
+		$(CC) -c -fPIC test_so.c -o test_so.o
+
+#test_memory.o:	test_memory.c
+#		$(CC) -c test_memory.c -o test_memory.o
 
 bison.o		: plisp.tab.c plisp.h util.h
 lex.o		: plisp.tab.h plisp.h
@@ -108,6 +115,8 @@ mmap.o		: tpl/win/mman.h
 ui.o		: plisp.h
 
 event_handlers.o	: plisp.h
+
+#test_memory.o	: plisp.h memory.h
 
 clean:
 	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump

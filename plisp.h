@@ -31,7 +31,7 @@
 #define CHARACTER 5
 #define FLOAT 6
 
-#define null -1  //not using NULL because 0 is a valid entry in our heap
+#define null -1 //not using NULL because 0 is a valid entry in our heap
 
 #define NOT_FOUND -1
 

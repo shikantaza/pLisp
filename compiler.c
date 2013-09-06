@@ -591,7 +591,7 @@ int load_core_library()
     }
   }
 
-  //gc();
+  gc();
 
   core_library_loaded = true;
 
