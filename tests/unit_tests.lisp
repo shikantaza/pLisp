@@ -599,6 +599,7 @@
 
   (load-foreign-library "libtest.so")
 
+
   (test-condition 215 (eq (call-foreign-function "fn_ret_int" 'integer
                                              '((i integer)
                                                (6.5 float)
@@ -606,7 +607,7 @@
                                                (x character-pointer)))
                       100))
 
-  
+
   (test-condition 216 (eq (call-foreign-function "fn_ret_float" 'float
                                                  '((10 integer)
                                                    (6.5 float)
@@ -650,7 +651,9 @@
                                               '((10 integer)
                                                 (6.5 float)
                                                 (#\a character)
-                                                ("abc" character-pointer)))))
+                                                ("abc" character-pointer))))
+
+  )
 ;end call-foreign-library
 
 ;load-file

@@ -383,10 +383,10 @@ void gc()
     remove_node(&white, white_obj->key);
 #else
 
-    if(!value_exists(black, *(OBJECT_PTR *)white_obj->key))
-      dealloc(*(OBJECT_PTR *)white_obj->key >> OBJECT_SHIFT);
+    if(!value_exists(black, *(unsigned int *)white_obj->key))
+      dealloc(*(unsigned int *)white_obj->key >> OBJECT_SHIFT);
 
-    remove_node(white,*(OBJECT_PTR *)(white_obj->key));
+    remove_node(white,*(unsigned int *)(white_obj->key));
 #endif
   }
 
@@ -399,9 +399,6 @@ void gc()
   destroy(grey);
   destroy(white); 
 #endif
-
-  //printf("Exiting GC\n");
-
 }
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
@@ -932,7 +929,9 @@ OBJECT_PTR get_heap(RAW_PTR ptr)
 
 RAW_PTR object_alloc(int size, unsigned int tag)
 {
-  assert(size > 0 && size <= HEAP_SIZE-2);
+  //assert(size > 0 && size <= HEAP_SIZE-2);
+
+  //assert(heap[last_segment + 1] == NULL_RAW_PTR);
 
   RAW_PTR it = free_list;
   RAW_PTR prev = NULL_RAW_PTR;
@@ -941,26 +940,34 @@ RAW_PTR object_alloc(int size, unsigned int tag)
 
   while(it != NULL_RAW_PTR)
   {
-    if(heap[it] >= size + 2)
+    if(heap[it] >= size)
     {
-      ret = it + heap[it] - size;
-      heap[ret] = size;
-      heap[ret+1] = NULL_RAW_PTR;
-      heap[it] -= (size + 2);
-
-      //if current segment has no space left,
-      //remove it from the list
-      if(heap[it] == 0)
+      if(heap[it] >= size + 3)
       {
+        ret = it + heap[it] - size;
+        heap[ret] = size;
+        heap[it] -= (size+2);
+        
+        insert_node(WHITE, ((ret+2) << OBJECT_SHIFT) + tag);
+
+        return ret+2;        
+      }
+      else
+      {
+        //remove the segment from the free list
         if(prev != NULL_RAW_PTR)
           heap[prev+1] = heap[it+1];
         else
+        {
           free_list = heap[it+1];
+          if(free_list == NULL_RAW_PTR)
+            last_segment = NULL_RAW_PTR;
+        }
+
+        insert_node(WHITE, ((it+2) << OBJECT_SHIFT) + tag);
+        
+        return it+2;
       }
-
-      insert_node(WHITE, ((ret+2) << OBJECT_SHIFT) + tag);
-
-      return ret+2;
     }
     prev = it;
     it = heap[it + 1];
@@ -989,7 +996,12 @@ RAW_PTR object_alloc(int size, unsigned int tag)
 
 void dealloc(RAW_PTR ptr)
 {
-  //TODO: something not correct here; look into this
-  heap[last_segment+1] = ptr - 2;
+  if(last_segment != NULL_RAW_PTR)
+    heap[last_segment+1] = ptr - 2;
+
   last_segment = ptr - 2;
+  heap[ptr-1] = NULL_RAW_PTR;
+
+  if(free_list == NULL_RAW_PTR)
+    free_list = ptr - 2;
 }

@@ -34,7 +34,7 @@ libtest.so:	test_so.o
 		$(CC) -shared -Wl,-soname,libtest.so -o libtest.so test_so.o
 
 #test_memory:	$(TEST_MEMORY_OBJS)
-#		$(CC) $(CFLAGS) $(TEST_MEMORY_OBJS) -o test_memory `pkg-config --libs gtk+-2.0`
+#		$(CC) $(CFLAGS) $(TEST_MEMORY_OBJS) -o test_memory
 
 plisp:	$(OBJS)
 		$(CC) $(CFLAGS) $(OBJS) -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-2.0`
