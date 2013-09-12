@@ -32,6 +32,8 @@
 
 int initialize_memory();
 
+void cleanup_memory();
+
 RAW_PTR object_alloc(int, unsigned int);
 
 #ifndef DEBUG_MEMORY

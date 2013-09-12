@@ -504,10 +504,9 @@ void cleanup()
     free(packages[i].symbols);
   }
 
-  if(heap)
-    free(heap);
-
   free(dl_handles);
+
+  cleanup_memory();
 
   log_function_exit("cleanup");
 }

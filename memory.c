@@ -86,25 +86,6 @@ int get_free_memory();
 
 enum {WHITE, GREY, BLACK};
 
-int initialize_memory()
-{
-  heap = (RAW_PTR *)malloc(HEAP_SIZE * sizeof(RAW_PTR));
-
-  if(!heap)
-  {
-    fprintf(stderr, "Unable to create heap of size %d\n", HEAP_SIZE);
-    return -1;
-  }
-
-  free_list = 0;
-  heap[free_list] = HEAP_SIZE - 2;
-  heap[free_list + 1] = NULL_RAW_PTR;
-
-  last_segment = 0;
-
-  return 0;
-}
-
 //first-fit (use the first segment
 //whose length is greater
 //than the required size)
@@ -219,9 +200,6 @@ void gc()
 #ifdef CUSTOM_BST
   destroy(&black);
   destroy(&grey);
-#else
-  destroy(black);
-  destroy(grey);
 #endif
 
   //only top_level_env is stored in the grey set initially
@@ -384,7 +362,7 @@ void gc()
 #else
 
     if(!value_exists(black, *(unsigned int *)white_obj->key))
-      dealloc(*(unsigned int *)white_obj->key >> OBJECT_SHIFT);
+      dealloc((*(unsigned int *)(white_obj->key)) >> OBJECT_SHIFT);
 
     remove_node(white,*(unsigned int *)(white_obj->key));
 #endif
@@ -394,10 +372,6 @@ void gc()
   destroy(&black);
   destroy(&grey);
   destroy(&white);
-#else
-  destroy(black);
-  destroy(grey);
-  destroy(white); 
 #endif
 }
 
@@ -492,10 +466,11 @@ struct node *create_node(OBJECT_PTR value)
 
 void insert_node(unsigned int set_type, OBJECT_PTR val)
 {
-
 #ifdef DEBUG
   assert(set_type == WHITE || set_type == GREY || set_type == BLACK);
 #endif
+
+  assert((val >> OBJECT_SHIFT) >= 0 && (val >> OBJECT_SHIFT) < HEAP_SIZE);
 
   if(set_type == WHITE)
     white = put(white, val);
@@ -827,30 +802,18 @@ void InfoDest(void *a)
 
 void insert_node(unsigned int set_type, OBJECT_PTR val)
 {
+  if(!is_valid_object(val))
+    assert(false);
+
   unsigned int *newInt=(unsigned int*) malloc(sizeof(unsigned int));
   *newInt = val;
 
   if(set_type == WHITE)
-  {
-    if(white == NULL)
-      white = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
-
     RBTreeInsert(white, newInt, 0);
-  }
   else if(set_type == GREY)
-  {
-    if(grey == NULL)
-      grey = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
-
     RBTreeInsert(grey, newInt, 0);
-  }
   else if(set_type == BLACK)
-  {
-    if(black == NULL)
-      black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
-
     RBTreeInsert(black, newInt, 0);
-  }
   else
     assert(false);
 }
@@ -867,9 +830,8 @@ void remove_node(rb_red_blk_tree *tree, OBJECT_PTR val)
 
 void destroy(rb_red_blk_tree *tree)
 {
-  /* if(tree) */
-  /*   RBTreeDestroy(tree); */
-  /* tree = NULL; */
+  if(tree)
+    RBTreeDestroy(tree);
 }
 
 void print_tree(rb_red_blk_tree *tree)
@@ -950,6 +912,8 @@ RAW_PTR object_alloc(int size, unsigned int tag)
         
         insert_node(WHITE, ((ret+2) << OBJECT_SHIFT) + tag);
 
+        assert((ret+2) >=0 && (ret+2) < HEAP_SIZE);
+
         return ret+2;        
       }
       else
@@ -965,6 +929,8 @@ RAW_PTR object_alloc(int size, unsigned int tag)
         }
 
         insert_node(WHITE, ((it+2) << OBJECT_SHIFT) + tag);
+
+        assert((it+2) >=0 && (it+2) < HEAP_SIZE);
         
         return it+2;
       }
@@ -990,12 +956,12 @@ RAW_PTR object_alloc(int size, unsigned int tag)
 
   cleanup();
   exit(1);
-
-  //return NULL_RAW_PTR;
 }
 
 void dealloc(RAW_PTR ptr)
 {
+  assert(ptr >= 0 && ptr < HEAP_SIZE);
+
   if(last_segment != NULL_RAW_PTR)
     heap[last_segment+1] = ptr - 2;
 
@@ -1005,3 +971,43 @@ void dealloc(RAW_PTR ptr)
   if(free_list == NULL_RAW_PTR)
     free_list = ptr - 2;
 }
+
+int initialize_memory()
+{
+  heap = (RAW_PTR *)malloc(HEAP_SIZE * sizeof(RAW_PTR));
+
+  if(!heap)
+  {
+    fprintf(stderr, "Unable to create heap of size %d\n", HEAP_SIZE);
+    return -1;
+  }
+
+  free_list = 0;
+  heap[free_list] = HEAP_SIZE - 2;
+  heap[free_list + 1] = NULL_RAW_PTR;
+
+  last_segment = 0;
+
+  white = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
+  grey = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
+  black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
+
+  return 0;
+}
+
+void cleanup_memory()
+{
+  if(heap)
+    free(heap);
+
+#ifndef CUSTOM_BST
+  destroy(white);
+  destroy(grey);
+  destroy(black);
+
+  white = NULL;
+  grey = NULL;
+  black = NULL;
+#endif
+}
+
