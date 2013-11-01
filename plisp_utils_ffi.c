@@ -129,3 +129,84 @@ int plisp_read(int *int_val,
   return 3;
 
 }
+
+int alloc_memory_int(int size)
+{
+  return (int)malloc(size * sizeof(int));
+}
+
+int alloc_memory_float(int size)
+{
+  return (int)malloc(size * sizeof(float));
+}
+
+int alloc_memory_char(int size)
+{
+  return (int)malloc(size * sizeof(char));
+}
+
+void set_memory_ref_int(void *ptr, int idx, int val)
+{
+  int *int_ptr = (int *)ptr;
+  int_ptr[idx] = val;
+}
+
+void set_memory_ref_float(void *ptr, int idx, float val)
+{
+  float *float_ptr = (float *)ptr;
+  float_ptr[idx] = val;
+}
+
+void set_memory_ref_char(void *ptr, int idx, char val)
+{
+  char *char_ptr = (char *)ptr;
+  char_ptr[idx] = val;
+}
+
+int get_memory_ref_int(void *ptr, int idx)
+{
+  int *int_ptr = (int *)ptr;
+  return int_ptr[idx];
+}
+
+float get_memory_ref_float(void *ptr, int idx)
+{
+  float *float_ptr = (float *)ptr;
+  return float_ptr[idx];
+}
+
+char get_memory_ref_char(void *ptr, int idx)
+{
+  char *char_ptr = (char *)ptr;
+  return char_ptr[idx];
+}
+
+void print_memory_int(void *ptr, int size)
+{
+  int *int_ptr = (int *)ptr;
+  int i;
+  for(i=0; i<size; i++)
+    printf("%d\n", int_ptr[i]);
+}
+
+void print_memory_float(void *ptr, int size)
+{
+  float *float_ptr = (float *)ptr;
+  int i;
+  for(i=0; i<size; i++)
+    printf("%f\n", float_ptr[i]);
+}
+
+void print_memory_char(void *ptr, int size)
+{
+  char *char_ptr = (char *)ptr;
+  int i;
+  for(i=0; i<size; i++)
+    printf("%c\n", char_ptr[i]);
+}
+
+void free_memory(void *ptr)
+{
+  free(ptr);
+}
+

@@ -81,6 +81,16 @@
               (remove-if (lambda (x) (not (eq x pivot))) lst)
               (quicksort (remove-if (lambda (x) (<= x pivot)) lst))))))
 
+(defun quicksort1 (lst compare-fn)
+  (let1 ((lt compare-fn)
+         (gt (lambda (x y) (not (or (lt x y) (eq x y))))))
+    (if (null (cdr lst))
+        lst
+      (let ((pivot (first lst)))
+        (concat (quicksort1 (select (lambda (x) (lt x pivot)) lst) compare-fn) 
+                            (select (lambda (x) (eq x pivot)) lst) 
+                (quicksort1 (select (lambda (x) (gt x pivot)) lst) compare-fn))))))
+
 ;helper function for sort
 (defun split (lst)
   (cond ((null lst)

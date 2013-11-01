@@ -24,11 +24,14 @@ CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
 
 all:	plisp libplisp.so libtest.so
 
-libplisp.so:	plisp_utils_ffi.o
-		$(CC) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o
+libplisp.so:	plisp_utils_ffi.o plisp_graph_ffi.o
+		$(CC) $(CFLAGS) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o plisp_graph_ffi.o `pkg-config --libs libffi` `pkg-config --libs gtk+-2.0`
 
 plisp_utils_ffi.o:	plisp_utils_ffi.c
-		$(CC) -c -fPIC plisp_utils_ffi.c -o plisp_utils_ffi.o
+		$(CC) $(CFLAGS) -c plisp_utils_ffi.c -o plisp_utils_ffi.o
+
+plisp_graph_ffi.o:	plisp_graph_ffi.c
+		$(CC) $(CFLAGS) -c plisp_graph_ffi.c -o plisp_graph_ffi.o
 
 libtest.so:	test_so.o
 		$(CC) -shared -Wl,-soname,libtest.so -o libtest.so test_so.o
@@ -94,7 +97,7 @@ event_handlers.o:	./gui/event_handlers.c
 		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/event_handlers.c -o event_handlers.o
 
 test_so.o:	test_so.c
-		$(CC) -c -fPIC test_so.c -o test_so.o
+		$(CC) -c test_so.c -o test_so.o
 
 #test_memory.o:	test_memory.c
 #		$(CC) -c test_memory.c -o test_memory.o

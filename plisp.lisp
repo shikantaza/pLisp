@@ -73,6 +73,12 @@
       (cons (list (car x) (car y))
 	    (pair (cdr x) (cdr y)))))
 
+(defun cons-pair (x y)
+  (if (and (null x) (null y))
+      nil
+      (cons (cons (car x) (car y))
+	    (cons-pair (cdr x) (cdr y)))))
+
 (defmacro while (condition &rest body)
   `(((lambda (f) (set f (lambda ()
                           (if ,condition
@@ -288,6 +294,13 @@
   `(if (not ,condition)
        (error ,text)))
 
+(defun select (pred lst)
+  (if (null lst)
+      nil
+    (if (pred (car lst))
+        (cons (car lst) (select pred (cdr lst)))
+      (select pred (cdr lst)))))
+
 (defun remove-if (pred lst)
   (if (null lst)
       nil
@@ -427,6 +440,108 @@
 (defun read-character ()
   (array-get (read-string) 0))
 
+(defun alloc-ext-mem-int (n)
+  (list (call-foreign-function "alloc_memory_int" 'integer '((n integer)))
+        n
+        1))
+
+(defun alloc-ext-mem-float (n)
+  (list (call-foreign-function "alloc_memory_float" 'integer '((n integer)))
+        n
+        2))
+
+(defun alloc-ext-mem-char (n)
+  (list (call-foreign-function "alloc_memory_char" 'integer '((n integer)))
+        n
+        3))
+
+(defun set-ext-mem (blk arr)
+  (let ((ptr (car blk))
+        (len (cadr blk))
+        (type (caddr blk)))
+    (if (not (arrayp arr))
+        (throw (exception 'invalid-argument "set-ext-mem expects an array as the second parameter")))
+    (if (not (eq len (array-length arr)))
+        (throw (exception 'invalid-argument "set-ext-mem: memory block size does not match array length")))
+    (dolist (i (range 0 (- (array-length arr) 1) 1))
+      (let ((val (array-get arr i)))
+        (set-ext-mem-cell blk i val)))))
+
+(defun set-ext-mem-cell (blk pos val)
+  (let ((ptr (car blk))
+        (len (cadr blk))
+        (type (caddr blk)))
+    (if (not (and (>= pos 0) (< pos len)))
+        (throw (exception 'invalid-index "set-ext-mem-cell: index out of bounds")))
+    (cond ((eq type 1)
+           (progn (if (not (integerp val)) (exception 'invalid-argument "set-ext-mem-cell: integer expected"))
+                  (call-foreign-function "set_memory_ref_int" 
+                                         'void
+                                         '((ptr integer)
+                                           (pos integer)
+                                           (val integer)))))
+          ((eq type 2)
+           (progn (if (not (floatp val)) (exception 'invalid-argument "set-ext-mem-cell: float expected"))
+                  (call-foreign-function "set_memory_ref_float" 
+                                         'void
+                                         '((ptr integer)
+                                           (pos integer)
+                                           (val float)))))
+          ((eq type 3)
+           (progn (if (not (characterp val)) (exception 'invalid-argument "set-ext-mem-cell: character expected"))
+                  (call-foreign-function "set_memory_ref_char" 
+                                         'void
+                                         '((ptr integer)
+                                           (pos integer)
+                                           (val character)))))
+          (t (throw (exception 'exception "Invalid type of external memory"))))))
+
+(defun get-ext-mem-cell (blk pos)
+  (let ((ptr (car blk))
+        (len (cadr blk))
+        (type (caddr blk)))
+    (if (not (and (>= pos 0) (< pos len)))
+        (throw (exception 'invalid-index "get-ext-mem-cell: index out of bounds")))
+    (cond ((eq type 1)
+           (call-foreign-function "get_memory_ref_int" 
+                                  'integer
+                                  '((ptr integer)
+                                    (pos integer))))
+          ((eq type 2)
+           (call-foreign-function "get_memory_ref_float" 
+                                  'float
+                                  '((ptr integer)
+                                    (pos integer))))
+          ((eq type 3)
+           (call-foreign-function "get_memory_ref_char" 
+                                  'character
+                                  '((ptr integer)
+                                    (pos integer))))
+          (t (throw (exception 'exception "Invalid type of external memory"))))))
+
+
+(defun inspect-ext-mem (memory-block)
+  (let ((ptr (car memory-block))
+        (len (cadr memory-block))
+        (type (caddr memory-block)))
+    (cond ((eq type 1) (call-foreign-function "print_memory_int" 
+                                              'void 
+                                              '((ptr integer)
+                                                (len integer))))
+          ((eq type 2) (call-foreign-function "print_memory_float" 
+                                              'void 
+                                              '((ptr integer)
+                                                (len integer))))
+          ((eq type 3) (call-foreign-function "print_memory_char" 
+                                              'void 
+                                              '((ptr integer)
+                                                (len integer))))
+           (t (throw (exception 'exception "Invalid type of external memory"))))))
+
+(defun free-ext-mem (memory-block)
+  (let ((ptr (car memory-block)))
+    (call-foreign-function "free_memory" 'void '((ptr integer)))))
+
 (load-file "pos.lisp")
 
 (load-file "utils.lisp")
@@ -437,8 +552,11 @@
 
 (load-file "statistics.lisp")
 
+(load-file "graph.lisp")
+
 (create-package "user")
 
 (in-package "user")
 
 ;(load-file "tests/unit_tests.lisp")
+
