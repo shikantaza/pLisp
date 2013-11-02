@@ -68,6 +68,8 @@ extern void handle_code_edit_cursor_move(GtkTextBuffer *,
                                          GtkTextMark   *,
                                          gpointer); 
 
+extern resume_from_debugger(GtkWidget *, gpointer);
+extern abort_debugger(GtkWidget *, gpointer);
 
 /* event handler function definitions end */
 
@@ -144,7 +146,7 @@ GtkToolbar *create_workspace_toolbar()
                            "Private",                              /* tooltip private info */
                            load_icon,                              /* icon widget */
                            GTK_SIGNAL_FUNC(load_source_file),      /* a signal */
-                           NULL);
+                           (GtkWidget *)workspace_window);
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
@@ -752,6 +754,37 @@ void populate_frames_list(GtkTreeView *list)
   }
 }
 
+GtkToolbar *create_debugger_toolbar()
+{
+  GtkWidget *toolbar;
+
+  GtkWidget *resume_icon = gtk_image_new_from_file ("icons/resume.png");
+  GtkWidget *abort_icon = gtk_image_new_from_file ("icons/abort.png");
+
+  toolbar = gtk_toolbar_new ();
+  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
+
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Resume (F5)",                          /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           resume_icon,                            /* icon widget */
+                           GTK_SIGNAL_FUNC(resume_from_debugger),  /* a signal */
+                           (GtkWidget *)debugger_window);
+
+  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
+                           NULL,                                   /* button label */
+                           "Abort",                                /* button's tooltip */
+                           "Private",                              /* tooltip private info */
+                           abort_icon,                             /* icon widget */
+                           GTK_SIGNAL_FUNC(abort_debugger),        /* a signal */
+                           (GtkWidget *)debugger_window);
+
+  return (GtkToolbar *)toolbar;
+}
+
 void create_debug_window()
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -809,8 +842,7 @@ void create_debug_window()
   gtk_box_pack_start_defaults (GTK_BOX (hbox2), scrolled_win2);
 
   vbox = gtk_vbox_new (FALSE, 5);
-  //uncomment this when adding debugger toolbar
-  //gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox2, TRUE, TRUE, 0);
 

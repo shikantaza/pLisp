@@ -54,6 +54,12 @@ void set_focus_to_last_row(GtkTreeView *);
 
 extern BOOLEAN in_error;
 
+void resume()
+{
+  close_application_window((GtkWidget **)&debugger_window);
+  call_repl("(RESUME)");
+}
+
 int call_repl(char *expression)
 {
   yy_scan_string(expression);
@@ -100,9 +106,8 @@ gboolean delete_event( GtkWidget *widget,
   else if(widget == (GtkWidget *)debugger_window)
   {
     close_application_window((GtkWidget **)&debugger_window);
-    debug_mode = false;
     if(!in_error)
-      call_repl("(RESUME)");
+      call_repl("(ABORT)");
   }
 
   return FALSE;
@@ -565,6 +570,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     create_system_browser_window();
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
     quit_application();
+  else if(widget == (GtkWidget *)debugger_window && event->keyval == GDK_F5)
+    resume();
 
   return FALSE;
 }
@@ -1077,4 +1084,17 @@ void handle_code_edit_cursor_move(GtkTextBuffer *buffer,
     display_matching_parens(buffer);
   else if(gtk_text_iter_get_char(location) == '(')
     display_matching_parens_forward(buffer);
+}
+
+void resume_from_debugger(GtkWidget *widget,
+                          gpointer data)
+{
+  resume();
+}
+
+void abort_debugger(GtkWidget *widget,
+                    gpointer data)
+{
+  close_application_window((GtkWidget **)&debugger_window);
+  call_repl("(ABORT)");
 }

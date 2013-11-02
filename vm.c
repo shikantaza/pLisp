@@ -131,6 +131,8 @@ extern OBJECT_PTR UNBIND;
 
 extern OBJECT_PTR NEWLINE;
 
+extern OBJECT_PTR ABORT;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -2017,6 +2019,30 @@ void eval()
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
+      else if(operator == ABORT)
+      {
+        if(!debug_mode)
+        {
+          throw_exception("EXCEPTION", "ABORT must be invoked only in debug mode");
+          return;
+        }
+
+        reg_current_env = NIL;
+
+        reg_current_value_rib = NIL;
+        reg_current_stack = NIL;
+
+        continuations_map = NIL;
+
+        reg_accumulator = NIL;
+        reg_next_expression = NIL;
+
+        in_error = false;
+
+        debug_mode = false;
+
+        return;
+      }
       else
       {
 	char buf[SYMBOL_STRING_SIZE];
@@ -2416,10 +2442,11 @@ BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR exp)
 
     if(IS_SYMBOL_OBJECT(car_obj))
     {
-      return (car_obj == RESUME)     || 
-             (car_obj == ENV)        || 
-             (car_obj == BACKTRACE)  ||
-             (car_obj == CREATE_IMAGE);
+      return (car_obj == RESUME)       || 
+             (car_obj == ENV)          || 
+             (car_obj == BACKTRACE)    ||
+             (car_obj == CREATE_IMAGE) ||
+             (car_obj == ABORT);
     }
 
     return false;
