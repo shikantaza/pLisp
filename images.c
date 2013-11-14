@@ -18,15 +18,18 @@
 **/
 
 #include <stdio.h>
-#include <stdarg.h>
-#include <setjmp.h>
-
-#define TPL_NOLIB
-
-#include "tpl/tpl.h"
+#include <assert.h>
+#include <dlfcn.h>
 
 #include "plisp.h"
 #include "memory.h"
+
+#include "cJSON/cJSON.h"
+
+#include "queue.h"
+#include "hashtable.h"
+
+static const int REF          = 11;
 
 extern OBJECT_PTR top_level_env;
 extern unsigned int current_package;
@@ -36,11 +39,6 @@ extern int gen_sym_count;
 
 extern int nof_strings;
 extern char **strings;
-
-extern RAW_PTR *heap;
-
-extern RAW_PTR free_list;
-extern RAW_PTR last_segment;
 
 extern BOOLEAN debug_mode;
 extern OBJECT_PTR debug_continuation;
@@ -53,203 +51,473 @@ extern OBJECT_PTR reg_current_env;
 extern OBJECT_PTR reg_current_value_rib;
 extern OBJECT_PTR reg_current_stack;
 
+extern OBJECT_PTR NIL;
 
-jmp_buf env;
-extern tpl_hook_t tpl_hook;
+extern int nof_dl_handles;
+extern char *foreign_library_names[];
+extern void **dl_handles;
+
+inline void print_ref_json_object(FILE *fp, OBJECT_PTR obj, unsigned int *obj_count, hashtable_t *hashtable)
+{
+  if(obj == NIL)
+    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", SYMBOL, (int)obj);
+  else
+  {
+    hashtable_entry_t *e = hashtable_get(hashtable, (void *)obj);
+
+    if(e)
+      fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", REF, (int)e->value);
+    else
+    {
+      fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", REF, *obj_count);
+      hashtable_put(hashtable, (void *)obj, (void *)(*obj_count));
+      (*obj_count)++;
+    }
+  }
+}
+
+void add_obj_to_print_list(queue_t *print_queue, OBJECT_PTR obj, hashtable_t *printed_objects)
+{
+  //this search is O(n), but this is OK because
+  //the queue keeps growing and shrinking, so its
+  //size at any point in time is quite small (<10)
+  if(queue_item_exists(print_queue, (void *)obj) || hashtable_get(printed_objects, (void *)obj))
+    return;
+
+  assert(is_dynamic_memory_object(obj));
+  queue_enqueue(print_queue, (void *)obj);
+}
+
+void print_immediate_object(FILE *fp, OBJECT_PTR obj)
+{
+  assert(IS_CHAR_OBJECT(obj)    ||
+         IS_SYMBOL_OBJECT(obj)  ||
+         IS_STRING_LITERAL_OBJECT(obj));
+
+  if(IS_CHAR_OBJECT(obj))
+    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", CHAR_TAG, (unsigned int)obj);
+  else if(IS_STRING_LITERAL_OBJECT(obj))
+    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", STRING_LITERAL_TAG, (unsigned int)obj);
+  else if(IS_SYMBOL_OBJECT(obj))
+    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", SYMBOL_TAG, (unsigned int)obj);
+}
+
+void print_object1(FILE *fp, OBJECT_PTR obj, queue_t *print_queue, unsigned int *obj_count, hashtable_t *hashtable, hashtable_t *printed_objects)
+{
+  if(is_dynamic_memory_object(obj))
+  {
+    print_ref_json_object(fp, obj, obj_count, hashtable);
+    add_obj_to_print_list(print_queue, obj, printed_objects);
+  }
+  else
+    print_immediate_object(fp, obj);
+}
+
+void print_json_object(FILE *fp, 
+                       OBJECT_PTR obj, 
+                       queue_t *print_queue, 
+                       unsigned int *obj_count, 
+                       hashtable_t *hashtable, 
+                       hashtable_t *printed_objects)
+{
+  if(!is_dynamic_memory_object(obj))
+  {
+    printf("%d\n", (int)obj);
+    assert(false);
+  }
+
+  fprintf(fp, "{ ");
+  //fprintf(fp, "{ \"ptr\" : %d, ", obj);
+
+  if(IS_CONS_OBJECT(obj))
+  {
+    OBJECT_PTR car_obj = car(obj);
+    OBJECT_PTR cdr_obj = cdr(obj);
+
+    fprintf(fp, "\"t\" : %d ,", CONS_TAG);
+    fprintf(fp, "\"v\" : [");
+    print_object1(fp, car_obj, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, ", ");
+    print_object1(fp, cdr_obj, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, "] ");
+  }
+  else if(IS_ARRAY_OBJECT(obj))
+  {
+    fprintf(fp, "\"t\" : %d,", ARRAY_TAG);
+    fprintf(fp, "\"v\" : [ ");
+
+    int len = get_int_value(get_heap(obj));
+
+    int i;
+
+    for(i=1; i<=len; i++)
+    {
+      print_object1(fp, get_heap(obj+i), print_queue, obj_count, hashtable, printed_objects);
+
+      if(i != len)     fprintf(fp, ", ");
+      else             fprintf(fp, " ");
+    }
+
+    fprintf(fp, "] ");
+  }
+  else if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
+  {
+    OBJECT_PTR env    = get_env_list(obj);
+    OBJECT_PTR params = get_params_object(obj);
+    OBJECT_PTR body   = get_body_object(obj);
+    OBJECT_PTR source = get_source_object(obj);
+
+    fprintf(fp, "\"t\" : %d,", IS_CLOSURE_OBJECT(obj) ? CLOSURE_TAG : MACRO_TAG);
+    fprintf(fp, "\"v\" : [");
+    print_object1(fp, env, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, ", ");
+    print_object1(fp, params, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, ", ");
+    print_object1(fp, body, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, ", ");
+    print_object1(fp, source, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, "] ");
+  }
+  else if(IS_CONTINUATION_OBJECT(obj))
+  {
+    fprintf(fp, "\"t\" : %d,", CONTINUATION_TAG);
+    fprintf(fp, "\"v\" : ");
+    print_object1(fp, get_heap(obj), print_queue, obj_count, hashtable, printed_objects);
+  }
+  else if(IS_INTEGER_OBJECT(obj))
+    fprintf(fp, "\"t\" : %d, \"v\" : %d ", INTEGER_TAG, get_int_value(obj));
+  else if(IS_FLOAT_OBJECT(obj))
+    fprintf(fp, "\"t\" : %d, \"v\" : %d ", FLOAT_TAG,   get_float_value(obj));
+  else
+    assert(false);
+
+  fprintf(fp, "}");
+
+  hashtable_put(printed_objects, (void *)obj, (void *)1);
+}
+
+//#ifdef DEBUG
+void doit(char *text)
+{
+  char *out;cJSON *json;
+	
+  json=cJSON_Parse(text);
+  if (!json) {printf("Error before: [%s]\n",cJSON_GetErrorPtr()); getchar();}
+  else
+  {
+    out=cJSON_Print(json);
+    cJSON_Delete(json);
+    printf("%s\n",out);
+    free(out);
+  }
+}
+
+/* Read a file, parse, render back, etc. */
+void dofile(char *filename)
+{
+  FILE *f=fopen(filename,"rb");fseek(f,0,SEEK_END);long len=ftell(f);fseek(f,0,SEEK_SET);
+  char *data=(char*)malloc(len+1);fread(data,1,len,f);fclose(f);
+  doit(data);
+  free(data);
+}
+//#endif
 
 void create_image(char *file_name)
 {
+  int i;
 
-  /* 
-    variables that are serialized
-    -----------------------------
-    char           **strings
-    OBJECT_PTR     top_level_env
-    RAW_PTR        free_list
-    RAW_PTR        last_segment
-    RAW_PTR        *heap
-    unsigned int   current_package
-    int            gen_sym_count
-    package_t      *packages
-    BOOLEAN        debug_mode
-    OBJECT_PTR     debug_continuation
-    OBJECT_PTR     debug_env
-    OBJECT_PTR     execution_stack
-    OBJECT_PTR     debug_execution_stack
-    OBJECT_PTR     reg_accumulator
-    OBJECT_PTR     reg_next_expression
-    OBJECT_PTR     reg_current_env
-    OBJECT_PTR     reg_current_value_rib
-    OBJECT_PTR     reg_current_stack
-  */
+  FILE *fp = fopen(file_name, "w");  
 
-  int i,j;
-  char *str;
-  RAW_PTR val;
+  unsigned int *obj_count = (unsigned int *)malloc(sizeof(unsigned int));
 
-  struct pkg {
-    char *name;
-    int  nof_symbols;
-  } package;
+  *obj_count = 0;
 
-  char *sym;
+  queue_t *print_queue = queue_create();
+  hashtable_t *hashtable = hashtable_create();
+  hashtable_t *printed_objects = hashtable_create();
 
-  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))uuuuuuuuuu", 
-			 &str, 
-			 &top_level_env,
-			 &free_list,
-			 &last_segment,
-			 &val,
-			 &current_package,
-			 &gen_sym_count,
-			 &package,
-			 &sym,
-                         &debug_mode,
-                         &debug_continuation,
-                         &debug_env,
-                         &execution_stack,
-                         &debug_execution_stack,
-                         &reg_accumulator,
-                         &reg_next_expression,
-                         &reg_current_env,
-                         &reg_current_value_rib,
-                         &reg_current_stack);
+  fprintf(fp, "{ ");
 
-  i=0;
+  fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
 
-  for(str=strings[i]; i<nof_strings; str=strings[++i])
-    tpl_pack(tn, 1);
+  fprintf(fp, "\"top_level_env\" : "        ); print_object1(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_continuation\" : "   ); print_object1(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_env\" : "            ); print_object1(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"execution_stack\" : "      ); print_object1(fp,execution_stack,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", "); 
+  fprintf(fp, "\"debug_execution_stack\" : "); print_object1(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_accumulator\" : "      ); print_object1(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_next_expression\" : "  ); print_object1(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_env\" : "      ); print_object1(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_value_rib\" : "); print_object1(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_stack\" : "    ); print_object1(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
 
-  tpl_pack(tn, 0);
+  fprintf(fp, "\"current_package\" : %d ",     current_package);                                                           fprintf(fp, ", ");
+  fprintf(fp, "\"gen_sym_count\" : %d ",       gen_sym_count);                                                             fprintf(fp, ", ");
 
-  for(i=0; i<HEAP_SIZE; i++)
-  //for(i=0; i<heap_ptr; i++)
-  {
-    val = heap[i];
-    tpl_pack(tn, 2);
-  }
+  fprintf(fp,               "\"strings\" : [ ");
+  for(i=0; i<nof_strings; i++)
+    fprintf(fp, "\"%s\"%s", strings[i], (i == (nof_strings-1)) ? " " : ", ");
+  fprintf(fp,               "]");
+  fprintf(fp, ", ");
+
+  fprintf(fp,               "\"foreign_libraries\" : [ ");
+  for(i=0; i<nof_dl_handles; i++)
+    fprintf(fp, "\"%s\"%s", foreign_library_names[i], (i == (nof_dl_handles-1)) ? " " : ", ");
+  fprintf(fp,               "]");
+  fprintf(fp, ", ");
+
+  fprintf(fp,               "\"packages\" : [ ");
 
   for(i=0; i<nof_packages; i++)
   {
-    package.name = packages[i].name;
-    package.nof_symbols = packages[i].nof_symbols;
+    fprintf(fp, "{\"name\" : \"%s\",", packages[i].name);
+    fprintf(fp, "\"symbols\" : ");
 
-    for(j=0; j<package.nof_symbols; j++)
-    {
-      sym = packages[i].symbols[j];
-      tpl_pack(tn, 4);
-    }
+    fprintf(fp, "[ ");
+    int j;
+    for(j=0; j<packages[i].nof_symbols; j++)
+      fprintf(fp, "\"%s\"%s", packages[i].symbols[j], (j == (packages[i].nof_symbols-1)) ? " " : ", ");
+    fprintf(fp, "]");
 
-    tpl_pack(tn, 3);
+    fprintf(fp, "}");
+
+    if(i != nof_packages-1)     fprintf(fp, ", ");
+    else                        fprintf(fp, " ");
   }
 
-  tpl_dump(tn, TPL_FILE, file_name);
-  tpl_free(tn);
+  fprintf(fp, "]");
+
+  fprintf(fp, ", ");
+
+  fprintf(fp, "\"heap\" : [");
+
+  //add_obj_to_print_list(print_queue, top_level_env);
+
+  while(!queue_is_empty(print_queue))
+  {
+    OBJECT_PTR obj = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
+    assert(is_dynamic_memory_object(obj));
+    print_json_object(fp, obj, print_queue, obj_count, hashtable, printed_objects);
+    if(!queue_is_empty(print_queue))fprintf(fp, ", ");
+  }
+
+  queue_delete(print_queue);
+  hashtable_delete(hashtable);
+  hashtable_delete(printed_objects);
+
+  fprintf(fp, "]}");
+
+  fclose(fp);
+
+  free(obj_count);
+
+  //#ifdef DEBUG
+  //dofile(file_name);
+  //#endif
+
 }
 
-//for handline tpl-related errors
-void catch_fatal(char *fmt, ...) {
-  va_list ap;
+OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable_t *hashtable)
+{
+  /* cJSON *type = cJSON_GetObjectItem(obj, "t"); */
+  /* cJSON *value = cJSON_GetObjectItem(obj, "v"); */
+  cJSON *type = obj->child;
+  cJSON *value = obj->child->next;
+  
+  int str_type = type->valueint;
 
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  va_end(ap);
-  longjmp(env,-1);                /* return to setjmp point */
+  int i;
+
+  OBJECT_PTR ret;
+
+  BOOLEAN obj_to_be_created = false;
+
+  if(str_type == REF)
+  {
+    hashtable_entry_t *e = hashtable_get(hashtable, (void *)(value->valueint));
+    if(e)
+      ret = (OBJECT_PTR)(e->value);
+    else
+    {
+      cJSON *refobj = cJSON_GetArrayItem(heap, value->valueint);
+
+      if(!refobj)
+      {
+        printf("%d\n", value->valueint);
+        printf("%d\n", cJSON_GetArraySize(heap));
+        assert(false);
+      }
+
+      ret = convert_to_plisp_obj(root, heap, refobj, hashtable);
+      hashtable_put(hashtable, (void *)(value->valueint),(void *)ret);
+    }
+  }
+  else if(str_type == CONS_TAG)
+  {
+    ret = object_alloc(2, CONS_TAG);
+ 
+    set_heap(ret,     convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
+    set_heap(ret + 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
+  }
+  else if(str_type == ARRAY_TAG)
+  {
+    int size = cJSON_GetArraySize(value);
+    
+    ret = object_alloc(size + 1, ARRAY_TAG);
+
+    for(i=0; i<size; i++)
+      set_heap(ret+i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable));
+  }
+  else if(str_type == CLOSURE_TAG || str_type == MACRO_TAG)
+  {
+    if(str_type == CLOSURE_TAG)
+      ret = object_alloc(4, CLOSURE_TAG);
+    else
+      ret = object_alloc(4, MACRO_TAG);
+
+    set_heap(ret,   convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
+    set_heap(ret+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
+    set_heap(ret+2, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 2), hashtable));
+    set_heap(ret+3, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 3), hashtable));
+  }
+  else if(str_type == CONTINUATION_TAG)
+  {
+    ret = object_alloc(1, CONTINUATION_TAG);
+    set_heap(ret, convert_to_plisp_obj(root, heap, value, hashtable));
+  }
+  else if(str_type == INTEGER_TAG)
+  {
+    ret = convert_int_to_object(value->valueint);
+  }
+  else if(str_type == FLOAT_TAG)
+  {
+    ret = convert_float_to_object((float)value->valuedouble);
+  }
+  else if(str_type == SYMBOL_TAG         ||
+          str_type == STRING_LITERAL_TAG ||
+          str_type == CHAR_TAG)
+    ret = (OBJECT_PTR)(value->valueint);
+  else
+  {
+    printf("%d\n", str_type);
+    assert(false);
+  }
+
+  if(!is_valid_object(ret))
+  {
+    printf("%d\n", ret);
+    assert(false);
+  }
+
+  return ret;
 }
 
 void load_from_image(char *file_name)
 {
+  int i, j;
 
-  int err;
+  FILE *f=fopen(file_name,"rb");fseek(f,0,SEEK_END);long len=ftell(f);fseek(f,0,SEEK_SET);
+  char *data=(char*)malloc(len+1);fread(data,1,len,f);fclose(f);
 
-  int i,j;
+  cJSON *root = cJSON_Parse(data);
+  cJSON *heap = cJSON_GetObjectItem(root, "heap");
 
-  char *str;
-  unsigned int val;
+  free(data);
 
-  struct pkg {
-    char *name;
-    int  nof_symbols;
-  } package;
+  cJSON *temp;
 
-  char *sym;
- 
-  tpl_hook.fatal = catch_fatal;
+  temp = cJSON_GetObjectItem(root, "current_package");
+  current_package = temp->valueint;
 
-  err = setjmp(env);
-  if (err) {
-    fprintf(stdout, "load_from_image() failed\n");
-    cleanup();
-    exit(1);
-  }
+  temp = cJSON_GetObjectItem(root, "gen_sym_count");
+  gen_sym_count = temp->valueint;
 
-  tpl_node *tn = tpl_map("A(s)uuuA(u)uiA(S(si)A(s))uuuuuuuuuu", 
-			 &str, 
-			 &top_level_env,
-			 &free_list,
-			 &last_segment,
-			 &val,
-			 &current_package,
-			 &gen_sym_count,
-			 &package,
-			 &sym,
-                         &debug_mode,
-                         &debug_continuation,
-                         &debug_env,
-                         &execution_stack,
-                         &debug_execution_stack,
-                         &reg_accumulator,
-                         &reg_next_expression,
-                         &reg_current_env,
-                         &reg_current_value_rib,
-                         &reg_current_stack);
-
-  tpl_load(tn, TPL_FILE, file_name);
-
-  tpl_unpack(tn, 0);
-
-  nof_strings = tpl_Alen(tn, 1);
+  temp = cJSON_GetObjectItem(root, "strings");
+  nof_strings = cJSON_GetArraySize(temp);
 
   strings = (char **)malloc(nof_strings * sizeof(char *));
 
-  for(i=0;i<nof_strings; i++)
+  for(i=0; i<nof_strings; i++)
   {
-    tpl_unpack(tn, 1);
-    strings[i] = strdup(str);
-    free(str);
+    cJSON *strobj = cJSON_GetArrayItem(temp, i);
+    strings[i] = strdup(strobj->valuestring);
   }
 
-  //heap_ptr = tpl_Alen(tn, 2);
-  heap = (unsigned int *)malloc(HEAP_SIZE * sizeof(unsigned int));
+  temp = cJSON_GetObjectItem(root, "foreign_libraries");
+  nof_dl_handles = cJSON_GetArraySize(temp);
 
-  //for(i=0; i<heap_ptr; i++)
-  for(i=0; i<HEAP_SIZE; i++)
+  dl_handles = (void **)malloc(nof_dl_handles * sizeof(void *));
+
+  for(i=0; i<nof_dl_handles; i++)
   {
-    tpl_unpack(tn, 2);
-    heap[i] = val;
+    cJSON *strobj = cJSON_GetArrayItem(temp, i);
+    foreign_library_names[i] = strdup(strobj->valuestring);
+    dl_handles[i] = dlopen(strobj->valuestring, RTLD_LAZY);
   }
 
-  nof_packages = tpl_Alen(tn, 3);
+  temp = cJSON_GetObjectItem(root, "packages");
+  nof_packages = cJSON_GetArraySize(temp);
 
   packages = (package_t *)malloc(nof_packages * sizeof(package_t));
 
   for(i=0; i<nof_packages; i++)
   {
-    tpl_unpack(tn, 3);
- 
-    packages[i].name = strdup(package.name);
-    free(package.name);
-    packages[i].nof_symbols = package.nof_symbols;
+    cJSON *pkgobj = cJSON_GetArrayItem(temp, i);
 
-    packages[i].symbols = (char **)malloc(package.nof_symbols * sizeof(char *));
+    cJSON *pkg_name = cJSON_GetObjectItem(pkgobj, "name");
+    cJSON *symbols  = cJSON_GetObjectItem(pkgobj, "symbols");
 
-    for(j=0; j<package.nof_symbols; j++)
+    int nof_symbols = cJSON_GetArraySize(symbols);
+
+    packages[i].name = strdup(pkg_name->valuestring);
+    packages[i].nof_symbols = nof_symbols;
+
+    packages[i].symbols = (char **)malloc(packages[i].nof_symbols * sizeof(char *));
+
+    for(j=0; j<nof_symbols; j++)
     {
-      tpl_unpack(tn, 4);
-      packages[i].symbols[j] = strdup(sym);
-      free(sym);
+      cJSON *symbol_obj = cJSON_GetArrayItem(symbols, j);
+      packages[i].symbols[j] = strdup(symbol_obj->valuestring);
     }
-   }
+  }
 
-  tpl_free(tn);
+  hashtable_t *hashtable = hashtable_create();
+
+  temp = cJSON_GetObjectItem(root, "debug_mode");
+  debug_mode = strcmp(temp->valuestring, "true") ? false : true;
+
+  temp = cJSON_GetObjectItem(root, "top_level_env");
+  top_level_env = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "debug_continuation");
+  debug_continuation = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "debug_env");
+  debug_env = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "execution_stack");
+  execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "debug_execution_stack");
+  debug_execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "reg_accumulator");
+  reg_accumulator = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "reg_next_expression");
+  reg_next_expression = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "reg_current_env");
+  reg_current_env = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "reg_current_value_rib");
+  reg_current_value_rib = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "reg_current_stack");
+  reg_current_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  hashtable_delete(hashtable);
+
+  cJSON_Delete(root);
 }
+

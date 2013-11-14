@@ -17,28 +17,21 @@
   along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#ifndef MEMORY_H
-#define MEMORY_H 
+typedef struct list {
+  void *data;
+  struct list *next;
+} queue_item_t;
 
-#define GC_FREQUENCY 100
+typedef struct {
+  unsigned int count;
+  struct list *first;
+  struct list *last;
+} queue_t;
 
-int initialize_memory();
-
-void cleanup_memory();
-
-OBJECT_PTR object_alloc(int, unsigned int);
-
-#ifndef DEBUG_MEMORY
-inline
-#endif
-void set_heap(OBJECT_PTR, OBJECT_PTR);
-
-#ifndef DEBUG_MEMORY
-inline
-#endif
-OBJECT_PTR get_heap(OBJECT_PTR);
-
-void test_memory();
-void test_bst();
-
-#endif
+queue_t *queue_create();
+void queue_enqueue(queue_t *, void *);
+queue_item_t *queue_dequeue(queue_t *);
+unsigned int queue_count(queue_t *);
+void queue_delete(queue_t *);
+int queue_item_exists(queue_t *, void *);
+int queue_is_empty(queue_t *);

@@ -17,28 +17,16 @@
   along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#ifndef MEMORY_H
-#define MEMORY_H 
+typedef struct hashtable_entry
+{
+  struct hashtable_entry *next;
+  void *ptr;
+  void *value;
+} hashtable_entry_t;
 
-#define GC_FREQUENCY 100
+typedef hashtable_entry_t * hashtable_t;
 
-int initialize_memory();
-
-void cleanup_memory();
-
-OBJECT_PTR object_alloc(int, unsigned int);
-
-#ifndef DEBUG_MEMORY
-inline
-#endif
-void set_heap(OBJECT_PTR, OBJECT_PTR);
-
-#ifndef DEBUG_MEMORY
-inline
-#endif
-OBJECT_PTR get_heap(OBJECT_PTR);
-
-void test_memory();
-void test_bst();
-
-#endif
+hashtable_t *hashtable_create();
+hashtable_entry_t *hashtable_get(hashtable_t *, void *ptr);
+hashtable_entry_t *hashtable_put(hashtable_t *, void *ptr, void *value);
+void hashtable_remove(hashtable_t *, void *ptr);

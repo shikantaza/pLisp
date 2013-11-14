@@ -359,9 +359,9 @@
   (let ((l1 (array-length str1))
         (l2 (array-length str2)))
     (let ((str (make-array (+ l1 l2) nil)))
-      (dotimes (i l1)
+      (dolist (i (range 0 (- l1 1) 1))
         (array-set str i (array-get str1 i)))
-      (dotimes (i l2)
+      (dolist (i (range 0 (- l2 1) 1))
         (array-set str (+ i l1) (array-get str2 i)))
       str)))
 
@@ -559,4 +559,3 @@
 (in-package "user")
 
 ;(load-file "tests/unit_tests.lisp")
-

@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o tpl.o mmap.o red_black_tree.o stack.o misc.o ui.o event_handlers.o
+OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o cJSON.o queue.o hashtable.o
 
 #TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
-CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
+CFLAGS	= -g -pg -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
 
 all:	plisp libplisp.so libtest.so
 
@@ -72,12 +72,6 @@ memory.o:	memory.c
 images.o:	images.c
 		$(CC) $(CFLAGS) -c images.c -o images.o
 
-tpl.o:		./tpl/tpl.c
-		$(CC) $(CFLAGS) -c ./tpl/tpl.c -o tpl.o
-
-mmap.o:		./tpl/win/mmap.c
-		$(CC) $(CFLAGS) -c ./tpl/win/mmap.c -o mmap.o
-
 red_black_tree.o:	./rb/red_black_tree.c
 		$(CC) $(CFLAGS) -c ./rb/red_black_tree.c -o red_black_tree.o
 
@@ -96,6 +90,18 @@ ui.o:		./gui/ui.c
 event_handlers.o:	./gui/event_handlers.c
 		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/event_handlers.c -o event_handlers.o
 
+hash.o:		hash.c
+		$(CC) $(CFLAGS) -c hash.c -o hash.o
+
+cJSON.o:	./cJSON/cJSON.c
+		$(CC) $(CFLAGS) -c ./cJSON/cJSON.c -o cJSON.o
+
+queue.o:	queue.c
+		$(CC) $(CFLAGS) -c queue.c -o queue.o
+
+hashtable.o:	hashtable.c
+		$(CC) $(CFLAGS) -c hashtable.c -o hashtable.o
+
 test_so.o:	test_so.c
 		$(CC) -c test_so.c -o test_so.o
 
@@ -108,18 +114,17 @@ main.o		: plisp.h memory.h
 compiler.o	: plisp.h
 vm.o		: plisp.h memory.h
 util.o		: util.h
-images.o	: plisp.h memory.h tpl/tpl.h
+images.o	: plisp.h memory.h queue.h cJSON/cJSON.h hashtable.h
 ffi.o		: plisp.h
 memory.o	: plisp.h memory.h
-
-tpl.o		: tpl/tpl.h
-mmap.o		: tpl/win/mman.h
 
 ui.o		: plisp.h
 
 event_handlers.o	: plisp.h
 
-#test_memory.o	: plisp.h memory.h
+cJSON.o		: cJSON/cJSON.h
+
+hashtable.o	: hashtable.h
 
 clean:
 	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump

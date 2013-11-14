@@ -3,6 +3,8 @@
 
 #include "../plisp.h"
 
+#include "../memory.h"
+
 #define FONT "Courier Bold 9"
 
 GtkTextBuffer *transcript_buffer;
@@ -738,8 +740,8 @@ void populate_frames_list(GtkTreeView *list)
 
     sprintf(buf, "#<Frame #x%08x> ", frame);
 
-    OBJECT_PTR env = get_heap((frame >> OBJECT_SHIFT) + 2);
-    OBJECT_PTR source_expression  = get_heap((frame >> OBJECT_SHIFT) + 4);    
+    OBJECT_PTR env = get_heap(frame + 2);
+    OBJECT_PTR source_expression  = get_heap(frame + 4);    
 
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter, 0, buf, -1);

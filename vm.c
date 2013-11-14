@@ -20,10 +20,25 @@
 #include <stdio.h>
 #include <assert.h>
 #include <dlfcn.h>
+#include <string.h>
 
 #include "plisp.h"
 
 #include "memory.h"
+
+extern OBJECT_PTR CAAR(OBJECT_PTR);
+extern OBJECT_PTR CADR(OBJECT_PTR);
+extern OBJECT_PTR CDAR(OBJECT_PTR);
+extern OBJECT_PTR CADAR(OBJECT_PTR);
+extern OBJECT_PTR CADDR(OBJECT_PTR);
+extern OBJECT_PTR CADDDR(OBJECT_PTR);
+extern OBJECT_PTR CADDDDR(OBJECT_PTR);
+
+extern OBJECT_PTR first(OBJECT_PTR);
+extern OBJECT_PTR second(OBJECT_PTR);
+extern OBJECT_PTR third(OBJECT_PTR);
+extern OBJECT_PTR fourth(OBJECT_PTR);
+extern OBJECT_PTR fifth(OBJECT_PTR);
 
 extern OBJECT_PTR reg_accumulator;
 extern OBJECT_PTR reg_next_expression;
@@ -160,6 +175,8 @@ extern FILE *yyin;
 extern OBJECT_PTR continuations_map;
 
 extern BOOLEAN system_changed;
+
+extern char *foreign_library_names[];
 
 void eval()
 {
@@ -323,7 +340,7 @@ void eval()
     OBJECT_PTR symbol_given = CADR(exp);
     OBJECT_PTR symbol_to_be_used;
 
-    int package_index = symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
+    int package_index = (int)symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
 
     if(package_index != current_package)
     {
@@ -686,21 +703,21 @@ void eval()
         OBJECT_PTR error_string_obj = car(reg_current_value_rib);
 
         if(IS_STRING_LITERAL_OBJECT(error_string_obj))
-          raise_error(strdup(strings[error_string_obj >> OBJECT_SHIFT]));
+          raise_error(strdup(strings[(int)error_string_obj >> OBJECT_SHIFT]));
         else if(is_string_object(error_string_obj))
         {
           char msg[500];
 
           memset(msg, '\0', 500);
 
-          RAW_PTR ptr = error_string_obj >> OBJECT_SHIFT;
+          OBJECT_PTR ptr = error_string_obj;
 
           int len = get_int_value(get_heap(ptr));
 
           int i;
 
           for(i=1; i <= len; i++)
-            msg[i-1] = get_heap(ptr + i) >> OBJECT_SHIFT;
+            msg[i-1] = (int)get_heap(ptr + i) >> OBJECT_SHIFT;
 
           raise_error(msg);
         }
@@ -739,7 +756,7 @@ void eval()
           if(reg_accumulator == NIL)
             reg_accumulator = cons(car(rest), NIL);
           else
-            set_heap((last_cell(reg_accumulator) >> OBJECT_SHIFT) + 1, 
+            set_heap(last_cell(reg_accumulator) + 1, 
                      cons(car(rest), NIL));         
 
           rest = cdr(rest);
@@ -867,7 +884,7 @@ void eval()
           return;
         }
 
-        set_heap((car_obj >> OBJECT_SHIFT), CADR(reg_current_value_rib));
+        set_heap(car_obj, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
@@ -890,7 +907,7 @@ void eval()
           return;
         }
 
-        set_heap((car_obj >> OBJECT_SHIFT) + 1, CADR(reg_current_value_rib));
+        set_heap(car_obj + 1, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
@@ -913,7 +930,7 @@ void eval()
           return;
         }
 
-        char *package_name = (char *)convert_to_upper_case(strings[package >> OBJECT_SHIFT]);
+        char *package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
 
         /* if(!strcmp(package_name,"CORE")) */
 	/* { */
@@ -950,7 +967,7 @@ void eval()
           return;
         }
 
-        char *package_name = (char *)convert_to_upper_case(strings[package >> OBJECT_SHIFT]);
+        char *package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
 
         if(!strcmp(package_name,"CORE"))
 	{
@@ -1021,7 +1038,7 @@ void eval()
             if(reg_current_value_rib == NIL)
               reg_current_value_rib = cons(car(args), NIL);
             else
-              set_heap((last_cell(reg_current_value_rib) >> OBJECT_SHIFT) + 1, 
+              set_heap(last_cell(reg_current_value_rib) + 1, 
                        cons(car(args), NIL));         
             args = cdr(args);
           }
@@ -1139,7 +1156,7 @@ void eval()
           return;
         }        
 
-        int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
+        int array_len = get_int_value(get_heap(array_obj));
 
         int index = get_int_value(idx);
 
@@ -1149,7 +1166,7 @@ void eval()
           return;
         }        
  
-        set_heap((array_obj >> OBJECT_SHIFT) + index + 1, CADDR(reg_current_value_rib));
+        set_heap(array_obj + index + 1, CADDR(reg_current_value_rib));
 
         reg_accumulator = CADDR(reg_current_value_rib);
 
@@ -1178,7 +1195,7 @@ void eval()
 
         if(IS_STRING_LITERAL_OBJECT(array_obj))
         {
-          char *str = strings[array_obj >> OBJECT_SHIFT];
+          char *str = strings[(int)array_obj >> OBJECT_SHIFT];
 
           if(index < 0 || index >= strlen(str))
           {
@@ -1186,7 +1203,7 @@ void eval()
             return;
           }        
 
-          reg_accumulator = (str[index] << OBJECT_SHIFT) + CHAR_TAG;
+          reg_accumulator = (OBJECT_PTR)((str[index] << OBJECT_SHIFT) + CHAR_TAG);
         }
         else
         {
@@ -1196,7 +1213,7 @@ void eval()
             return;
           }        
 
-          int array_len = get_int_value(get_heap(array_obj >> OBJECT_SHIFT));
+          int array_len = get_int_value(get_heap(array_obj));
 
           if(index < 0 || (index >= array_len))
           {
@@ -1204,7 +1221,7 @@ void eval()
             return;
           }        
 
-          reg_accumulator = get_heap((array_obj >> OBJECT_SHIFT) + index + 1);
+          reg_accumulator = get_heap(array_obj + index + 1);
         }
 
         reg_current_value_rib = NIL;
@@ -1254,7 +1271,7 @@ void eval()
           return;
         }
 
-        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array >> OBJECT_SHIFT)))
+        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array)))
         {
           throw_exception("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
@@ -1284,7 +1301,7 @@ void eval()
         }
 
         if(IS_STRING_LITERAL_OBJECT(array))
-          reg_accumulator = convert_int_to_object(strlen(strings[array >> OBJECT_SHIFT]));
+          reg_accumulator = convert_int_to_object(strlen(strings[(int)array >> OBJECT_SHIFT]));
         else
         {
           if(!(IS_ARRAY_OBJECT(array)))
@@ -1293,7 +1310,7 @@ void eval()
             return;
           }
 
-          reg_accumulator = get_heap(array >> OBJECT_SHIFT);
+          reg_accumulator = get_heap(array);
         }
 
         reg_current_value_rib = NIL;
@@ -1342,7 +1359,7 @@ void eval()
         if(is_string_object(file_name))
           create_image(get_string(file_name));
         else
-          create_image(strings[file_name >> OBJECT_SHIFT]);
+          create_image(strings[(int)file_name >> OBJECT_SHIFT]);
 
         system_changed = false;
 
@@ -1367,6 +1384,12 @@ void eval()
           return;
         }
 
+        if(nof_dl_handles == MAX_FOREIGN_LIBRARY_COUNT)
+        {
+          throw_generic_exception("Maximum number of foreign libraries has been exceeded");
+          return;
+        }
+
         nof_dl_handles++;
   
         void **temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
@@ -1379,12 +1402,15 @@ void eval()
 
         dl_handles = temp;
 
+        char *fname = IS_STRING_LITERAL_OBJECT(file_name) ? strings[(int)file_name >> OBJECT_SHIFT] : get_string(file_name);
+
         void *ret;
 
-        if(IS_STRING_LITERAL_OBJECT(file_name))
-          ret = dlopen(strings[file_name >> OBJECT_SHIFT], RTLD_LAZY);
-        else
-          ret = dlopen(get_string(file_name), RTLD_LAZY);
+        /* if(IS_STRING_LITERAL_OBJECT(file_name)) */
+        /*   ret = dlopen(strings[(int)file_name >> OBJECT_SHIFT], RTLD_LAZY); */
+        /* else */
+        /*   ret = dlopen(get_string(file_name), RTLD_LAZY); */
+        ret = dlopen(fname, RTLD_LAZY);
 
         if(!ret)
         {
@@ -1393,6 +1419,8 @@ void eval()
         }
 
         dl_handles[nof_dl_handles - 1] = ret;
+
+        foreign_library_names[nof_dl_handles - 1] = strdup(fname);
 
         reg_accumulator = NIL;
 
@@ -1598,7 +1626,7 @@ void eval()
       {
         debug_mode = false;
 
-        reg_current_stack = ((debug_continuation >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        reg_current_stack = get_heap(debug_continuation);
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -1629,7 +1657,7 @@ void eval()
           return;
         }
 
-        FILE *temp = fopen(is_string_object(arg) ?  get_string(arg) : strings[arg >> OBJECT_SHIFT], "r");
+        FILE *temp = fopen(is_string_object(arg) ?  get_string(arg) : strings[(int)arg >> OBJECT_SHIFT], "r");
 
         if(!temp)
         {
@@ -1639,6 +1667,7 @@ void eval()
 
         if(set_up_new_yyin(temp))
         {
+          printf("error\n");
           throw_exception("FILE-READ-ERROR", "Unable to read from file");
           return;
         }
@@ -1870,7 +1899,7 @@ void eval()
           return;
         }
 
-        reg_current_stack = ((cont >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        reg_current_stack = get_heap(cont);
 
         reg_accumulator = CADR(reg_current_value_rib);
         reg_current_value_rib = NIL;
@@ -1913,7 +1942,7 @@ void eval()
 
         if(IS_STRING_LITERAL_OBJECT(str))
         {
-          reg_accumulator = get_symbol_object((char *)convert_to_upper_case(strdup(strings[str >> OBJECT_SHIFT])));
+          reg_accumulator = get_symbol_object((char *)convert_to_upper_case(strdup(strings[(int)str >> OBJECT_SHIFT])));
         }
         else if(is_string_object(str))
         {
@@ -1921,14 +1950,14 @@ void eval()
 
           memset(msg, '\0', 500);
 
-          RAW_PTR ptr = str >> OBJECT_SHIFT;
+          OBJECT_PTR ptr = str;
 
           int len = get_int_value(get_heap(ptr));
 
           int i;
 
           for(i=1; i <= len; i++)
-            msg[i-1] = get_heap(ptr + i) >> OBJECT_SHIFT;
+            msg[i-1] = (int)get_heap(ptr + i) >> OBJECT_SHIFT;
 
           reg_accumulator = get_symbol_object((char *)convert_to_upper_case(msg));
         }
@@ -1957,7 +1986,7 @@ void eval()
 
         print_symbol(sym, buf);
 
-        reg_accumulator = (add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG;
+        reg_accumulator = (OBJECT_PTR)((add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG);
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
@@ -1998,7 +2027,7 @@ void eval()
             if(prev == NIL)
               top_level_env = cdr(top_level_env);
             else
-              set_heap((prev >> OBJECT_SHIFT) + 1, cdr(rest));
+              set_heap(prev + 1, cdr(rest));
             break;
           }
 
@@ -2076,8 +2105,8 @@ void eval()
 
         while(rest_params != NIL)
         {
-          int package_index = car(rest_params) >> (SYMBOL_BITS + OBJECT_SHIFT);
-          int symbol_index =  (car(rest_params) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+          int package_index = (int)car(rest_params) >> (SYMBOL_BITS + OBJECT_SHIFT);
+          int symbol_index =  ((int)car(rest_params) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
           char *param_name = packages[package_index].symbols[symbol_index];
 
@@ -2086,7 +2115,7 @@ void eval()
             if(params_env == NIL)
               params_env = cons(cons(CADR(rest_params), rest_args), NIL);
             else
-              set_heap((last_cell(params_env) >> OBJECT_SHIFT) + 1, 
+              set_heap(last_cell(params_env) + 1, 
                        cons(cons(CADR(rest_params),rest_args), NIL));            
             break;
           }
@@ -2095,8 +2124,8 @@ void eval()
             if(params_env == NIL)
               params_env = cons(cons(car(rest_params), car(rest_args)), NIL);
             else
-              set_heap((last_cell(params_env) >> OBJECT_SHIFT) + 1, 
-                       cons(cons(car(rest_params),car(rest_args)), NIL));         
+              set_heap(last_cell(params_env) + 1, 
+                       cons(cons(car(rest_params),car(rest_args)), NIL));
           }
 
           rest_params = cdr(rest_params);
@@ -2116,7 +2145,7 @@ void eval()
           return;
         }
 
-        reg_current_stack = ((reg_accumulator >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        reg_current_stack = get_heap(reg_accumulator);
 
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
@@ -2137,7 +2166,7 @@ void eval()
     OBJECT_PTR frame = car(reg_current_stack);
     reg_current_stack = cdr(reg_current_stack);
 
-    RAW_PTR ptr = frame >> OBJECT_SHIFT;
+    OBJECT_PTR ptr = frame;
     reg_next_expression   = get_heap(ptr+1);
     reg_current_env       = get_heap(ptr+2);
     reg_current_value_rib = get_heap(ptr+3);
@@ -2151,7 +2180,7 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 {
   log_function_entry("create_call_frame");
 
-  RAW_PTR ptr = object_alloc(5, ARRAY_TAG);
+  OBJECT_PTR ptr = object_alloc(5, ARRAY_TAG);
 
   set_heap(ptr, convert_int_to_object(4));
   set_heap(ptr+1, next_expression);
@@ -2161,17 +2190,18 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 
   log_function_exit("create_call_frame");
 
-  return (ptr << OBJECT_SHIFT) + ARRAY_TAG;
+  return ptr;
 }
 
 OBJECT_PTR create_current_continuation()
 {
-  return ((reg_current_stack >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONTINUATION_TAG;
+  OBJECT_PTR ptr = object_alloc(1, CONTINUATION_TAG);
+  set_heap(ptr, reg_current_stack);
+  return ptr;
 }
 
 void raise_error(char *err_str)
 {
-
 #ifdef GUI
   show_error_dialog(err_str);
 
@@ -2208,7 +2238,7 @@ void print_stack()
   {
     OBJECT_PTR frame = car(rest);
 
-    RAW_PTR ptr = frame >> OBJECT_SHIFT;
+    OBJECT_PTR ptr = frame;
 
     printf("---- begin frame %0x----\n, frame");
     printf("Next expression: ");
@@ -2334,7 +2364,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = obj;
 	  else
-	    set_heap((last_cell(result) >> OBJECT_SHIFT) + 1, obj);
+	    set_heap(last_cell(result) + 1, obj);
 	}
 	else
 	{
@@ -2343,7 +2373,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = cons(obj, NIL);
 	  else
-	    set_heap((last_cell(result) >> OBJECT_SHIFT) + 1, cons(obj, NIL));
+	    set_heap(last_cell(result) + 1, cons(obj, NIL));
 	}
       }
       else
@@ -2353,7 +2383,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	if(result == NIL)
 	  result = cons(obj, NIL);
 	else
-	  set_heap((last_cell(result) >> OBJECT_SHIFT) + 1, cons(obj, NIL));
+	  set_heap(last_cell(result) + 1, cons(obj, NIL));
       }
       rest = cdr(rest);
     }
@@ -2370,13 +2400,13 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 {
   assert(IS_STRING_LITERAL_OBJECT(literal));
 
-  char *str_val = strings[literal >> OBJECT_SHIFT];
+  char *str_val = strings[(int)literal >> OBJECT_SHIFT];
 
   char *ptr = NULL;
 
   int len = strlen(str_val);
 
-  RAW_PTR raw_ptr = object_alloc(len + 1, ARRAY_TAG);
+  OBJECT_PTR raw_ptr = object_alloc(len + 1, ARRAY_TAG);
 
   set_heap(raw_ptr, convert_int_to_object(len));
 
@@ -2384,11 +2414,11 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
-    set_heap(raw_ptr + i, (*ptr << OBJECT_SHIFT) + CHAR_TAG);
+    set_heap(raw_ptr + i, (OBJECT_PTR)((*ptr << OBJECT_SHIFT) + CHAR_TAG));
     i++;
   }
 
-  return (raw_ptr << OBJECT_SHIFT) + ARRAY_TAG;
+  return raw_ptr;
 }
 
 OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
@@ -2397,7 +2427,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   
   int sz = get_int_value(size);
 
-  RAW_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
+  OBJECT_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
 
   set_heap(ptr, size);
 
@@ -2406,7 +2436,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   for(i=0; i<sz; i++)
     set_heap(ptr + i + 1, default_value);
 
-  return (ptr << OBJECT_SHIFT) + ARRAY_TAG;
+  return ptr;
 }
 
 OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
@@ -2416,9 +2446,9 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int st = get_int_value(start);
   int len = get_int_value(length);
 
-  RAW_PTR orig_ptr = array >> OBJECT_SHIFT;
+  OBJECT_PTR orig_ptr = array;
 
-  RAW_PTR ptr = object_alloc(len + 1, ARRAY_TAG);
+  OBJECT_PTR ptr = object_alloc(len + 1, ARRAY_TAG);
 
   set_heap(ptr, convert_int_to_object(len));
 
@@ -2427,7 +2457,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   for(i=1; i<=len; i++)
     set_heap(ptr+i, get_heap(orig_ptr + st + i));
 
-  ret = (ptr << OBJECT_SHIFT) + ARRAY_TAG;
+  ret = ptr;
 
   log_function_exit("eval_sub_array");
 
@@ -2468,7 +2498,7 @@ void print_backtrace()
   while(rest != NIL)
   {
     //print_object(car(rest));
-    print_object(cdr(get_heap((car(rest) >> OBJECT_SHIFT) + 1)));
+    print_object(cdr(get_heap(car(rest) + 1)));
 
     printf("\n");
 
@@ -2540,9 +2570,8 @@ void throw_exception(char *excp, char *err_str)
 {
   //printf("In throw_exception() %s %s\n", excp, err_str);
   //getchar();
-  reg_current_value_rib = cons(cons(get_symbol_object(excp), get_string_object(err_str)), NIL);
+  reg_current_value_rib = cons(cons(get_symbol_object(excp), (OBJECT_PTR)get_string_object(err_str)), NIL);
 
   //basically (REFER THROW (APPLY))
   reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL);
-
 }

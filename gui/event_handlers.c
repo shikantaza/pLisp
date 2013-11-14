@@ -3,6 +3,8 @@
 
 #include "../plisp.h"
 
+extern OBJECT_PTR CAAR(OBJECT_PTR);
+
 extern GtkTextBuffer *transcript_buffer;
 extern GtkTextBuffer *workspace_buffer;
 
@@ -679,7 +681,7 @@ void fetch_package_symbols()
     {
       OBJECT_PTR sym = CAAR(rest);
 
-      if((sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+      if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
       {
         gtk_list_store_append(store2, &iter2);
         gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
@@ -721,7 +723,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env(ptr, top_level_env));
+    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
 
     gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
@@ -731,7 +733,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       print_object_to_string(cons(DEFINE,
-                                  cons(ptr,
+                                  cons((OBJECT_PTR)ptr,
                                        cons(cons(LAMBDA,
                                                  cons(get_params_object(obj),
                                                       get_source_object(obj))),
@@ -745,7 +747,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       print_object_to_string(cons(DEFINE,
-                                  cons(ptr,
+                                  cons((OBJECT_PTR)ptr,
                                        cons(cons(MACRO,
                                                  cons(get_params_object(obj),
                                                       get_source_object(obj))),
@@ -764,7 +766,7 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       print_object_to_string(cons(DEFINE,
-                                  cons(ptr, cons(obj, NIL))), buf, 0);
+                                  cons((OBJECT_PTR)ptr, cons(obj, NIL))), buf, 0);
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
@@ -844,7 +846,7 @@ void fetch_variables(GtkWidget *list, gpointer data)
 
     store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(variables_list)));
 
-    OBJECT_PTR rest1 = env_list_ptr;
+    OBJECT_PTR rest1 = (OBJECT_PTR)env_list_ptr;
 
     while(rest1 != NIL)
     {

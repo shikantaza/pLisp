@@ -27,9 +27,7 @@
 
 #include "rb/red_black_tree.h"
 
-RAW_PTR *heap;
-RAW_PTR free_list;
-RAW_PTR last_segment;
+#include "hashtable.h"
 
 #ifdef CUSTOM_BST
 struct node *black = NULL, *white = NULL, *grey = NULL;
@@ -47,9 +45,11 @@ extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
 
+extern hashtable_t *ht;
+
 //forward declarations
 
-void dealloc(RAW_PTR);
+void dealloc(OBJECT_PTR);
 
 void insert_node(unsigned int, OBJECT_PTR);
 
@@ -80,113 +80,9 @@ void gc();
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 void build_grey_set();
 
-int get_free_memory();
-
 //end forward declarations
 
 enum {WHITE, GREY, BLACK};
-
-//first-fit (use the first segment
-//whose length is greater
-//than the required size)
-RAW_PTR object_alloc_old(int size, unsigned int tag)
-{
-  assert(size > 0 && size <= HEAP_SIZE-2);
-
-  RAW_PTR it = free_list;
-  RAW_PTR prev = NULL_RAW_PTR;
-
-  RAW_PTR ret;
-
-  while(it != NULL_RAW_PTR)
-  {
-    //if a segment would have less than three words
-    //after allocating the required space,
-    //it is not considered as it will not have
-    //any usable space after the allocation
-    if((heap[it] - (size + 1)) >= 3)
-    {
-      //the current segment will not have any
-      //usable space after the allocation, 
-      //so it will have to be
-      //removed from the free list
-      //[we allocate the entire segment
-      //though the caller will not (and should not)
-      //use the additional memory]
-      if((heap[it] - (size + 1)) == 3)
-      {
-	//point the previous segment's 'next' to
-	//the current segment's 'next
-	//(i.e., remove the current segment
-	//from the free list)
-	if(prev != NULL_RAW_PTR)
-	  heap[prev] = heap[it + 1];
-
-        insert_node(WHITE, ((it+1) << OBJECT_SHIFT) + tag);
-
-	return it + 1;
-      }
-      else
-      {
-
-	//minimum size allocated is two;
-	//if we allow an allocation size of one,
-	//we cannot use this segment after deallocation,
-	//since a minimum of three words is required
-	//for a segment (size, pointer to next segment,
-	//and space for the actual data)
-
-	int new_size;
-	if(size == 1)
-	  new_size = 2;
-	else
-	  new_size = size;
-
-	//reduce the size of the segment (left over after 
-	//allocating the new segment)
-	heap[it] = heap[it] - new_size - 1;
-
-	//set the size field of the newly created segment
-	heap[it + heap[it]] = new_size + 1;
-
-	ret = it + heap[it] + 1;
-
-        insert_node(WHITE, (ret << OBJECT_SHIFT) + tag);
-
-	//return the address of the new segment
-	return ret;
-      }
-    }
-
-    prev = it;
-    it = heap[it + 1];
-  }
-
-  return NULL_RAW_PTR;
-}
-
-void dealloc_old(RAW_PTR ptr)
-{
-  assert(ptr >= 0 && ptr < HEAP_SIZE);
-
-  //to avoid integer and float objects being incorrectly flagged
-  //if(!is_valid_object(heap[ptr]))
-  //  assert(false);
-
-  assert(heap[last_segment + 1] == NULL_RAW_PTR);
-
-  //make the current last segment's 'next' (so to speak) 
-  //field point to one address above the deallocated segment 
-  heap[last_segment + 1] = ptr - 1;
-
-  heap[ptr] = NULL_RAW_PTR;
-
-  //set the length field of the newly added segment
-  //(is this required, since the length was already set?)
-  //heap[heap[last_segment]] = heap[ptr - 1];
-
-  last_segment = ptr - 1;
-}
 
 void gc()
 {
@@ -212,7 +108,7 @@ void gc()
 #ifdef CUSTOM_BST
     OBJECT_PTR obj = grey->key;
 #else
-    OBJECT_PTR obj = *(unsigned int *)grey->root->left->key;
+    OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)grey->root->left->key;
 #endif
 
     insert_node(BLACK, obj);
@@ -296,9 +192,7 @@ void gc()
     }
     else if(IS_ARRAY_OBJECT(obj))
     {
-      RAW_PTR ptr = obj >> OBJECT_SHIFT;
-
-      OBJECT_PTR length_obj = get_heap(ptr);
+      OBJECT_PTR length_obj = get_heap(obj);
 
       insert_node(GREY, length_obj);
 #ifdef CUSTOM_BST
@@ -307,13 +201,13 @@ void gc()
       remove_node(white, length_obj);
 #endif
 
-      int len = get_int_value(get_heap(ptr));
+      int len = get_int_value(length_obj);
 
       int i;
 
       for(i=1; i<=len; i++)
       {
-        OBJECT_PTR array_elem = get_heap(ptr + i);
+        OBJECT_PTR array_elem = get_heap(obj + i);
 
         if(is_dynamic_memory_object(array_elem))
         {
@@ -328,7 +222,7 @@ void gc()
     }
     else if(IS_CONTINUATION_OBJECT(obj))
     {
-      OBJECT_PTR stack = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR stack = get_heap(obj);
       insert_node(GREY, stack);
 #ifdef CUSTOM_BST
       remove_node(&white, stack);
@@ -336,10 +230,6 @@ void gc()
       remove_node(white, stack);
 #endif
     }
-
-    //though integer and float objects are also allocated 
-    //on the heap, they don't reference other objects
-    //and hence just freeing them is sufficient
 
   } //end of while(!is_set_empty(grey))
 
@@ -356,15 +246,15 @@ void gc()
 
 #ifdef CUSTOM_BST
     if(!value_exists(black, white_obj->key))
-      dealloc(white_obj->key >> OBJECT_SHIFT);
+      dealloc(white_obj->key);
 
     remove_node(&white, white_obj->key);
 #else
 
-    if(!value_exists(black, *(unsigned int *)white_obj->key))
-      dealloc((*(unsigned int *)(white_obj->key)) >> OBJECT_SHIFT);
+    if(!value_exists(black, (OBJECT_PTR)*(unsigned int *)white_obj->key))
+      dealloc((OBJECT_PTR)(*(unsigned int *)(white_obj->key)));
 
-    remove_node(white,*(unsigned int *)(white_obj->key));
+    remove_node(white, (OBJECT_PTR)*(unsigned int *)(white_obj->key));
 #endif
   }
 
@@ -377,13 +267,13 @@ void gc()
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 {
-   return IS_CONS_OBJECT(obj)    ||
-          IS_ARRAY_OBJECT(obj)   ||
-          IS_INTEGER_OBJECT(obj) ||
-          IS_FLOAT_OBJECT(obj)   ||
-          IS_CLOSURE_OBJECT(obj) ||
-          IS_MACRO_OBJECT(obj)   ||
-          IS_CONTINUATION_OBJECT(obj);
+   return IS_CONS_OBJECT(obj)         ||
+          IS_ARRAY_OBJECT(obj)        ||
+          IS_CLOSURE_OBJECT(obj)      ||
+          IS_MACRO_OBJECT(obj)        ||
+          IS_CONTINUATION_OBJECT(obj) ||
+          IS_INTEGER_OBJECT(obj)      ||
+          IS_FLOAT_OBJECT(obj);
 }
 
 void build_grey_set()
@@ -397,36 +287,6 @@ void build_grey_set()
     remove_node(white,top_level_env);
 #endif
   }
-}
-
-int get_segment_count()
-{
-  int count = 0;
-
-  RAW_PTR it = free_list;
-
-  while(it != NULL_RAW_PTR)
-  {
-    count++;
-    it = heap[it + 1];
-  }
-
-  return count;
-}
-
-int get_free_memory()
-{
-  int free_mem = 0;
-
-  RAW_PTR it = free_list;
-
-  while(it != NULL_RAW_PTR)
-  {
-    free_mem += heap[it];
-    it = heap[it + 1];
-  }
-
-  return free_mem;
 }
 
 void test_memory()
@@ -469,8 +329,6 @@ void insert_node(unsigned int set_type, OBJECT_PTR val)
 #ifdef DEBUG
   assert(set_type == WHITE || set_type == GREY || set_type == BLACK);
 #endif
-
-  assert((val >> OBJECT_SHIFT) >= 0 && (val >> OBJECT_SHIFT) < HEAP_SIZE);
 
   if(set_type == WHITE)
     white = put(white, val);
@@ -756,7 +614,7 @@ void test_bst()
   printf("BST test done\n");
 }
 
-BOOLEAN value_exists(struct node *r, RAW_PTR val)
+BOOLEAN value_exists(struct node *r, OBJECT_PTR val)
 {
   if(r == NULL)
     return false;
@@ -806,7 +664,7 @@ void insert_node(unsigned int set_type, OBJECT_PTR val)
     assert(false);
 
   unsigned int *newInt=(unsigned int*) malloc(sizeof(unsigned int));
-  *newInt = val;
+  *newInt = (int)val;
 
   if(set_type == WHITE)
     RBTreeInsert(white, newInt, 0);
@@ -862,23 +720,20 @@ BOOLEAN value_exists(rb_red_blk_tree *tree, OBJECT_PTR val)
 #ifndef DEBUG_MEMORY
 inline
 #endif
-void set_heap(RAW_PTR index, OBJECT_PTR val)
+void set_heap(OBJECT_PTR ptr, OBJECT_PTR val)
 {
   if(!is_valid_object(val))
     assert(false);
 
-  heap[index] = val;
+  *ptr = val;
 }
 
 #ifndef DEBUG_MEMORY
 inline
 #endif
-OBJECT_PTR get_heap(RAW_PTR ptr)
+OBJECT_PTR get_heap(OBJECT_PTR ptr)
 {
-  if(ptr == null)
-    assert(false);
-
-  OBJECT_PTR ret = heap[ptr];
+  OBJECT_PTR ret = *ptr;
 
   if(!is_valid_object(ret))
   {
@@ -889,105 +744,40 @@ OBJECT_PTR get_heap(RAW_PTR ptr)
   return ret;
 }
 
-RAW_PTR object_alloc(int size, unsigned int tag)
+OBJECT_PTR object_alloc(int size, unsigned int tag)
 {
-  //assert(size > 0 && size <= HEAP_SIZE-2);
+  OBJECT_PTR ret = malloc(size * sizeof(unsigned int));
 
-  //assert(heap[last_segment + 1] == NULL_RAW_PTR);
-
-  RAW_PTR it = free_list;
-  RAW_PTR prev = NULL_RAW_PTR;
-
-  RAW_PTR ret;
-
-  while(it != NULL_RAW_PTR)
+  if(!ret)
   {
-    if(heap[it] >= size)
-    {
-      if(heap[it] >= size + 3)
-      {
-        ret = it + heap[it] - size;
-        heap[ret] = size;
-        heap[it] -= (size+2);
-        
-        insert_node(WHITE, ((ret+2) << OBJECT_SHIFT) + tag);
-
-        assert((ret+2) >=0 && (ret+2) < HEAP_SIZE);
-
-        return ret+2;        
-      }
-      else
-      {
-        //remove the segment from the free list
-        if(prev != NULL_RAW_PTR)
-          heap[prev+1] = heap[it+1];
-        else
-        {
-          free_list = heap[it+1];
-          if(free_list == NULL_RAW_PTR)
-            last_segment = NULL_RAW_PTR;
-        }
-
-        insert_node(WHITE, ((it+2) << OBJECT_SHIFT) + tag);
-
-        assert((it+2) >=0 && (it+2) < HEAP_SIZE);
-        
-        return it+2;
-      }
-    }
-    prev = it;
-    it = heap[it + 1];
-  }
 
 #ifdef GUI
-  char buf[MAX_STRING_LENGTH];
-  memset(buf, '\0', MAX_STRING_LENGTH);
-  int len=0;
-  len += sprintf(buf, "Unable to allocate memory\n");
-  len += sprintf(buf+len, "Heap size        = %d words\n", HEAP_SIZE);
-  len += sprintf(buf+len, "Available memory = %d words (%d segments)\n", get_free_memory(), get_segment_count());
-
-  show_error_dialog(buf);
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+    int len=0;
+    len += sprintf(buf, "Unable to allocate memory\n");
+    show_error_dialog(buf);
 #else
-  printf("Unable to allocate memory\n");
-  printf("Heap size        = %d words\n", HEAP_SIZE);
-  printf("Available memory = %d words (%d segments)\n", get_free_memory(), get_segment_count());
+    printf("Unable to allocate memory\n");
 #endif
 
-  cleanup();
-  exit(1);
+    cleanup();
+    exit(1);
+  }
+
+  hashtable_put(ht, (void *)ret, (void *)tag);
+
+  return ret;
 }
 
-void dealloc(RAW_PTR ptr)
+void dealloc(OBJECT_PTR ptr)
 {
-  assert(ptr >= 0 && ptr < HEAP_SIZE);
-
-  if(last_segment != NULL_RAW_PTR)
-    heap[last_segment+1] = ptr - 2;
-
-  last_segment = ptr - 2;
-  heap[ptr-1] = NULL_RAW_PTR;
-
-  if(free_list == NULL_RAW_PTR)
-    free_list = ptr - 2;
+  hashtable_remove(ht, (void *)ptr);
+  free(ptr);
 }
 
 int initialize_memory()
 {
-  heap = (RAW_PTR *)malloc(HEAP_SIZE * sizeof(RAW_PTR));
-
-  if(!heap)
-  {
-    fprintf(stderr, "Unable to create heap of size %d\n", HEAP_SIZE);
-    return -1;
-  }
-
-  free_list = 0;
-  heap[free_list] = HEAP_SIZE - 2;
-  heap[free_list + 1] = NULL_RAW_PTR;
-
-  last_segment = 0;
-
   white = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
   grey = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
   black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
@@ -997,9 +787,6 @@ int initialize_memory()
 
 void cleanup_memory()
 {
-  if(heap)
-    free(heap);
-
 #ifndef CUSTOM_BST
   destroy(white);
   destroy(grey);

@@ -24,6 +24,11 @@
 
 #include "plisp.h"
 
+#include "memory.h"
+
+extern OBJECT_PTR CAAR(OBJECT_PTR);
+extern OBJECT_PTR CADAR(OBJECT_PTR);
+
 extern int nof_dl_handles;
 extern void **dl_handles;
 extern char err_buf[];
@@ -32,7 +37,6 @@ extern OBJECT_PTR NIL;
 
 extern char **strings;
 extern BOOLEAN in_exception;
-extern RAW_PTR *heap;
 
 extern OBJECT_PTR reg_current_env;
 
@@ -54,7 +58,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   char *fn_name_str;
 
   if(IS_STRING_LITERAL_OBJECT(fn_name))
-     fn_name_str = strings[fn_name >> OBJECT_SHIFT];
+    fn_name_str = strings[(int)fn_name >> OBJECT_SHIFT];
   else
     fn_name_str = get_string(fn_name);
 
@@ -131,14 +135,14 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     else if(type == CHAR)
     {
       arg_types[i] = &ffi_type_schar;
-      c_val = val >> OBJECT_SHIFT;
+      c_val = (int)val >> OBJECT_SHIFT;
       arg_values[i] = (char *)malloc(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
     else if(type == CHAR_POINTER)
     {
       arg_types[i] = &ffi_type_pointer;
-      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[val >> OBJECT_SHIFT]) : get_string(val);
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)malloc(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
@@ -237,15 +241,17 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       int sz = strlen(str);
 
-      RAW_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
+      OBJECT_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
 
-      heap[ptr] = convert_int_to_object(sz);
+      //heap[ptr] = convert_int_to_object(sz);
+      set_heap(ptr, convert_int_to_object(sz));
 
       int j;
       for(j=0; j< sz; j++)
-	heap[ptr + j + 1] = (str[j] << OBJECT_SHIFT) + CHAR_TAG;
+	//heap[ptr + j + 1] = (str[j] << OBJECT_SHIFT) + CHAR_TAG;
+        set_heap(ptr + j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
 
-      if(update_environment(reg_current_env, sym, (ptr << OBJECT_SHIFT) + ARRAY_TAG) == NIL)
+      if(update_environment(reg_current_env, sym, ptr) == NIL)
       {
 	throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
@@ -264,7 +270,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   if(ret_type == INTEGR)
     ret = convert_int_to_object((int)ret_val);
   else if(ret_type == CHAR)
-    ret = ((char)ret_val << OBJECT_SHIFT) + CHAR_TAG;
+    ret = (OBJECT_PTR)(((char)ret_val << OBJECT_SHIFT) + CHAR_TAG);
   else if(ret_type == FLOT)
     ret = convert_float_to_object(float_ret_val);
   else if(ret_type == CHAR_POINTER)
@@ -274,16 +280,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
     int sz = strlen(str);
 
-    RAW_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
+    OBJECT_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
 
-    heap[ptr] = convert_int_to_object(sz);
+    //heap[ptr] = convert_int_to_object(sz);
+    set_heap(ptr, convert_int_to_object(sz));
 
     for(i=0; i< sz; i++)
-      heap[ptr + i + 1] = (str[i] << OBJECT_SHIFT) + CHAR_TAG;
+      //heap[ptr + i + 1] = (str[i] << OBJECT_SHIFT) + CHAR_TAG;
+      set_heap(ptr + i + 1, (OBJECT_PTR)((str[i] << OBJECT_SHIFT) + CHAR_TAG));
 
     free(str);
 
-    ret = (ptr << OBJECT_SHIFT) + ARRAY_TAG;
+    ret = ptr;
 
   }
   else if(ret_type == VOID)
@@ -383,14 +391,14 @@ int format(OBJECT_PTR args)
     else if(IS_CHAR_OBJECT(val))
     {
       arg_types[i] = &ffi_type_schar;
-      c_val = val >> OBJECT_SHIFT;
+      c_val = (int)val >> OBJECT_SHIFT;
       arg_values[i] = (char *)malloc(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
     else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
     {
       arg_types[i] = &ffi_type_pointer;
-      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[val >> OBJECT_SHIFT]) : get_string(val);
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)malloc(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
@@ -508,14 +516,14 @@ int format_for_gui(OBJECT_PTR args)
     else if(IS_CHAR_OBJECT(val))
     {
       arg_types[i] = &ffi_type_schar;
-      c_val = val >> OBJECT_SHIFT;
+      c_val = (int)val >> OBJECT_SHIFT;
       arg_values[i] = (char *)malloc(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
     else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
     {
       arg_types[i] = &ffi_type_pointer;
-      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[val >> OBJECT_SHIFT]) : get_string(val);
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)malloc(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }

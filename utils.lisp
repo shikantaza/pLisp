@@ -196,3 +196,28 @@
   (if (not (stringp str))
       (throw (exception 'invalid-argument "Argument to SYSTEM should be a string literal or a string object"))
     (call-foreign-function "plisp_system" 'void '((str character-pointer)))))
+
+(defun sort1 (a compare-fn)
+  (assert arrayp a)
+  (let ((i 0)
+        (len (array-length a)))
+    (labels ((min (start-index)
+                    (let ((min-val (array-get a start-index))
+                          (min-index start-index))
+                      (dolist (i (range start-index (- (array-length a) 1) 1))
+                        (if (compare-fn (array-get a i) min-val) 
+                            (progn (set min-val   (array-get a i))
+                                   (set min-index i))))
+                      min-index)))
+            (while (< i len)
+              (let ((min-index)
+                    (temp))
+                (set min-index (min i))
+                (set temp (array-get a min-index))
+                (array-set a min-index (array-get a i))
+                (array-set a i temp)
+                (incf i))))))
+                         
+    
+    
+    

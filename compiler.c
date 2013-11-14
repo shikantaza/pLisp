@@ -25,6 +25,13 @@
 
 #include "plisp.h"
 
+#include "hashtable.h"
+
+extern OBJECT_PTR CADR(OBJECT_PTR);
+extern OBJECT_PTR CDDR(OBJECT_PTR);
+extern OBJECT_PTR CADDR(OBJECT_PTR);
+extern OBJECT_PTR CADDDR(OBJECT_PTR);
+
 extern OBJECT_PTR NIL;
 extern OBJECT_PTR QUOTE;
 extern OBJECT_PTR LAMBDA;
@@ -79,6 +86,8 @@ BOOLEAN core_library_loaded = false;
 char *loaded_image_file_name = NULL;
 
 extern unsigned int current_package;
+
+extern hashtable_t *ht;
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -289,7 +298,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
             if(reg_current_value_rib == NIL)
               reg_current_value_rib = cons(car(args), NIL);
             else
-              set_heap((last_cell(reg_current_value_rib) >> OBJECT_SHIFT) + 1, 
+              set_heap(last_cell(reg_current_value_rib) + 1, 
                        cons(car(args), NIL));         
             args = cdr(args);
           }
@@ -354,6 +363,8 @@ int main(int argc, char **argv)
   if(argc == 2)
   {
     core_library_loaded = true;
+    ht = hashtable_create();
+    initialize_memory();
     load_from_image(argv[1]);
     loaded_image_file_name = strdup(argv[1]);
 
@@ -557,7 +568,7 @@ int load_core_library()
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-                        cons(get_string_object("plisp.lisp"),
+                        cons((OBJECT_PTR)get_string_object("plisp.lisp"),
                              NIL));
 
   OBJECT_PTR temp = compile(src, cons(cons(HALT, NIL), src));

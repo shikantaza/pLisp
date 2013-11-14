@@ -35,60 +35,42 @@
 
 #define NOT_FOUND -1
 
-//all in-built types are
-//identified by a four-bit tag
-#define OBJECT_SHIFT         4
-
-/*
-#define SYMBOL_SHIFT         4
-#define CONS_SHIFT           4
-#define CLOSURE_SHIFT        4
-#define INTEGER_SHIFT        4
-#define STRING_LITERAL_SHIFT 4
-#define CHAR_SHIFT           4
-#define FLOAT_SHIFT          4
-#define MACRO_SHIFT          4
-#define ARRAY_SHIFT          4
-#define CONTINUATION_SHIFT   4
-*/
-
 #define BIT_MASK 15
 
-//the 28 bits reserved for
-//symbols is split into six bits
+//the 28 bits are split into six bits
 //for indexing into the package table,
 //and 22 bits for indexing into the
 //symbols table of the chosen package table entry
 #define PACKAGE_BITS         6
 #define SYMBOL_BITS         22
 
-#define SYMBOL_TAG          1
-#define CONS_TAG            2
-#define CLOSURE_TAG         3
-#define INTEGER_TAG         4
-#define STRING_LITERAL_TAG  5
-#define CHAR_TAG            6
-#define FLOAT_TAG           7
-#define MACRO_TAG           8
-#define ARRAY_TAG           9
+#define OBJECT_SHIFT         4
+
+#define SYMBOL_TAG           1
+#define STRING_LITERAL_TAG   2
+#define CHAR_TAG             3
+#define INTEGER_TAG          4
+#define FLOAT_TAG            5
+#define CONS_TAG             6
+#define CLOSURE_TAG          7
+#define MACRO_TAG            8
+#define ARRAY_TAG            9
 #define CONTINUATION_TAG    10
 
 #define SYMBOL_STRING_SIZE 100
 
 #define CORE_PACKAGE_INDEX 0
 
-typedef unsigned int RAW_PTR;
-typedef unsigned int OBJECT_PTR;
-
-typedef int BOOLEAN;
+#define MAX_FOREIGN_LIBRARY_COUNT 100
 
 #define true 1
 #define false 0
 
-//constants defined for speed and clarity
-//#define TWO_RAISED_TO_27 134217728
-//#define TWO_RAISED_TO_28 268435456
 #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
+
+typedef unsigned int * OBJECT_PTR;
+
+typedef int BOOLEAN;
 
 typedef struct package
 {
@@ -109,12 +91,6 @@ typedef struct expression
   struct expression **elements;
 } expression_t;
 
-union float_and_uint
-{
-  unsigned int i;
-  float f;
-};
-
 //for implementing garbage collection (tri-colour marking)
 struct node
 {
@@ -122,6 +98,19 @@ struct node
   struct node *right;
   OBJECT_PTR key;
 } ;
+
+struct nlist
+{
+  struct nlist *next;
+  OBJECT_PTR ptr;
+  int value;
+};
+
+union float_and_uint
+{
+  unsigned int i;
+  float f;
+};
 
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
