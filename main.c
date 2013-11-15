@@ -164,10 +164,14 @@ OBJECT_PTR COND          = (OBJECT_PTR)((92 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR DOTIMES       = (OBJECT_PTR)((93 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR DOLIST        = (OBJECT_PTR)((94 << OBJECT_SHIFT) + SYMBOL_TAG);
 
+OBJECT_PTR LET1          = (OBJECT_PTR)((95 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DEFUN         = (OBJECT_PTR)((96 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DEFMACRO      = (OBJECT_PTR)((97 << OBJECT_SHIFT) + SYMBOL_TAG);
+
 extern FILE *yyin;
 
 #define NOF_SPECIAL_SYMBOLS     72
-#define NOF_NON_SPECIAL_SYMBOLS 23
+#define NOF_NON_SPECIAL_SYMBOLS 26
 
 BOOLEAN in_exception = false;
 OBJECT_PTR execution_stack;
@@ -816,6 +820,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
   if(car_obj == LAMBDA  || 
      car_obj == MACRO   || 
      car_obj == LET     ||
+     car_obj == LET1    ||
      car_obj == WHILE   ||
      car_obj == DOTIMES ||
      car_obj == DOLIST)
@@ -826,6 +831,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       length += sprintf(buf+filled_buf_len+length, "(macro ");
     else if(car_obj == LET)
       length += sprintf(buf+filled_buf_len+length, "(let ");
+    else if(car_obj == LET1)
+      length += sprintf(buf+filled_buf_len+length, "(let1 ");
     else if(car_obj == WHILE)
       length += sprintf(buf+filled_buf_len+length, "(while ");
     else if(car_obj == DOTIMES)
@@ -833,7 +840,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     else if(car_obj == DOLIST)
       length += sprintf(buf+filled_buf_len+length, "(dolist ");
 
-    if(car_obj != LET)
+    if(car_obj != LET && car_obj != LET1)
       length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
     else
     {
@@ -855,7 +862,10 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
         for(i=1; i<indents; i++)
           length += sprintf(buf+filled_buf_len+length, " ");
 
-        length += sprintf(buf+filled_buf_len+length, "      ");        
+        if(car_obj == LET)
+          length += sprintf(buf+filled_buf_len+length, "      ");        
+        else
+          length += sprintf(buf+filled_buf_len+length, "       ");        
 
         length += print_object_to_string(car(rest), buf, filled_buf_len+length);
 
@@ -881,6 +891,34 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
       rest = cdr(rest);
     }
+
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
+  if(car_obj == DEFUN || car_obj == DEFMACRO)
+  {
+    if(car_obj == DEFUN)
+      length += sprintf(buf+filled_buf_len+length, "(defun ");
+    else if(car_obj == DEFMACRO)
+      length += sprintf(buf+filled_buf_len+length, "(defmacro ");
+
+    length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+
+    length += sprintf(buf+filled_buf_len+length, " ");
+
+    length += print_object_to_string(CADDR(obj), buf, filled_buf_len+length);
+
+    length += sprintf(buf+filled_buf_len+length, "\n");
+
+    int i;
+    for(i=1; i<indents; i++)
+      length += sprintf(buf+filled_buf_len+length, " ");
+
+    length += sprintf(buf+filled_buf_len+length, "  ");
+
+    length += print_object_to_string(CADDDR(obj), buf, filled_buf_len+length);
 
     length += sprintf(buf+filled_buf_len+length, ")");
 
@@ -1760,6 +1798,10 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[92] = strdup("COND");
   packages[CORE_PACKAGE_INDEX].symbols[93] = strdup("DOTIMES");
   packages[CORE_PACKAGE_INDEX].symbols[94] = strdup("DOLIST");
+
+  packages[CORE_PACKAGE_INDEX].symbols[95] = strdup("LET1");
+  packages[CORE_PACKAGE_INDEX].symbols[96] = strdup("DEFUN");
+  packages[CORE_PACKAGE_INDEX].symbols[97] = strdup("DEFMACRO");
 }
 
 int find_package(char* package_name)

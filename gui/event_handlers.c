@@ -56,6 +56,9 @@ void set_focus_to_last_row(GtkTreeView *);
 
 extern BOOLEAN in_error;
 
+extern OBJECT_PTR DEFUN;
+extern OBJECT_PTR DEFMACRO;
+
 void resume()
 {
   close_application_window((GtkWidget **)&debugger_window);
@@ -701,13 +704,13 @@ void fetch_package_members(GtkWidget *list, gpointer selection)
   fetch_package_symbols();
 }
 
-void fetch_symbol_value(GtkWidget *list, gpointer data)
+void fetch_symbol_value(GtkWidget *lst, gpointer data)
 {
-  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
-  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
+  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
+  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (lst));
   GtkTreeIter  iter;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), &model, &iter))
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(lst)), &model, &iter))
   {
     gchar *symbol_name;
     gint ptr;
@@ -732,12 +735,13 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     if(IS_CLOSURE_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(cons(DEFINE,
-                                  cons((OBJECT_PTR)ptr,
-                                       cons(cons(LAMBDA,
-                                                 cons(get_params_object(obj),
-                                                      get_source_object(obj))),
-                                            NIL))), buf, 0);
+      /* print_object_to_string(cons(DEFINE, */
+      /*                             cons((OBJECT_PTR)ptr, */
+      /*                                  cons(cons(LAMBDA, */
+      /*                                            cons(get_params_object(obj), */
+      /*                                                 get_source_object(obj))), */
+      /*                                       NIL))), buf, 0); */
+      print_object_to_string(list(4, DEFUN, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0);
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
 
@@ -746,12 +750,13 @@ void fetch_symbol_value(GtkWidget *list, gpointer data)
     else if(IS_MACRO_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(cons(DEFINE,
-                                  cons((OBJECT_PTR)ptr,
-                                       cons(cons(MACRO,
-                                                 cons(get_params_object(obj),
-                                                      get_source_object(obj))),
-                                            NIL))), buf, 0);
+      /* print_object_to_string(cons(DEFINE, */
+      /*                             cons((OBJECT_PTR)ptr, */
+      /*                                  cons(cons(MACRO, */
+      /*                                            cons(get_params_object(obj), */
+      /*                                                 get_source_object(obj))), */
+      /*                                       NIL))), buf, 0); */
+      print_object_to_string(list(4, DEFMACRO, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0);
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
