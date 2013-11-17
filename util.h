@@ -28,4 +28,6 @@ void log_function_exit(char *);
 
 char *substring(char *, size_t, size_t);
 
+size_t trim_whitespace(char *, size_t, const char *);
+
 #endif

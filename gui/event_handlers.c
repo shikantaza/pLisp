@@ -629,6 +629,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   {
     action_triggering_window = workspace_window;
     evaluate();
+    return TRUE;
   }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
     close_application_window((GtkWidget **)&workspace_window);
@@ -1165,6 +1166,17 @@ gboolean handle_code_edit_key_press(GtkWidget *widget, GdkEventKey *event, gpoin
     gtk_text_buffer_get_iter_at_line(buffer, &line_start, line_number);
 
     gchar *text = gtk_text_buffer_get_text(buffer, &line_start, &iter, FALSE);
+
+    char trimmed_text[100];
+    memset(trimmed_text, '\0', 100);
+
+    trim_whitespace(trimmed_text, 100, text);
+
+    if(strlen(trimmed_text) == 0)
+    {
+      gtk_text_buffer_insert_at_cursor(buffer, "\n", -1);
+      return TRUE;
+    }
 
     char ret[10];
     memset(ret, '\0', 11);

@@ -30,3 +30,4 @@ hashtable_t *hashtable_create();
 hashtable_entry_t *hashtable_get(hashtable_t *, void *ptr);
 hashtable_entry_t *hashtable_put(hashtable_t *, void *ptr, void *value);
 void hashtable_remove(hashtable_t *, void *ptr);
+hashtable_entry_t *hashtable_entries(hashtable_t *);

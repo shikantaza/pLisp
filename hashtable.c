@@ -86,7 +86,14 @@ void hashtable_remove(hashtable_t *hashtab, void *ptr)
 
 hashtable_t *hashtable_create()
 {
-  return (hashtable_t *)malloc(HASHSIZE * sizeof(hashtable_t));
+  hashtable_t *ret = (hashtable_t *)malloc(HASHSIZE * sizeof(hashtable_t));
+
+  int i;
+
+  for(i=0; i<HASHSIZE; i++)
+    ret[i] = NULL;
+
+  return ret;
 }
 
 void hashtable_delete(hashtable_t *tab)
@@ -107,6 +114,68 @@ void hashtable_delete(hashtable_t *tab)
   }
 
   free(tab);
+}
+
+hashtable_entry_t *clone_entries(hashtable_entry_t *np)
+{
+  hashtable_entry_t *ret = NULL, *last = NULL;
+
+  while(np)
+  {
+    hashtable_entry_t *temp = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+
+    temp->ptr = np->ptr;
+    temp->value = np->value;
+
+    if(!ret)
+    {
+      ret = temp;
+      last = temp;
+    }
+    else
+    {
+      last->next = temp;
+      last = temp;
+    }
+    
+    np = np->next;
+  }
+
+  return ret;
+}
+
+hashtable_entry_t *hashtable_entries(hashtable_t *tab)
+{
+  hashtable_t *replica = (hashtable_t *)malloc(HASHSIZE * sizeof(hashtable_t));
+
+  int i;
+
+  for(i=0; i<HASHSIZE; i++)
+  {
+    if(tab[i] != NULL)
+      replica[i] = clone_entries(tab[i]);
+    else
+      replica[i] = NULL;
+  }
+
+  for(i=0; i<HASHSIZE-1; i++)
+  {
+    hashtable_entry_t *t;
+
+    if(replica[i])
+      t = replica[i];
+
+    while(t->next)
+      t = t->next;
+
+    if(replica[i+1])
+      t->next = replica[i+1];
+  }
+
+  for(i=0; i<HASHSIZE; i++)
+    if(replica[i]) return replica[0];
+
+  return NULL;
 }
 
 #ifdef TEST_HASH
@@ -161,8 +230,24 @@ int main(int argc, char **argv)
 
   hashtable_remove(tab, (void *)(vals[0]));
 
-  free(vals);
   hashtable_delete(tab);
+
+  tab = hashtable_create();
+
+  for(i=0; i<20; i++)
+    hashtable_put(tab, (void *)vals[i], (void *)(i*i));
+
+  hashtable_entry_t *entries = hashtable_entries(tab);
+
+  while(entries)
+  {
+    printf("%d %d\n", (int)entries->ptr, (int)entries->value);
+    entries = entries->next;
+  }
+
+  hashtable_delete(tab);
+
+  free(vals);
 }
 
 #endif

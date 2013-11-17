@@ -530,6 +530,16 @@ void cleanup()
 
   cleanup_memory();
 
+  hashtable_entry_t *entries = hashtable_entries(ht);
+
+  while(entries)
+  {
+    hashtable_entry_t *temp = entries->next;
+    free(entries->ptr);
+    free(entries);
+    entries = temp;
+  }
+
   hashtable_delete(ht);
 
   log_function_exit("cleanup");
