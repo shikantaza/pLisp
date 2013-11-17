@@ -152,7 +152,7 @@ GtkToolbar *create_workspace_toolbar()
 
   gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
                            NULL,                                   /* button label */
-                           "Evaluate (F5)",                        /* button's tooltip */
+                           "Evaluate (Ctrl+Enter)",                /* button's tooltip */
                            "Private",                              /* tooltip private info */
                            eval_icon,                              /* icon widget */
                            GTK_SIGNAL_FUNC(eval_expression),       /* a signal */
@@ -194,7 +194,7 @@ void create_workspace_window()
 
   print_to_workspace("; This is the workspace; type pLisp expressions here.\n");
   print_to_workspace("; To evaluate an expression, enter the expression\n");
-  print_to_workspace("; and press F5 when the expression is complete\n");
+  print_to_workspace("; and press Ctrl+Enter when the expression is complete\n");
   print_to_workspace("; (indicated by the highlighted matching parens).\n");
 
   g_signal_connect(G_OBJECT(win), 

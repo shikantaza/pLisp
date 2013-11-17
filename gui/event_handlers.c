@@ -624,7 +624,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 {
   if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_l)
     load_source();
-  else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
+  //else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
+  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_Return)
   {
     action_triggering_window = workspace_window;
     evaluate();
