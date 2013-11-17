@@ -20,7 +20,7 @@ OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_b
 #TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
-CFLAGS	= -g -pg -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
+CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
 
 all:	plisp libplisp.so libtest.so
 

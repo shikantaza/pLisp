@@ -3,6 +3,8 @@
 
 #include "../plisp.h"
 
+#include "../util.h"
+
 extern OBJECT_PTR CAAR(OBJECT_PTR);
 
 extern GtkTextBuffer *transcript_buffer;
@@ -58,6 +60,85 @@ extern BOOLEAN in_error;
 
 extern OBJECT_PTR DEFUN;
 extern OBJECT_PTR DEFMACRO;
+
+char *form_for_eval;
+
+int get_indents_for_form(char *form)
+{
+  char *up = convert_to_upper_case(form);
+
+  if(!strcmp(up, "DEFUN") || !strcmp(up, "DEFMACRO") || !strcmp(up, "LAMBDA"))
+    return 2;
+  else if(!strcmp(up, "PROGN"))
+    return 7;
+  else if(!strcmp(up, "COND"))
+    return 6;
+  else if(!strcmp(up, "IF"))
+    return 4;
+  else if(!strcmp(up, "LET"))
+    return 6;
+  else if(!strcmp(up, "LET1"))
+    return 7;
+
+  return 0;
+}
+
+void get_form(char *str, char *ret)
+{
+  if(!str)
+  {
+    ret = NULL;
+    return;
+  }
+
+  int i, len = strlen(str);
+
+  int start, size;
+
+  for(i=0; i<len; i++)
+  {
+    if(str[i] != '(' && str[i] != ' ')
+    {
+      start = i;
+      break;
+    }
+  }
+
+  while(str[i] != ' ' && i < len)
+  {
+    ret[i-start] = str[i];
+    i++;
+  }
+}
+
+int get_carried_over_indents(char *str)
+{
+  int ret = 0;
+
+  int i = 0, len = strlen(str);
+
+  while(i<len)
+  {
+    if(str[i] == ' ')ret++;
+    else break;
+    i++;
+  }
+
+  return ret;
+}
+
+//position of the first non-space character
+//in the 
+int get_position_of_first_arg(char *str)
+{
+  int i, len = strlen(str);
+
+  for(i=1; i<len-1; i++)
+    if(str[i] == ' ' && str[i+1] != ' ')
+      return i+2;
+
+  return 0;
+}
 
 void resume()
 {
@@ -468,28 +549,31 @@ void evaluate()
   }
   else
   {
-    GtkTextIter line_start, line_end, iter;
-    gtk_text_buffer_get_iter_at_mark(buf, &iter, gtk_text_buffer_get_insert(buf));
-    gint line_number = gtk_text_iter_get_line(&iter);
+    /* GtkTextIter line_start, line_end, iter; */
+    /* gtk_text_buffer_get_iter_at_mark(buf, &iter, gtk_text_buffer_get_insert(buf)); */
+    /* gint line_number = gtk_text_iter_get_line(&iter); */
 
-    gint line_count = gtk_text_buffer_get_line_count(buf);
+    /* gint line_count = gtk_text_buffer_get_line_count(buf); */
 
-    if(line_count == (line_number+1))
-    {
-      gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number-1);
-      gtk_text_buffer_get_end_iter (buf, &line_end);
-    }
-    else
-    {
-      gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number);
-      gtk_text_buffer_get_iter_at_line(buf, &line_end, line_number+1);
-    }
+    /* if(line_count == (line_number+1)) */
+    /* { */
+    /*   gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number-1); */
+    /*   gtk_text_buffer_get_end_iter (buf, &line_end); */
+    /* } */
+    /* else */
+    /* { */
+    /*   gtk_text_buffer_get_iter_at_line(buf, &line_start, line_number); */
+    /*   gtk_text_buffer_get_iter_at_line(buf, &line_end, line_number+1); */
+    /* } */
 
-    expression = (char *)gtk_text_buffer_get_text(buf, &line_start, &line_end, FALSE);
+    /* expression = (char *)gtk_text_buffer_get_text(buf, &line_start, &line_end, FALSE); */
+
+    expression = form_for_eval;
   }
 
-  if(!call_repl(expression))
-    update_workspace_title();
+  if(expression)
+    if(!call_repl(expression))
+      update_workspace_title();
 }
 
 void load_source()
@@ -976,6 +1060,8 @@ void display_matching_parens(GtkTextBuffer *buffer)
                                           "cyan_bg", 
                                           &saved_iter, 
                                           &temp_iter);
+
+        form_for_eval = str;
         
         break;
       }
@@ -988,7 +1074,10 @@ void display_matching_parens(GtkTextBuffer *buffer)
       }
     }
     else
+    {
+      form_for_eval = NULL;
       break;
+    }
   }      
 }
 
@@ -1066,6 +1155,53 @@ gboolean handle_code_edit_key_press(GtkWidget *widget, GdkEventKey *event, gpoin
     }
   }
 
+  if(event->keyval ==  GDK_Return)
+  {
+    GtkTextIter iter, line_start;
+    gtk_text_buffer_get_iter_at_mark(buffer, &iter, gtk_text_buffer_get_insert(buffer));
+    gint line_number = gtk_text_iter_get_line(&iter);
+
+    gtk_text_buffer_get_iter_at_line(buffer, &line_start, line_number);
+
+    gchar *text = gtk_text_buffer_get_text(buffer, &line_start, &iter, FALSE);
+
+    char ret[10];
+    memset(ret, '\0', 11);
+
+    get_form(text, ret);
+
+    int carried_over_indents = get_carried_over_indents(text);
+
+    gtk_text_buffer_insert_at_cursor(buffer, "\n", -1);
+
+    int i;
+    for(i=0; i<carried_over_indents; i++)
+      gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
+
+    if(ret)
+    {
+      GtkTextIter it;
+      gtk_text_buffer_get_iter_at_line(buffer, &it, line_number);
+
+      int indents = get_indents_for_form(ret);
+
+      if(indents > 0)
+      {
+        int i;
+        for(i=0; i<indents; i++)
+          gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
+      }
+      else
+      {
+        int default_indents = get_position_of_first_arg(ret);
+        int i;
+        for(i=0; i<default_indents; i++)
+          gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
+      }
+    }
+    return TRUE;
+  }
+
   return handle_key_press_events(widget, event, user_data);
 }
 
@@ -1105,3 +1241,5 @@ void abort_debugger(GtkWidget *widget,
   close_application_window((GtkWidget **)&debugger_window);
   call_repl("(ABORT)");
 }
+
+

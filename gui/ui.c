@@ -193,9 +193,9 @@ void create_workspace_window()
   workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
   print_to_workspace("; This is the workspace; type pLisp expressions here.\n");
-  print_to_workspace("; Select an expression and press F5 to evaluate it.\n");
-  print_to_workspace("; Alternately, if the expression fits in a single line,\n");
-  print_to_workspace("; place the cursor anywhere on the line and press F5.\n");
+  print_to_workspace("; To evaluate an expression, enter the expression\n");
+  print_to_workspace("; and press F5 when the expression is complete\n");
+  print_to_workspace("; (indicated by the highlighted matching parens).\n");
 
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 
@@ -599,8 +599,6 @@ void create_transcript_window()
 
   transcript_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
-  print_ui_copyright_notice();
-
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
@@ -612,6 +610,8 @@ void create_transcript_window()
   gtk_container_add (GTK_CONTAINER (transcript_window), vbox);
   
   gtk_widget_show_all((GtkWidget *)transcript_window);
+
+  print_ui_copyright_notice();
 }
 
 void show_error_dialog(char *msg)

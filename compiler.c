@@ -391,7 +391,7 @@ int main(int argc, char **argv)
     initialize();
 
 #ifdef GUI
-  create_transcript_window();
+    create_transcript_window();
 #endif
 
     if(load_core_library())
