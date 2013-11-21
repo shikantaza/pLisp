@@ -30,4 +30,6 @@ char *substring(char *, size_t, size_t);
 
 size_t trim_whitespace(char *, size_t, const char *);
 
+double get_wall_time();
+
 #endif

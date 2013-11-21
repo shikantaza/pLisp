@@ -38,6 +38,8 @@ inline
 #endif
 OBJECT_PTR get_heap(OBJECT_PTR);
 
+unsigned int memory_allocated();
+
 void test_memory();
 void test_bst();
 

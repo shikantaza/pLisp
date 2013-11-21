@@ -2,8 +2,8 @@
 #include <gdk/gdkkeysyms.h>
 
 #include "../plisp.h"
-
 #include "../memory.h"
+#include "../hashtable.h"
 
 #define FONT "Courier Bold 9"
 
@@ -15,6 +15,7 @@ GtkWindow *transcript_window;
 GtkWindow *workspace_window;
 GtkWindow *system_browser_window;
 GtkWindow *debugger_window;
+GtkWindow *profiler_window;
 
 GtkTreeView *packages_list;
 GtkTreeView *symbols_list;
@@ -31,11 +32,17 @@ GtkTreeView *variables_list;
 
 GtkStatusbar *system_browser_statusbar;
 
+GtkTreeView *operators_list;
+
 extern unsigned int nof_packages;
 extern package_t *packages;
 
 extern OBJECT_PTR debug_execution_stack;
 extern OBJECT_PTR NIL;
+
+extern OBJECT_PTR LAMBDA;
+
+extern hashtable_t *profiling_tab;
 
 /* event handler function definitions begin */
 extern gboolean delete_event(GtkWidget *,
@@ -856,4 +863,158 @@ void create_debug_window()
   gtk_widget_show_all(win);
 
   gtk_widget_grab_focus((GtkWidget *)frames_list);
+}
+
+void initialize_operators_list(GtkTreeView *list)
+{
+  GtkCellRenderer    *renderer;
+  GtkTreeViewColumn  *column1, *column2, *column3, *column4, *column5;
+  GtkListStore       *store;
+
+  renderer = gtk_cell_renderer_text_new();
+
+  column1 = gtk_tree_view_column_new_with_attributes("Operator/Closure",
+                                                     renderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
+
+  column2 = gtk_tree_view_column_new_with_attributes("# of times called",
+                                                     renderer, "text", 1, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2);
+
+  column3 = gtk_tree_view_column_new_with_attributes("Wall time (seconds)",
+                                                     renderer, "text", 2, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column3);
+
+  column4 = gtk_tree_view_column_new_with_attributes("CPU time (seconds)",
+                                                     renderer, "text", 3, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column4);
+
+  column5 = gtk_tree_view_column_new_with_attributes("Allocated memory (words)",
+                                                     renderer, "text", 4, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column5);
+
+  gtk_tree_view_column_set_sort_column_id(column2, 1);
+  gtk_tree_view_column_set_sort_column_id(column3, 2);
+  gtk_tree_view_column_set_sort_column_id(column4, 3);
+  gtk_tree_view_column_set_sort_column_id(column5, 4); 
+
+  store = gtk_list_store_new (5, 
+                              G_TYPE_STRING,
+                              G_TYPE_INT,
+                              G_TYPE_FLOAT,
+                              G_TYPE_FLOAT,
+                              G_TYPE_INT);
+
+  gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
+                          GTK_TREE_MODEL(store));
+
+  g_object_unref(store);  
+}
+
+void populate_operators_list(GtkTreeView *list)
+{
+  GtkListStore *store;
+  GtkTreeIter  iter;
+
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
+
+  hashtable_entry_t *e = hashtable_entries(profiling_tab);
+
+  while(e)
+  {
+    OBJECT_PTR operator = (OBJECT_PTR)e->ptr;
+
+    profiling_datum_t *pd = (profiling_datum_t *)e->value;
+
+    gtk_list_store_append(store, &iter);
+
+    char buf1[MAX_STRING_LENGTH];
+    memset(buf1, '\0', MAX_STRING_LENGTH);
+
+    OBJECT_PTR temp_obj;
+
+    if(IS_SYMBOL_OBJECT(operator))
+       temp_obj = operator;
+    else
+      temp_obj = cons(LAMBDA,
+                      cons(get_params_object(operator),
+                           cons(car(get_source_object(operator)), NIL)));
+
+    print_object_to_string(temp_obj, buf1, 0);
+
+    /* char buf2[20]; */
+    /* memset(buf2, '\0', 20); */
+    /* sprintf(buf2, "%d", pd->count); */
+
+    /* char buf3[20]; */
+    /* memset(buf3, '\0', 20); */
+    /* sprintf(buf3, "%.6lf", pd->elapsed_wall_time); */
+
+    /* char buf4[20]; */
+    /* memset(buf4, '\0', 20); */
+    /* sprintf(buf4, "%.6lf", pd->elapsed_cpu_time); */
+
+    /* char buf5[20]; */
+    /* memset(buf5, '\0', 20); */
+    /* sprintf(buf5, "%d", pd->mem); */
+
+    unsigned int count = pd->count;
+    double elapsed_wall_time = pd->elapsed_wall_time;
+    double elapsed_cpu_time = pd->elapsed_cpu_time;
+    unsigned int mem = pd->mem;
+
+    gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem, -1);
+
+    hashtable_entry_t *temp = e->next;
+    free(e->value);
+    free(e);
+    e = temp;
+  }
+}
+
+void create_profiler_window()
+{
+  GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  profiler_window = (GtkWindow *)win;
+
+  GtkWidget *scrolled_win1;
+  GtkWidget *vbox, *hbox1;
+
+  gtk_window_set_title((GtkWindow *)win, "pLisp Profiler");
+  gtk_window_set_default_size((GtkWindow *)win, 600, 400);
+  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+
+  g_signal_connect (win, "delete-event",
+                    G_CALLBACK (delete_event), NULL);
+
+  gtk_container_set_border_width (GTK_CONTAINER (win), 10);
+
+  scrolled_win1 = gtk_scrolled_window_new(NULL, NULL);
+
+  operators_list = (GtkTreeView *)gtk_tree_view_new();
+  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(operators_list), TRUE);
+  gtk_widget_modify_font(GTK_WIDGET(operators_list), pango_font_description_from_string(FONT));
+
+  initialize_operators_list((GtkTreeView *)operators_list);
+
+  populate_operators_list((GtkTreeView *)operators_list);
+
+  gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)operators_list);
+
+  hbox1 = gtk_hbox_new (FALSE, 5);
+
+  gtk_box_pack_start_defaults (GTK_BOX (hbox1), scrolled_win1);
+
+  vbox = gtk_vbox_new (FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
+
+  //uncomment this to add status bar
+  //gtk_box_pack_start (GTK_BOX (vbox), gtk_statusbar_new(), FALSE, FALSE, 0);  
+
+  gtk_container_add (GTK_CONTAINER (win), vbox);
+
+  gtk_widget_show_all(win);
+
+  gtk_widget_grab_focus((GtkWidget *)operators_list);
 }

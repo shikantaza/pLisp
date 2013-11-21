@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 char *convert_to_upper_case(char *str)
 {
@@ -98,4 +99,16 @@ size_t trim_whitespace(char *out, size_t len, const char *str)
   out[out_size] = 0;
 
   return out_size;
+}
+
+//http://stackoverflow.com/questions/17432502/how-can-i-measure-cpu-time-and-wall-clock-time-on-both-linux-windows
+double get_wall_time()
+{
+  struct timeval time;
+  if (gettimeofday(&time,NULL)){
+    //  Handle error
+    printf("error in get_wall_time()\n");
+    return 0;
+  }
+  return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }

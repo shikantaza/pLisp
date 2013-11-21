@@ -21,10 +21,16 @@
 #include <assert.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <time.h>
 
 #include "plisp.h"
 
 #include "memory.h"
+
+#include "hashtable.h"
+
+//#include "util.h"
+double get_wall_time();
 
 extern OBJECT_PTR CAAR(OBJECT_PTR);
 extern OBJECT_PTR CADR(OBJECT_PTR);
@@ -148,6 +154,10 @@ extern OBJECT_PTR NEWLINE;
 
 extern OBJECT_PTR ABORT;
 
+extern OBJECT_PTR TIME;
+
+extern OBJECT_PTR PROFILE;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -178,6 +188,15 @@ extern BOOLEAN system_changed;
 
 extern char *foreign_library_names[];
 
+//variables related to profiling
+double wall_time_var;
+clock_t cpu_time_var;
+unsigned int mem_var;
+OBJECT_PTR last_operator;
+OBJECT_PTR prev_operator;
+hashtable_t *profiling_tab = NULL;
+//end variables related to profiling
+
 void eval()
 {
   //print_object(car(reg_next_expression)); fprintf(stdout, "\n");
@@ -186,6 +205,61 @@ void eval()
   OBJECT_PTR exp = car(reg_next_expression);
 
   OBJECT_PTR opcode = car(exp);
+
+  if(opcode == APPLY && profiling_tab)
+  {
+    last_operator = reg_accumulator;
+
+    if(prev_operator != NIL)
+    {
+      hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)prev_operator);
+
+      unsigned int count;
+      unsigned int mem;
+      double elapsed_wall_time;
+      double elapsed_cpu_time;
+
+      double temp1 = get_wall_time();
+      clock_t temp2 = clock();
+      unsigned int temp3 = memory_allocated();
+
+      if(e)
+      {
+        profiling_datum_t *pd = (profiling_datum_t *)e->value;
+
+        count = pd->count + 1;
+
+        elapsed_wall_time = pd->elapsed_wall_time + temp1 - wall_time_var;
+        elapsed_cpu_time = pd->elapsed_cpu_time + (temp2 - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
+      
+        mem = pd->mem + temp3 - mem_var;
+
+        hashtable_remove(profiling_tab, (void *)prev_operator);
+        free(pd);
+      }
+      else
+      {
+        count = 1;
+        elapsed_wall_time = temp1 - wall_time_var;
+        elapsed_cpu_time = (temp2 - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
+        mem = temp3 - mem_var;
+      }
+
+      profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+      pd->count = count;
+      pd->elapsed_wall_time = elapsed_wall_time;
+      pd->elapsed_cpu_time = elapsed_cpu_time;
+      pd->mem = mem;
+
+      hashtable_put(profiling_tab, (void *)prev_operator, (void *)pd);
+    }
+
+    wall_time_var = get_wall_time();
+    cpu_time_var = clock();
+    mem_var = memory_allocated();
+
+    prev_operator = reg_accumulator;
+  }
 
   if(opcode == HALT)
   {
@@ -403,7 +477,6 @@ void eval()
         
       if(operator == CONS)
       {
-
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "CONS expects two arguments");
@@ -1583,7 +1656,6 @@ void eval()
       }
       else if(operator == EVAL)
       {
-
         OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
 
         if(temp == ERROR)
@@ -1592,8 +1664,11 @@ void eval()
           return;
         }
 
+        /* reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)), */
+        /*                                             cons(cons(temp, NIL), car(reg_current_value_rib)))), */
+        /*                            car(reg_current_value_rib)); */
         reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)),
-                                                    cons(cons(temp, NIL), car(reg_current_value_rib)))),
+                                                    cons(temp, car(reg_current_value_rib)))),
                                    car(reg_current_value_rib));
 
         while(car(reg_next_expression) != NIL)
@@ -1605,6 +1680,174 @@ void eval()
             return;
           }
         }
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == TIME)
+      {
+        OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
+
+        char form[500];
+        memset(form, '\0', 500);
+        print_object_to_string(car(reg_current_value_rib), form, 0);
+
+        if(temp == ERROR)
+        {
+          throw_generic_exception("TIME: Compilation failed");
+          return;
+        }
+
+        reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)),
+                                                    cons(temp, car(reg_current_value_rib)))),
+                                   car(reg_current_value_rib));
+
+        clock_t start, diff;
+        int msec;
+
+        start = clock();
+
+        while(car(reg_next_expression) != NIL)
+        {
+          eval();
+          if(in_error)
+          {
+            throw_generic_exception("TIME failed");
+            return;
+          }
+        }
+
+        diff = clock() - start;
+        msec = diff * 1000 / CLOCKS_PER_SEC;
+
+#ifdef GUI
+        char buf[100];
+        memset(buf, '\0', 100);
+        sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
+        print_to_transcript(buf);
+#else
+        printf("%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
+#endif
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == PROFILE)
+      {
+        OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
+
+        if(temp == ERROR)
+        {
+          throw_generic_exception("PROFILE: Compilation failed");
+          return;
+        }
+
+        reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)),
+                                                    cons(temp, car(reg_current_value_rib)))),
+                                   car(reg_current_value_rib));
+
+        profiling_tab = hashtable_create();
+
+        prev_operator = NIL;
+
+        wall_time_var = get_wall_time();
+        cpu_time_var = clock();
+        mem_var = memory_allocated();
+
+        double initial_wall_time = wall_time_var;
+        clock_t initial_cpu_time = cpu_time_var;
+        unsigned int initial_mem = mem_var;
+
+        while(car(reg_next_expression) != NIL)
+        {
+          eval();
+          if(in_error)
+          {
+            throw_generic_exception("TIME failed");
+            return;
+          }
+        }
+
+        hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)last_operator);
+
+        unsigned int count;
+        double elapsed_wall_time;
+        double elapsed_cpu_time;
+        unsigned int mem;
+
+        if(e)
+        {
+          profiling_datum_t *pd = (profiling_datum_t *)e->value;
+
+          count = pd->count + 1;
+          elapsed_wall_time = pd->elapsed_wall_time + get_wall_time() - wall_time_var;
+          elapsed_cpu_time = pd->elapsed_cpu_time + (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
+          mem = pd->mem + memory_allocated() - mem_var;
+
+          free(pd);
+          hashtable_remove(profiling_tab, (void *)last_operator);
+        }
+        else
+        {
+          count = 1;
+          elapsed_wall_time = get_wall_time() - wall_time_var;
+          elapsed_cpu_time = (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
+          mem = memory_allocated() - mem_var;
+        }
+
+        profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+        pd->count = count;
+        pd->elapsed_wall_time = elapsed_wall_time;
+        pd->elapsed_cpu_time = elapsed_cpu_time;
+        pd->mem = mem;
+
+        hashtable_put(profiling_tab, (void *)last_operator, (void *)pd);
+
+        double final_wall_time = get_wall_time();
+        clock_t final_cpu_time = clock();
+        unsigned int final_mem = memory_allocated();
+
+#ifdef GUI
+        create_profiler_window();
+
+        char buf[1000];
+        memset(buf, '\0', 1000);
+        sprintf(buf,
+                "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+                final_wall_time - initial_wall_time,
+                (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
+                final_mem - initial_mem);
+        print_to_transcript(buf);
+
+#else
+        hashtable_entry_t *entries = hashtable_entries(profiling_tab);
+
+        while(entries)
+        {
+          OBJECT_PTR operator = (OBJECT_PTR)entries->ptr;
+
+          char str[50];
+          memset(str, '\0', 50);
+          print_object_to_string(operator, str, 0);
+
+          profiling_datum_t *pd = (profiling_datum_t *)entries->value;
+
+          printf("%s : %d %lf\n", str, pd->count, pd->elapsed_time);
+
+          hashtable_entry_t *temp = entries->next;
+          free(entries->value);
+          free(entries);
+          entries = temp;
+        }
+
+        printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+               final_wall_time - initial_wall_time,
+               (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
+               final_mem - initial_mem);
+#endif
+
+        hashtable_delete(profiling_tab);
+        profiling_tab = NULL;
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));

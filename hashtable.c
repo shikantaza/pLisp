@@ -126,6 +126,7 @@ hashtable_entry_t *clone_entries(hashtable_entry_t *np)
 
     temp->ptr = np->ptr;
     temp->value = np->value;
+    temp->next = NULL;
 
     if(!ret)
     {
@@ -158,24 +159,28 @@ hashtable_entry_t *hashtable_entries(hashtable_t *tab)
       replica[i] = NULL;
   }
 
-  for(i=0; i<HASHSIZE-1; i++)
-  {
-    hashtable_entry_t *t;
+  hashtable_entry_t *prev = NULL, *t, *ret = NULL;
 
+  for(i=0; i< HASHSIZE; i++)
+  {
     if(replica[i])
+    {
+      if(!ret)
+        ret = replica[i];
+
+      if(prev)
+        prev->next = replica[i];
+
       t = replica[i];
 
-    while(t->next)
-      t = t->next;
+      while(t->next)
+        t = t->next;
 
-    if(replica[i+1])
-      t->next = replica[i+1];
+      prev = t;
+    }
   }
 
-  for(i=0; i<HASHSIZE; i++)
-    if(replica[i]) return replica[0];
-
-  return NULL;
+  return ret;
 }
 
 #ifdef TEST_HASH
@@ -234,14 +239,14 @@ int main(int argc, char **argv)
 
   tab = hashtable_create();
 
-  for(i=0; i<20; i++)
+  for(i=0; i<SIZE; i++)
     hashtable_put(tab, (void *)vals[i], (void *)(i*i));
 
   hashtable_entry_t *entries = hashtable_entries(tab);
 
   while(entries)
   {
-    printf("%d %d\n", (int)entries->ptr, (int)entries->value);
+    assert((int)(entries->value) == (int)(entries->ptr) * (int)(entries->ptr));
     entries = entries->next;
   }
 

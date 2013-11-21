@@ -182,8 +182,8 @@ void update_workspace_title()
 }
 
 gboolean delete_event( GtkWidget *widget,
-                              GdkEvent  *event,
-                              gpointer   data )
+                       GdkEvent  *event,
+                       gpointer   data )
 {
   if(widget == (GtkWidget *)workspace_window)
     close_application_window((GtkWidget **)&workspace_window);

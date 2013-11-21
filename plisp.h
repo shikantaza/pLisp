@@ -112,6 +112,14 @@ union float_and_uint
   float f;
 };
 
+typedef struct profiling_datum
+{
+  unsigned int count;
+  unsigned int mem;
+  double elapsed_wall_time;
+  double elapsed_cpu_time;
+} profiling_datum_t;
+
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);

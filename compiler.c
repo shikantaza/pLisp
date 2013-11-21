@@ -362,10 +362,16 @@ int main(int argc, char **argv)
 
   if(argc == 2)
   {
+    fprintf(stdout, "Loading image...");
+    fflush(stdout);
+
     core_library_loaded = true;
     ht = hashtable_create();
     initialize_memory();
     load_from_image(argv[1]);
+
+    fprintf(stdout, "done\n");
+
     loaded_image_file_name = strdup(argv[1]);
 
     //create_transcript_window() is called in both

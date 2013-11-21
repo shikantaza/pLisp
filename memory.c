@@ -84,6 +84,8 @@ void build_grey_set();
 
 enum {WHITE, GREY, BLACK};
 
+unsigned int words_allocated;
+
 void gc()
 {
   static int count = 0;
@@ -748,6 +750,8 @@ OBJECT_PTR object_alloc(int size, unsigned int tag)
 {
   OBJECT_PTR ret = malloc(size * sizeof(unsigned int));
 
+  words_allocated += size;
+
   if(!ret)
   {
 
@@ -782,6 +786,8 @@ int initialize_memory()
   grey = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
   black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
 
+  words_allocated = 0;
+
   return 0;
 }
 
@@ -798,3 +804,4 @@ void cleanup_memory()
 #endif
 }
 
+inline unsigned int memory_allocated() { return words_allocated; }
