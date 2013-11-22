@@ -198,7 +198,6 @@
     (call-foreign-function "plisp_system" 'void '((str character-pointer)))))
 
 (defun sort1 (a compare-fn)
-  (assert (arrayp a))
   (let ((i 0)
         (len (array-length a)))
     (labels ((min (start-index)
