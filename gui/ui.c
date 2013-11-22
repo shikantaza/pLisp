@@ -893,6 +893,7 @@ void initialize_operators_list(GtkTreeView *list)
                                                      renderer, "text", 4, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column5);
 
+  gtk_tree_view_column_set_sort_column_id(column1, 0);
   gtk_tree_view_column_set_sort_column_id(column2, 1);
   gtk_tree_view_column_set_sort_column_id(column3, 2);
   gtk_tree_view_column_set_sort_column_id(column4, 3);
@@ -931,32 +932,16 @@ void populate_operators_list(GtkTreeView *list)
     char buf1[MAX_STRING_LENGTH];
     memset(buf1, '\0', MAX_STRING_LENGTH);
 
-    OBJECT_PTR temp_obj;
+    OBJECT_PTR temp_obj = operator;
 
-    if(IS_SYMBOL_OBJECT(operator))
-       temp_obj = operator;
-    else
-      temp_obj = cons(LAMBDA,
-                      cons(get_params_object(operator),
-                           cons(car(get_source_object(operator)), NIL)));
+    /* if(IS_SYMBOL_OBJECT(operator)) */
+    /*    temp_obj = operator; */
+    /* else */
+    /*   temp_obj = cons(LAMBDA, */
+    /*                   cons(get_params_object(operator), */
+    /*                        cons(car(get_source_object(operator)), NIL))); */
 
     print_object_to_string(temp_obj, buf1, 0);
-
-    /* char buf2[20]; */
-    /* memset(buf2, '\0', 20); */
-    /* sprintf(buf2, "%d", pd->count); */
-
-    /* char buf3[20]; */
-    /* memset(buf3, '\0', 20); */
-    /* sprintf(buf3, "%.6lf", pd->elapsed_wall_time); */
-
-    /* char buf4[20]; */
-    /* memset(buf4, '\0', 20); */
-    /* sprintf(buf4, "%.6lf", pd->elapsed_cpu_time); */
-
-    /* char buf5[20]; */
-    /* memset(buf5, '\0', 20); */
-    /* sprintf(buf5, "%d", pd->mem); */
 
     unsigned int count = pd->count;
     double elapsed_wall_time = pd->elapsed_wall_time;

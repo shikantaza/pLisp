@@ -158,6 +158,8 @@ extern OBJECT_PTR TIME;
 
 extern OBJECT_PTR PROFILE;
 
+extern OBJECT_PTR LAMBDA;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -212,7 +214,22 @@ void eval()
 
     if(prev_operator != NIL)
     {
-      hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)prev_operator);
+      OBJECT_PTR operator_to_be_used;
+
+      if(IS_SYMBOL_OBJECT(prev_operator))
+         operator_to_be_used = prev_operator;
+      else
+      {
+        OBJECT_PTR res = get_symbol_from_value(prev_operator, reg_current_env);
+        if(car(res) != NIL)
+          operator_to_be_used = cdr(res);
+        else
+          operator_to_be_used = cons(LAMBDA,
+                                     cons(get_params_object(prev_operator),
+                                          cons(car(get_source_object(prev_operator)), NIL)));
+      }
+
+      hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
 
       unsigned int count;
       unsigned int mem;
@@ -234,7 +251,7 @@ void eval()
       
         mem = pd->mem + temp3 - mem_var;
 
-        hashtable_remove(profiling_tab, (void *)prev_operator);
+        hashtable_remove(profiling_tab, (void *)operator_to_be_used);
         free(pd);
       }
       else
@@ -251,7 +268,7 @@ void eval()
       pd->elapsed_cpu_time = elapsed_cpu_time;
       pd->mem = mem;
 
-      hashtable_put(profiling_tab, (void *)prev_operator, (void *)pd);
+      hashtable_put(profiling_tab, (void *)operator_to_be_used, (void *)pd);
     }
 
     wall_time_var = get_wall_time();
@@ -1763,12 +1780,37 @@ void eval()
           eval();
           if(in_error)
           {
+            hashtable_entry_t *entries = hashtable_entries(profiling_tab);
+
+            while(entries)
+            {
+              hashtable_entry_t *temp = entries->next;
+              free(entries->value);
+              free(entries);
+              entries = temp;
+            }
+
             throw_generic_exception("TIME failed");
             return;
           }
         }
 
-        hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)last_operator);
+        OBJECT_PTR operator_to_be_used;
+
+        if(IS_SYMBOL_OBJECT(last_operator))
+          operator_to_be_used = last_operator;
+        else
+        {
+          OBJECT_PTR res = get_symbol_from_value(last_operator, reg_current_env);
+          if(car(res) != NIL)
+            operator_to_be_used = cdr(res);
+          else
+            operator_to_be_used = cons(LAMBDA,
+                                       cons(get_params_object(last_operator),
+                                            cons(car(get_source_object(last_operator)), NIL)));
+        }
+
+        hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
 
         unsigned int count;
         double elapsed_wall_time;
@@ -1785,7 +1827,7 @@ void eval()
           mem = pd->mem + memory_allocated() - mem_var;
 
           free(pd);
-          hashtable_remove(profiling_tab, (void *)last_operator);
+          hashtable_remove(profiling_tab, (void *)operator_to_be_used);
         }
         else
         {
@@ -1801,7 +1843,7 @@ void eval()
         pd->elapsed_cpu_time = elapsed_cpu_time;
         pd->mem = mem;
 
-        hashtable_put(profiling_tab, (void *)last_operator, (void *)pd);
+        hashtable_put(profiling_tab, (void *)operator_to_be_used, (void *)pd);
 
         double final_wall_time = get_wall_time();
         clock_t final_cpu_time = clock();
