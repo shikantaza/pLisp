@@ -241,17 +241,17 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       int sz = strlen(str);
 
-      OBJECT_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
+      uintptr_t ptr = object_alloc(sz+1);
 
       //heap[ptr] = convert_int_to_object(sz);
-      set_heap(ptr, convert_int_to_object(sz));
+      set_heap(ptr, 0, convert_int_to_object(sz));
 
       int j;
       for(j=0; j< sz; j++)
 	//heap[ptr + j + 1] = (str[j] << OBJECT_SHIFT) + CHAR_TAG;
-        set_heap(ptr + j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
+        set_heap(ptr, j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
 
-      if(update_environment(reg_current_env, sym, ptr) == NIL)
+      if(update_environment(reg_current_env, sym, ptr+ARRAY_TAG) == NIL)
       {
 	throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
@@ -280,18 +280,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
     int sz = strlen(str);
 
-    OBJECT_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
+    uintptr_t ptr = object_alloc(sz+1);
 
     //heap[ptr] = convert_int_to_object(sz);
-    set_heap(ptr, convert_int_to_object(sz));
+    set_heap(ptr, 0, convert_int_to_object(sz));
 
     for(i=0; i< sz; i++)
       //heap[ptr + i + 1] = (str[i] << OBJECT_SHIFT) + CHAR_TAG;
-      set_heap(ptr + i + 1, (OBJECT_PTR)((str[i] << OBJECT_SHIFT) + CHAR_TAG));
+      set_heap(ptr, i + 1, (OBJECT_PTR)((str[i] << OBJECT_SHIFT) + CHAR_TAG));
 
     free(str);
 
-    ret = ptr;
+    ret = ptr + ARRAY_TAG;
 
   }
   else if(ret_type == VOID)
@@ -312,8 +312,7 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
   int i;
 
   for(i=0; i<nargs; i++)
-  {
-    OBJECT_PTR type = CADAR(rest);
+  {    OBJECT_PTR type = CADAR(rest);
 
     if(types[i] == &ffi_type_pointer)
     {

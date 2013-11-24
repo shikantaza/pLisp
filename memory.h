@@ -26,17 +26,17 @@ int initialize_memory();
 
 void cleanup_memory();
 
-OBJECT_PTR object_alloc(int, unsigned int);
+uintptr_t object_alloc(int);
 
 #ifndef DEBUG_MEMORY
 inline
 #endif
-void set_heap(OBJECT_PTR, OBJECT_PTR);
+void set_heap(uintptr_t, unsigned int, OBJECT_PTR);
 
 #ifndef DEBUG_MEMORY
 inline
 #endif
-OBJECT_PTR get_heap(OBJECT_PTR);
+OBJECT_PTR get_heap(uintptr_t, unsigned int);
 
 unsigned int memory_allocated();
 

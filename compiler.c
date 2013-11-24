@@ -18,6 +18,7 @@
 **/
 
 #include <stdio.h>
+#include <assert.h>
 
 #ifdef GUI
 #include <gtk/gtk.h>
@@ -298,8 +299,11 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
             if(reg_current_value_rib == NIL)
               reg_current_value_rib = cons(car(args), NIL);
             else
-              set_heap(last_cell(reg_current_value_rib) + 1, 
+            {
+              uintptr_t ptr = (last_cell(reg_current_value_rib) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              set_heap(ptr, 1, 
                        cons(car(args), NIL));         
+            }
             args = cdr(args);
           }
 
@@ -502,6 +506,8 @@ int repl()
 
     OBJECT_PTR exp;
     int val = convert_expression_to_object(g_expr, &exp);
+
+    assert(is_valid_object(exp));
 
     if(val != 0)
       return 1;

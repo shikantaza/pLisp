@@ -194,7 +194,7 @@ void gc()
     }
     else if(IS_ARRAY_OBJECT(obj))
     {
-      OBJECT_PTR length_obj = get_heap(obj);
+      OBJECT_PTR length_obj = get_heap(obj, 0);
 
       insert_node(GREY, length_obj);
 #ifdef CUSTOM_BST
@@ -209,7 +209,7 @@ void gc()
 
       for(i=1; i<=len; i++)
       {
-        OBJECT_PTR array_elem = get_heap(obj + i);
+        OBJECT_PTR array_elem = get_heap(obj, i);
 
         if(is_dynamic_memory_object(array_elem))
         {
@@ -224,7 +224,7 @@ void gc()
     }
     else if(IS_CONTINUATION_OBJECT(obj))
     {
-      OBJECT_PTR stack = get_heap(obj);
+      OBJECT_PTR stack = get_heap(obj, 0);
       insert_node(GREY, stack);
 #ifdef CUSTOM_BST
       remove_node(&white, stack);
@@ -295,10 +295,10 @@ void test_memory()
 {
   printf("Testing memory\n");
 
-  OBJECT_PTR ptr;
+  uintptr_t ptr;
 
   printf("Allocating 50000 objects...");
-  ptr = object_alloc(50000, CONS_TAG);
+  ptr = object_alloc(50000);
   printf("done\n");
 
   printf("Deallocating 50000 objects...");
@@ -306,7 +306,7 @@ void test_memory()
   printf("done\n");
 
   printf("Allocating 50000 objects...");
-  ptr = object_alloc(50000, CONS_TAG);
+  ptr = object_alloc(50000);
   printf("done\n");
 
   printf("Deallocating 50000 objects...");
@@ -722,20 +722,24 @@ BOOLEAN value_exists(rb_red_blk_tree *tree, OBJECT_PTR val)
 #ifndef DEBUG_MEMORY
 inline
 #endif
-void set_heap(OBJECT_PTR ptr, OBJECT_PTR val)
+void set_heap(uintptr_t ptr, unsigned int index, OBJECT_PTR val)
 {
   if(!is_valid_object(val))
     assert(false);
 
-  *ptr = val;
+  unsigned int *ptr1 = (unsigned int *)ptr;
+
+  *(ptr1 + index) = val;
 }
 
 #ifndef DEBUG_MEMORY
 inline
 #endif
-OBJECT_PTR get_heap(OBJECT_PTR ptr)
+OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
 {
-  OBJECT_PTR ret = *ptr;
+  unsigned int *ptr1 = (unsigned int *)ptr;
+
+  OBJECT_PTR ret = *(ptr1 + index);
 
   if(!is_valid_object(ret))
   {
@@ -746,9 +750,10 @@ OBJECT_PTR get_heap(OBJECT_PTR ptr)
   return ret;
 }
 
-OBJECT_PTR object_alloc(int size, unsigned int tag)
+uintptr_t object_alloc(int size)
 {
-  OBJECT_PTR ret = malloc(size * sizeof(unsigned int));
+  unsigned int *ret;
+  posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
 
   words_allocated += size;
 
@@ -769,15 +774,16 @@ OBJECT_PTR object_alloc(int size, unsigned int tag)
     exit(1);
   }
 
-  hashtable_put(ht, (void *)ret, (void *)tag);
+  //hashtable_put(ht, (void *)ret, (void *)tag);
+  //return ret;
 
-  return ret;
+  return (uintptr_t)ret;
 }
 
-void dealloc(OBJECT_PTR ptr)
+void dealloc(uintptr_t ptr)
 {
-  hashtable_remove(ht, (void *)ptr);
-  free(ptr);
+  //hashtable_remove(ht, (void *)ptr);
+  free((void *)ptr);
 }
 
 int initialize_memory()

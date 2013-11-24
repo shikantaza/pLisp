@@ -800,14 +800,14 @@ void eval()
 
           memset(msg, '\0', 500);
 
-          OBJECT_PTR ptr = error_string_obj;
+          uintptr_t ptr = (error_string_obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-          int len = get_int_value(get_heap(ptr));
+          int len = get_int_value(get_heap(ptr, 0));
 
           int i;
 
           for(i=1; i <= len; i++)
-            msg[i-1] = (int)get_heap(ptr + i) >> OBJECT_SHIFT;
+            msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
 
           raise_error(msg);
         }
@@ -846,8 +846,11 @@ void eval()
           if(reg_accumulator == NIL)
             reg_accumulator = cons(car(rest), NIL);
           else
-            set_heap(last_cell(reg_accumulator) + 1, 
+          {
+            uintptr_t ptr = (last_cell(reg_accumulator) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+            set_heap(ptr, 1, 
                      cons(car(rest), NIL));         
+          }
 
           rest = cdr(rest);
         }
@@ -974,7 +977,7 @@ void eval()
           return;
         }
 
-        set_heap(car_obj, CADR(reg_current_value_rib));
+        set_heap((car_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
@@ -997,7 +1000,7 @@ void eval()
           return;
         }
 
-        set_heap(car_obj + 1, CADR(reg_current_value_rib));
+        set_heap((car_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
@@ -1128,8 +1131,11 @@ void eval()
             if(reg_current_value_rib == NIL)
               reg_current_value_rib = cons(car(args), NIL);
             else
-              set_heap(last_cell(reg_current_value_rib) + 1, 
+            {
+              uintptr_t ptr = (last_cell(reg_current_value_rib) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              set_heap(ptr, 1, 
                        cons(car(args), NIL));         
+            }
             args = cdr(args);
           }
 
@@ -1232,6 +1238,8 @@ void eval()
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
 
+        uintptr_t ptr = (array_obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
           throw_exception("INVALID-ARGUMENT", "First argument to ARRAY-SET should be an array");
@@ -1246,7 +1254,7 @@ void eval()
           return;
         }        
 
-        int array_len = get_int_value(get_heap(array_obj));
+        int array_len = get_int_value(get_heap(ptr, 0));
 
         int index = get_int_value(idx);
 
@@ -1256,7 +1264,7 @@ void eval()
           return;
         }        
  
-        set_heap(array_obj + index + 1, CADDR(reg_current_value_rib));
+        set_heap(ptr, index + 1, CADDR(reg_current_value_rib));
 
         reg_accumulator = CADDR(reg_current_value_rib);
 
@@ -1272,6 +1280,7 @@ void eval()
         }        
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
+        uintptr_t ptr = (array_obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
         OBJECT_PTR idx = CADR(reg_current_value_rib);
 
@@ -1303,7 +1312,7 @@ void eval()
             return;
           }        
 
-          int array_len = get_int_value(get_heap(array_obj));
+          int array_len = get_int_value(get_heap(ptr, 0));
 
           if(index < 0 || (index >= array_len))
           {
@@ -1311,7 +1320,7 @@ void eval()
             return;
           }        
 
-          reg_accumulator = get_heap(array_obj + index + 1);
+          reg_accumulator = get_heap(ptr, index + 1);
         }
 
         reg_current_value_rib = NIL;
@@ -1361,7 +1370,7 @@ void eval()
           return;
         }
 
-        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array)))
+        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap((array >> OBJECT_SHIFT) << OBJECT_SHIFT, 0)))
         {
           throw_exception("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
@@ -1400,7 +1409,7 @@ void eval()
             return;
           }
 
-          reg_accumulator = get_heap(array);
+          reg_accumulator = get_heap((array >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
         }
 
         reg_current_value_rib = NIL;
@@ -1911,7 +1920,7 @@ void eval()
       {
         debug_mode = false;
 
-        reg_current_stack = get_heap(debug_continuation);
+        reg_current_stack = get_heap((debug_continuation >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -2184,7 +2193,7 @@ void eval()
           return;
         }
 
-        reg_current_stack = get_heap(cont);
+        reg_current_stack = get_heap((cont >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
 
         reg_accumulator = CADR(reg_current_value_rib);
         reg_current_value_rib = NIL;
@@ -2235,14 +2244,14 @@ void eval()
 
           memset(msg, '\0', 500);
 
-          OBJECT_PTR ptr = str;
+          uintptr_t ptr = (str >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-          int len = get_int_value(get_heap(ptr));
+          int len = get_int_value(get_heap(ptr, 0));
 
           int i;
 
           for(i=1; i <= len; i++)
-            msg[i-1] = (int)get_heap(ptr + i) >> OBJECT_SHIFT;
+            msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
 
           reg_accumulator = get_symbol_object((char *)convert_to_upper_case(msg));
         }
@@ -2312,7 +2321,7 @@ void eval()
             if(prev == NIL)
               top_level_env = cdr(top_level_env);
             else
-              set_heap(prev + 1, cdr(rest));
+              set_heap((prev >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, cdr(rest));
             break;
           }
 
@@ -2400,8 +2409,11 @@ void eval()
             if(params_env == NIL)
               params_env = cons(cons(CADR(rest_params), rest_args), NIL);
             else
-              set_heap(last_cell(params_env) + 1, 
+            {
+              uintptr_t ptr = (last_cell(params_env) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              set_heap(ptr, 1, 
                        cons(cons(CADR(rest_params),rest_args), NIL));            
+            }
             break;
           }
           else
@@ -2409,8 +2421,11 @@ void eval()
             if(params_env == NIL)
               params_env = cons(cons(car(rest_params), car(rest_args)), NIL);
             else
-              set_heap(last_cell(params_env) + 1, 
+            {
+              uintptr_t ptr = (last_cell(params_env) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              set_heap(ptr, 1, 
                        cons(cons(car(rest_params),car(rest_args)), NIL));
+            }
           }
 
           rest_params = cdr(rest_params);
@@ -2430,7 +2445,7 @@ void eval()
           return;
         }
 
-        reg_current_stack = get_heap(reg_accumulator);
+        reg_current_stack = get_heap((reg_accumulator >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
 
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
@@ -2451,10 +2466,10 @@ void eval()
     OBJECT_PTR frame = car(reg_current_stack);
     reg_current_stack = cdr(reg_current_stack);
 
-    OBJECT_PTR ptr = frame;
-    reg_next_expression   = get_heap(ptr+1);
-    reg_current_env       = get_heap(ptr+2);
-    reg_current_value_rib = get_heap(ptr+3);
+    uintptr_t ptr = (frame >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    reg_next_expression   = get_heap(ptr,1);
+    reg_current_env       = get_heap(ptr,2);
+    reg_current_value_rib = get_heap(ptr,3);
   }
 }
 
@@ -2465,24 +2480,24 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 {
   log_function_entry("create_call_frame");
 
-  OBJECT_PTR ptr = object_alloc(5, ARRAY_TAG);
+  uintptr_t ptr = object_alloc(5);
 
-  set_heap(ptr, convert_int_to_object(4));
-  set_heap(ptr+1, next_expression);
-  set_heap(ptr+2, env);
-  set_heap(ptr+3, rib);
-  set_heap(ptr+4, source_expression);
+  set_heap(ptr, 0, convert_int_to_object(4));
+  set_heap(ptr, 1, next_expression);
+  set_heap(ptr, 2, env);
+  set_heap(ptr, 3, rib);
+  set_heap(ptr, 4, source_expression);
 
   log_function_exit("create_call_frame");
 
-  return ptr;
+  return ptr + ARRAY_TAG;
 }
 
 OBJECT_PTR create_current_continuation()
 {
-  OBJECT_PTR ptr = object_alloc(1, CONTINUATION_TAG);
-  set_heap(ptr, reg_current_stack);
-  return ptr;
+  uintptr_t ptr = object_alloc(1);
+  set_heap(ptr, 0, reg_current_stack);
+  return ptr + CONTINUATION_TAG;
 }
 
 void raise_error(char *err_str)
@@ -2523,19 +2538,19 @@ void print_stack()
   {
     OBJECT_PTR frame = car(rest);
 
-    OBJECT_PTR ptr = frame;
+    uintptr_t ptr = (frame >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
     printf("---- begin frame %0x----\n, frame");
     printf("Next expression: ");
-    print_object(get_heap(ptr+1));
+    print_object(get_heap(ptr,1));
     printf("\n");
 
     printf("Env: ");
-    print_object(get_heap(ptr+2));
+    print_object(get_heap(ptr,2));
     printf("\n");
 
     printf("Value rib: ");
-    print_object(get_heap(ptr+3));
+    print_object(get_heap(ptr,3));
     printf("\n");
     printf("---- end frame %0x----\n", frame);
 
@@ -2649,7 +2664,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = obj;
 	  else
-	    set_heap(last_cell(result) + 1, obj);
+	    set_heap((last_cell(result) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, obj);
 	}
 	else
 	{
@@ -2658,7 +2673,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = cons(obj, NIL);
 	  else
-	    set_heap(last_cell(result) + 1, cons(obj, NIL));
+	    set_heap((last_cell(result) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, cons(obj, NIL));
 	}
       }
       else
@@ -2668,7 +2683,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	if(result == NIL)
 	  result = cons(obj, NIL);
 	else
-	  set_heap(last_cell(result) + 1, cons(obj, NIL));
+	  set_heap((last_cell(result) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, cons(obj, NIL));
       }
       rest = cdr(rest);
     }
@@ -2691,19 +2706,19 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   int len = strlen(str_val);
 
-  OBJECT_PTR raw_ptr = object_alloc(len + 1, ARRAY_TAG);
+  uintptr_t raw_ptr = object_alloc(len + 1);
 
-  set_heap(raw_ptr, convert_int_to_object(len));
+  set_heap(raw_ptr, 0, convert_int_to_object(len));
 
   int i=1;
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
-    set_heap(raw_ptr + i, (OBJECT_PTR)((*ptr << OBJECT_SHIFT) + CHAR_TAG));
+    set_heap(raw_ptr, i, (OBJECT_PTR)((*ptr << OBJECT_SHIFT) + CHAR_TAG));
     i++;
   }
 
-  return raw_ptr;
+  return raw_ptr + ARRAY_TAG;
 }
 
 OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
@@ -2712,16 +2727,16 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   
   int sz = get_int_value(size);
 
-  OBJECT_PTR ptr = object_alloc(sz+1, ARRAY_TAG);
+  uintptr_t ptr = object_alloc(sz+1);
 
-  set_heap(ptr, size);
+  set_heap(ptr, 0, size);
 
   int i;
 
   for(i=0; i<sz; i++)
-    set_heap(ptr + i + 1, default_value);
+    set_heap(ptr, i + 1, default_value);
 
-  return ptr;
+  return ptr + ARRAY_TAG;
 }
 
 OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
@@ -2731,22 +2746,22 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int st = get_int_value(start);
   int len = get_int_value(length);
 
-  OBJECT_PTR orig_ptr = array;
+  uintptr_t orig_ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-  OBJECT_PTR ptr = object_alloc(len + 1, ARRAY_TAG);
+  uintptr_t ptr = object_alloc(len + 1);
 
-  set_heap(ptr, convert_int_to_object(len));
+  set_heap(ptr, 0, convert_int_to_object(len));
 
   int i;
 
   for(i=1; i<=len; i++)
-    set_heap(ptr+i, get_heap(orig_ptr + st + i));
+    set_heap(ptr, i, get_heap(orig_ptr, st + i));
 
   ret = ptr;
 
   log_function_exit("eval_sub_array");
 
-  return ret;
+  return ret + ARRAY_TAG;
 }
 
 BOOLEAN is_permitted_in_debug_mode(OBJECT_PTR exp)
@@ -2783,7 +2798,7 @@ void print_backtrace()
   while(rest != NIL)
   {
     //print_object(car(rest));
-    print_object(cdr(get_heap(car(rest) + 1)));
+    print_object(cdr(get_heap((car(rest) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1)));
 
     printf("\n");
 

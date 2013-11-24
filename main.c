@@ -213,19 +213,29 @@ inline OBJECT_PTR third(OBJECT_PTR x)  { return car(cdr(cdr(x))); }
 inline OBJECT_PTR fourth(OBJECT_PTR x) { return car(cdr(cdr(cdr(x)))); } 
 inline OBJECT_PTR fifth(OBJECT_PTR x)  { return car(cdr(cdr(cdr(cdr(x))))); } 
 
-inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == SYMBOL_TAG;         }
-inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == STRING_LITERAL_TAG; }
-inline BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == CHAR_TAG;           }
-/* inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return !get(x) && ((((int)x) & BIT_MASK) == POS_INTEGER_TAG || */
-/*                                                                            (((int)x) & BIT_MASK) ==  NEG_INTEGER_TAG); } */
+/* inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == SYMBOL_TAG;         } */
+/* inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == STRING_LITERAL_TAG; } */
+/* inline BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == CHAR_TAG;           } */
+/* /\* inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return !get(x) && ((((int)x) & BIT_MASK) == POS_INTEGER_TAG || *\/ */
+/* /\*                                                                            (((int)x) & BIT_MASK) ==  NEG_INTEGER_TAG); } *\/ */
+/* inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == INTEGER_TAG;        } */
+/* inline BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == FLOAT_TAG;        } */
+/* inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CONS_TAG;         } */
+/* inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CLOSURE_TAG;      } */
+/* inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == MACRO_TAG;        } */
+/* inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == ARRAY_TAG;        } */
+/* inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CONTINUATION_TAG; } */
 
-inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == INTEGER_TAG;        }
-inline BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == FLOAT_TAG;        }
-inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CONS_TAG;         }
-inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CLOSURE_TAG;      }
-inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == MACRO_TAG;        }
-inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == ARRAY_TAG;        }
-inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CONTINUATION_TAG; }
+inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG;         }
+inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return (x & BIT_MASK) == STRING_LITERAL_TAG; }
+inline BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CHAR_TAG;           }
+inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == INTEGER_TAG;        }
+inline BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == FLOAT_TAG;          }
+inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CONS_TAG;           }
+inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == CLOSURE_TAG;        }
+inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == MACRO_TAG;          }
+inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == ARRAY_TAG;          }
+inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return (x & BIT_MASK) == CONTINUATION_TAG;   }
 
 //registers
 OBJECT_PTR reg_accumulator;
@@ -532,17 +542,17 @@ void cleanup()
 
   cleanup_memory();
 
-  hashtable_entry_t *entries = hashtable_entries(ht);
+  /* hashtable_entry_t *entries = hashtable_entries(ht); */
 
-  while(entries)
-  {
-    hashtable_entry_t *temp = entries->next;
-    free(entries->ptr);
-    free(entries);
-    entries = temp;
-  }
+  /* while(entries) */
+  /* { */
+  /*   hashtable_entry_t *temp = entries->next; */
+  /*   free(entries->ptr); */
+  /*   free(entries); */
+  /*   entries = temp; */
+  /* } */
 
-  hashtable_delete(ht);
+  /* hashtable_delete(ht); */
 
   log_function_exit("cleanup");
 }
@@ -726,14 +736,14 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
   if(!is_valid_object(cdr))
     assert(false);
 
-  OBJECT_PTR ptr = object_alloc(2, CONS_TAG);
+  uintptr_t ptr = object_alloc(2);
 
-  set_heap(ptr, car);
-  set_heap(ptr+1, cdr);
+  set_heap(ptr, 0, car);
+  set_heap(ptr, 1, cdr);
 
   log_function_exit("cons");
 
-  return ptr;
+  return ptr + CONS_TAG;
 }
 
 OBJECT_PTR get_string_object(char *str)
@@ -792,8 +802,8 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
   else
   {
      if(!IS_CONS_OBJECT(cons_obj))
-      assert(false);
-    return get_heap(cons_obj);
+       assert(false);
+     return get_heap((cons_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
   }
 }
 
@@ -804,7 +814,7 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   else
   {
     assert(IS_CONS_OBJECT(cons_obj));
-    return get_heap(cons_obj + 1);
+    return get_heap((cons_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 1);
   }
 }
 
@@ -1304,14 +1314,14 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
 
 OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body, OBJECT_PTR source)
 {
-  OBJECT_PTR ptr = object_alloc(4, CLOSURE_TAG);
+  uintptr_t ptr = object_alloc(4);
 
-  set_heap(ptr, env_list);
-  set_heap(ptr + 1, params);
-  set_heap(ptr + 2, body);
-  set_heap(ptr + 3, source);
+  set_heap(ptr, 0, env_list);
+  set_heap(ptr, 1, params);
+  set_heap(ptr, 2, body);
+  set_heap(ptr, 3, source);
   
-  return ptr;
+  return ptr + CLOSURE_TAG;
 }
 
 OBJECT_PTR clone_object(OBJECT_PTR obj)
@@ -1343,18 +1353,20 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
                                 clone_object(get_source_object(obj)));
     else if(IS_ARRAY_OBJECT(obj))
     {
-      int len = get_int_value(get_heap(obj));
+      uintptr_t ptr = (obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-      OBJECT_PTR new_obj = object_alloc(len+1, ARRAY_TAG);
+      int len = get_int_value(get_heap(ptr, 0));
+
+      uintptr_t new_obj = object_alloc(len+1);
       
-      set_heap(new_obj, get_heap(obj));
+      set_heap(new_obj, 0, get_heap(ptr, 0));
 
       int i;
 
       for(i=1; i<=len; i++)
-	set_heap(new_obj + i, clone_object(get_heap(obj + i)));
+	set_heap(new_obj, i, clone_object(get_heap(ptr, i)));
 
-      ret = new_obj;
+      ret = new_obj + ARRAY_TAG;
     }
   }
 
@@ -1371,25 +1383,25 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 OBJECT_PTR get_env_list(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj);
+  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
 }
 
 OBJECT_PTR get_params_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj + 1);
+  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 1);
 }
 
 OBJECT_PTR get_body_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj + 2);
+  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 2);
 }
 
 OBJECT_PTR get_source_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj + 3);
+  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 3);
 }
 
 int print_closure_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
@@ -1520,7 +1532,8 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     {
       if(equal(CAAR(rest2),symbol_obj))
       {
-	set_heap(car(rest2) + 1, val);
+        uintptr_t ptr = (car(rest2) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+	set_heap(ptr, 1, val);
 	return symbol_obj;
       }
 
@@ -1537,7 +1550,8 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
   {
     if(equal(CAAR(rest2),symbol_obj))
     {
-      set_heap(car(rest2) + 1, val);
+      uintptr_t ptr = (car(rest2) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+      set_heap(ptr, 1, val);
       system_changed = true;
       return symbol_obj;
     }
@@ -1570,7 +1584,8 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
       //the new value
       if(equal(CAAR(rest),symbol_obj))
       {
-        set_heap(car(rest) + 1, val);
+        uintptr_t ptr = (car(rest) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+        set_heap(ptr, 1, val);
         system_changed = true;
         return;
       }
@@ -1578,7 +1593,8 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
     }
 
     //symbol does not exist in the environment
-    set_heap(last_cell(top_level_env) + 1, cons(cons(symbol_obj, val), NIL));
+    uintptr_t ptr = (last_cell(top_level_env) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    set_heap(ptr, 1, cons(cons(symbol_obj, val), NIL));
     system_changed = true;
   }
 }
@@ -1597,14 +1613,14 @@ BOOLEAN is_special_form(OBJECT_PTR form)
 
 OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body, OBJECT_PTR source)
 {
-  OBJECT_PTR ptr = object_alloc(4, MACRO_TAG);
+  uintptr_t ptr = object_alloc(4);
 
-  set_heap(ptr, env_list);
-  set_heap(ptr + 1, params);
-  set_heap(ptr + 2, body);
-  set_heap(ptr + 3, source);
+  set_heap(ptr, 0, env_list);
+  set_heap(ptr, 1, params);
+  set_heap(ptr, 2, body);
+  set_heap(ptr, 3, source);
 
-  return ptr;
+  return ptr + MACRO_TAG;
 }
 
 int print_macro_object_to_string(OBJECT_PTR macro_obj, char *buf, int filled_buf_len)
@@ -2044,9 +2060,10 @@ BOOLEAN contains_keyword_parameter(OBJECT_PTR list)
 
 inline int get_int_value(OBJECT_PTR obj)
 {
-  assert(IS_INTEGER_OBJECT(obj));
+  if(!IS_INTEGER_OBJECT(obj))
+    assert(false);
 
-  return *((int *)obj);
+  return *((int *)((obj >> OBJECT_SHIFT) << OBJECT_SHIFT));
 
   /*
   int TWENTY_EIGHT_ONES = 268435455;
@@ -2059,12 +2076,19 @@ inline int get_int_value(OBJECT_PTR obj)
 
 inline OBJECT_PTR convert_int_to_object(int v)
 {
-  int *ptr = (int *)malloc(sizeof(int));
+  /* int *ptr = (int *)malloc(sizeof(int)); */
 
-  *ptr = v;
+  /* *ptr = v; */
 
-  hashtable_put(ht, (void *)ptr, (void *)INTEGER_TAG);
-  return (OBJECT_PTR)ptr;
+  /* hashtable_put(ht, (void *)ptr, (void *)INTEGER_TAG); */
+  /* return (OBJECT_PTR)ptr; */
+
+  void *ptr;
+  posix_memalign(&ptr, 16, sizeof(int));
+
+  *(int *)ptr = v;
+
+  return (OBJECT_PTR)ptr + INTEGER_TAG;
 
   /*
   int TWENTY_EIGHT_ONES = 268435455;
@@ -2079,17 +2103,25 @@ inline OBJECT_PTR convert_int_to_object(int v)
 float get_float_value(OBJECT_PTR obj)
 {
   assert(IS_FLOAT_OBJECT(obj));
-  return *((float *)obj);
+  //return *((float *)obj);
+  return *((float *)((obj >> OBJECT_SHIFT) << OBJECT_SHIFT));
 }
 
 OBJECT_PTR convert_float_to_object(float v)
 {
-  float *ptr = (float *)malloc(sizeof(float));
+  /* float *ptr = (float *)malloc(sizeof(float)); */
 
-  *ptr = v;
+  /* *ptr = v; */
 
-  hashtable_put(ht, (void *)ptr, (void *)FLOAT_TAG);
-  return (OBJECT_PTR)ptr;
+  /* hashtable_put(ht, (void *)ptr, (void *)FLOAT_TAG); */
+  /* return (OBJECT_PTR)ptr; */
+
+  void *ptr;
+  posix_memalign(&ptr, 16, sizeof(float));
+
+  *(float *)ptr = v;
+
+  return (OBJECT_PTR)ptr + FLOAT_TAG;
 }
 
 int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len)
@@ -2098,13 +2130,15 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
 
   len += sprintf(buf+filled_buf_len, "[");
 
-  int length = get_int_value(get_heap(array));
+  uintptr_t ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
+
+  int length = get_int_value(get_heap(ptr, 0));
 
   int i;
 
   for(i=0; i< length; i++)
   {
-    len += print_object_to_string(get_heap(array + i + 1), buf, filled_buf_len+len);
+    len += print_object_to_string(get_heap(ptr, i + 1), buf, filled_buf_len+len);
     len += sprintf(buf+filled_buf_len+len, " ");
   }
 
@@ -2121,17 +2155,19 @@ void print_array_object(OBJECT_PTR array)
 
   log_function_entry("print_array_object");
 
+  uintptr_t ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
+
 #ifdef GUI
 
   print_to_transcript("[");
 
-  int length = get_int_value(get_heap(array));
+  int length = get_int_value(get_heap(ptr, 0));
 
   int i;
 
   for(i=0; i< length; i++)
   {
-    print_object(get_heap(array + i + 1));
+    print_object(get_heap(ptr, i + 1));
     print_to_transcript(" ");
   }
 
@@ -2144,13 +2180,13 @@ void print_array_object(OBJECT_PTR array)
 
   fprintf(stdout, "[");
 
-  int length = get_int_value(get_heap(array));
+  int length = get_int_value(get_heap(ptr, 0));
 
   int i;
 
   for(i=0; i< length; i++)
   {
-    print_object(get_heap(array + i + 1));
+    print_object(get_heap(ptr, i + 1));
     fprintf(stdout, " ");
   }
 
@@ -2166,9 +2202,9 @@ void print_array_object(OBJECT_PTR array)
 
 int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_len)
 {
-  OBJECT_PTR ptr = string_object;
+  uintptr_t ptr = (string_object >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-  int len = get_int_value(get_heap(ptr));
+  int len = get_int_value(get_heap(ptr, 0));
 
   int i;
 
@@ -2177,7 +2213,7 @@ int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_l
   length += sprintf(buf+filled_buf_len, "\"");
 
   for(i=1; i<=len; i++)
-    length += sprintf(buf+filled_buf_len+length, "%c", (int)get_heap(ptr + i) >> OBJECT_SHIFT);
+    length += sprintf(buf+filled_buf_len+length, "%c", (int)get_heap(ptr, i) >> OBJECT_SHIFT);
 
   length += sprintf(buf+filled_buf_len+length, "\"");
 
@@ -2188,9 +2224,9 @@ void print_string(OBJECT_PTR string_object)
 {
   assert(is_string_object(string_object));
 
-  OBJECT_PTR ptr = string_object;
+  uintptr_t ptr = (string_object >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-  int len = get_int_value(get_heap(ptr));
+  int len = get_int_value(get_heap(ptr, 0));
 
   int i;
 
@@ -2204,7 +2240,7 @@ void print_string(OBJECT_PTR string_object)
   length = sprintf(buf+length, "\"");
 
   for(i=1; i<=len; i++)
-    length += sprintf(buf+length, "%c", (int)get_heap(ptr + i) >> OBJECT_SHIFT);
+    length += sprintf(buf+length, "%c", (int)get_heap(ptr, i) >> OBJECT_SHIFT);
 
   length += sprintf(buf+length, "\"");
 
@@ -2215,7 +2251,7 @@ void print_string(OBJECT_PTR string_object)
   fprintf(stdout, "\"");
 
   for(i=1; i<=len; i++)
-    fprintf(stdout, "%c", (int)get_heap(ptr + i) >> OBJECT_SHIFT);
+    fprintf(stdout, "%c", (int)get_heap(ptr, i) >> OBJECT_SHIFT);
 
   fprintf(stdout, "\"");
 
@@ -2228,15 +2264,15 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
   if(!(IS_ARRAY_OBJECT(obj)))
     return false;
 
-  OBJECT_PTR ptr = obj;
+  uintptr_t ptr = (obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-  int len = get_int_value(get_heap(ptr));
+  int len = get_int_value(get_heap(ptr, 0));
 
   int i;
 
   for(i=1; i<=len; i++)
   {
-    if(!(IS_CHAR_OBJECT(get_heap(ptr+i))))
+    if(!(IS_CHAR_OBJECT(get_heap(ptr, i))))
       return false;
   }
 
@@ -2248,16 +2284,16 @@ char *get_string(OBJECT_PTR string_object)
   if(!is_string_object(string_object))
     assert(false);
 
-  OBJECT_PTR ptr = string_object;
+  uintptr_t ptr = (string_object >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-  int len = get_int_value(get_heap(ptr));
+  int len = get_int_value(get_heap(ptr, 0));
 
   char *ret = (char *)malloc(len * sizeof(char));
 
   int i;
 
   for(i=1; i<=len; i++)
-    ret[i-1] = (int)get_heap(ptr + i) >> OBJECT_SHIFT;
+    ret[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
 
   ret[len] = '\0';
 
@@ -2377,7 +2413,10 @@ OBJECT_PTR list(int count, ...)
   int i;
 
   for(i=1; i<count; i++)
-    set_heap(last_cell(ret) + 1, cons((OBJECT_PTR)va_arg(ap, int), NIL));
+  {
+    uintptr_t ptr = (last_cell(ret) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    set_heap(ptr, 1, cons((OBJECT_PTR)va_arg(ap, int), NIL));
+  }
 
   va_end(ap);
 

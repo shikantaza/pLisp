@@ -146,13 +146,13 @@ void print_json_object(FILE *fp,
     fprintf(fp, "\"t\" : %d,", ARRAY_TAG);
     fprintf(fp, "\"v\" : [ ");
 
-    int len = get_int_value(get_heap(obj));
+    int len = get_int_value(get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0));
 
     int i;
 
     for(i=1; i<=len; i++)
     {
-      print_object1(fp, get_heap(obj+i), print_queue, obj_count, hashtable, printed_objects);
+      print_object1(fp, get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, i), print_queue, obj_count, hashtable, printed_objects);
 
       if(i != len)     fprintf(fp, ", ");
       else             fprintf(fp, " ");
@@ -182,7 +182,7 @@ void print_json_object(FILE *fp,
   {
     fprintf(fp, "\"t\" : %d,", CONTINUATION_TAG);
     fprintf(fp, "\"v\" : ");
-    print_object1(fp, get_heap(obj), print_queue, obj_count, hashtable, printed_objects);
+    print_object1(fp, get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0), print_queue, obj_count, hashtable, printed_objects);
   }
   else if(IS_INTEGER_OBJECT(obj))
     fprintf(fp, "\"t\" : %d, \"v\" : %d ", INTEGER_TAG, get_int_value(obj));
@@ -354,36 +354,42 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   }
   else if(str_type == CONS_TAG)
   {
-    ret = object_alloc(2, CONS_TAG);
+    uintptr_t ptr = object_alloc(2);
  
-    set_heap(ret,     convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
-    set_heap(ret + 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
+    set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
+    set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
+
+    ret = ptr + CONS_TAG;
   }
   else if(str_type == ARRAY_TAG)
   {
     int size = cJSON_GetArraySize(value);
     
-    ret = object_alloc(size + 1, ARRAY_TAG);
+    uintptr_t ptr = object_alloc(size + 1);
+
+    set_heap(ptr, 0, convert_int_to_object(size));
 
     for(i=0; i<size; i++)
-      set_heap(ret+i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable));
+      set_heap(ptr, i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable));
+
+    ret = ptr + ARRAY_TAG;
   }
   else if(str_type == CLOSURE_TAG || str_type == MACRO_TAG)
   {
-    if(str_type == CLOSURE_TAG)
-      ret = object_alloc(4, CLOSURE_TAG);
-    else
-      ret = object_alloc(4, MACRO_TAG);
+    uintptr_t ptr = object_alloc(4);
 
-    set_heap(ret,   convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
-    set_heap(ret+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
-    set_heap(ret+2, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 2), hashtable));
-    set_heap(ret+3, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 3), hashtable));
+    set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
+    set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
+    set_heap(ptr, 2, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 2), hashtable));
+    set_heap(ptr, 3, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 3), hashtable));
+
+    ret = ptr + str_type;
   }
   else if(str_type == CONTINUATION_TAG)
   {
-    ret = object_alloc(1, CONTINUATION_TAG);
-    set_heap(ret, convert_to_plisp_obj(root, heap, value, hashtable));
+    uintptr_t ptr = object_alloc(1);
+    set_heap(ptr, 0, convert_to_plisp_obj(root, heap, value, hashtable));
+    ret = ptr + CONTINUATION_TAG;
   }
   else if(str_type == INTEGER_TAG)
   {

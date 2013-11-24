@@ -68,7 +68,7 @@
 
 #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
 
-typedef unsigned int * OBJECT_PTR;
+typedef unsigned int OBJECT_PTR;
 
 typedef int BOOLEAN;
 
