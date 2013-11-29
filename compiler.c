@@ -26,8 +26,6 @@
 
 #include "plisp.h"
 
-#include "hashtable.h"
-
 extern OBJECT_PTR CADR(OBJECT_PTR);
 extern OBJECT_PTR CDDR(OBJECT_PTR);
 extern OBJECT_PTR CADDR(OBJECT_PTR);
@@ -87,8 +85,6 @@ BOOLEAN core_library_loaded = false;
 char *loaded_image_file_name = NULL;
 
 extern unsigned int current_package;
-
-extern hashtable_t *ht;
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -370,7 +366,7 @@ int main(int argc, char **argv)
     fflush(stdout);
 
     core_library_loaded = true;
-    ht = hashtable_create();
+
     initialize_memory();
     load_from_image(argv[1]);
 

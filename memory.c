@@ -29,8 +29,8 @@
 
 #include "hashtable.h"
 
-#ifdef CUSTOM_BST
-struct node *black = NULL, *white = NULL, *grey = NULL;
+#ifdef GC_USES_HASHTABLE
+hashtable_t *white, *grey, *black;
 #else
 rb_red_blk_tree *white, *grey, *black;
 #endif
@@ -53,28 +53,9 @@ void dealloc(OBJECT_PTR);
 
 void insert_node(unsigned int, OBJECT_PTR);
 
-#ifdef CUSTOM_BST
-
-struct node *create_node(OBJECT_PTR);
-struct node *put(struct node *, OBJECT_PTR);
-void insert_node_orig(struct node **, struct node *);
-void remove_node(struct node **, OBJECT_PTR);
-void destroy(struct node **);
-void print_tree(struct node *);
-BOOLEAN is_set_empty(struct node *);
-int get_size_of_tree(struct node *);
-int get_height_of_tree(struct node *);
-BOOLEAN value_exists(struct node **, OBJECT_PTR);
-
-#else
-
-void remove_node(rb_red_blk_tree *, OBJECT_PTR);
-void destroy(rb_red_blk_tree *);
-void print_tree(rb_red_blk_tree *);
-BOOLEAN is_set_empty(rb_red_blk_tree *);
-BOOLEAN value_exists(rb_red_blk_tree *, OBJECT_PTR);
-
-#endif
+void remove_node(unsigned int, OBJECT_PTR);
+BOOLEAN is_set_empty(unsigned int);
+BOOLEAN value_exists(unsigned int, OBJECT_PTR);
 
 void gc();
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
@@ -85,6 +66,41 @@ void build_grey_set();
 enum {WHITE, GREY, BLACK};
 
 unsigned int words_allocated;
+unsigned int words_deallocated;
+
+inline unsigned int memory_allocated() { return words_allocated; }
+inline unsigned int memory_deallocated() { return words_deallocated; }
+
+void free_white_set_objects()
+{
+  while(!is_set_empty(WHITE))
+  {
+
+#ifdef GC_USES_HASHTABLE
+    hashtable_entry_t *e = hashtable_get_any_element(white);
+    assert(e);
+    OBJECT_PTR obj = (OBJECT_PTR)(e->ptr);
+    assert(is_valid_object(obj));
+#else
+    rb_red_blk_node *white_obj = white->root->left;
+    OBJECT_PTR obj = *((unsigned int *)(white_obj->key));
+#endif
+
+    if(!value_exists(BLACK, obj))
+      dealloc(obj);
+
+    remove_node(WHITE, obj);
+  }
+}
+
+void move_from_white_to_grey(OBJECT_PTR obj)
+{
+  if(is_dynamic_memory_object(obj))
+  {
+    insert_node(GREY, obj);
+    remove_node(WHITE, obj);
+  }
+}
 
 void gc()
 {
@@ -95,113 +111,44 @@ void gc()
   if(count % GC_FREQUENCY)
     return;
 
-#ifdef CUSTOM_BST
-  destroy(&black);
-  destroy(&grey);
-#endif
+  unsigned int dealloc_words = memory_deallocated();
 
   //only top_level_env is stored in the grey set initially
   build_grey_set();
 
-  while(!is_set_empty(grey))
+  while(!is_set_empty(GREY))
   {
+#ifdef GC_USES_HASHTABLE
+    OBJECT_PTR obj = (OBJECT_PTR)(((hashtable_entry_t *)(hashtable_get_any_element(grey)))->ptr);
+    assert(is_valid_object(obj));
+#else
     //we can pick any grey object,
     //picking the root for convenience
-#ifdef CUSTOM_BST
-    OBJECT_PTR obj = grey->key;
-#else
     OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)grey->root->left->key;
 #endif
 
     insert_node(BLACK, obj);
 
-#ifdef CUSTOM_BST
-    remove_node(&grey, obj);
-#else
-    remove_node(grey, obj);
-#endif
+    remove_node(GREY, obj);
 
     if(IS_CONS_OBJECT(obj))
     {
-      OBJECT_PTR car_obj = car(obj);
-      if(is_dynamic_memory_object(car_obj))
-      {
-	insert_node(GREY, car_obj);
-#ifdef CUSTOM_BST
-	remove_node(&white, car_obj);
-#else
-	remove_node(white, car_obj);
-#endif
-      }
-
-      OBJECT_PTR cdr_obj = cdr(obj);
-      if(is_dynamic_memory_object(cdr_obj))
-      {
-	insert_node(GREY, cdr_obj);
-#ifdef CUSTOM_BST
-	remove_node(&white, cdr_obj);
-#else
-        remove_node(white, cdr_obj);
-#endif
-      }
+      move_from_white_to_grey(car(obj));
+      move_from_white_to_grey(cdr(obj));
     }
     else if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
     {
-      OBJECT_PTR env_obj = get_env_list(obj);
-      if(is_dynamic_memory_object(env_obj))
-      {
-	insert_node(GREY, env_obj);
-#ifdef CUSTOM_BST
-	remove_node(&white, env_obj);
-#else
-	remove_node(white, env_obj);
-#endif
-      }
-
-      OBJECT_PTR params_obj = get_params_object(obj);
-      if(is_dynamic_memory_object(params_obj))
-      {
-	insert_node(GREY, params_obj);
-#ifdef CUSTOM_BST
-	remove_node(&white, params_obj);
-#else
-	remove_node(white, params_obj);
-#endif
-      }
-
-      OBJECT_PTR body_obj = get_body_object(obj);
-      if(is_dynamic_memory_object(body_obj))
-      {
-	insert_node(GREY, body_obj);
-#ifdef CUSTOM_BST
-	remove_node(&white, body_obj);
-#else
-	remove_node(white, body_obj);
-#endif
-      }
-
-      OBJECT_PTR source_obj = get_source_object(obj);
-      if(is_dynamic_memory_object(source_obj))
-      {
-	insert_node(GREY, source_obj);
-#ifdef CUSTOM_BST
-	remove_node(&white, source_obj);
-#else
-	remove_node(white, source_obj);
-#endif
-      }
-
+      move_from_white_to_grey(get_env_list(obj));
+      move_from_white_to_grey(get_params_object(obj));
+      move_from_white_to_grey(get_body_object(obj));
+      move_from_white_to_grey(get_source_object(obj));
     }
     else if(IS_ARRAY_OBJECT(obj))
     {
-      OBJECT_PTR length_obj = get_heap(obj, 0);
+      OBJECT_PTR length_obj = get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
 
       insert_node(GREY, length_obj);
-#ifdef CUSTOM_BST
-      remove_node(&white, length_obj);
-#else
-      remove_node(white, length_obj);
-#endif
+      remove_node(WHITE, length_obj);
 
       int len = get_int_value(length_obj);
 
@@ -209,62 +156,19 @@ void gc()
 
       for(i=1; i<=len; i++)
       {
-        OBJECT_PTR array_elem = get_heap(obj, i);
-
-        if(is_dynamic_memory_object(array_elem))
-        {
-          insert_node(GREY, array_elem);
-#ifdef CUSTOM_BST
-          remove_node(&white, array_elem);
-#else
-          remove_node(white, array_elem);
-#endif
-        }
+        OBJECT_PTR array_elem = get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, i);
+        move_from_white_to_grey(array_elem);
       }
     }
     else if(IS_CONTINUATION_OBJECT(obj))
     {
-      OBJECT_PTR stack = get_heap(obj, 0);
-      insert_node(GREY, stack);
-#ifdef CUSTOM_BST
-      remove_node(&white, stack);
-#else
-      remove_node(white, stack);
-#endif
+      OBJECT_PTR stack = get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+      move_from_white_to_grey(stack);
     }
 
-  } //end of while(!is_set_empty(grey))
+  } //end of while(!is_set_empty(GREY))
 
-  //free all the objects in the white set
-  while(!is_set_empty(white))
-  {
-
-#ifdef CUSTOM_BST
-    struct node *white_obj = white;
-#else
-    rb_red_blk_node *white_obj = white->root->left;
-
-#endif
-
-#ifdef CUSTOM_BST
-    if(!value_exists(black, white_obj->key))
-      dealloc(white_obj->key);
-
-    remove_node(&white, white_obj->key);
-#else
-
-    if(!value_exists(black, (OBJECT_PTR)*(unsigned int *)white_obj->key))
-      dealloc((OBJECT_PTR)(*(unsigned int *)(white_obj->key)));
-
-    remove_node(white, (OBJECT_PTR)*(unsigned int *)(white_obj->key));
-#endif
-  }
-
-#ifdef CUSTOM_BST
-  destroy(&black);
-  destroy(&grey);
-  destroy(&white);
-#endif
+  free_white_set_objects();
 }
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
@@ -283,355 +187,11 @@ void build_grey_set()
   if(top_level_env != NIL)
   {
     insert_node(GREY, top_level_env);
-#ifdef CUSTOM_BST
-    remove_node(&white, top_level_env);
-#else
-    remove_node(white,top_level_env);
-#endif
+    remove_node(WHITE,top_level_env);
   }
 }
 
-void test_memory()
-{
-  printf("Testing memory\n");
-
-  uintptr_t ptr;
-
-  printf("Allocating 50000 objects...");
-  ptr = object_alloc(50000);
-  printf("done\n");
-
-  printf("Deallocating 50000 objects...");
-  dealloc(ptr);
-  printf("done\n");
-
-  printf("Allocating 50000 objects...");
-  ptr = object_alloc(50000);
-  printf("done\n");
-
-  printf("Deallocating 50000 objects...");
-  dealloc(ptr);
-  printf("done\n");  
-}
-
-#ifdef CUSTOM_BST
-
-struct node *create_node(OBJECT_PTR value)
-{
-  struct node *n = (struct node *)malloc(sizeof(struct node));
-  n->left = NULL;
-  n->right = NULL;
-  n->key = value;
-
-  return n;
-}
-
-void insert_node(unsigned int set_type, OBJECT_PTR val)
-{
-#ifdef DEBUG
-  assert(set_type == WHITE || set_type == GREY || set_type == BLACK);
-#endif
-
-  if(set_type == WHITE)
-    white = put(white, val);
-  else if(set_type == GREY)
-    grey = put(grey, val);
-  else
-    black = put(black, val);
-}
-
-struct node *put(struct node *x, OBJECT_PTR val)
-{
-  if(x == NULL)
-    return create_node(val);
-
-  if(val > x->key)
-    x->right = put(x->right, val);
-  else if(val < x->key)
-    x->left = put(x->left, val);
-  else
-    x->key = val;
-
-  return x;
-}
-
-void insert_node_orig(struct node **r, struct node *n)
-{
-  struct node *root;
-
-#ifdef DEBUG
-  if(!is_valid_object(n->key))
-    assert(false);
-
-  if(!is_dynamic_memory_object(n->key))
-    assert(false);
-#endif
-
-  if(*r == NULL)
-    *r = n;
-  else
-  {
-    root = *r;
-    if(n->key > root->key)
-      insert_node_orig(&(root->right), n);
-    else if(n->key < root->key)
-      insert_node_orig(&(root->left), n);
-  }
-}
-
-void remove_node(struct node **r, OBJECT_PTR value)
-{
-  struct node *root;
-
-  if(!is_valid_object(value))
-    assert(false);
-
-  if(*r == NULL)
-    return;
-
-  root = *r;
-
-  OBJECT_PTR key = root->key;
-
-  if(value > key)
-    remove_node(&(root->right), value);
-  else if(value < key)
-    remove_node(&(root->left), value);
-  else
-  {
-    if(root->right == NULL && root->left == NULL) //both children are empty
-    {
-      free(root);
-      *r = NULL;
-    }
-    else if(root->right == NULL) //node has only one child (left)
-    {
-      root->key = root->left->key;
-      *r = root->left;
-      free(root);
-    }
-    else if(root->left == NULL) //node has only one child (right)
-    {
-      root->key = root->right->key;
-      *r = root->right;
-      free(root);
-    }
-    else // both children are present
-    {
-      //to prevent the tree from becoming unbalanced
-      //if(rand() > RAND_MAX / 2)
-      if(1) //TODO: fix this
-      {
-	//in-order successor is the left-most leaf in the 
-	//right sub-tree of the node
-	struct node *it = root->right;
-	struct node *parent = root;
-
-	while(it->left != NULL)
-	{
-	  parent = it;
-	  it = it->left;
-	}
-
-	root->key = it->key;
-	
-	if(parent == root)
-	  parent->right = it->right;
-	else
-	  parent->left = NULL;
-
-	free(it);
-
-      }
-      else
-      {
-	//in-order predecessor is the right-most leaf in the
-	//left sub-tree of the node
-	struct node *it = root->left;
-	struct node *parent = root;
-
-	while(it->right != NULL)
-	{
-	  parent = it;
-	  it = it->right;
-	}
-
-	root->key = it->key;
-	
-	if(parent == root)
-	  parent->left = it->left;
-	else
-	  parent->right = NULL;
-
-	free(it);
-      
-      }
-    }
-  }
-}
-
-void destroy(struct node **r)
-{
-  struct node *root = *r;
-
-  if(root == NULL)
-    return;
-
-  destroy(&(root->left));
-  destroy(&(root->right));
-  
-  free(root);
-  *r = NULL;
-}
-
-void print_tree(struct node *n)
-{
-  if(n == NULL)
-    return;
-
-  if(n->left != NULL)
-    print_tree(n->left);
-
-  //fprintf(stdout, "%d\n", n->key);
-  print_object(n->key); printf("\n");
-
-  if(n->right != NULL)
-    print_tree(n->right);
-
-}
-
-BOOLEAN is_set_empty(struct node *set)
-{
-  if(set == NULL)
-    return true;
-  else
-    return false;
-}
-
-int get_size_of_tree(struct node *n)
-{
-  if(n == NULL)
-    return 0;
-  else
-    return 1 + get_size_of_tree(n->left) + get_size_of_tree(n->right);
-}
-
-int get_height_of_tree(struct node *n)
-{
-  if(n == NULL)
-    return -1;
-  else
-  {
-    int l = get_height_of_tree(n->left);
-    int r = get_height_of_tree(n->right);
-    return 1 + ((l>r) ? l : r);
-  }
-}
-
-void test_bst()
-{
-
-  printf("BST test start\n");
-
-  grey = NULL;
-
-  //test 1
-
-  /* int i; */
-  /* int a[1000]; */
-
-  /* for(i=0; i< 1000; i++) */
-  /* { */
-  /*   a[i] = rand(); */
-  /*   insert_node(GREY, a[i]); */
-  /* } */
-
-  /* print_tree(grey); */
-
-  /* printf("removing nodes\n"); */
-
-  /* for(i=999; i>= 0; i--) */
-  /*   remove_node(&grey, a[i]); */
-
-  /* print_tree(grey); */
-
-  /* if(is_set_empty(grey)) */
-  /*   printf("set is empty\n"); */
-
-  //end of test 1
-
-  //test 2
-
-  /* insert_node(GREY, 10); */
-  /* insert_node(GREY, 5); */
-  /* insert_node(GREY, 20); */
-  /* insert_node(GREY, 3); */
-  /* insert_node(GREY, 8); */
-  /* insert_node(GREY, 15); */
-  /* insert_node(GREY, 40); */
-  /* insert_node(GREY, 13); */
-  /* insert_node(GREY, 18); */
-
-  /* print_tree(grey); */
-
-  /* remove_node(&grey, 15); */
-
-  /* if(value_exists(grey, 10)) */
-  /*    printf("10 exists in the tree\n"); */
-  /* else */
-  /*   printf("Failure: 10 does not exist in the tree\n"); */
-
-  /* if(!value_exists(grey, 15)) */
-  /*    printf("15 does not exist in the tree\n"); */
-  /* else */
-  /*   printf("Failure: 15 exists not exist in the tree\n"); */
-
-  /* print_tree(grey); */
-
-  //end of test 2
-
-  //test 3
-  insert_node(GREY, 100);
-  insert_node(GREY, 80);
-  insert_node(GREY, 60);
-  insert_node(GREY, 40);
-  insert_node(GREY, 120);
-  insert_node(GREY, 110);
-  insert_node(GREY, 130);
-  insert_node(GREY, 90);
-  insert_node(GREY, 95);
-
-  print_tree(grey);
-  printf("----%d------\n", get_size_of_tree(grey));
-
-  remove_node(&grey, 120);
-
-  print_tree(grey);
-  printf("----%d------\n", get_size_of_tree(grey));
-
-  //end of test 3
-
-  destroy(&grey);
-
-  printf("BST test done\n");
-}
-
-BOOLEAN value_exists(struct node *r, OBJECT_PTR val)
-{
-  if(r == NULL)
-    return false;
-
-  if(r->key == val)
-    return true;
-  else if(r->key > val)
-    return value_exists(r->left, val);
-  else
-    return value_exists(r->right, val);
-
-  //return value_exists(r->left, val) || value_exists(r->right, val);
-}
-
-#endif
+#ifndef GC_USES_HASHTABLE
 
 void IntDest(void* a)
 {
@@ -660,13 +220,28 @@ void InfoDest(void *a)
   ;
 }
 
+#endif
+
 void insert_node(unsigned int set_type, OBJECT_PTR val)
 {
   if(!is_valid_object(val))
     assert(false);
 
+#ifdef GC_USES_HASHTABLE
+
+  if(set_type == WHITE)
+    hashtable_put(white, (void *)val, 0);
+  else if(set_type == GREY)
+    hashtable_put(grey, (void *)val, 0);
+  else if(set_type == BLACK)
+    hashtable_put(black, (void *)val, 0);
+  else
+    assert(false);
+
+#else
+
   unsigned int *newInt=(unsigned int*) malloc(sizeof(unsigned int));
-  *newInt = (int)val;
+  *newInt = (unsigned int)val;
 
   if(set_type == WHITE)
     RBTreeInsert(white, newInt, 0);
@@ -676,39 +251,109 @@ void insert_node(unsigned int set_type, OBJECT_PTR val)
     RBTreeInsert(black, newInt, 0);
   else
     assert(false);
+
+#endif
 }
 
-void remove_node(rb_red_blk_tree *tree, OBJECT_PTR val)
+void remove_node(unsigned int set_type, OBJECT_PTR val)
 {
+
+#ifdef GC_USES_HASHTABLE
+
+  if(set_type == WHITE)
+    hashtable_remove(white, (void *)val);
+  else if(set_type == GREY)
+    hashtable_remove(grey, (void *)val);
+  else if(set_type == BLACK)
+    hashtable_remove(black, (void *)val);
+  else
+    assert(false);
+
+#else
+
+  rb_red_blk_tree *tree;
+
+  if(set_type == WHITE)
+    tree = white;
+  else if(set_type == GREY)
+    tree = grey;
+  else if(set_type == BLACK)
+    tree = black;
+  else
+    assert(false);
+
   if(!tree)
     return;
 
   rb_red_blk_node* newNode;
   if((newNode=RBExactQuery(tree,&val))) 
     RBDelete(tree,newNode);  
+
+#endif
 }
 
-void destroy(rb_red_blk_tree *tree)
+BOOLEAN is_set_empty(unsigned int set_type)
 {
-  if(tree)
-    RBTreeDestroy(tree);
-}
 
-void print_tree(rb_red_blk_tree *tree)
-{
-  RBTreePrint(tree);
-}
+#ifdef GC_USES_HASHTABLE
 
-BOOLEAN is_set_empty(rb_red_blk_tree *tree)
-{
+  if(set_type == WHITE)
+    return(hashtable_count(white) == 0);
+  else if(set_type == GREY)
+    return(hashtable_count(grey) == 0);
+  else if(set_type == BLACK)
+    return(hashtable_count(black) == 0);
+  else
+    assert(false);
+
+#else
+
+  rb_red_blk_tree *tree;
+
+  if(set_type == WHITE)
+    tree = white;
+  else if(set_type == GREY)
+    tree = grey;
+  else if(set_type == BLACK)
+    tree = black;
+  else
+    assert(false);
+
   if(!tree)
     return true;
 
   return tree->root->left == tree->nil;
+
+#endif
 }
 
-BOOLEAN value_exists(rb_red_blk_tree *tree, OBJECT_PTR val)
+BOOLEAN value_exists(unsigned int set_type, OBJECT_PTR val)
 {
+
+#ifdef GC_USES_HASHTABLE
+
+  if(set_type == WHITE)
+    return(hashtable_get(white, (void *)val) != NULL);
+  else if(set_type == GREY)
+    return(hashtable_get(grey, (void *)val) != NULL);
+  else if(set_type == BLACK)
+    return(hashtable_get(black, (void *)val) != NULL);
+  else
+    assert(false);
+
+#else
+
+  rb_red_blk_tree *tree;
+
+  if(set_type == WHITE)
+    tree = white;
+  else if(set_type == GREY)
+    tree = grey;
+  else if(set_type == BLACK)
+    tree = black;
+  else
+    assert(false);
+
   if(!tree)
     return false;
 
@@ -717,6 +362,8 @@ BOOLEAN value_exists(rb_red_blk_tree *tree, OBJECT_PTR val)
     return true;
   else
     return false;
+
+#endif
 }
 
 #ifndef DEBUG_MEMORY
@@ -750,64 +397,117 @@ OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
   return ret;
 }
 
-uintptr_t object_alloc(int size)
+uintptr_t object_alloc(int size, int tag)
 {
   unsigned int *ret;
-  posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
 
-  words_allocated += size;
+  int err = posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
 
-  if(!ret)
+  if(err)
   {
 
 #ifdef GUI
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
     int len=0;
-    len += sprintf(buf, "Unable to allocate memory\n");
+    len += sprintf(buf, "Unable to allocate memory; posix_memalign error = %d\n", err);
     show_error_dialog(buf);
 #else
-    printf("Unable to allocate memory\n");
+    printf("Unable to allocate memory; posix_memalign error = %d\n", err);
 #endif
+
+    printf("Unable to allocate memory; posix_memalign error = %d\n", err);
 
     cleanup();
     exit(1);
   }
 
-  //hashtable_put(ht, (void *)ret, (void *)tag);
-  //return ret;
+  words_allocated += size;
+
+  assert(is_valid_object((OBJECT_PTR)((uintptr_t)ret+tag)));
+
+  insert_node(WHITE, (OBJECT_PTR)((uintptr_t)ret+tag));
 
   return (uintptr_t)ret;
 }
 
-void dealloc(uintptr_t ptr)
+void dealloc(OBJECT_PTR ptr)
 {
-  //hashtable_remove(ht, (void *)ptr);
-  free((void *)ptr);
+  if(!is_valid_object(ptr))
+  {
+    printf("%d\n", ptr);
+    assert(false);
+  }
+
+  int tag = ptr & BIT_MASK;
+
+  switch(tag)
+  {
+    case CONS_TAG:
+      words_deallocated += 2;
+      break;
+    case ARRAY_TAG:
+      words_deallocated += get_int_value(get_heap((ptr >> OBJECT_SHIFT) << OBJECT_SHIFT, 0)) + 1;
+      break;
+    case CLOSURE_TAG:
+      words_deallocated += 4;
+      break;
+    case MACRO_TAG:
+      words_deallocated += 4;
+      break;
+    case CONTINUATION_TAG:
+      words_deallocated += 1;
+      break;
+    case INTEGER_TAG:
+      words_deallocated += 1;
+      break;
+    case FLOAT_TAG:
+      words_deallocated += 1;
+      break;
+    default:
+      assert(false);
+  }
+
+  free((void *)((ptr >> OBJECT_SHIFT) << OBJECT_SHIFT));
 }
 
 int initialize_memory()
 {
+#ifdef GC_USES_HASHTABLE
+
+  white = hashtable_create(1001);
+  grey  = hashtable_create(1001);
+  black = hashtable_create(1001);
+
+#else
+
   white = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
-  grey = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
+  grey  = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
   black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
 
+#endif
+
   words_allocated = 0;
+  words_deallocated = 0;
 
   return 0;
 }
 
 void cleanup_memory()
 {
-#ifndef CUSTOM_BST
-  destroy(white);
-  destroy(grey);
-  destroy(black);
+#ifdef GC_USES_HASHTABLE
+  hashtable_delete(white);
+  hashtable_delete(grey);
+  hashtable_delete(black);
+#else
+  if(white)RBTreeDestroy(white);
+  if(grey)RBTreeDestroy(grey);
+  if(black)RBTreeDestroy(black);
+#endif
 
   white = NULL;
-  grey = NULL;
+  grey  = NULL;
   black = NULL;
-#endif
 }
 
-inline unsigned int memory_allocated() { return words_allocated; }
+

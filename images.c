@@ -233,18 +233,19 @@ void create_image(char *file_name)
   *obj_count = 0;
 
   queue_t *print_queue = queue_create();
-  hashtable_t *hashtable = hashtable_create();
-  hashtable_t *printed_objects = hashtable_create();
+  hashtable_t *hashtable = hashtable_create(1000001);
+  hashtable_t *printed_objects = hashtable_create(1000001);
 
   fprintf(fp, "{ ");
 
   fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
 
   fprintf(fp, "\"top_level_env\" : "        ); print_object1(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+
   fprintf(fp, "\"debug_continuation\" : "   ); print_object1(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"debug_env\" : "            ); print_object1(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"execution_stack\" : "      ); print_object1(fp,execution_stack,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", "); 
   fprintf(fp, "\"debug_execution_stack\" : "); print_object1(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"execution_stack\" : "      ); print_object1(fp,execution_stack,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"reg_accumulator\" : "      ); print_object1(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"reg_next_expression\" : "  ); print_object1(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"reg_current_env\" : "      ); print_object1(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
@@ -354,8 +355,8 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   }
   else if(str_type == CONS_TAG)
   {
-    uintptr_t ptr = object_alloc(2);
- 
+    uintptr_t ptr = object_alloc(2, CONS_TAG);
+
     set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
     set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
 
@@ -365,7 +366,7 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   {
     int size = cJSON_GetArraySize(value);
     
-    uintptr_t ptr = object_alloc(size + 1);
+    uintptr_t ptr = object_alloc(size + 1, ARRAY_TAG);
 
     set_heap(ptr, 0, convert_int_to_object(size));
 
@@ -376,7 +377,7 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   }
   else if(str_type == CLOSURE_TAG || str_type == MACRO_TAG)
   {
-    uintptr_t ptr = object_alloc(4);
+    uintptr_t ptr = object_alloc(4, str_type);
 
     set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
     set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
@@ -387,7 +388,7 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   }
   else if(str_type == CONTINUATION_TAG)
   {
-    uintptr_t ptr = object_alloc(1);
+    uintptr_t ptr = object_alloc(1, CONTINUATION_TAG);
     set_heap(ptr, 0, convert_to_plisp_obj(root, heap, value, hashtable));
     ret = ptr + CONTINUATION_TAG;
   }
@@ -402,7 +403,9 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   else if(str_type == SYMBOL_TAG         ||
           str_type == STRING_LITERAL_TAG ||
           str_type == CHAR_TAG)
+  {
     ret = (OBJECT_PTR)(value->valueint);
+  }
   else
   {
     printf("%d\n", str_type);
@@ -487,7 +490,7 @@ void load_from_image(char *file_name)
     }
   }
 
-  hashtable_t *hashtable = hashtable_create();
+  hashtable_t *hashtable = hashtable_create(1000001);
 
   temp = cJSON_GetObjectItem(root, "debug_mode");
   debug_mode = strcmp(temp->valuestring, "true") ? false : true;
@@ -501,11 +504,11 @@ void load_from_image(char *file_name)
   temp = cJSON_GetObjectItem(root, "debug_env");
   debug_env = convert_to_plisp_obj(root, heap, temp, hashtable);
 
-  temp = cJSON_GetObjectItem(root, "execution_stack");
-  execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
-
   temp = cJSON_GetObjectItem(root, "debug_execution_stack");
   debug_execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
+
+  temp = cJSON_GetObjectItem(root, "execution_stack");
+  execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
 
   temp = cJSON_GetObjectItem(root, "reg_accumulator");
   reg_accumulator = convert_to_plisp_obj(root, heap, temp, hashtable);

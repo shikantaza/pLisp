@@ -27,10 +27,6 @@
 
 #include "memory.h"
 
-#include "hashtable.h"
-
-hashtable_t *ht;
-
 expression_t *g_expr = NULL;
 
 extern void yyparse();
@@ -132,47 +128,53 @@ OBJECT_PTR ABORT                 = (OBJECT_PTR)((72 << OBJECT_SHIFT) + SYMBOL_TA
 OBJECT_PTR TIME                  = (OBJECT_PTR)((73 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR PROFILE               = (OBJECT_PTR)((74 << OBJECT_SHIFT) + SYMBOL_TAG);
 
+OBJECT_PTR NOT                   = (OBJECT_PTR)((75 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LT                    = (OBJECT_PTR)((76 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LEQ                   = (OBJECT_PTR)((77 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR GEQ                   = (OBJECT_PTR)((78 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR NEQ                   = (OBJECT_PTR)((79 << OBJECT_SHIFT) + SYMBOL_TAG);
+
 //end of standard object definition
 
 /* symbols corresponding to assembler mnemonics */
-OBJECT_PTR HALT     = (OBJECT_PTR)((75 << OBJECT_SHIFT) + SYMBOL_TAG);                  
-OBJECT_PTR REFER    = (OBJECT_PTR)((76 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CONSTANT = (OBJECT_PTR)((77 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CLOSE    = (OBJECT_PTR)((78 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR TEST     = (OBJECT_PTR)((79 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR ASSIGN   = (OBJECT_PTR)((80 << OBJECT_SHIFT) + SYMBOL_TAG);         
-OBJECT_PTR CONTI    = (OBJECT_PTR)((81 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR NUATE    = (OBJECT_PTR)((82 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR FRAME    = (OBJECT_PTR)((83 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR ARGUMENT = (OBJECT_PTR)((84 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR HALT     = (OBJECT_PTR)((80 << OBJECT_SHIFT) + SYMBOL_TAG);                  
+OBJECT_PTR REFER    = (OBJECT_PTR)((81 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CONSTANT = (OBJECT_PTR)((82 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CLOSE    = (OBJECT_PTR)((83 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR TEST     = (OBJECT_PTR)((84 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ASSIGN   = (OBJECT_PTR)((85 << OBJECT_SHIFT) + SYMBOL_TAG);         
+OBJECT_PTR CONTI    = (OBJECT_PTR)((86 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR NUATE    = (OBJECT_PTR)((87 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR FRAME    = (OBJECT_PTR)((88 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ARGUMENT = (OBJECT_PTR)((89 << OBJECT_SHIFT) + SYMBOL_TAG);
 /* APPLY already defined as a special symbol */
 /* RETURN already defined as a special symbol */
 /* DEFINE already defind as a special symbol */
-OBJECT_PTR MACRO    = (OBJECT_PTR)((85 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR MACRO    = (OBJECT_PTR)((90 << OBJECT_SHIFT) + SYMBOL_TAG);
 /* end symbols corresponding to assembler mnemonics */
 
 /* symbols useful in FFI */
-OBJECT_PTR INTEGR        = (OBJECT_PTR)((86 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR FLOT          = (OBJECT_PTR)((87 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CHAR          = (OBJECT_PTR)((88 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR VOID          = (OBJECT_PTR)((89 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR INT_POINTER   = (OBJECT_PTR)((90 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR FLOAT_POINTER = (OBJECT_PTR)((91 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CHAR_POINTER  = (OBJECT_PTR)((92 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR INTEGR        = (OBJECT_PTR)((91 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR FLOT          = (OBJECT_PTR)((92 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CHAR          = (OBJECT_PTR)((93 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR VOID          = (OBJECT_PTR)((94 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR INT_POINTER   = (OBJECT_PTR)((95 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR FLOAT_POINTER = (OBJECT_PTR)((96 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CHAR_POINTER  = (OBJECT_PTR)((97 << OBJECT_SHIFT) + SYMBOL_TAG);
 /* end symbols useful in FFI */
 
-OBJECT_PTR LET           = (OBJECT_PTR)((93 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR COND          = (OBJECT_PTR)((94 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DOTIMES       = (OBJECT_PTR)((95 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DOLIST        = (OBJECT_PTR)((96 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LET           = (OBJECT_PTR)((98 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR COND          = (OBJECT_PTR)((99 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DOTIMES       = (OBJECT_PTR)((100 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DOLIST        = (OBJECT_PTR)((101 << OBJECT_SHIFT) + SYMBOL_TAG);
 
-OBJECT_PTR LET1          = (OBJECT_PTR)((97 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DEFUN         = (OBJECT_PTR)((98 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DEFMACRO      = (OBJECT_PTR)((99 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LET1          = (OBJECT_PTR)((102 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DEFUN         = (OBJECT_PTR)((103 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DEFMACRO      = (OBJECT_PTR)((104 << OBJECT_SHIFT) + SYMBOL_TAG);
 
 extern FILE *yyin;
 
-#define NOF_SPECIAL_SYMBOLS     74
+#define NOF_SPECIAL_SYMBOLS     79
 #define NOF_NON_SPECIAL_SYMBOLS 26
 
 BOOLEAN in_exception = false;
@@ -212,19 +214,6 @@ inline OBJECT_PTR second(OBJECT_PTR x) { return car(cdr(x)); }
 inline OBJECT_PTR third(OBJECT_PTR x)  { return car(cdr(cdr(x))); } 
 inline OBJECT_PTR fourth(OBJECT_PTR x) { return car(cdr(cdr(cdr(x)))); } 
 inline OBJECT_PTR fifth(OBJECT_PTR x)  { return car(cdr(cdr(cdr(cdr(x))))); } 
-
-/* inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == SYMBOL_TAG;         } */
-/* inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == STRING_LITERAL_TAG; } */
-/* inline BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return !hashtable_get(ht, (void *)x) &&  (((int)x) & BIT_MASK) == CHAR_TAG;           } */
-/* /\* inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return !get(x) && ((((int)x) & BIT_MASK) == POS_INTEGER_TAG || *\/ */
-/* /\*                                                                            (((int)x) & BIT_MASK) ==  NEG_INTEGER_TAG); } *\/ */
-/* inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == INTEGER_TAG;        } */
-/* inline BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == FLOAT_TAG;        } */
-/* inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CONS_TAG;         } */
-/* inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CLOSURE_TAG;      } */
-/* inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == MACRO_TAG;        } */
-/* inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == ARRAY_TAG;        } */
-/* inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return hashtable_get(ht, (void *)x) && (int)((hashtable_entry_t *)hashtable_get(ht, (void *)x))->value == CONTINUATION_TAG; } */
 
 inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG;         }
 inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return (x & BIT_MASK) == STRING_LITERAL_TAG; }
@@ -272,8 +261,6 @@ void initialize()
   debug_execution_stack = NIL;
   debug_continuation = NIL;
   debug_env = NIL;
-
-  ht = hashtable_create();
 }
 
 int add_string(char *str)
@@ -542,18 +529,6 @@ void cleanup()
 
   cleanup_memory();
 
-  /* hashtable_entry_t *entries = hashtable_entries(ht); */
-
-  /* while(entries) */
-  /* { */
-  /*   hashtable_entry_t *temp = entries->next; */
-  /*   free(entries->ptr); */
-  /*   free(entries); */
-  /*   entries = temp; */
-  /* } */
-
-  /* hashtable_delete(ht); */
-
   log_function_exit("cleanup");
 }
 
@@ -736,7 +711,7 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
   if(!is_valid_object(cdr))
     assert(false);
 
-  uintptr_t ptr = object_alloc(2);
+  uintptr_t ptr = object_alloc(2, CONS_TAG);
 
   set_heap(ptr, 0, car);
   set_heap(ptr, 1, cdr);
@@ -940,7 +915,15 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
     length += sprintf(buf+filled_buf_len+length, "  ");
 
-    length += print_object_to_string(CADDDR(obj), buf, filled_buf_len+length);
+    OBJECT_PTR rest = CDDDR(obj);
+
+    while(rest != NIL)
+    {
+      length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+      rest = cdr(rest);
+      if(rest != NIL)
+        length += sprintf(buf+filled_buf_len+length, " ");
+    }
 
     length += sprintf(buf+filled_buf_len+length, ")");
 
@@ -1314,7 +1297,7 @@ BOOLEAN equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
 
 OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body, OBJECT_PTR source)
 {
-  uintptr_t ptr = object_alloc(4);
+  uintptr_t ptr = object_alloc(4, CLOSURE_TAG);
 
   set_heap(ptr, 0, env_list);
   set_heap(ptr, 1, params);
@@ -1357,7 +1340,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
       int len = get_int_value(get_heap(ptr, 0));
 
-      uintptr_t new_obj = object_alloc(len+1);
+      uintptr_t new_obj = object_alloc(len+1, ARRAY_TAG);
       
       set_heap(new_obj, 0, get_heap(ptr, 0));
 
@@ -1613,7 +1596,7 @@ BOOLEAN is_special_form(OBJECT_PTR form)
 
 OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PTR body, OBJECT_PTR source)
 {
-  uintptr_t ptr = object_alloc(4);
+  uintptr_t ptr = object_alloc(4, MACRO_TAG);
 
   set_heap(ptr, 0, env_list);
   set_heap(ptr, 1, params);
@@ -1797,41 +1780,47 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[73] = strdup("TIME");
   packages[CORE_PACKAGE_INDEX].symbols[74] = strdup("PROFILE");
 
+  packages[CORE_PACKAGE_INDEX].symbols[75] = strdup("NOT");
+  packages[CORE_PACKAGE_INDEX].symbols[76] = strdup("<");
+  packages[CORE_PACKAGE_INDEX].symbols[77] = strdup("<=");
+  packages[CORE_PACKAGE_INDEX].symbols[78] = strdup(">=");
+  packages[CORE_PACKAGE_INDEX].symbols[79] = strdup("NEQ");
+
   /* symbols corresponding to assembler mnemonics */
-  packages[CORE_PACKAGE_INDEX].symbols[75] =  strdup("HALT");
-  packages[CORE_PACKAGE_INDEX].symbols[76] =  strdup("REFER");
-  packages[CORE_PACKAGE_INDEX].symbols[77] =  strdup("CONSTANT");
-  packages[CORE_PACKAGE_INDEX].symbols[78] =  strdup("CLOSE");
-  packages[CORE_PACKAGE_INDEX].symbols[79] =  strdup("TEST");
-  packages[CORE_PACKAGE_INDEX].symbols[80] =  strdup("ASSIGN");         
-  packages[CORE_PACKAGE_INDEX].symbols[81] =  strdup("CONTI");
-  packages[CORE_PACKAGE_INDEX].symbols[82] =  strdup("NUATE");
-  packages[CORE_PACKAGE_INDEX].symbols[83] =  strdup("FRAME");
-  packages[CORE_PACKAGE_INDEX].symbols[84] =  strdup("ARGUMENT");
+  packages[CORE_PACKAGE_INDEX].symbols[80] =  strdup("HALT");
+  packages[CORE_PACKAGE_INDEX].symbols[81] =  strdup("REFER");
+  packages[CORE_PACKAGE_INDEX].symbols[82] =  strdup("CONSTANT");
+  packages[CORE_PACKAGE_INDEX].symbols[83] =  strdup("CLOSE");
+  packages[CORE_PACKAGE_INDEX].symbols[84] =  strdup("TEST");
+  packages[CORE_PACKAGE_INDEX].symbols[85] =  strdup("ASSIGN");         
+  packages[CORE_PACKAGE_INDEX].symbols[86] =  strdup("CONTI");
+  packages[CORE_PACKAGE_INDEX].symbols[87] =  strdup("NUATE");
+  packages[CORE_PACKAGE_INDEX].symbols[88] =  strdup("FRAME");
+  packages[CORE_PACKAGE_INDEX].symbols[89] =  strdup("ARGUMENT");
   /* APPLY already defined as a special symbol */
   /* RETURN already defined as a special symbol */
   /* DEFINE already defined as a special symbol */
-  packages[CORE_PACKAGE_INDEX].symbols[85] = strdup("MACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[90] = strdup("MACRO");
   /* end symbols corresponding to assembler mnemonics */
 
   /* symbols for FFI */
-  packages[CORE_PACKAGE_INDEX].symbols[86] = strdup("INTEGER");
-  packages[CORE_PACKAGE_INDEX].symbols[87] = strdup("FLOAT");
-  packages[CORE_PACKAGE_INDEX].symbols[88] = strdup("CHARACTER");
-  packages[CORE_PACKAGE_INDEX].symbols[89] = strdup("VOID");
-  packages[CORE_PACKAGE_INDEX].symbols[90] = strdup("INTEGER-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[91] = strdup("FLOAT-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[92] = strdup("CHARACTER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[91] = strdup("INTEGER");
+  packages[CORE_PACKAGE_INDEX].symbols[92] = strdup("FLOAT");
+  packages[CORE_PACKAGE_INDEX].symbols[93] = strdup("CHARACTER");
+  packages[CORE_PACKAGE_INDEX].symbols[94] = strdup("VOID");
+  packages[CORE_PACKAGE_INDEX].symbols[95] = strdup("INTEGER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[96] = strdup("FLOAT-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[97] = strdup("CHARACTER-POINTER");
   /* end symbols for FFI */
 
-  packages[CORE_PACKAGE_INDEX].symbols[93] = strdup("LET");
-  packages[CORE_PACKAGE_INDEX].symbols[94] = strdup("COND");
-  packages[CORE_PACKAGE_INDEX].symbols[95] = strdup("DOTIMES");
-  packages[CORE_PACKAGE_INDEX].symbols[96] = strdup("DOLIST");
+  packages[CORE_PACKAGE_INDEX].symbols[98] = strdup("LET");
+  packages[CORE_PACKAGE_INDEX].symbols[99] = strdup("COND");
+  packages[CORE_PACKAGE_INDEX].symbols[100] = strdup("DOTIMES");
+  packages[CORE_PACKAGE_INDEX].symbols[101] = strdup("DOLIST");
 
-  packages[CORE_PACKAGE_INDEX].symbols[97] = strdup("LET1");
-  packages[CORE_PACKAGE_INDEX].symbols[98] = strdup("DEFUN");
-  packages[CORE_PACKAGE_INDEX].symbols[99] = strdup("DEFMACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[102] = strdup("LET1");
+  packages[CORE_PACKAGE_INDEX].symbols[103] = strdup("DEFUN");
+  packages[CORE_PACKAGE_INDEX].symbols[104] = strdup("DEFMACRO");
 }
 
 int find_package(char* package_name)
@@ -2064,40 +2053,15 @@ inline int get_int_value(OBJECT_PTR obj)
     assert(false);
 
   return *((int *)((obj >> OBJECT_SHIFT) << OBJECT_SHIFT));
-
-  /*
-  int TWENTY_EIGHT_ONES = 268435455;
-
-  int tag = (int)obj & BIT_MASK;
-
-  return ((int)obj >> OBJECT_SHIFT) & ((tag == POS_INTEGER_TAG) ? TWENTY_EIGHT_ONES : -1);
-  */
 }
 
 inline OBJECT_PTR convert_int_to_object(int v)
 {
-  /* int *ptr = (int *)malloc(sizeof(int)); */
+  uintptr_t ptr = object_alloc(1, INTEGER_TAG);
 
-  /* *ptr = v; */
+  *((int *)ptr) = v;
 
-  /* hashtable_put(ht, (void *)ptr, (void *)INTEGER_TAG); */
-  /* return (OBJECT_PTR)ptr; */
-
-  void *ptr;
-  posix_memalign(&ptr, 16, sizeof(int));
-
-  *(int *)ptr = v;
-
-  return (OBJECT_PTR)ptr + INTEGER_TAG;
-
-  /*
-  int TWENTY_EIGHT_ONES = 268435455;
-
-  //discard OBJECT_SHIFT most significant bits, add POS_INTEGER_TAG/NEG_INTEGER_TAG
-  OBJECT_PTR ret = ((v & TWENTY_EIGHT_ONES) << OBJECT_SHIFT) + ((v >= 0) ? POS_INTEGER_TAG : NEG_INTEGER_TAG);
-
-  return ret;
-  */
+  return ptr + INTEGER_TAG;
 }
 
 float get_float_value(OBJECT_PTR obj)
@@ -2109,19 +2073,11 @@ float get_float_value(OBJECT_PTR obj)
 
 OBJECT_PTR convert_float_to_object(float v)
 {
-  /* float *ptr = (float *)malloc(sizeof(float)); */
+  uintptr_t ptr = object_alloc(1, FLOAT_TAG);
 
-  /* *ptr = v; */
+  *((float *)ptr) = v;
 
-  /* hashtable_put(ht, (void *)ptr, (void *)FLOAT_TAG); */
-  /* return (OBJECT_PTR)ptr; */
-
-  void *ptr;
-  posix_memalign(&ptr, 16, sizeof(float));
-
-  *(float *)ptr = v;
-
-  return (OBJECT_PTR)ptr + FLOAT_TAG;
+  return ptr + FLOAT_TAG;
 }
 
 int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len)

@@ -827,7 +827,13 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
       /*                                            cons(get_params_object(obj), */
       /*                                                 get_source_object(obj))), */
       /*                                       NIL))), buf, 0); */
-      print_object_to_string(list(4, DEFUN, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0);
+      /* print_object_to_string(list(4, DEFUN, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0); */
+      OBJECT_PTR temp = cons(DEFUN, 
+                             cons((OBJECT_PTR)ptr,
+                                  cons(get_params_object(obj),
+                                       get_source_object(obj))));
+
+      print_object_to_string(temp, buf, 0);
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
 
@@ -842,7 +848,15 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
       /*                                            cons(get_params_object(obj), */
       /*                                                 get_source_object(obj))), */
       /*                                       NIL))), buf, 0); */
-      print_object_to_string(list(4, DEFMACRO, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0);
+      /* print_object_to_string(list(4, DEFMACRO, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0); */
+
+      OBJECT_PTR temp = cons(DEFMACRO, 
+                             cons((OBJECT_PTR)ptr,
+                                  cons(get_params_object(obj),
+                                       get_source_object(obj))));
+
+      print_object_to_string(temp, buf, 0);
+
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
@@ -856,10 +870,11 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
     else
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(cons(DEFINE,
-                                  cons((OBJECT_PTR)ptr, cons(obj, NIL))), buf, 0);
+      /* print_object_to_string(cons(DEFINE, */
+      /*                             cons((OBJECT_PTR)ptr, cons(obj, NIL))), buf, 0); */
+      print_object_to_string(obj, buf, 0);
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
-      gtk_text_view_set_editable(system_browser_textview, TRUE);
+      gtk_text_view_set_editable(system_browser_textview, FALSE);
     }
 
     gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);

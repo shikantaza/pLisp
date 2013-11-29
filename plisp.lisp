@@ -59,9 +59,6 @@
         't
       (apply or (cdr lst)))))
 
-(defun not (x)
-  (if x nil 't))
-
 (defun append (x y)
   (if (null x)
       y
@@ -124,18 +121,6 @@
   (if (null lst)
       nil
     (append (reverse (cdr lst)) (list (car lst)))))
-
-(defun < (x y)
-  (not (or (> x y) (eq x y))))
-
-(defmacro <= (x y)
-  `(or (< ,x ,y) (eq ,x ,y)))
-
-(defmacro >= (x y)
-  `(or (> ,x ,y) (eq ,x ,y)))
-
-(defmacro neq (x y)
-  `(not (eq ,x ,y)))
 
 (defun range (start end incr)
   (if (> start end)

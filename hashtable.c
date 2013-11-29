@@ -24,15 +24,20 @@
 
 #include "hashtable.h"
 
-#define HASHSIZE 1000001
+//#define HASHSIZE 1000001
 
-static inline unsigned hash(void * val) { return (unsigned int)val % HASHSIZE; }
+inline unsigned hash(void * val, unsigned int hash_size) { return (unsigned int)val % hash_size; }
+
+inline unsigned int hashtable_count(hashtable_t *tab)
+{
+  return tab->count;
+}
 
 hashtable_entry_t *hashtable_get(hashtable_t *hashtab, void *ptr)
 {
   hashtable_entry_t *np;
 
-  for(np = hashtab[hash(ptr)]; np != NULL; np = np->next)
+  for(np = hashtab->entries[hash(ptr, hashtab->hash_size)]; np != NULL; np = np->next)
   {
     if(np->ptr == ptr)
       return np;
@@ -52,12 +57,16 @@ hashtable_entry_t *hashtable_put(hashtable_t *hashtab, void *ptr, void *value)
     if(np == NULL)
       return NULL;
 
-    hashval = hash(ptr);
-    np->next = hashtab[hashval];
+    hashval = hash(ptr, hashtab->hash_size);
+    np->next = hashtab->entries[hashval];
     np->ptr = ptr;
     np->value = value;
-    hashtab[hashval] = np;
+    hashtab->entries[hashval] = np;
+
+    hashtab->count++;
   }
+
+  hashtab->an_element = np;
 
   return np;
 }
@@ -66,32 +75,58 @@ void hashtable_remove(hashtable_t *hashtab, void *ptr)
 {
   hashtable_entry_t *np, *prev = NULL;
 
-  for(np = hashtab[hash(ptr)]; np != NULL; np = np->next)
+  for(np = hashtab->entries[hash(ptr, hashtab->hash_size)]; np != NULL; np = np->next)
   {
     if(np->ptr == ptr)
     {
       if(prev)
         prev->next = np->next;
       else
-        hashtab[hash(ptr)] = np->next;
+        hashtab->entries[hash(ptr, hashtab->hash_size)] = np->next;
+
+      if(hashtab->an_element->ptr == ptr)
+      {
+        if(np->next)
+          hashtab->an_element = np->next;
+        else
+        {
+          int i;
+
+          for(i=0; i<hashtab->hash_size; i++)
+          {
+            if(hashtab->entries[i])
+            {
+              hashtab->an_element = hashtab->entries[i];
+              break;
+            }
+          }
+        }
+      }
 
       free(np);
+      hashtab->count--;
+
       return;
     }
     prev = np;
   }
 
-  printf("%d does not exist\n", ptr);
+  //printf("%d does not exist\n", ptr);
 }
 
-hashtable_t *hashtable_create()
+hashtable_t *hashtable_create(unsigned int hash_size)
 {
-  hashtable_t *ret = (hashtable_t *)malloc(HASHSIZE * sizeof(hashtable_t));
+  hashtable_t *ret = (hashtable_t *)malloc(sizeof(hashtable_t));
+
+  ret->count = 0;
+
+  ret->entries = (hashtable_entry_t **)malloc(hash_size * sizeof(hashtable_entry_t *));
+  ret->hash_size = hash_size;
 
   int i;
 
-  for(i=0; i<HASHSIZE; i++)
-    ret[i] = NULL;
+  for(i=0; i<hash_size; i++)
+    ret->entries[i] = NULL;
 
   return ret;
 }
@@ -101,9 +136,9 @@ void hashtable_delete(hashtable_t *tab)
   int i;
   hashtable_entry_t *np;
 
-  for(i=0; i<HASHSIZE; i++)
+  for(i=0; i<tab->hash_size; i++)
   {
-    np = tab[i];
+    np = tab->entries[i];
 
     while(np != NULL)
     {
@@ -147,21 +182,21 @@ hashtable_entry_t *clone_entries(hashtable_entry_t *np)
 
 hashtable_entry_t *hashtable_entries(hashtable_t *tab)
 {
-  hashtable_t *replica = (hashtable_t *)malloc(HASHSIZE * sizeof(hashtable_t));
+  hashtable_entry_t **replica = (hashtable_entry_t **)malloc(tab->hash_size * sizeof(hashtable_entry_t *));
 
   int i;
 
-  for(i=0; i<HASHSIZE; i++)
+  for(i=0; i<tab->hash_size; i++)
   {
-    if(tab[i] != NULL)
-      replica[i] = clone_entries(tab[i]);
+    if(tab->entries[i] != NULL)
+      replica[i] = clone_entries(tab->entries[i]);
     else
       replica[i] = NULL;
   }
 
   hashtable_entry_t *prev = NULL, *t, *ret = NULL;
 
-  for(i=0; i< HASHSIZE; i++)
+  for(i=0; i< tab->hash_size; i++)
   {
     if(replica[i])
     {
@@ -183,6 +218,17 @@ hashtable_entry_t *hashtable_entries(hashtable_t *tab)
   return ret;
 }
 
+hashtable_entry_t *hashtable_get_any_element(hashtable_t *tab)
+{
+  /* int i; */
+
+  /* for(i=0; i<tab->hash_size; i++) */
+  /*   if(tab->entries[i]) return tab->entries[i]; */
+
+  /* return NULL; */
+  return tab->an_element;
+}
+
 #ifdef TEST_HASH
 
 #define SIZE 1000000
@@ -196,7 +242,7 @@ int main(int argc, char **argv)
   for(i=0;i<SIZE; i++)
     vals[i] = i;
 
-  hashtable_t *tab = hashtable_create();
+  hashtable_t *tab = hashtable_create(1000001);
 
   clock_t start, diff;
   int msec;
@@ -219,6 +265,8 @@ int main(int argc, char **argv)
     assert((int)(b->value) == i*i);
   }
 
+  assert(tab->count == SIZE);
+
   diff = clock() - start;
   msec = diff * 1000 / CLOCKS_PER_SEC;
   printf("Get took %d seconds %d milliseconds\n", msec/1000, msec%1000);
@@ -226,6 +274,8 @@ int main(int argc, char **argv)
   start = clock();
 
   hashtable_remove(tab, (void *)(vals[SIZE/2]));
+
+  assert(tab->count == SIZE-1);
 
   diff = clock() - start;
   msec = diff * 1000 / CLOCKS_PER_SEC;
@@ -237,7 +287,7 @@ int main(int argc, char **argv)
 
   hashtable_delete(tab);
 
-  tab = hashtable_create();
+  tab = hashtable_create(1000001);
 
   for(i=0; i<SIZE; i++)
     hashtable_put(tab, (void *)vals[i], (void *)(i*i));

@@ -300,8 +300,24 @@ void initialize_symbols_list(GtkTreeView *list)
   g_object_unref(store);  
 }
 
+void remove_all_from_list(GtkTreeView *list)
+{
+  GtkListStore *store;
+  GtkTreeModel *model;
+  GtkTreeIter  iter;
+
+  model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
+  store = GTK_LIST_STORE(model);
+
+  if(gtk_tree_model_get_iter_first(model, &iter) == FALSE) 
+      return;
+  gtk_list_store_clear(store);
+}
+
 void populate_packages_list()
 {
+  remove_all_from_list(packages_list);
+
   GtkListStore *store;
   GtkTreeIter  iter;
 
@@ -317,21 +333,6 @@ void populate_packages_list()
   }
 
 }
-
-void remove_all_from_list(GtkTreeView *list)
-{
-  GtkListStore *store;
-  GtkTreeModel *model;
-  GtkTreeIter  iter;
-
-  model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
-  store = GTK_LIST_STORE(model);
-
-  if(gtk_tree_model_get_iter_first(model, &iter) == FALSE) 
-      return;
-  gtk_list_store_clear(store);
-}
-
 
 GtkToolbar *create_system_browser_toolbar()
 {
@@ -868,7 +869,7 @@ void create_debug_window()
 void initialize_operators_list(GtkTreeView *list)
 {
   GtkCellRenderer    *renderer;
-  GtkTreeViewColumn  *column1, *column2, *column3, *column4, *column5;
+  GtkTreeViewColumn  *column1, *column2, *column3, *column4, *column5, *column6;
   GtkListStore       *store;
 
   renderer = gtk_cell_renderer_text_new();
@@ -893,17 +894,23 @@ void initialize_operators_list(GtkTreeView *list)
                                                      renderer, "text", 4, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column5);
 
+  column6 = gtk_tree_view_column_new_with_attributes("Dellocated memory (words)",
+                                                     renderer, "text", 5, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column6);
+
   gtk_tree_view_column_set_sort_column_id(column1, 0);
   gtk_tree_view_column_set_sort_column_id(column2, 1);
   gtk_tree_view_column_set_sort_column_id(column3, 2);
   gtk_tree_view_column_set_sort_column_id(column4, 3);
   gtk_tree_view_column_set_sort_column_id(column5, 4); 
+  gtk_tree_view_column_set_sort_column_id(column6, 5); 
 
-  store = gtk_list_store_new (5, 
+  store = gtk_list_store_new (6, 
                               G_TYPE_STRING,
                               G_TYPE_INT,
                               G_TYPE_FLOAT,
                               G_TYPE_FLOAT,
+                              G_TYPE_INT,
                               G_TYPE_INT);
 
   gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
@@ -946,9 +953,10 @@ void populate_operators_list(GtkTreeView *list)
     unsigned int count = pd->count;
     double elapsed_wall_time = pd->elapsed_wall_time;
     double elapsed_cpu_time = pd->elapsed_cpu_time;
-    unsigned int mem = pd->mem;
+    unsigned int mem_alloc = pd->mem_allocated;
+    unsigned int mem_dealloc = pd->mem_deallocated;
 
-    gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem, -1);
+    gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem_alloc, 5, mem_dealloc, -1);
 
     hashtable_entry_t *temp = e->next;
     free(e->value);

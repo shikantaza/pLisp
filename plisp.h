@@ -115,7 +115,8 @@ union float_and_uint
 typedef struct profiling_datum
 {
   unsigned int count;
-  unsigned int mem;
+  unsigned int mem_allocated;
+  unsigned int mem_deallocated;
   double elapsed_wall_time;
   double elapsed_cpu_time;
 } profiling_datum_t;

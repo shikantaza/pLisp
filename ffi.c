@@ -241,7 +241,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       int sz = strlen(str);
 
-      uintptr_t ptr = object_alloc(sz+1);
+      uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
 
       //heap[ptr] = convert_int_to_object(sz);
       set_heap(ptr, 0, convert_int_to_object(sz));
@@ -280,7 +280,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
     int sz = strlen(str);
 
-    uintptr_t ptr = object_alloc(sz+1);
+    uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
 
     //heap[ptr] = convert_int_to_object(sz);
     set_heap(ptr, 0, convert_int_to_object(sz));

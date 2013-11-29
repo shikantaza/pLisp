@@ -26,7 +26,7 @@ int initialize_memory();
 
 void cleanup_memory();
 
-uintptr_t object_alloc(int);
+uintptr_t object_alloc(int, int);
 
 #ifndef DEBUG_MEMORY
 inline

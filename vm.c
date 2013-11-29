@@ -160,6 +160,12 @@ extern OBJECT_PTR PROFILE;
 
 extern OBJECT_PTR LAMBDA;
 
+extern OBJECT_PTR NOT;
+extern OBJECT_PTR LT;
+extern OBJECT_PTR LEQ;
+extern OBJECT_PTR GEQ;
+extern OBJECT_PTR NEQ;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -193,7 +199,8 @@ extern char *foreign_library_names[];
 //variables related to profiling
 double wall_time_var;
 clock_t cpu_time_var;
-unsigned int mem_var;
+unsigned int mem_alloc_var;
+unsigned int mem_dealloc_var;
 OBJECT_PTR last_operator;
 OBJECT_PTR prev_operator;
 hashtable_t *profiling_tab = NULL;
@@ -232,7 +239,7 @@ void eval()
       hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
 
       unsigned int count;
-      unsigned int mem;
+      unsigned int mem_alloc;
       double elapsed_wall_time;
       double elapsed_cpu_time;
 
@@ -249,7 +256,7 @@ void eval()
         elapsed_wall_time = pd->elapsed_wall_time + temp1 - wall_time_var;
         elapsed_cpu_time = pd->elapsed_cpu_time + (temp2 - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
       
-        mem = pd->mem + temp3 - mem_var;
+        mem_alloc = pd->mem_allocated + temp3 - mem_alloc_var;
 
         hashtable_remove(profiling_tab, (void *)operator_to_be_used);
         free(pd);
@@ -259,21 +266,21 @@ void eval()
         count = 1;
         elapsed_wall_time = temp1 - wall_time_var;
         elapsed_cpu_time = (temp2 - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-        mem = temp3 - mem_var;
+        mem_alloc = temp3 - mem_alloc_var;
       }
 
       profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
       pd->count = count;
       pd->elapsed_wall_time = elapsed_wall_time;
       pd->elapsed_cpu_time = elapsed_cpu_time;
-      pd->mem = mem;
+      pd->mem_allocated = mem_alloc;
 
       hashtable_put(profiling_tab, (void *)operator_to_be_used, (void *)pd);
     }
 
     wall_time_var = get_wall_time();
     cpu_time_var = clock();
-    mem_var = memory_allocated();
+    mem_alloc_var = memory_allocated();
 
     prev_operator = reg_accumulator;
   }
@@ -516,6 +523,35 @@ void eval()
         OBJECT_PTR v2 = CADR(reg_current_value_rib);
 
         reg_accumulator = equal(v1, v2) ? TRUE : NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == NEQ)
+      {
+        if(length(reg_current_value_rib) != 2)
+        {
+          throw_exception("ARG-MISMATCH", "NEQ expects two arguments");
+          return;
+        }
+
+        OBJECT_PTR v1 = car(reg_current_value_rib);
+        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+
+        reg_accumulator = equal(v1, v2) ? NIL : TRUE;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == NOT)
+      {
+        if(length(reg_current_value_rib) != 1)
+        {
+          throw_exception("ARG-MISMATCH", "NOT expects one argument");
+          return;
+        }
+
+        OBJECT_PTR v = car(reg_current_value_rib);
+
+        reg_accumulator = (v == NIL) ? TRUE : NIL;
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
       }
@@ -945,6 +981,111 @@ void eval()
           val2 = get_int_value(v2);
 	    
         reg_accumulator = (val1 > val2) ? TRUE : NIL;        
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == LT)
+      {
+        if(length(reg_current_value_rib) != 2)
+        {
+          throw_exception("ARG-MISMATCH", "< requires exactly two arguments");
+          return;
+        }
+
+        OBJECT_PTR v1 = car(reg_current_value_rib);
+        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+
+        if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+           (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+        {
+          throw_exception("INVALID-ARGUMENT", "Arguments to < should be numbers (integer or float)");
+          return;
+        }
+
+        float val1, val2;
+	  
+        if(IS_FLOAT_OBJECT(v1))
+          val1 = get_float_value(v1);
+        else
+          val1 = get_int_value(v1);
+
+        if(IS_FLOAT_OBJECT(v2))
+          val2 = get_float_value(v2);
+        else
+          val2 = get_int_value(v2);
+	    
+        reg_accumulator = (val1 < val2) ? TRUE : NIL;        
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == LEQ)
+      {
+        if(length(reg_current_value_rib) != 2)
+        {
+          throw_exception("ARG-MISMATCH", "<= requires exactly two arguments");
+          return;
+        }
+
+        OBJECT_PTR v1 = car(reg_current_value_rib);
+        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+
+        if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+           (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+        {
+          throw_exception("INVALID-ARGUMENT", "Arguments to <= should be numbers (integer or float)");
+          return;
+        }
+
+        float val1, val2;
+	  
+        if(IS_FLOAT_OBJECT(v1))
+          val1 = get_float_value(v1);
+        else
+          val1 = get_int_value(v1);
+
+        if(IS_FLOAT_OBJECT(v2))
+          val2 = get_float_value(v2);
+        else
+          val2 = get_int_value(v2);
+	    
+        reg_accumulator = (val1 <= val2) ? TRUE : NIL;        
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      }
+      else if(operator == GEQ)
+      {
+        if(length(reg_current_value_rib) != 2)
+        {
+          throw_exception("ARG-MISMATCH", ">= requires exactly two arguments");
+          return;
+        }
+
+        OBJECT_PTR v1 = car(reg_current_value_rib);
+        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+
+        if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+           (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+        {
+          throw_exception("INVALID-ARGUMENT", "Arguments to >= should be numbers (integer or float)");
+          return;
+        }
+
+        float val1, val2;
+	  
+        if(IS_FLOAT_OBJECT(v1))
+          val1 = get_float_value(v1);
+        else
+          val1 = get_int_value(v1);
+
+        if(IS_FLOAT_OBJECT(v2))
+          val2 = get_float_value(v2);
+        else
+          val2 = get_int_value(v2);
+	    
+        reg_accumulator = (val1 >= val2) ? TRUE : NIL;        
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
@@ -1772,17 +1913,17 @@ void eval()
                                                     cons(temp, car(reg_current_value_rib)))),
                                    car(reg_current_value_rib));
 
-        profiling_tab = hashtable_create();
+        profiling_tab = hashtable_create(1000001);
 
         prev_operator = NIL;
 
         wall_time_var = get_wall_time();
         cpu_time_var = clock();
-        mem_var = memory_allocated();
+        mem_alloc_var = memory_allocated();
 
         double initial_wall_time = wall_time_var;
         clock_t initial_cpu_time = cpu_time_var;
-        unsigned int initial_mem = mem_var;
+        unsigned int initial_mem_alloc = mem_alloc_var;
 
         while(car(reg_next_expression) != NIL)
         {
@@ -1824,7 +1965,7 @@ void eval()
         unsigned int count;
         double elapsed_wall_time;
         double elapsed_cpu_time;
-        unsigned int mem;
+        unsigned int mem_alloc;
 
         if(e)
         {
@@ -1833,7 +1974,7 @@ void eval()
           count = pd->count + 1;
           elapsed_wall_time = pd->elapsed_wall_time + get_wall_time() - wall_time_var;
           elapsed_cpu_time = pd->elapsed_cpu_time + (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-          mem = pd->mem + memory_allocated() - mem_var;
+          mem_alloc = pd->mem_allocated + memory_allocated() - mem_alloc_var;
 
           free(pd);
           hashtable_remove(profiling_tab, (void *)operator_to_be_used);
@@ -1843,20 +1984,20 @@ void eval()
           count = 1;
           elapsed_wall_time = get_wall_time() - wall_time_var;
           elapsed_cpu_time = (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-          mem = memory_allocated() - mem_var;
+          mem_alloc = memory_allocated() - mem_alloc_var;
         }
 
         profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
         pd->count = count;
         pd->elapsed_wall_time = elapsed_wall_time;
         pd->elapsed_cpu_time = elapsed_cpu_time;
-        pd->mem = mem;
+        pd->mem_allocated = mem_alloc;
 
         hashtable_put(profiling_tab, (void *)operator_to_be_used, (void *)pd);
 
         double final_wall_time = get_wall_time();
         clock_t final_cpu_time = clock();
-        unsigned int final_mem = memory_allocated();
+        unsigned int final_mem_alloc = memory_allocated();
 
 #ifdef GUI
         create_profiler_window();
@@ -1867,7 +2008,7 @@ void eval()
                 "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
                 final_wall_time - initial_wall_time,
                 (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-                final_mem - initial_mem);
+                final_mem_alloc - initial_mem_alloc);
         print_to_transcript(buf);
 
 #else
@@ -1894,7 +2035,7 @@ void eval()
         printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
                final_wall_time - initial_wall_time,
                (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-               final_mem - initial_mem);
+               final_mem_alloc - initial_mem_alloc);
 #endif
 
         hashtable_delete(profiling_tab);
@@ -2480,7 +2621,7 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 {
   log_function_entry("create_call_frame");
 
-  uintptr_t ptr = object_alloc(5);
+  uintptr_t ptr = object_alloc(5, ARRAY_TAG);
 
   set_heap(ptr, 0, convert_int_to_object(4));
   set_heap(ptr, 1, next_expression);
@@ -2495,7 +2636,7 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 
 OBJECT_PTR create_current_continuation()
 {
-  uintptr_t ptr = object_alloc(1);
+  uintptr_t ptr = object_alloc(1, CONTINUATION_TAG);
   set_heap(ptr, 0, reg_current_stack);
   return ptr + CONTINUATION_TAG;
 }
@@ -2706,7 +2847,7 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   int len = strlen(str_val);
 
-  uintptr_t raw_ptr = object_alloc(len + 1);
+  uintptr_t raw_ptr = object_alloc(len + 1, ARRAY_TAG);
 
   set_heap(raw_ptr, 0, convert_int_to_object(len));
 
@@ -2727,7 +2868,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   
   int sz = get_int_value(size);
 
-  uintptr_t ptr = object_alloc(sz+1);
+  uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
 
   set_heap(ptr, 0, size);
 
@@ -2748,7 +2889,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
 
   uintptr_t orig_ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
-  uintptr_t ptr = object_alloc(len + 1);
+  uintptr_t ptr = object_alloc(len + 1, ARRAY_TAG);
 
   set_heap(ptr, 0, convert_int_to_object(len));
 
