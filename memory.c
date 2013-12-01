@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 #include "plisp.h"
 
@@ -36,6 +37,10 @@ rb_red_blk_tree *white, *grey, *black;
 #endif
 
 extern OBJECT_PTR top_level_env, NIL;
+extern OBJECT_PTR CONS_NIL_NIL;
+extern OBJECT_PTR CONS_APPLY_NIL;
+extern OBJECT_PTR CONS_HALT_NIL;
+extern OBJECT_PTR CONS_RETURN_NIL;
 
 extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR);
@@ -61,6 +66,7 @@ void gc();
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 void build_grey_set();
 
+void recreate_black();
 //end forward declarations
 
 enum {WHITE, GREY, BLACK};
@@ -70,6 +76,11 @@ unsigned int words_deallocated;
 
 inline unsigned int memory_allocated() { return words_allocated; }
 inline unsigned int memory_deallocated() { return words_deallocated; }
+
+//an AND operation with POINTER_MASK will get
+//the pointer created by posix_memalign.
+//const unsigned int POINTER_MASK = 4294967280;
+unsigned int POINTER_MASK;
 
 void free_white_set_objects()
 {
@@ -102,6 +113,40 @@ void move_from_white_to_grey(OBJECT_PTR obj)
   }
 }
 
+OBJECT_PTR get_an_object_from_grey()
+{
+#ifdef GC_USES_HASHTABLE
+  OBJECT_PTR obj = (OBJECT_PTR)(((hashtable_entry_t *)(hashtable_get_any_element(grey)))->ptr);
+  assert(is_valid_object(obj));
+#else
+  //we can pick any  object,
+  //picking the root for convenience
+  OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)grey->root->left->key;
+#endif
+  return obj;
+}
+
+OBJECT_PTR get_an_object_from_black()
+{
+#ifdef GC_USES_HASHTABLE
+  OBJECT_PTR obj = (OBJECT_PTR)(((hashtable_entry_t *)(hashtable_get_any_element(black)))->ptr);
+  assert(is_valid_object(obj));
+#else
+  //we can pick any object,
+  //picking the root for convenience
+  OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)black->root->left->key;
+#endif
+  return obj;
+}
+
+void free_all_objects()
+{
+  gc();
+
+  while(!is_set_empty(BLACK))
+    dealloc(get_an_object_from_black());
+}
+
 void gc()
 {
   static int count = 0;
@@ -113,19 +158,13 @@ void gc()
 
   unsigned int dealloc_words = memory_deallocated();
 
-  //only top_level_env is stored in the grey set initially
   build_grey_set();
 
   while(!is_set_empty(GREY))
   {
-#ifdef GC_USES_HASHTABLE
-    OBJECT_PTR obj = (OBJECT_PTR)(((hashtable_entry_t *)(hashtable_get_any_element(grey)))->ptr);
-    assert(is_valid_object(obj));
-#else
-    //we can pick any grey object,
-    //picking the root for convenience
-    OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)grey->root->left->key;
-#endif
+    OBJECT_PTR obj = get_an_object_from_grey();
+
+    assert(is_dynamic_memory_object(obj));
 
     insert_node(BLACK, obj);
 
@@ -145,30 +184,27 @@ void gc()
     }
     else if(IS_ARRAY_OBJECT(obj))
     {
-      OBJECT_PTR length_obj = get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+      uintptr_t ptr = obj & POINTER_MASK;
 
-      insert_node(GREY, length_obj);
-      remove_node(WHITE, length_obj);
+      OBJECT_PTR length_obj = get_heap(ptr, 0);
+
+      move_from_white_to_grey(length_obj);
 
       int len = get_int_value(length_obj);
 
       int i;
 
       for(i=1; i<=len; i++)
-      {
-        OBJECT_PTR array_elem = get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, i);
-        move_from_white_to_grey(array_elem);
-      }
+        move_from_white_to_grey(get_heap(ptr, i));
     }
     else if(IS_CONTINUATION_OBJECT(obj))
-    {
-      OBJECT_PTR stack = get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
-      move_from_white_to_grey(stack);
-    }
+      move_from_white_to_grey(get_heap(obj & POINTER_MASK, 0));
 
   } //end of while(!is_set_empty(GREY))
 
   free_white_set_objects();
+
+  recreate_black();
 }
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
@@ -185,10 +221,12 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 void build_grey_set()
 {
   if(top_level_env != NIL)
-  {
-    insert_node(GREY, top_level_env);
-    remove_node(WHITE,top_level_env);
-  }
+    move_from_white_to_grey(top_level_env);
+
+  move_from_white_to_grey(CONS_NIL_NIL);
+  move_from_white_to_grey(CONS_APPLY_NIL);
+  move_from_white_to_grey(CONS_HALT_NIL);
+  move_from_white_to_grey(CONS_RETURN_NIL);
 }
 
 #ifndef GC_USES_HASHTABLE
@@ -439,7 +477,7 @@ void dealloc(OBJECT_PTR ptr)
     assert(false);
   }
 
-  int tag = ptr & BIT_MASK;
+  unsigned int tag = ptr & BIT_MASK;
 
   switch(tag)
   {
@@ -447,7 +485,7 @@ void dealloc(OBJECT_PTR ptr)
       words_deallocated += 2;
       break;
     case ARRAY_TAG:
-      words_deallocated += get_int_value(get_heap((ptr >> OBJECT_SHIFT) << OBJECT_SHIFT, 0)) + 1;
+      words_deallocated += get_int_value(get_heap(ptr & POINTER_MASK, 0)) + 1;
       break;
     case CLOSURE_TAG:
       words_deallocated += 4;
@@ -468,7 +506,7 @@ void dealloc(OBJECT_PTR ptr)
       assert(false);
   }
 
-  free((void *)((ptr >> OBJECT_SHIFT) << OBJECT_SHIFT));
+  free((void *)(ptr & POINTER_MASK));
 }
 
 int initialize_memory()
@@ -490,11 +528,15 @@ int initialize_memory()
   words_allocated = 0;
   words_deallocated = 0;
 
+  POINTER_MASK = ((unsigned int)(pow(2, 8 * sizeof(uintptr_t))) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+
   return 0;
 }
 
 void cleanup_memory()
 {
+  free_all_objects();
+
 #ifdef GC_USES_HASHTABLE
   hashtable_delete(white);
   hashtable_delete(grey);
@@ -510,4 +552,8 @@ void cleanup_memory()
   black = NULL;
 }
 
-
+void recreate_black()
+{
+  RBTreeDestroy(black);
+  black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
+}

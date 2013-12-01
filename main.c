@@ -172,6 +172,12 @@ OBJECT_PTR LET1          = (OBJECT_PTR)((102 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR DEFUN         = (OBJECT_PTR)((103 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR DEFMACRO      = (OBJECT_PTR)((104 << OBJECT_SHIFT) + SYMBOL_TAG);
 
+//for performance
+OBJECT_PTR CONS_NIL_NIL;
+OBJECT_PTR CONS_APPLY_NIL;
+OBJECT_PTR CONS_HALT_NIL;
+OBJECT_PTR CONS_RETURN_NIL;
+
 extern FILE *yyin;
 
 #define NOF_SPECIAL_SYMBOLS     79
@@ -241,6 +247,8 @@ extern OBJECT_PTR debug_execution_stack;
 extern OBJECT_PTR debug_continuation;
 extern OBJECT_PTR debug_env;
 
+extern unsigned int POINTER_MASK;
+
 void initialize()
 {
   if(initialize_memory())
@@ -261,6 +269,11 @@ void initialize()
   debug_execution_stack = NIL;
   debug_continuation = NIL;
   debug_env = NIL;
+
+  CONS_NIL_NIL = cons(NIL, NIL);
+  CONS_APPLY_NIL = cons(APPLY, NIL);
+  CONS_HALT_NIL = cons(HALT, NIL);
+  CONS_RETURN_NIL = cons(RETURN, NIL);
 }
 
 int add_string(char *str)
@@ -778,7 +791,7 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
   {
      if(!IS_CONS_OBJECT(cons_obj))
        assert(false);
-     return get_heap((cons_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+     return get_heap(cons_obj & POINTER_MASK, 0);
   }
 }
 
@@ -788,8 +801,9 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
     return NIL;
   else
   {
-    assert(IS_CONS_OBJECT(cons_obj));
-    return get_heap((cons_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 1);
+    if(!IS_CONS_OBJECT(cons_obj))
+       assert(false);
+    return get_heap(cons_obj & POINTER_MASK, 1);
   }
 }
 
@@ -1336,7 +1350,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
                                 clone_object(get_source_object(obj)));
     else if(IS_ARRAY_OBJECT(obj))
     {
-      uintptr_t ptr = (obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+      uintptr_t ptr = obj & POINTER_MASK;
 
       int len = get_int_value(get_heap(ptr, 0));
 
@@ -1366,25 +1380,25 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 OBJECT_PTR get_env_list(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+  return get_heap(obj & POINTER_MASK, 0);
 }
 
 OBJECT_PTR get_params_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 1);
+  return get_heap(obj & POINTER_MASK, 1);
 }
 
 OBJECT_PTR get_body_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 2);
+  return get_heap(obj & POINTER_MASK, 2);
 }
 
 OBJECT_PTR get_source_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 3);
+  return get_heap(obj & POINTER_MASK, 3);
 }
 
 int print_closure_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
@@ -1468,7 +1482,7 @@ OBJECT_PTR get_symbol_value(OBJECT_PTR symbol_obj, OBJECT_PTR env_list)
   }
 
   if(!found)
-    ret = cons(NIL, NIL);
+    ret = CONS_NIL_NIL;
 
   log_function_exit("get_symbol_value");
 
@@ -1496,7 +1510,7 @@ OBJECT_PTR get_symbol_value_from_env(OBJECT_PTR symbol_obj, OBJECT_PTR env_obj)
   }
 
   if(!found)
-    ret = cons(NIL, NIL);
+    ret = CONS_NIL_NIL;
 
   log_function_exit("get_symbol_value_from_env");
 
@@ -1515,7 +1529,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     {
       if(equal(CAAR(rest2),symbol_obj))
       {
-        uintptr_t ptr = (car(rest2) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+        uintptr_t ptr = car(rest2) & POINTER_MASK;
 	set_heap(ptr, 1, val);
 	return symbol_obj;
       }
@@ -1533,7 +1547,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
   {
     if(equal(CAAR(rest2),symbol_obj))
     {
-      uintptr_t ptr = (car(rest2) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+      uintptr_t ptr = car(rest2) & POINTER_MASK;
       set_heap(ptr, 1, val);
       system_changed = true;
       return symbol_obj;
@@ -1567,7 +1581,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
       //the new value
       if(equal(CAAR(rest),symbol_obj))
       {
-        uintptr_t ptr = (car(rest) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+        uintptr_t ptr = car(rest) & POINTER_MASK;
         set_heap(ptr, 1, val);
         system_changed = true;
         return;
@@ -1576,7 +1590,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
     }
 
     //symbol does not exist in the environment
-    uintptr_t ptr = (last_cell(top_level_env) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    uintptr_t ptr = last_cell(top_level_env) & POINTER_MASK;
     set_heap(ptr, 1, cons(cons(symbol_obj, val), NIL));
     system_changed = true;
   }
@@ -1856,7 +1870,7 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
   if(package_index == NOT_FOUND)
   {
     printf("Not found for %s\n", package_name);
-    return cons(NIL, NIL);
+    return CONS_NIL_NIL;
   }
 
   int symbol_index = find_qualified_symbol(package_index, symbol_name);
@@ -2052,7 +2066,7 @@ inline int get_int_value(OBJECT_PTR obj)
   if(!IS_INTEGER_OBJECT(obj))
     assert(false);
 
-  return *((int *)((obj >> OBJECT_SHIFT) << OBJECT_SHIFT));
+  return *((int *)(obj & POINTER_MASK));
 }
 
 inline OBJECT_PTR convert_int_to_object(int v)
@@ -2068,7 +2082,7 @@ float get_float_value(OBJECT_PTR obj)
 {
   assert(IS_FLOAT_OBJECT(obj));
   //return *((float *)obj);
-  return *((float *)((obj >> OBJECT_SHIFT) << OBJECT_SHIFT));
+  return *((float *)(obj & POINTER_MASK));
 }
 
 OBJECT_PTR convert_float_to_object(float v)
@@ -2086,7 +2100,7 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
 
   len += sprintf(buf+filled_buf_len, "[");
 
-  uintptr_t ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t ptr = array & POINTER_MASK;
 
   int length = get_int_value(get_heap(ptr, 0));
 
@@ -2111,7 +2125,7 @@ void print_array_object(OBJECT_PTR array)
 
   log_function_entry("print_array_object");
 
-  uintptr_t ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t ptr = array & POINTER_MASK;
 
 #ifdef GUI
 
@@ -2158,7 +2172,7 @@ void print_array_object(OBJECT_PTR array)
 
 int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_len)
 {
-  uintptr_t ptr = (string_object >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t ptr = string_object & POINTER_MASK;
 
   int len = get_int_value(get_heap(ptr, 0));
 
@@ -2180,7 +2194,7 @@ void print_string(OBJECT_PTR string_object)
 {
   assert(is_string_object(string_object));
 
-  uintptr_t ptr = (string_object >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t ptr = string_object & POINTER_MASK;
 
   int len = get_int_value(get_heap(ptr, 0));
 
@@ -2220,7 +2234,7 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
   if(!(IS_ARRAY_OBJECT(obj)))
     return false;
 
-  uintptr_t ptr = (obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t ptr = obj & POINTER_MASK;
 
   int len = get_int_value(get_heap(ptr, 0));
 
@@ -2240,7 +2254,7 @@ char *get_string(OBJECT_PTR string_object)
   if(!is_string_object(string_object))
     assert(false);
 
-  uintptr_t ptr = (string_object >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t ptr = string_object & POINTER_MASK;
 
   int len = get_int_value(get_heap(ptr, 0));
 
@@ -2320,7 +2334,7 @@ OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)
   }
 
   if(!found)
-    ret = cons(NIL, NIL);
+    ret = CONS_NIL_NIL;
 
   log_function_exit("get_symbol_from_value");
 
@@ -2348,7 +2362,7 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_o
   }
 
   if(!found)
-    ret = cons(NIL, NIL);
+    ret = CONS_NIL_NIL;
 
   log_function_exit("get_symbol_from_value_from_env");
 
@@ -2370,7 +2384,7 @@ OBJECT_PTR list(int count, ...)
 
   for(i=1; i<count; i++)
   {
-    uintptr_t ptr = (last_cell(ret) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
     set_heap(ptr, 1, cons((OBJECT_PTR)va_arg(ap, int), NIL));
   }
 
@@ -2391,5 +2405,5 @@ OBJECT_PTR convert_symbol_to_core_package_symbol(OBJECT_PTR sym)
       return cons((OBJECT_PTR)TRUE, (OBJECT_PTR)((i << OBJECT_SHIFT) + SYMBOL_TAG));
   }
 
-  return cons(NIL, NIL);
+  return CONS_NIL_NIL;
 }

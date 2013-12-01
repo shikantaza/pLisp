@@ -57,6 +57,8 @@ extern int nof_dl_handles;
 extern char *foreign_library_names[];
 extern void **dl_handles;
 
+extern unsigned int POINTER_MASK;
+
 inline void print_ref_json_object(FILE *fp, OBJECT_PTR obj, unsigned int *obj_count, hashtable_t *hashtable)
 {
   if(obj == NIL)
@@ -146,13 +148,13 @@ void print_json_object(FILE *fp,
     fprintf(fp, "\"t\" : %d,", ARRAY_TAG);
     fprintf(fp, "\"v\" : [ ");
 
-    int len = get_int_value(get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0));
+    int len = get_int_value(get_heap(obj & POINTER_MASK, 0));
 
     int i;
 
     for(i=1; i<=len; i++)
     {
-      print_object1(fp, get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, i), print_queue, obj_count, hashtable, printed_objects);
+      print_object1(fp, get_heap(obj & POINTER_MASK, i), print_queue, obj_count, hashtable, printed_objects);
 
       if(i != len)     fprintf(fp, ", ");
       else             fprintf(fp, " ");
@@ -182,7 +184,7 @@ void print_json_object(FILE *fp,
   {
     fprintf(fp, "\"t\" : %d,", CONTINUATION_TAG);
     fprintf(fp, "\"v\" : ");
-    print_object1(fp, get_heap((obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0), print_queue, obj_count, hashtable, printed_objects);
+    print_object1(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects);
   }
   else if(IS_INTEGER_OBJECT(obj))
     fprintf(fp, "\"t\" : %d, \"v\" : %d ", INTEGER_TAG, get_int_value(obj));

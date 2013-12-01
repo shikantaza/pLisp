@@ -44,6 +44,8 @@ extern OBJECT_PTR LAMBDA;
 
 extern hashtable_t *profiling_tab;
 
+extern unsigned int POINTER_MASK;
+
 /* event handler function definitions begin */
 extern gboolean delete_event(GtkWidget *,
                              GdkEvent *,
@@ -741,7 +743,7 @@ void populate_frames_list(GtkTreeView *list)
 
   while(rest != NIL)
   {
-    uintptr_t frame = (car(rest) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    uintptr_t frame = car(rest) & POINTER_MASK;
 
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);

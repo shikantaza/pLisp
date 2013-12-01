@@ -196,6 +196,12 @@ extern BOOLEAN system_changed;
 
 extern char *foreign_library_names[];
 
+extern unsigned int POINTER_MASK;
+
+extern OBJECT_PTR CONS_APPLY_NIL;
+extern OBJECT_PTR CONS_HALT_NIL;
+extern OBJECT_PTR CONS_RETURN_NIL;
+
 //variables related to profiling
 double wall_time_var;
 clock_t cpu_time_var;
@@ -466,7 +472,7 @@ void eval()
     reg_current_stack = CADR(exp);
     reg_accumulator = CADDR(exp);
     reg_current_value_rib = NIL;
-    reg_next_expression =  cons(cons(RETURN, NIL), cdr(reg_next_expression));
+    reg_next_expression =  cons(CONS_RETURN_NIL, cdr(reg_next_expression));
   }
   else if(opcode == FRAME)
   {
@@ -509,7 +515,7 @@ void eval()
 
         reg_accumulator = cons(car(reg_current_value_rib), CADR(reg_current_value_rib));
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == EQ)
       {
@@ -524,7 +530,7 @@ void eval()
 
         reg_accumulator = equal(v1, v2) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == NEQ)
       {
@@ -539,7 +545,7 @@ void eval()
 
         reg_accumulator = equal(v1, v2) ? NIL : TRUE;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == NOT)
       {
@@ -553,7 +559,7 @@ void eval()
 
         reg_accumulator = (v == NIL) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == ATOM)
       {
@@ -567,7 +573,7 @@ void eval()
 
         reg_accumulator = is_atom(v) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == CAR)
       {
@@ -592,7 +598,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == CDR)
       {
@@ -618,7 +624,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));        
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
       else if(operator == ADD)
       {
@@ -658,7 +664,7 @@ void eval()
           reg_accumulator = convert_int_to_object((int)sum);
 
           reg_current_value_rib = NIL;
-          reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));        
+          reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
       else if(operator == SUB)
       {
@@ -716,7 +722,7 @@ void eval()
           reg_accumulator = convert_int_to_object((int)(val - sum));
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));        
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
       else if(operator == MULT)
       {
@@ -757,7 +763,7 @@ void eval()
           reg_accumulator = convert_int_to_object((int)sum);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));        
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
       else if(operator == DIV)
       {
@@ -822,7 +828,7 @@ void eval()
           reg_accumulator = convert_int_to_object((int)(val / sum));
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));        
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
       else if(operator == ERROR)
       {
@@ -836,7 +842,7 @@ void eval()
 
           memset(msg, '\0', 500);
 
-          uintptr_t ptr = (error_string_obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+          uintptr_t ptr = error_string_obj & POINTER_MASK;
 
           int len = get_int_value(get_heap(ptr, 0));
 
@@ -858,7 +864,7 @@ void eval()
 #endif
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == NEWLINE)
       {
@@ -869,7 +875,7 @@ void eval()
 #endif
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == LST)
       {
@@ -883,7 +889,7 @@ void eval()
             reg_accumulator = cons(car(rest), NIL);
           else
           {
-            uintptr_t ptr = (last_cell(reg_accumulator) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+            uintptr_t ptr = last_cell(reg_accumulator) & POINTER_MASK;
             set_heap(ptr, 1, 
                      cons(car(rest), NIL));         
           }
@@ -892,7 +898,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
 
       }
       else if(operator == BACKQUOTE)
@@ -900,7 +906,7 @@ void eval()
         reg_accumulator = eval_backquote(car(reg_current_value_rib));
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == LISTP)
       {
@@ -918,7 +924,7 @@ void eval()
           reg_accumulator = IS_CONS_OBJECT(arg) ? TRUE : NIL;
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == SYMBOL_VALUE)
       {
@@ -948,7 +954,7 @@ void eval()
         reg_accumulator = cdr(res);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == GT)
       {
@@ -983,7 +989,7 @@ void eval()
         reg_accumulator = (val1 > val2) ? TRUE : NIL;        
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == LT)
       {
@@ -1018,7 +1024,7 @@ void eval()
         reg_accumulator = (val1 < val2) ? TRUE : NIL;        
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == LEQ)
       {
@@ -1053,7 +1059,7 @@ void eval()
         reg_accumulator = (val1 <= val2) ? TRUE : NIL;        
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == GEQ)
       {
@@ -1088,7 +1094,7 @@ void eval()
         reg_accumulator = (val1 >= val2) ? TRUE : NIL;        
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == GENSYM)
       {
@@ -1100,7 +1106,7 @@ void eval()
 
         reg_accumulator = gensym();
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == SETCAR)
       {
@@ -1118,12 +1124,12 @@ void eval()
           return;
         }
 
-        set_heap((car_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 0, CADR(reg_current_value_rib));
+        set_heap(car_obj & POINTER_MASK, 0, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == SETCDR)
       {
@@ -1141,12 +1147,12 @@ void eval()
           return;
         }
 
-        set_heap((car_obj >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, CADR(reg_current_value_rib));
+        set_heap(car_obj & POINTER_MASK, 1, CADR(reg_current_value_rib));
 
         reg_accumulator = CADR(reg_current_value_rib);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == CREATE_PACKAGE)
       {
@@ -1183,7 +1189,7 @@ void eval()
         reg_accumulator = package;
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == IN_PACKAGE)
       {
@@ -1224,7 +1230,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == EXPAND_MACRO)
       {
@@ -1273,7 +1279,7 @@ void eval()
               reg_current_value_rib = cons(car(args), NIL);
             else
             {
-              uintptr_t ptr = (last_cell(reg_current_value_rib) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              uintptr_t ptr = last_cell(reg_current_value_rib) & POINTER_MASK;
               set_heap(ptr, 1, 
                        cons(car(args), NIL));         
             }
@@ -1282,7 +1288,7 @@ void eval()
 
           //place the macro object in the accumulator (to invoke APPLY)
           reg_accumulator = obj;
-          reg_next_expression = cons(cons(APPLY, NIL), car(macro_body));
+          reg_next_expression = cons(CONS_APPLY_NIL, car(macro_body));
           
           //evaluate the macro invocation
           while(car(reg_next_expression) != NIL)
@@ -1294,7 +1300,7 @@ void eval()
         }        
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == APPLY)
       {
@@ -1324,7 +1330,7 @@ void eval()
         reg_accumulator = obj;
         reg_current_value_rib = args;
 
-        reg_next_expression = cons(cons(APPLY, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_APPLY_NIL, cdr(reg_next_expression));
       }
       else if(operator == STRING)
       {
@@ -1345,7 +1351,7 @@ void eval()
         reg_accumulator = eval_string(string_literal);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == MAKE_ARRAY)
       {
@@ -1367,7 +1373,7 @@ void eval()
         reg_accumulator = eval_make_array(size, CADR(reg_current_value_rib));
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == ARRAY_SET)
       {
@@ -1379,7 +1385,7 @@ void eval()
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
 
-        uintptr_t ptr = (array_obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+        uintptr_t ptr = array_obj & POINTER_MASK;
 
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
@@ -1410,7 +1416,7 @@ void eval()
         reg_accumulator = CADDR(reg_current_value_rib);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == ARRAY_GET)
       {
@@ -1421,7 +1427,7 @@ void eval()
         }        
 
         OBJECT_PTR array_obj = car(reg_current_value_rib);
-        uintptr_t ptr = (array_obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+        uintptr_t ptr = array_obj & POINTER_MASK;
 
         OBJECT_PTR idx = CADR(reg_current_value_rib);
 
@@ -1465,7 +1471,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == SUB_ARRAY)
       {
@@ -1511,7 +1517,7 @@ void eval()
           return;
         }
 
-        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap((array >> OBJECT_SHIFT) << OBJECT_SHIFT, 0)))
+        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array & POINTER_MASK, 0)))
         {
           throw_exception("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
@@ -1520,7 +1526,7 @@ void eval()
         reg_accumulator = eval_sub_array(array, start, array_length);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == ARRAY_LENGTH)
       {
@@ -1536,7 +1542,7 @@ void eval()
         {
           reg_accumulator = convert_int_to_object(0);
           reg_current_value_rib = NIL;
-          reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+          reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
           return;
         }
 
@@ -1550,11 +1556,11 @@ void eval()
             return;
           }
 
-          reg_accumulator = get_heap((array >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+          reg_accumulator = get_heap(array & POINTER_MASK, 0);
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == PRINT_STRING)
       {
@@ -1578,7 +1584,7 @@ void eval()
         reg_accumulator = NIL;
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == CREATE_IMAGE)
       {
@@ -1606,7 +1612,7 @@ void eval()
         reg_accumulator = NIL;
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == LOAD_FOREIGN_LIBRARY)
       {
@@ -1665,7 +1671,7 @@ void eval()
         reg_accumulator = NIL;
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == CALL_FOREIGN_FUNCTION)
       {
@@ -1812,14 +1818,14 @@ void eval()
         reg_accumulator = call_foreign_function(fn_name, ret_type, args);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == ENV)
       {
         reg_accumulator = cons(top_level_env, debug_mode ? debug_env : reg_current_env);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == EVAL)
       {
@@ -1834,7 +1840,7 @@ void eval()
         /* reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)), */
         /*                                             cons(cons(temp, NIL), car(reg_current_value_rib)))), */
         /*                            car(reg_current_value_rib)); */
-        reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)),
+        reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, car(reg_current_value_rib)),
                                                     cons(temp, car(reg_current_value_rib)))),
                                    car(reg_current_value_rib));
 
@@ -1849,7 +1855,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == TIME)
       {
@@ -1865,7 +1871,7 @@ void eval()
           return;
         }
 
-        reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)),
+        reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, car(reg_current_value_rib)),
                                                     cons(temp, car(reg_current_value_rib)))),
                                    car(reg_current_value_rib));
 
@@ -1897,7 +1903,7 @@ void eval()
 #endif
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == PROFILE)
       {
@@ -1909,7 +1915,7 @@ void eval()
           return;
         }
 
-        reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)),
+        reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, car(reg_current_value_rib)),
                                                     cons(temp, car(reg_current_value_rib)))),
                                    car(reg_current_value_rib));
 
@@ -2016,15 +2022,15 @@ void eval()
 
         while(entries)
         {
-          OBJECT_PTR operator = (OBJECT_PTR)entries->ptr;
+          /* OBJECT_PTR operator = (OBJECT_PTR)entries->ptr; */
 
-          char str[50];
-          memset(str, '\0', 50);
-          print_object_to_string(operator, str, 0);
+          /* char str[50]; */
+          /* memset(str, '\0', 50); */
+          /* print_object_to_string(operator, str, 0); */
 
-          profiling_datum_t *pd = (profiling_datum_t *)entries->value;
+          /* profiling_datum_t *pd = (profiling_datum_t *)entries->value; */
 
-          printf("%s : %d %lf\n", str, pd->count, pd->elapsed_time);
+          /* printf("%s : %d %lf\n", str, pd->count, pd->elapsed_time); */
 
           hashtable_entry_t *temp = entries->next;
           free(entries->value);
@@ -2042,7 +2048,7 @@ void eval()
         profiling_tab = NULL;
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == BREAK)
       {
@@ -2061,10 +2067,10 @@ void eval()
       {
         debug_mode = false;
 
-        reg_current_stack = get_heap((debug_continuation >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+        reg_current_stack = get_heap(debug_continuation & POINTER_MASK, 0);
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
 
         debug_execution_stack = NIL;
 
@@ -2073,7 +2079,7 @@ void eval()
       else if(operator == BACKTRACE)
       {
         print_backtrace();
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
         return;
       }
       else if(operator == LOAD_FILE)
@@ -2129,7 +2135,7 @@ void eval()
 
         reg_accumulator = IS_CONS_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  INTEGERP)
       {
@@ -2141,7 +2147,7 @@ void eval()
 
         reg_accumulator = IS_INTEGER_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  FLOATP)
       {
@@ -2153,7 +2159,7 @@ void eval()
 
         reg_accumulator = IS_FLOAT_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  CHARACTERP)
       {
@@ -2165,7 +2171,7 @@ void eval()
 
         reg_accumulator = IS_CHAR_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  SYMBOLP)
       {
@@ -2177,7 +2183,7 @@ void eval()
 
         reg_accumulator = IS_SYMBOL_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  STRINGP)
       {
@@ -2189,7 +2195,7 @@ void eval()
 
         reg_accumulator = (IS_STRING_LITERAL_OBJECT(car(reg_current_value_rib)) || is_string_object(car(reg_current_value_rib))) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  ARRAYP)
       {
@@ -2202,7 +2208,7 @@ void eval()
         OBJECT_PTR obj = car(reg_current_value_rib);
         reg_accumulator = (IS_ARRAY_OBJECT(obj) || IS_STRING_LITERAL_OBJECT(obj)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  CLOSUREP)
       {
@@ -2214,7 +2220,7 @@ void eval()
 
         reg_accumulator = IS_CLOSURE_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  MACROP)
       {
@@ -2226,7 +2232,7 @@ void eval()
 
         reg_accumulator = IS_MACRO_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator ==  CONTINUATIONP)
       {
@@ -2238,7 +2244,7 @@ void eval()
 
         reg_accumulator = IS_CONTINUATION_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == LAMBDA_EXPRESSION)
       {
@@ -2258,7 +2264,7 @@ void eval()
 
         reg_accumulator = cons(get_params_object(obj),
                                get_body_object(obj));
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == FORMAT)
       {
@@ -2304,7 +2310,7 @@ void eval()
         }
 
         reg_accumulator = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == CLONE)
       {
@@ -2316,7 +2322,7 @@ void eval()
 
         reg_accumulator  = clone_object(car(reg_current_value_rib));
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == RETURN_FROM)
       {
@@ -2334,11 +2340,11 @@ void eval()
           return;
         }
 
-        reg_current_stack = get_heap((cont >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+        reg_current_stack = get_heap(cont & POINTER_MASK, 0);
 
         reg_accumulator = CADR(reg_current_value_rib);
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == COMPILE)
       {
@@ -2358,7 +2364,7 @@ void eval()
 
         reg_accumulator = car(temp);
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == SYMBL)
       {
@@ -2385,7 +2391,7 @@ void eval()
 
           memset(msg, '\0', 500);
 
-          uintptr_t ptr = (str >> OBJECT_SHIFT) << OBJECT_SHIFT;
+          uintptr_t ptr = str & POINTER_MASK;
 
           int len = get_int_value(get_heap(ptr, 0));
 
@@ -2398,7 +2404,7 @@ void eval()
         }
 
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == SYMBOL_NAME)
       {
@@ -2423,7 +2429,7 @@ void eval()
 
         reg_accumulator = (OBJECT_PTR)((add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG);
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == UNBIND)
       {
@@ -2462,7 +2468,7 @@ void eval()
             if(prev == NIL)
               top_level_env = cdr(top_level_env);
             else
-              set_heap((prev >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, cdr(rest));
+              set_heap(prev & POINTER_MASK, 1, cdr(rest));
             break;
           }
 
@@ -2481,7 +2487,7 @@ void eval()
 
         reg_accumulator = NIL;
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else if(operator == ABORT)
       {
@@ -2551,7 +2557,7 @@ void eval()
               params_env = cons(cons(CADR(rest_params), rest_args), NIL);
             else
             {
-              uintptr_t ptr = (last_cell(params_env) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              uintptr_t ptr = last_cell(params_env) & POINTER_MASK;
               set_heap(ptr, 1, 
                        cons(cons(CADR(rest_params),rest_args), NIL));            
             }
@@ -2563,7 +2569,7 @@ void eval()
               params_env = cons(cons(car(rest_params), car(rest_args)), NIL);
             else
             {
-              uintptr_t ptr = (last_cell(params_env) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              uintptr_t ptr = last_cell(params_env) & POINTER_MASK;
               set_heap(ptr, 1, 
                        cons(cons(car(rest_params),car(rest_args)), NIL));
             }
@@ -2586,11 +2592,11 @@ void eval()
           return;
         }
 
-        reg_current_stack = get_heap((reg_accumulator >> OBJECT_SHIFT) << OBJECT_SHIFT, 0);
+        reg_current_stack = get_heap(reg_accumulator & POINTER_MASK, 0);
 
         reg_accumulator = car(reg_current_value_rib);
         reg_current_value_rib = NIL;
-        reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
       else
       {
@@ -2607,7 +2613,7 @@ void eval()
     OBJECT_PTR frame = car(reg_current_stack);
     reg_current_stack = cdr(reg_current_stack);
 
-    uintptr_t ptr = (frame >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    uintptr_t ptr = frame & POINTER_MASK;
     reg_next_expression   = get_heap(ptr,1);
     reg_current_env       = get_heap(ptr,2);
     reg_current_value_rib = get_heap(ptr,3);
@@ -2679,7 +2685,7 @@ void print_stack()
   {
     OBJECT_PTR frame = car(rest);
 
-    uintptr_t ptr = (frame >> OBJECT_SHIFT) << OBJECT_SHIFT;
+    uintptr_t ptr = frame & POINTER_MASK;
 
     printf("---- begin frame %0x----\n, frame");
     printf("Next expression: ");
@@ -2725,7 +2731,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
         return NIL;
       }
 
-      reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), CADR(form)),
+      reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, CADR(form)),
                                                   cons(temp, CADR(form)))),
                                  CADR(form));
 
@@ -2741,7 +2747,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
         }
       }
 
-      reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+      reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       reg_current_value_rib = NIL;
 
       return reg_accumulator;
@@ -2781,7 +2787,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
             return NIL;
           }
 
-          reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), CADAR(rest)),
+          reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, CADAR(rest)),
                                                       cons(temp, CADAR(rest)))),
                                      CADAR(rest));
 
@@ -2797,7 +2803,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
             }
           }
 
-          reg_next_expression = cons(cons(RETURN, NIL), cdr(reg_next_expression));
+          reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
           reg_current_value_rib = NIL;
 
 	  obj = reg_accumulator;
@@ -2805,7 +2811,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = obj;
 	  else
-	    set_heap((last_cell(result) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, obj);
+	    set_heap(last_cell(result) & POINTER_MASK, 1, obj);
 	}
 	else
 	{
@@ -2814,7 +2820,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = cons(obj, NIL);
 	  else
-	    set_heap((last_cell(result) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, cons(obj, NIL));
+	    set_heap(last_cell(result) & POINTER_MASK, 1, cons(obj, NIL));
 	}
       }
       else
@@ -2824,7 +2830,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	if(result == NIL)
 	  result = cons(obj, NIL);
 	else
-	  set_heap((last_cell(result) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1, cons(obj, NIL));
+	  set_heap(last_cell(result) & POINTER_MASK, 1, cons(obj, NIL));
       }
       rest = cdr(rest);
     }
@@ -2887,7 +2893,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int st = get_int_value(start);
   int len = get_int_value(length);
 
-  uintptr_t orig_ptr = (array >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  uintptr_t orig_ptr = array & POINTER_MASK;
 
   uintptr_t ptr = object_alloc(len + 1, ARRAY_TAG);
 
@@ -2939,7 +2945,7 @@ void print_backtrace()
   while(rest != NIL)
   {
     //print_object(car(rest));
-    print_object(cdr(get_heap((car(rest) >> OBJECT_SHIFT) << OBJECT_SHIFT, 1)));
+    print_object(cdr(get_heap(car(rest) & POINTER_MASK, 1)));
 
     printf("\n");
 
@@ -3014,5 +3020,5 @@ void throw_exception(char *excp, char *err_str)
   reg_current_value_rib = cons(cons(get_symbol_object(excp), (OBJECT_PTR)get_string_object(err_str)), NIL);
 
   //basically (REFER THROW (APPLY))
-  reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL);
+  reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(CONS_APPLY_NIL, NIL), NIL))), NIL);
 }

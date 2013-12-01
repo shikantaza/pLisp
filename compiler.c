@@ -86,6 +86,9 @@ char *loaded_image_file_name = NULL;
 
 extern unsigned int current_package;
 
+extern OBJECT_PTR CONS_APPLY_NIL;
+extern OBJECT_PTR CONS_HALT_NIL;
+
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -140,7 +143,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       //basically (FRAME next (CONSTANT cadr(exp) (ARGUMENT (CONSTANT BACKQUOTE (APPLY)))))
       //decorated with exp (cons'd to all the instructions recursively)
 
-      return cons(cons(FRAME, cons(next, cons(cons(cons(CONSTANT, cons(CADR(exp), cons(cons(cons(ARGUMENT, cons(cons(cons(CONSTANT, cons(BACKQUOTE, cons(cons(cons(APPLY, NIL), NIL), exp))), NIL), exp)), NIL), exp))), NIL), exp))), exp);
+      return cons(cons(FRAME, cons(next, cons(cons(cons(CONSTANT, cons(CADR(exp), cons(cons(cons(ARGUMENT, cons(cons(cons(CONSTANT, cons(BACKQUOTE, cons(cons(CONS_APPLY_NIL, NIL), exp))), NIL), exp)), NIL), exp))), NIL), exp))), exp);
 
     }
 
@@ -202,7 +205,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
 
     if(car_obj == WHILE)
     {
-      OBJECT_PTR cond = compile(CADR(exp), cons(cons(HALT,NIL), exp));
+      OBJECT_PTR cond = compile(CADR(exp), cons(CONS_HALT_NIL, exp));
       if(cond == ERROR)
       {
         printf("Compiling condition in WHILE failed\n");
@@ -210,7 +213,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
       }
 
       OBJECT_PTR body = compile(cons(PROGN, CDDR(exp)), 
-                                cons(cons(HALT, NIL), exp));
+                                cons(CONS_HALT_NIL, exp));
       if(body == ERROR)
       {
         printf("Compiling body of WHILE failed\n");
@@ -229,7 +232,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
 
     if(car_obj == CALL_CC)
     {
-      OBJECT_PTR temp = compile(CADR(exp), cons(cons(APPLY, NIL), exp));
+      OBJECT_PTR temp = compile(CADR(exp), cons(CONS_APPLY_NIL, exp));
       if(temp == ERROR)
       {
         printf("Compiling CALL-CC failed\n");
@@ -263,8 +266,8 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
         if(IS_MACRO_OBJECT(cdr(res)))
         {
           reg_next_expression = cons(cons(FRAME,
-                                          cons(cons(cons(HALT, NIL), car_obj),
-                                               cons(cons(cons(APPLY, NIL), car_obj),
+                                          cons(cons(CONS_HALT_NIL, car_obj),
+                                               cons(cons(CONS_APPLY_NIL, car_obj),
                                                     NIL))),
                                      car_obj);
 
@@ -338,7 +341,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     } /* end of if(IS_SYMBOL_OBJECT(car_obj)) */
 
     //it's an application
-    return cons(compile_loop(cdr(exp), compile(car(exp), cons(cons(APPLY, NIL), exp)), next), exp);
+    return cons(compile_loop(cdr(exp), compile(car(exp), cons(CONS_APPLY_NIL, exp)), next), exp);
   }
 
   //it's a constant object (integer, float, char, string, array) 
@@ -456,7 +459,7 @@ int repl()
       return 1;
     }
 
-    reg_next_expression = compile(out, cons(cons(HALT, NIL), out));
+    reg_next_expression = compile(out, cons(CONS_HALT_NIL, out));
 
     if(reg_next_expression == ERROR)
     {
@@ -508,7 +511,7 @@ int repl()
     if(val != 0)
       return 1;
 
-    reg_next_expression = compile(exp, cons(cons(HALT, NIL), exp));
+    reg_next_expression = compile(exp, cons(CONS_HALT_NIL, exp));
 
     if(reg_next_expression == ERROR)
       return 1;
@@ -579,7 +582,7 @@ int load_core_library()
                         cons((OBJECT_PTR)get_string_object("plisp.lisp"),
                              NIL));
 
-  OBJECT_PTR temp = compile(src, cons(cons(HALT, NIL), src));
+  OBJECT_PTR temp = compile(src, cons(CONS_HALT_NIL, src));
 
   if(temp == ERROR)
   {
