@@ -368,9 +368,15 @@ OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable
   {
     int size = cJSON_GetArraySize(value);
     
+    //see comment in main.c for why we're not using object_alloc()
+    unsigned int *raw_ptr;
+    posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+    *((int *)raw_ptr) = size;
+
     uintptr_t ptr = object_alloc(size + 1, ARRAY_TAG);
 
-    set_heap(ptr, 0, convert_int_to_object(size));
+    //set_heap(ptr, 0, convert_int_to_object(size));
+    set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
 
     for(i=0; i<size; i++)
       set_heap(ptr, i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable));

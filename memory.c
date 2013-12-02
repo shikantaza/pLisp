@@ -62,7 +62,7 @@ void remove_node(unsigned int, OBJECT_PTR);
 BOOLEAN is_set_empty(unsigned int);
 BOOLEAN value_exists(unsigned int, OBJECT_PTR);
 
-void gc();
+void gc(BOOLEAN);
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 void build_grey_set();
 
@@ -108,8 +108,10 @@ void move_from_white_to_grey(OBJECT_PTR obj)
 {
   if(is_dynamic_memory_object(obj))
   {
-    insert_node(GREY, obj);
-    remove_node(WHITE, obj);
+    if(value_exists(WHITE, obj))
+      remove_node(WHITE, obj);
+    if(!value_exists(GREY, obj))
+      insert_node(GREY, obj);
   }
 }
 
@@ -141,19 +143,19 @@ OBJECT_PTR get_an_object_from_black()
 
 void free_all_objects()
 {
-  gc();
+  gc(true);
 
   while(!is_set_empty(BLACK))
     dealloc(get_an_object_from_black());
 }
 
-void gc()
+void gc(BOOLEAN force)
 {
   static int count = 0;
 
   count++;
 
-  if(count % GC_FREQUENCY)
+  if(!force && count % GC_FREQUENCY)
     return;
 
   unsigned int dealloc_words = memory_deallocated();
@@ -460,6 +462,8 @@ uintptr_t object_alloc(int size, int tag)
     exit(1);
   }
 
+  //for arrays, the array size object is allocated outside the call to object_alloc
+  //but we include it here for accounting
   words_allocated += size;
 
   assert(is_valid_object((OBJECT_PTR)((uintptr_t)ret+tag)));
@@ -479,13 +483,17 @@ void dealloc(OBJECT_PTR ptr)
 
   unsigned int tag = ptr & BIT_MASK;
 
+  OBJECT_PTR array_size;
+
   switch(tag)
   {
     case CONS_TAG:
       words_deallocated += 2;
       break;
     case ARRAY_TAG:
-      words_deallocated += get_int_value(get_heap(ptr & POINTER_MASK, 0)) + 1;
+      array_size = get_heap(ptr & POINTER_MASK, 0);
+      words_deallocated += get_int_value(array_size); //accounting for the array size object will be done through the dealloc() call below
+      dealloc(array_size);
       break;
     case CLOSURE_TAG:
       words_deallocated += 4;

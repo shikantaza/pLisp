@@ -1354,9 +1354,22 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
       int len = get_int_value(get_heap(ptr, 0));
 
+      //not using object_alloc() because that would
+      //result in the array size object being independently
+      //added to the white set and garbage collected
+      //independently of the parent array object
+      //(this poses a problem only while deallocation
+      //while reporting the deallocation statistics,
+      //and not otherwise; the size object and the array object
+      //get moved to grey/black sets in unison).
+      unsigned int *raw_ptr;
+      posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+      *((int *)raw_ptr) = len;
+
       uintptr_t new_obj = object_alloc(len+1, ARRAY_TAG);
       
-      set_heap(new_obj, 0, get_heap(ptr, 0));
+      //set_heap(new_obj, 0, get_heap(ptr, 0));
+      set_heap(new_obj, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
 
       int i;
 

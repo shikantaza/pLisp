@@ -2629,7 +2629,14 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
 
   uintptr_t ptr = object_alloc(5, ARRAY_TAG);
 
-  set_heap(ptr, 0, convert_int_to_object(4));
+  //see comment in main.c for why we're not using object_alloc()
+  unsigned int *raw_ptr;
+  posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  *((int *)raw_ptr) = 4;
+
+  //set_heap(ptr, 0, convert_int_to_object(4));
+  set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+
   set_heap(ptr, 1, next_expression);
   set_heap(ptr, 2, env);
   set_heap(ptr, 3, rib);
@@ -2853,9 +2860,15 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   int len = strlen(str_val);
 
+  //see comment in main.c for why we're not using object_alloc()
+  unsigned int *raw_ptr1;
+  posix_memalign((void **)&raw_ptr1, 16, sizeof(unsigned int *));
+  *((int *)raw_ptr1) = len;
+
   uintptr_t raw_ptr = object_alloc(len + 1, ARRAY_TAG);
 
-  set_heap(raw_ptr, 0, convert_int_to_object(len));
+  //set_heap(raw_ptr, 0, convert_int_to_object(len));
+  set_heap(raw_ptr, 0, (uintptr_t)raw_ptr1 + INTEGER_TAG);
 
   int i=1;
 
@@ -2874,9 +2887,15 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   
   int sz = get_int_value(size);
 
+  //see comment in main.c for why we're not using object_alloc()
+  unsigned int *raw_ptr;
+  posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  *((int *)raw_ptr) = sz;
+
   uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
 
-  set_heap(ptr, 0, size);
+  //set_heap(ptr, 0, size);
+  set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
 
   int i;
 
@@ -2893,11 +2912,17 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int st = get_int_value(start);
   int len = get_int_value(length);
 
+  //see comment in main.c for why we're not using object_alloc()
+  unsigned int *raw_ptr;
+  posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  *((int *)raw_ptr) = len;
+
   uintptr_t orig_ptr = array & POINTER_MASK;
 
   uintptr_t ptr = object_alloc(len + 1, ARRAY_TAG);
 
-  set_heap(ptr, 0, convert_int_to_object(len));
+  //set_heap(ptr, 0, convert_int_to_object(len));
+  set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
 
   int i;
 

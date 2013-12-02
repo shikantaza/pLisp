@@ -553,7 +553,7 @@ int repl()
     //g_expr = NULL;
 
     if(!debug_mode)
-      gc();
+      gc(false);
 
     /* if(yyin == stdin) */
     /*   prompt(); */
@@ -613,7 +613,7 @@ int load_core_library()
     }
   }
 
-  gc();
+  gc(false);
 
   core_library_loaded = true;
 

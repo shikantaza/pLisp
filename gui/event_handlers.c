@@ -234,6 +234,8 @@ void quit_application()
 
     g_free(loaded_image_file_name);
 
+    cleanup();
+
     gtk_main_quit();
   }
   else
