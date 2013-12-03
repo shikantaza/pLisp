@@ -42,6 +42,16 @@ extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR CONS_RETURN_NIL;
 
+extern OBJECT_PTR reg_accumulator;
+extern OBJECT_PTR reg_next_expression;
+extern OBJECT_PTR reg_current_env;
+extern OBJECT_PTR reg_current_value_rib;
+extern OBJECT_PTR reg_current_stack;
+extern OBJECT_PTR continuations_map;
+extern OBJECT_PTR debug_continuation;
+extern OBJECT_PTR debug_env;
+extern OBJECT_PTR debug_execution_stack;
+
 extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR);
@@ -62,7 +72,7 @@ void remove_node(unsigned int, OBJECT_PTR);
 BOOLEAN is_set_empty(unsigned int);
 BOOLEAN value_exists(unsigned int, OBJECT_PTR);
 
-void gc(BOOLEAN);
+void gc(BOOLEAN, BOOLEAN);
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 void build_grey_set();
 
@@ -143,13 +153,17 @@ OBJECT_PTR get_an_object_from_black()
 
 void free_all_objects()
 {
-  gc(true);
+  gc(true, false);
 
   while(!is_set_empty(BLACK))
-    dealloc(get_an_object_from_black());
+  {
+    OBJECT_PTR obj = get_an_object_from_black();
+    dealloc(obj);
+    remove_node(BLACK, obj);
+  }
 }
 
-void gc(BOOLEAN force)
+void gc(BOOLEAN force, BOOLEAN clear_black)
 {
   static int count = 0;
 
@@ -168,7 +182,8 @@ void gc(BOOLEAN force)
 
     assert(is_dynamic_memory_object(obj));
 
-    insert_node(BLACK, obj);
+    if(!value_exists(BLACK, obj))
+      insert_node(BLACK, obj);
 
     remove_node(GREY, obj);
 
@@ -206,7 +221,8 @@ void gc(BOOLEAN force)
 
   free_white_set_objects();
 
-  recreate_black();
+  if(clear_black)
+    recreate_black();
 }
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
@@ -229,6 +245,16 @@ void build_grey_set()
   move_from_white_to_grey(CONS_APPLY_NIL);
   move_from_white_to_grey(CONS_HALT_NIL);
   move_from_white_to_grey(CONS_RETURN_NIL);
+
+  /* move_from_white_to_grey(reg_accumulator); */
+  /* move_from_white_to_grey(reg_next_expression); */
+  /* move_from_white_to_grey(reg_current_env); */
+  /* move_from_white_to_grey(reg_current_value_rib); */
+  /* move_from_white_to_grey(reg_current_stack); */
+  /* move_from_white_to_grey(continuations_map); */
+  /* move_from_white_to_grey(debug_continuation); */
+  /* move_from_white_to_grey(debug_env); */
+  /* move_from_white_to_grey(debug_execution_stack); */
 }
 
 #ifndef GC_USES_HASHTABLE
@@ -558,6 +584,8 @@ void cleanup_memory()
   white = NULL;
   grey  = NULL;
   black = NULL;
+
+  printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
 }
 
 void recreate_black()

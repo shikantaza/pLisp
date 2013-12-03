@@ -549,15 +549,8 @@ int repl()
                        get_symbol_object("EXCEPTION-HANDLERS"),
                        NIL);
 
-    //delete_expression(g_expr);
-    //g_expr = NULL;
-
     if(!debug_mode)
-      gc(false);
-
-    /* if(yyin == stdin) */
-    /*   prompt(); */
-
+      gc(false, true);
   }
 
   delete_expression(g_expr);
@@ -613,7 +606,7 @@ int load_core_library()
     }
   }
 
-  gc(false);
+  gc(false, true);
 
   core_library_loaded = true;
 

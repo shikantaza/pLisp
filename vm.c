@@ -214,6 +214,8 @@ hashtable_t *profiling_tab = NULL;
 
 void eval()
 {
+  //gc(false, true);
+
   //print_object(car(reg_next_expression)); fprintf(stdout, "\n");
   //print_state();
 
