@@ -36,7 +36,6 @@ extern char err_buf[];
 extern OBJECT_PTR NIL;
 
 extern char **strings;
-extern BOOLEAN in_exception;
 
 extern OBJECT_PTR reg_current_env;
 

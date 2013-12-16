@@ -20,7 +20,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H 
 
-#define GC_FREQUENCY 100
+#define GC_FREQUENCY 1000
 
 int initialize_memory();
 
@@ -39,6 +39,10 @@ inline
 OBJECT_PTR get_heap(uintptr_t, unsigned int);
 
 unsigned int memory_allocated();
+
+void pin_globals();
+
+void gc();
 
 void test_memory();
 void test_bst();

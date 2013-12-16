@@ -84,6 +84,8 @@ extern abort_debugger(GtkWidget *, gpointer);
 
 /* event handler function definitions end */
 
+extern BOOLEAN in_break;
+
 typedef struct
 {
   GtkWidget *textview;
@@ -739,7 +741,7 @@ void populate_frames_list(GtkTreeView *list)
   /*   gtk_list_store_set(store, &iter, 1, i, -1); */
   /* } */
 
-  OBJECT_PTR rest = debug_execution_stack;
+  OBJECT_PTR rest = in_break ? debug_execution_stack : CDDR(debug_execution_stack);
 
   while(rest != NIL)
   {

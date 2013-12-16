@@ -152,7 +152,7 @@ int call_repl(char *expression)
 
   while(yyparse() == 0)
   {
-    if(repl())
+    if(repl(1))
       return -1;
   }
 
@@ -631,7 +631,9 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   {
     action_triggering_window = workspace_window;
     evaluate();
-    gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1);
+    GtkTextIter start_sel, end_sel;
+    if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel))
+      gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1);
     return TRUE;
   }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)

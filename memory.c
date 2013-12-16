@@ -119,9 +119,10 @@ void move_from_white_to_grey(OBJECT_PTR obj)
   if(is_dynamic_memory_object(obj))
   {
     if(value_exists(WHITE, obj))
+    {
       remove_node(WHITE, obj);
-    if(!value_exists(GREY, obj))
       insert_node(GREY, obj);
+    }
   }
 }
 
@@ -155,26 +156,37 @@ void free_all_objects()
 {
   gc(true, false);
 
+  unsigned int count = memory_deallocated();
+
+  assert(!is_set_empty(BLACK));
+
   while(!is_set_empty(BLACK))
   {
     OBJECT_PTR obj = get_an_object_from_black();
+    assert(is_valid_object(obj));
     dealloc(obj);
     remove_node(BLACK, obj);
   }
+
+  //printf("%d words freed during cleanup\n", memory_deallocated() - count);
 }
 
 void gc(BOOLEAN force, BOOLEAN clear_black)
 {
-  static int count = 0;
-
-  count++;
-
-  if(!force && count % GC_FREQUENCY)
+  //no new objects were created since the
+  //last GC cycle, so nothing to do.
+  if(is_set_empty(WHITE))
     return;
+
+  //printf("Entering GC cycle... ");
 
   unsigned int dealloc_words = memory_deallocated();
 
+  //assert(is_set_empty(GREY));
+
   build_grey_set();
+
+  assert(!is_set_empty(GREY));
 
   while(!is_set_empty(GREY))
   {
@@ -182,8 +194,7 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
 
     assert(is_dynamic_memory_object(obj));
 
-    if(!value_exists(BLACK, obj))
-      insert_node(BLACK, obj);
+    insert_node(BLACK, obj);
 
     remove_node(GREY, obj);
 
@@ -221,8 +232,18 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
 
   free_white_set_objects();
 
-  if(clear_black)
-    recreate_black();
+  assert(is_set_empty(GREY));
+  assert(is_set_empty(WHITE));
+
+  assert(!is_set_empty(BLACK));
+
+  /* if(clear_black) */
+    /* recreate_black(); */
+
+  /* if(clear_black) */
+  /*   assert(is_set_empty(BLACK)); */
+
+  //printf("%d words deallocated in current GC cycle\n", memory_deallocated() - dealloc_words);
 }
 
 BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
@@ -236,25 +257,49 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
           IS_FLOAT_OBJECT(obj);
 }
 
+void pin_globals()
+{
+  if(is_dynamic_memory_object(reg_accumulator))
+    insert_node(GREY, reg_accumulator);
+
+  if(is_dynamic_memory_object(reg_next_expression))
+    insert_node(GREY, reg_next_expression);
+
+  if(is_dynamic_memory_object(reg_current_value_rib))
+    insert_node(GREY, reg_current_value_rib);
+
+  if(is_dynamic_memory_object(reg_current_env))
+    insert_node(GREY, reg_current_env);
+
+  if(is_dynamic_memory_object(reg_current_stack))
+    insert_node(GREY, reg_current_stack);
+
+  if(is_dynamic_memory_object(debug_env))
+    insert_node(GREY, debug_env);
+
+  if(is_dynamic_memory_object(debug_continuation))
+    insert_node(GREY, debug_continuation);
+
+  if(is_dynamic_memory_object(debug_execution_stack))
+    insert_node(GREY, debug_execution_stack);
+
+  if(is_dynamic_memory_object(continuations_map))
+    insert_node(GREY, continuations_map);
+}
+
 void build_grey_set()
 {
-  if(top_level_env != NIL)
-    move_from_white_to_grey(top_level_env);
+  assert(top_level_env != NIL);
 
-  move_from_white_to_grey(CONS_NIL_NIL);
-  move_from_white_to_grey(CONS_APPLY_NIL);
-  move_from_white_to_grey(CONS_HALT_NIL);
-  move_from_white_to_grey(CONS_RETURN_NIL);
+  insert_node(GREY, top_level_env);
 
-  /* move_from_white_to_grey(reg_accumulator); */
-  /* move_from_white_to_grey(reg_next_expression); */
-  /* move_from_white_to_grey(reg_current_env); */
-  /* move_from_white_to_grey(reg_current_value_rib); */
-  /* move_from_white_to_grey(reg_current_stack); */
-  /* move_from_white_to_grey(continuations_map); */
-  /* move_from_white_to_grey(debug_continuation); */
-  /* move_from_white_to_grey(debug_env); */
-  /* move_from_white_to_grey(debug_execution_stack); */
+  insert_node(GREY, CONS_NIL_NIL);
+  insert_node(GREY, CONS_APPLY_NIL);
+  insert_node(GREY, CONS_HALT_NIL);
+  insert_node(GREY, CONS_RETURN_NIL);
+
+  pin_globals();
+
 }
 
 #ifndef GC_USES_HASHTABLE
@@ -290,8 +335,14 @@ void InfoDest(void *a)
 
 void insert_node(unsigned int set_type, OBJECT_PTR val)
 {
+  if(!is_dynamic_memory_object(val))
+    assert(false);
+
   if(!is_valid_object(val))
     assert(false);
+
+  if(value_exists(set_type, val))
+    return;
 
 #ifdef GC_USES_HASHTABLE
 
@@ -306,17 +357,21 @@ void insert_node(unsigned int set_type, OBJECT_PTR val)
 
 #else
 
+  rb_red_blk_tree *tree;
+
+  if(set_type == WHITE)
+    tree = white;
+  else if(set_type == GREY)
+    tree = grey;
+  else if(set_type == BLACK)
+    tree = black;
+  else
+    assert(false);
+
   unsigned int *newInt=(unsigned int*) malloc(sizeof(unsigned int));
   *newInt = (unsigned int)val;
 
-  if(set_type == WHITE)
-    RBTreeInsert(white, newInt, 0);
-  else if(set_type == GREY)
-    RBTreeInsert(grey, newInt, 0);
-  else if(set_type == BLACK)
-    RBTreeInsert(black, newInt, 0);
-  else
-    assert(false);
+  RBTreeInsert(tree, newInt, 0);
 
 #endif
 }
@@ -593,3 +648,4 @@ void recreate_black()
   RBTreeDestroy(black);
   black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
 }
+

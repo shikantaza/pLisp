@@ -183,18 +183,11 @@ extern FILE *yyin;
 #define NOF_SPECIAL_SYMBOLS     79
 #define NOF_NON_SPECIAL_SYMBOLS 26
 
-BOOLEAN in_exception = false;
-OBJECT_PTR execution_stack;
 char err_buf[500];
 
 #define SYMBOL_STRING_SIZE 100
 
 BOOLEAN debug_mode = false;
-
-//used to keep track of when
-//to exit debugging mode, also
-//maybe useful when implementing continuations
-OBJECT_PTR root_form;
 
 int nof_dl_handles = 0;
 void **dl_handles = NULL;
@@ -278,11 +271,13 @@ void initialize()
 
 int add_string(char *str)
 {
+  char **temp;
+
   log_function_entry("add_string");
 
   nof_strings++;
 
-  char **temp = (char **)realloc(strings, nof_strings * sizeof(char *));
+  temp = (char **)realloc(strings, nof_strings * sizeof(char *));
 
   if(temp != NULL)
     strings = temp;
@@ -303,11 +298,13 @@ int add_string(char *str)
 
 int add_symbol(char *sym)
 {
+  char **temp;
+
   log_function_entry("add_symbol");
 
   packages[current_package].nof_symbols++;
   
-  char **temp = (char **)realloc(packages[current_package].symbols, packages[current_package].nof_symbols * sizeof(char *));
+  temp = (char **)realloc(packages[current_package].symbols, packages[current_package].nof_symbols * sizeof(char *));
 
   if(temp != NULL)
     packages[current_package].symbols = temp;
@@ -340,11 +337,11 @@ int find_string(char *str)
 
 int find_symbol(char *sym, int package_index)
 {
-  log_function_entry("find_symbol");
   int ret;
   BOOLEAN found = false;
-
   int i;
+
+  log_function_entry("find_symbol");
 
   for(i=0; i<packages[package_index].nof_symbols; i++)
   {
@@ -423,6 +420,7 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
 
 void delete_expression(expression_t *e)
 {
+  int i;
 
   log_function_entry("delete_expression");
 
@@ -433,8 +431,6 @@ void delete_expression(expression_t *e)
   print_expression(e);
   fprintf(stdout, "\n");
 #endif
-
-  int i;
 
   if(e->type == SYMBOL)
   {
@@ -717,14 +713,14 @@ void print_object(OBJECT_PTR obj_ptr)
 
 OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
 {
+  uintptr_t ptr = object_alloc(2, CONS_TAG);
+
   log_function_entry("cons");
 
   if(!is_valid_object(car))
     assert(false);
   if(!is_valid_object(cdr))
     assert(false);
-
-  uintptr_t ptr = object_alloc(2, CONS_TAG);
 
   set_heap(ptr, 0, car);
   set_heap(ptr, 1, cdr);
@@ -736,12 +732,11 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
 
 OBJECT_PTR get_string_object(char *str)
 {
-
-  log_function_entry("get_string_object");
-
   int index = find_string(str);
 
   OBJECT_PTR retval;
+
+  log_function_entry("get_string_object");
 
   if(index != NOT_FOUND) //string exists in string table
     retval = (OBJECT_PTR)((index << OBJECT_SHIFT) + STRING_LITERAL_TAG);
@@ -755,12 +750,14 @@ OBJECT_PTR get_string_object(char *str)
 
 OBJECT_PTR get_symbol_object(char *symbol_name)
 {
-  log_function_entry("get_symbol_object");
-
   OBJECT_PTR retval;
 
   int i;
   int package_index = current_package;
+
+  int index;
+
+  log_function_entry("get_symbol_object");
 
   for(i=0; i<packages[CORE_PACKAGE_INDEX].nof_symbols; i++)
   {
@@ -771,7 +768,7 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
     }
   }
 
-  int index = find_symbol(symbol_name, package_index);
+  index = find_symbol(symbol_name, package_index);
     
   if(index != NOT_FOUND) //symbol exists in symbol table
     retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG);
@@ -809,8 +806,6 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
 
 int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
-  assert(IS_CONS_OBJECT(obj));
-
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
 
@@ -821,6 +816,11 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
   //the number of indents
   char *ptr;
   int indents = 0;
+
+  BOOLEAN macro_form;
+
+  assert(IS_CONS_OBJECT(obj));
+
   for(ptr=buf+filled_buf_len; ptr>=buf; ptr--)
   {
     if(*ptr == '\n')
@@ -836,6 +836,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
      car_obj == DOTIMES ||
      car_obj == DOLIST)
   {
+    OBJECT_PTR rest;
+
     if(car_obj == LAMBDA)
       length += sprintf(buf+filled_buf_len+length, "(lambda ");
     else if(car_obj == MACRO)
@@ -858,18 +860,18 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       //LET specs
       OBJECT_PTR specs = CADR(obj);
 
+      OBJECT_PTR rest = cdr(specs);
+
       length += sprintf(buf+filled_buf_len+length, "(");
 
       length += print_object_to_string(car(specs), buf, filled_buf_len+length);
 
-      OBJECT_PTR rest = cdr(specs);
-
       while(rest != NIL)
       {
+        int i;
 
         length += sprintf(buf+filled_buf_len+length, "\n");
 
-        int i;
         for(i=1; i<indents; i++)
           length += sprintf(buf+filled_buf_len+length, " ");
 
@@ -886,13 +888,14 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       length += sprintf(buf+filled_buf_len+length, ")");
     }
 
-    OBJECT_PTR rest = CDDR(obj);
+    rest = CDDR(obj);
 
     while(rest != NIL)
     {
+      int i;
+
       length += sprintf(buf+filled_buf_len+length, "\n");
 
-      int i;
       for(i=1; i<indents; i++)
         length += sprintf(buf+filled_buf_len+length, " ");
 
@@ -910,6 +913,9 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
   if(car_obj == DEFUN || car_obj == DEFMACRO)
   {
+    int i;
+    OBJECT_PTR rest;
+
     if(car_obj == DEFUN)
       length += sprintf(buf+filled_buf_len+length, "(defun ");
     else if(car_obj == DEFMACRO)
@@ -923,13 +929,12 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
     length += sprintf(buf+filled_buf_len+length, "\n");
 
-    int i;
     for(i=1; i<indents; i++)
       length += sprintf(buf+filled_buf_len+length, " ");
 
     length += sprintf(buf+filled_buf_len+length, "  ");
 
-    OBJECT_PTR rest = CDDDR(obj);
+    rest = CDDDR(obj);
 
     while(rest != NIL)
     {
@@ -946,6 +951,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
   if(car_obj == PROGN || car_obj == COND)
   {
+    OBJECT_PTR rest;
+
     if(car_obj == PROGN)
       length += sprintf(buf+filled_buf_len+length, "(progn ");
     else if(car_obj == COND)
@@ -953,13 +960,14 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
     length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
 
-    OBJECT_PTR rest = cdr(cdr_obj);
+    rest = cdr(cdr_obj);
 
     while(rest != NIL)
     {
+      int i;
+
       length += sprintf(buf+filled_buf_len+length, "\n");
 
-      int i;
       for(i=1; i<indents; i++)
         length += sprintf(buf+filled_buf_len+length, " ");
 
@@ -980,12 +988,13 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
   if(car_obj == IF)
   {
+    int i;
+
     length += sprintf(buf+filled_buf_len+length, "(if ");
     length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
 
     length += sprintf(buf+filled_buf_len+length, "\n");
 
-    int i;
     for(i=1; i<indents; i++)
       length += sprintf(buf+filled_buf_len+length, " ");
 
@@ -1009,8 +1018,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
 
-
-  BOOLEAN macro_form = false;
+  macro_form = false;
 
   if(car_obj == BACKQUOTE || car_obj == COMMA || car_obj == COMMA_AT || car_obj == QUOTE)
     macro_form = true;
@@ -1033,12 +1041,14 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
   }
   else
   {
+    OBJECT_PTR rest;
+
     if(macro_form)
       length += sprintf(buf+filled_buf_len+length, "%s", (car_obj == BACKQUOTE) ? "`" : ((car_obj == COMMA) ? "," : ((car_obj == QUOTE) ? "'" : ",@")));
     else
       length += sprintf(buf+filled_buf_len+length, "(");
 
-    OBJECT_PTR rest = macro_form ? cdr(obj) : obj;
+    rest = macro_form ? cdr(obj) : obj;
 
     while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
     {
@@ -1069,12 +1079,12 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
 void print_cons_object(OBJECT_PTR obj)
 {
+  OBJECT_PTR car_obj = car(obj);
+  OBJECT_PTR cdr_obj = cdr(obj);
+
   log_function_entry("print_cons_object");
 
   assert(IS_CONS_OBJECT(obj));
-
-  OBJECT_PTR car_obj = car(obj);
-  OBJECT_PTR cdr_obj = cdr(obj);
 
 #ifdef GUI
 
@@ -1088,9 +1098,9 @@ void print_cons_object(OBJECT_PTR obj)
   }
   else
   {
-    print_to_transcript("(");
-
     OBJECT_PTR rest = obj;
+
+    print_to_transcript("(");
 
     while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
     {
@@ -1126,9 +1136,9 @@ void print_cons_object(OBJECT_PTR obj)
   }
   else
   {
-    fprintf(stdout, "(");
-
     OBJECT_PTR rest = obj;
+
+    fprintf(stdout, "(");
 
     while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
     {
@@ -1154,17 +1164,11 @@ void print_cons_object(OBJECT_PTR obj)
 
 BOOLEAN is_atom(OBJECT_PTR ptr)
 {
-  log_function_entry("is_atom");
-
-  BOOLEAN ret = IS_SYMBOL_OBJECT(ptr) || 
-                IS_INTEGER_OBJECT(ptr) || 
-                IS_FLOAT_OBJECT(ptr) ||
-                IS_STRING_LITERAL_OBJECT(ptr) ||
-                IS_CHAR_OBJECT(ptr);
-
-  log_function_exit("is_atom");
-
-  return ret;
+  return IS_SYMBOL_OBJECT(ptr) || 
+    IS_INTEGER_OBJECT(ptr) || 
+    IS_FLOAT_OBJECT(ptr) ||
+    IS_STRING_LITERAL_OBJECT(ptr) ||
+    IS_CHAR_OBJECT(ptr);
 }
 
 int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
@@ -1228,11 +1232,13 @@ int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
 
       OBJECT_PTR out;
       int val = convert_expression_to_object(e->elements[e->nof_elements-1], &out);
+
+      OBJECT_PTR cons_obj;
       
       if(val != 0)
         return -1;
 
-      OBJECT_PTR cons_obj = cons(out, NIL);
+      cons_obj = cons(out, NIL);
 
       for(i=e->nof_elements - 2; i>=0; i--)
       {
@@ -1323,6 +1329,8 @@ OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_
 
 OBJECT_PTR clone_object(OBJECT_PTR obj)
 {
+  OBJECT_PTR ret;
+
   log_function_entry("clone_object");
 
 #ifdef DEBUG
@@ -1330,8 +1338,6 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
   fprintf(stdout, "\n");
 #endif
   
-  OBJECT_PTR ret;
-
   if(is_atom(obj) || IS_CONTINUATION_OBJECT(obj))
     ret = obj; //atoms are immutable and are reused; continuation objects are also not cloned
   else
@@ -1354,6 +1360,12 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
       int len = get_int_value(get_heap(ptr, 0));
 
+      unsigned int *raw_ptr;
+
+      uintptr_t new_obj;
+
+      int i;
+
       //not using object_alloc() because that would
       //result in the array size object being independently
       //added to the white set and garbage collected
@@ -1362,16 +1374,13 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       //while reporting the deallocation statistics,
       //and not otherwise; the size object and the array object
       //get moved to grey/black sets in unison).
-      unsigned int *raw_ptr;
       posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
       *((int *)raw_ptr) = len;
 
-      uintptr_t new_obj = object_alloc(len+1, ARRAY_TAG);
+      new_obj = object_alloc(len+1, ARRAY_TAG);
       
       //set_heap(new_obj, 0, get_heap(ptr, 0));
       set_heap(new_obj, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-
-      int i;
 
       for(i=1; i<=len; i++)
 	set_heap(new_obj, i, clone_object(get_heap(ptr, i)));
@@ -1442,14 +1451,15 @@ void print_closure_object(OBJECT_PTR obj)
 
 int length(OBJECT_PTR cons_obj)
 {
+  OBJECT_PTR rest;
+  int l = 0;
+
   if(cons_obj == NIL)
     return 0;
 
   assert(IS_CONS_OBJECT(cons_obj));
 
-  OBJECT_PTR rest = cons_obj;
-
-  int l = 0;
+  rest = cons_obj;
 
   while(rest != NIL)
   {
@@ -1462,11 +1472,11 @@ int length(OBJECT_PTR cons_obj)
 
 OBJECT_PTR get_symbol_value(OBJECT_PTR symbol_obj, OBJECT_PTR env_list)
 {
-  log_function_entry("get_symbol_value");
-
   OBJECT_PTR rest = env_list;
   OBJECT_PTR ret;
   BOOLEAN found = false;
+
+  log_function_entry("get_symbol_value");
 
   while(rest != NIL)
   {
@@ -1504,11 +1514,11 @@ OBJECT_PTR get_symbol_value(OBJECT_PTR symbol_obj, OBJECT_PTR env_list)
 
 OBJECT_PTR get_symbol_value_from_env(OBJECT_PTR symbol_obj, OBJECT_PTR env_obj)
 {
-  log_function_entry("get_symbol_value_from_env");
-
   OBJECT_PTR rest = env_obj;
   OBJECT_PTR ret;
   BOOLEAN found = false;
+
+  log_function_entry("get_symbol_value_from_env");
 
   while(rest != NIL)
   {
@@ -1534,6 +1544,8 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
 {
   OBJECT_PTR rest1 = env_list;
 
+  OBJECT_PTR rest2;
+
   while(rest1 != NIL)
   {
     OBJECT_PTR rest2 = car(rest1);
@@ -1554,7 +1566,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
   }    
 
   //check the top level environment 
-  OBJECT_PTR rest2 = top_level_env;
+  rest2 = top_level_env;
 
   while(rest2 != NIL)
   {
@@ -1575,6 +1587,8 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
 void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
 {
   OBJECT_PTR rest;
+
+  uintptr_t ptr;
 
   if(top_level_env == NIL)
   {
@@ -1603,7 +1617,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
     }
 
     //symbol does not exist in the environment
-    uintptr_t ptr = last_cell(top_level_env) & POINTER_MASK;
+    ptr = last_cell(top_level_env) & POINTER_MASK;
     set_heap(ptr, 1, cons(cons(symbol_obj, val), NIL));
     system_changed = true;
   }
@@ -1691,9 +1705,9 @@ OBJECT_PTR last_cell(OBJECT_PTR list)
 //TODO: package-awareness (is this required?)
 OBJECT_PTR gensym()
 {
-  gen_sym_count++;
-
   char sym[7];
+
+  gen_sym_count++;
 
   sprintf(sym, "#:G%04d", gen_sym_count);
 
@@ -1702,9 +1716,11 @@ OBJECT_PTR gensym()
 
 void create_package(char *name)
 {
+  package_t *temp;
+
   nof_packages++;
 
-  package_t *temp = (package_t *)realloc(packages, nof_packages * sizeof(package_t));
+  temp = (package_t *)realloc(packages, nof_packages * sizeof(package_t));
 
   if(temp != NULL)
     packages = temp;
@@ -1880,15 +1896,17 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
 {
   int package_index = find_package(package_name);
 
+  int symbol_index;
+
+  OBJECT_PTR retval;
+
   if(package_index == NOT_FOUND)
   {
     printf("Not found for %s\n", package_name);
     return CONS_NIL_NIL;
   }
 
-  int symbol_index = find_qualified_symbol(package_index, symbol_name);
-
-  OBJECT_PTR retval;
+  symbol_index = find_qualified_symbol(package_index, symbol_name);
 
   if(symbol_index != NOT_FOUND) //symbol exists in symbol table
     retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (symbol_index << OBJECT_SHIFT) + SYMBOL_TAG);
@@ -1900,12 +1918,12 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
 
 void print_qualified_symbol(OBJECT_PTR ptr, char *buf)
 {
+  int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+
   assert(IS_SYMBOL_OBJECT(ptr));
 
   memset(buf,'\0',SYMBOL_STRING_SIZE);
-
-  int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-  int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
   if(package_index < 0 || package_index >= nof_packages)
     assert(false);
@@ -1918,15 +1936,14 @@ void print_qualified_symbol(OBJECT_PTR ptr, char *buf)
 
 void print_symbol(OBJECT_PTR ptr, char *buf)
 {
+  int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
   log_function_entry("print_symbol");
 
   assert(IS_SYMBOL_OBJECT(ptr));
 
   memset(buf,'\0',SYMBOL_STRING_SIZE);
-
-  int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-  int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
   if(package_index < 0 || package_index >= nof_packages)
     assert(false);
@@ -1944,15 +1961,17 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
 
 int add_qualified_symbol(char *package_name, char *sym)
 {
-  log_function_entry("add_symbol");
-
   int package_index = find_package(package_name);
+
+  char ** temp;
+
+  log_function_entry("add_symbol");
 
   assert(package_index != NOT_FOUND);
 
   packages[package_index].nof_symbols++;
 
-  char **temp = (char **)realloc(packages[package_index].symbols, packages[package_index].nof_symbols * sizeof(char *));
+  temp = (char **)realloc(packages[package_index].symbols, packages[package_index].nof_symbols * sizeof(char *));
 
   if(temp != NULL)
     packages[package_index].symbols = temp;
@@ -1973,11 +1992,13 @@ int add_qualified_symbol(char *package_name, char *sym)
 //NOTE: this function returns the unqualified symbol name
 char *get_symbol_name(OBJECT_PTR symbol_object)
 {
+  int package_index, symbol_index;
+
   if(!IS_SYMBOL_OBJECT(symbol_object))
     assert(false);
 
-  int package_index = (int)symbol_object >> (SYMBOL_BITS + OBJECT_SHIFT);
-  int symbol_index =  ((int)symbol_object >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+  package_index = (int)symbol_object >> (SYMBOL_BITS + OBJECT_SHIFT);
+  symbol_index =  ((int)symbol_object >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 
   return packages[package_index].symbols[symbol_index];
 }
@@ -1986,15 +2007,16 @@ char *get_symbol_name(OBJECT_PTR symbol_object)
 //this function returns the corresponding value (1 in this case)
 OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)
 {
-
-  log_function_entry("get_keyword_arg");
-
-  assert(IS_SYMBOL_OBJECT(key));
-
   OBJECT_PTR ret;
   BOOLEAN found = false;
 
   OBJECT_PTR rest = arg_list;
+
+  char *temp1, *temp2;
+
+  log_function_entry("get_keyword_arg");
+
+  assert(IS_SYMBOL_OBJECT(key));
 
   while(rest != NIL)
   {
@@ -2005,11 +2027,11 @@ OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)
       continue;
     }
 
-    char *temp1 = get_symbol_name(car(rest));
+    temp1 = get_symbol_name(car(rest));
 
     assert(temp1[0] == ':');
 
-    char *temp2 = substring(temp1, 1, strlen(temp1) - 1);
+    temp2 = substring(temp1, 1, strlen(temp1) - 1);
 
     if(!strcmp(get_symbol_name(key), temp2))
     {
@@ -2033,9 +2055,9 @@ OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)
 
 BOOLEAN is_keyword_symbol(OBJECT_PTR symbol_object)
 {
+  BOOLEAN ret;
 
   log_function_entry("is_keyword_symbol");
-  BOOLEAN ret;
 
   if(!(IS_SYMBOL_OBJECT(symbol_object)))
     ret = false;
@@ -2052,11 +2074,11 @@ BOOLEAN is_keyword_symbol(OBJECT_PTR symbol_object)
 
 BOOLEAN contains_keyword_parameter(OBJECT_PTR list)
 {
-  log_function_entry("contains_keyword_parameter");
-
   BOOLEAN ret = false;
 
   OBJECT_PTR rest = list;
+
+  log_function_entry("contains_keyword_parameter");
 
   while(rest != NIL)
   {
@@ -2111,13 +2133,13 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
 {
   int len = 0;
 
-  len += sprintf(buf+filled_buf_len, "[");
-
   uintptr_t ptr = array & POINTER_MASK;
 
   int length = get_int_value(get_heap(ptr, 0));
 
   int i;
+
+  len += sprintf(buf+filled_buf_len, "[");
 
   for(i=0; i< length; i++)
   {
@@ -2135,18 +2157,18 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
 
 void print_array_object(OBJECT_PTR array)
 {
+  uintptr_t ptr;
+  int length, i;
 
   log_function_entry("print_array_object");
 
-  uintptr_t ptr = array & POINTER_MASK;
+  ptr = array & POINTER_MASK;
 
 #ifdef GUI
 
   print_to_transcript("[");
 
-  int length = get_int_value(get_heap(ptr, 0));
-
-  int i;
+  length = get_int_value(get_heap(ptr, 0));
 
   for(i=0; i< length; i++)
   {
@@ -2163,9 +2185,7 @@ void print_array_object(OBJECT_PTR array)
 
   fprintf(stdout, "[");
 
-  int length = get_int_value(get_heap(ptr, 0));
-
-  int i;
+  length = get_int_value(get_heap(ptr, 0));
 
   for(i=0; i< length; i++)
   {
@@ -2205,8 +2225,6 @@ int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_l
 
 void print_string(OBJECT_PTR string_object)
 {
-  assert(is_string_object(string_object));
-
   uintptr_t ptr = string_object & POINTER_MASK;
 
   int len = get_int_value(get_heap(ptr, 0));
@@ -2214,11 +2232,17 @@ void print_string(OBJECT_PTR string_object)
   int i;
 
 #ifdef GUI
-
   char buf[500];
+  int length;
+#endif  
+
+  assert(is_string_object(string_object));
+
+#ifdef GUI
+
   memset(buf, '\0', 500);
 
-  int length = 0;
+  length = 0;
 
   length = sprintf(buf+length, "\"");
 
@@ -2244,14 +2268,15 @@ void print_string(OBJECT_PTR string_object)
 
 BOOLEAN is_string_object(OBJECT_PTR obj)
 {
+  uintptr_t ptr;
+  int len, i;
+
   if(!(IS_ARRAY_OBJECT(obj)))
     return false;
 
-  uintptr_t ptr = obj & POINTER_MASK;
+  ptr = obj & POINTER_MASK;
 
-  int len = get_int_value(get_heap(ptr, 0));
-
-  int i;
+  len = get_int_value(get_heap(ptr, 0));
 
   for(i=1; i<=len; i++)
   {
@@ -2264,16 +2289,18 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
 
 char *get_string(OBJECT_PTR string_object)
 {
+  uintptr_t ptr;
+  int len, i;
+  char *ret;
+
   if(!is_string_object(string_object))
     assert(false);
 
-  uintptr_t ptr = string_object & POINTER_MASK;
+  ptr = string_object & POINTER_MASK;
 
-  int len = get_int_value(get_heap(ptr, 0));
+  len = get_int_value(get_heap(ptr, 0));
 
-  char *ret = (char *)malloc(len * sizeof(char));
-
-  int i;
+  ret = (char *)malloc(len * sizeof(char));
 
   for(i=1; i<=len; i++)
     ret[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
@@ -2314,11 +2341,11 @@ BOOLEAN is_valid_object(OBJECT_PTR obj)
 
 OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)
 {
-  log_function_entry("get_symbol_from_value");
-
   OBJECT_PTR rest = env_list;
   OBJECT_PTR ret;
   BOOLEAN found = false;
+
+  log_function_entry("get_symbol_from_value");
 
   while(rest != NIL)
   {
@@ -2356,11 +2383,11 @@ OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)
 
 OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_obj)
 {
-  log_function_entry("get_symbol_from_value_from_env");
-
   OBJECT_PTR rest = env_obj;
   OBJECT_PTR ret;
   BOOLEAN found = false;
+
+  log_function_entry("get_symbol_from_value_from_env");
 
   while(rest != NIL)
   {
@@ -2384,16 +2411,16 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_o
 
 OBJECT_PTR list(int count, ...)
 {
+  va_list ap;
+  OBJECT_PTR ret;
+  int i;
+
   if(!count)
     return NIL;
 
-  va_list ap;
-
   va_start(ap, count);
 
-  OBJECT_PTR ret = cons((OBJECT_PTR)va_arg(ap, int), NIL);
-
-  int i;
+  ret = cons((OBJECT_PTR)va_arg(ap, int), NIL);
 
   for(i=1; i<count; i++)
   {

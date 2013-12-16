@@ -212,16 +212,38 @@ OBJECT_PTR prev_operator;
 hashtable_t *profiling_tab = NULL;
 //end variables related to profiling
 
-void eval()
-{
-  //gc(false, true);
+BOOLEAN in_break;
 
-  //print_object(car(reg_next_expression)); fprintf(stdout, "\n");
-  //print_state();
+OBJECT_PTR prev_reg_accumulator;
+OBJECT_PTR prev_reg_next_expression;
+OBJECT_PTR prev_reg_current_value_rib;
+OBJECT_PTR prev_reg_current_env;
+OBJECT_PTR prev_reg_current_stack;
+OBJECT_PTR prev_debug_env;
+OBJECT_PTR prev_debug_continuation;
+OBJECT_PTR prev_debug_execution_stack;
+OBJECT_PTR prev_continuations_map;
+
+void eval(BOOLEAN do_gc)
+{
+  static unsigned int count = 0;
 
   OBJECT_PTR exp = car(reg_next_expression);
 
   OBJECT_PTR opcode = car(exp);
+
+  pin_globals();
+
+  if(do_gc)
+  {
+    count++;
+
+    if(count == GC_FREQUENCY)
+    {
+      gc(false, true);
+      count = 0;
+    }
+  }
 
   if(opcode == APPLY && profiling_tab)
   {
@@ -230,6 +252,19 @@ void eval()
     if(prev_operator != NIL)
     {
       OBJECT_PTR operator_to_be_used;
+
+      hashtable_entry_t *e;
+
+      unsigned int count;
+      unsigned int mem_alloc;
+      double elapsed_wall_time;
+      double elapsed_cpu_time;
+
+      double temp1 = get_wall_time();
+      clock_t temp2 = clock();
+      unsigned int temp3 = memory_allocated();
+
+      profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
 
       if(IS_SYMBOL_OBJECT(prev_operator))
          operator_to_be_used = prev_operator;
@@ -244,16 +279,7 @@ void eval()
                                           cons(car(get_source_object(prev_operator)), NIL)));
       }
 
-      hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
-
-      unsigned int count;
-      unsigned int mem_alloc;
-      double elapsed_wall_time;
-      double elapsed_cpu_time;
-
-      double temp1 = get_wall_time();
-      clock_t temp2 = clock();
-      unsigned int temp3 = memory_allocated();
+      e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
 
       if(e)
       {
@@ -277,7 +303,6 @@ void eval()
         mem_alloc = temp3 - mem_alloc_var;
       }
 
-      profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
       pd->count = count;
       pd->elapsed_wall_time = elapsed_wall_time;
       pd->elapsed_cpu_time = elapsed_cpu_time;
@@ -333,10 +358,12 @@ void eval()
         reg_accumulator = cdr(res);
       else
       {
+        OBJECT_PTR res1;
+
         symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp))));
 
-        OBJECT_PTR res1 = get_symbol_value(symbol_to_be_used,
-                                           debug_mode ? debug_env : reg_current_env);
+        res1 = get_symbol_value(symbol_to_be_used,
+                                debug_mode ? debug_env : reg_current_env);
 
         if(car(res1) != NIL)
           reg_accumulator = cdr(res1);
@@ -388,13 +415,13 @@ void eval()
 
     while(1)
     {
-      reg_next_expression = cond;
-
       OBJECT_PTR temp = reg_current_stack;
+
+      reg_next_expression = cond;
 
       while(car(reg_next_expression) != NIL)
       {
-        eval();
+        eval(false);
         if(in_error)
           return;
       }
@@ -406,7 +433,7 @@ void eval()
 
       while(car(reg_next_expression) != NIL)
       {
-        eval();
+        eval(false);
         if(in_error)
           return;
       }
@@ -496,7 +523,7 @@ void eval()
   {
     OBJECT_PTR operator = reg_accumulator;
 
-    OBJECT_PTR res = get_symbol_from_value(reg_accumulator, reg_current_env);
+    //OBJECT_PTR res = get_symbol_from_value(reg_accumulator, reg_current_env);
 
     /* continuations_map = cons(cons(operator, create_current_continuation()), */
     /*                          continuations_map); */
@@ -521,14 +548,16 @@ void eval()
       }
       else if(operator == EQ)
       {
+        OBJECT_PTR v1, v2;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "EQ expects two arguments");
           return;
         }
 
-        OBJECT_PTR v1 = car(reg_current_value_rib);
-        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+        v1 = car(reg_current_value_rib);
+        v2 = CADR(reg_current_value_rib);
 
         reg_accumulator = equal(v1, v2) ? TRUE : NIL;
         reg_current_value_rib = NIL;
@@ -536,14 +565,16 @@ void eval()
       }
       else if(operator == NEQ)
       {
+        OBJECT_PTR v1, v2;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "NEQ expects two arguments");
           return;
         }
 
-        OBJECT_PTR v1 = car(reg_current_value_rib);
-        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+        v1 = car(reg_current_value_rib);
+        v2 = CADR(reg_current_value_rib);
 
         reg_accumulator = equal(v1, v2) ? NIL : TRUE;
         reg_current_value_rib = NIL;
@@ -551,13 +582,15 @@ void eval()
       }
       else if(operator == NOT)
       {
+        OBJECT_PTR v;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "NOT expects one argument");
           return;
         }
 
-        OBJECT_PTR v = car(reg_current_value_rib);
+        v = car(reg_current_value_rib);
 
         reg_accumulator = (v == NIL) ? TRUE : NIL;
         reg_current_value_rib = NIL;
@@ -565,13 +598,15 @@ void eval()
       }
       else if(operator == ATOM)
       {
+        OBJECT_PTR v;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_generic_exception("ATOM expects one argument");
           return;
         }
 
-        OBJECT_PTR v = car(reg_current_value_rib);
+        v = car(reg_current_value_rib);
 
         reg_accumulator = is_atom(v) ? TRUE : NIL;
         reg_current_value_rib = NIL;
@@ -579,13 +614,15 @@ void eval()
       }
       else if(operator == CAR)
       {
+        OBJECT_PTR car_obj;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("NOT-A-CONS", "CAR expects one argument, a CONS object");
           return;
         }
 
-        OBJECT_PTR car_obj = car(reg_current_value_rib);
+        car_obj = car(reg_current_value_rib);
         
         if(car_obj == NIL)
           reg_accumulator = NIL;
@@ -604,13 +641,15 @@ void eval()
       }
       else if(operator == CDR)
       {
+        OBJECT_PTR car_obj;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("NOT-A-CONS", "CDR expects one argument, a CONS object");
           return;
         }
 
-        OBJECT_PTR car_obj = car(reg_current_value_rib);
+        car_obj = car(reg_current_value_rib);
         
         if(car_obj == NIL)
           reg_accumulator = NIL;
@@ -630,16 +669,15 @@ void eval()
       }
       else if(operator == ADD)
       {
+        float sum = 0;
+        OBJECT_PTR rest = reg_current_value_rib;
+        BOOLEAN is_float = false;
 
         if(length(reg_current_value_rib) < 2)
         {
           throw_exception("ARG-MISMATCH", "Operator '+' requires at least two arguments");
           return;
         }
-
-        float sum = 0;
-        OBJECT_PTR rest = reg_current_value_rib;
-        BOOLEAN is_float = false;
 
         while(rest != NIL)
 	{
@@ -670,16 +708,21 @@ void eval()
       }
       else if(operator == SUB)
       {
+        float val;
+        BOOLEAN is_float = false;
+
+        OBJECT_PTR first;
+        OBJECT_PTR rest;
+
+        float sum = 0;
+
         if(length(reg_current_value_rib) < 2)
         {
           throw_exception("ARG-MISMATCH", "Operator '-' requires at least two arguments");
           return;
         }
-
-        float val;
-        BOOLEAN is_float = false;
         
-        OBJECT_PTR first = car(reg_current_value_rib);
+        first = car(reg_current_value_rib);
 
         if(IS_FLOAT_OBJECT(first))
 	{
@@ -694,9 +737,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR rest = cdr(reg_current_value_rib);
-
-        float sum = 0;
+        rest = cdr(reg_current_value_rib);
 
         while(rest != NIL)
 	{
@@ -728,16 +769,15 @@ void eval()
       }
       else if(operator == MULT)
       {
+        float sum = 1;
+        OBJECT_PTR rest = reg_current_value_rib;
+        BOOLEAN is_float = false;
 
         if(length(reg_current_value_rib) < 2)
         {
           throw_exception("ARG-MISMATCH", "Operator '*' requires at least two arguments");
           return;
         }
-
-        float sum = 1;
-        OBJECT_PTR rest = reg_current_value_rib;
-        BOOLEAN is_float = false;
 
         while(rest != NIL)
 	{
@@ -769,6 +809,13 @@ void eval()
       }
       else if(operator == DIV)
       {
+        float val;
+        BOOLEAN is_float = false;
+
+        OBJECT_PTR first;        
+        OBJECT_PTR rest;
+
+        float sum = 1;
 
         if(length(reg_current_value_rib) < 2)
         {
@@ -776,10 +823,7 @@ void eval()
           return;
         }
 
-        float val;
-        BOOLEAN is_float = false;
-
-        OBJECT_PTR first = car(reg_current_value_rib);
+        first = car(reg_current_value_rib);
 
         if(IS_FLOAT_OBJECT(first))
 	{
@@ -794,9 +838,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR rest = cdr(reg_current_value_rib);
-
-        float sum = 1;
+        rest = cdr(reg_current_value_rib);
 
         while(rest != NIL)
 	{
@@ -842,13 +884,13 @@ void eval()
         {
           char msg[500];
 
-          memset(msg, '\0', 500);
-
           uintptr_t ptr = error_string_obj & POINTER_MASK;
 
           int len = get_int_value(get_heap(ptr, 0));
 
           int i;
+
+          memset(msg, '\0', 500);
 
           for(i=1; i <= len; i++)
             msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
@@ -912,13 +954,15 @@ void eval()
       }
       else if(operator == LISTP)
       {
+        OBJECT_PTR arg;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "LISTP requires exactly one argument");
           return;
         }
 
-        OBJECT_PTR arg = car(reg_current_value_rib);
+        arg = car(reg_current_value_rib);
 
         if(arg == NIL)
           reg_accumulator = TRUE;
@@ -930,6 +974,7 @@ void eval()
       }
       else if(operator == SYMBOL_VALUE)
       {
+        OBJECT_PTR sym, res;
 
         if(length(reg_current_value_rib) != 1)
         {
@@ -937,7 +982,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR sym = car(reg_current_value_rib);
+        sym = car(reg_current_value_rib);
 
         if(!IS_SYMBOL_OBJECT(sym))
         {
@@ -945,7 +990,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR res = get_symbol_value(sym, reg_current_env);
+        res = get_symbol_value(sym, reg_current_env);
 
         if(car(res) == NIL)
         {
@@ -960,14 +1005,17 @@ void eval()
       }
       else if(operator == GT)
       {
+        OBJECT_PTR v1, v2;
+        float val1, val2;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "> requires exactly two arguments");
           return;
         }
 
-        OBJECT_PTR v1 = car(reg_current_value_rib);
-        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+        v1 = car(reg_current_value_rib);
+        v2 = CADR(reg_current_value_rib);
 
         if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
            (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -976,8 +1024,6 @@ void eval()
           return;
         }
 
-        float val1, val2;
-	  
         if(IS_FLOAT_OBJECT(v1))
           val1 = get_float_value(v1);
         else
@@ -995,14 +1041,17 @@ void eval()
       }
       else if(operator == LT)
       {
+        OBJECT_PTR v1, v2;
+        float val1, val2;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "< requires exactly two arguments");
           return;
         }
 
-        OBJECT_PTR v1 = car(reg_current_value_rib);
-        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+        v1 = car(reg_current_value_rib);
+        v2 = CADR(reg_current_value_rib);
 
         if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
            (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -1010,9 +1059,7 @@ void eval()
           throw_exception("INVALID-ARGUMENT", "Arguments to < should be numbers (integer or float)");
           return;
         }
-
-        float val1, val2;
-	  
+ 
         if(IS_FLOAT_OBJECT(v1))
           val1 = get_float_value(v1);
         else
@@ -1030,14 +1077,17 @@ void eval()
       }
       else if(operator == LEQ)
       {
+        OBJECT_PTR v1, v2;
+        float val1, val2;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "<= requires exactly two arguments");
           return;
         }
 
-        OBJECT_PTR v1 = car(reg_current_value_rib);
-        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+        v1 = car(reg_current_value_rib);
+        v2 = CADR(reg_current_value_rib);
 
         if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
            (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -1045,8 +1095,6 @@ void eval()
           throw_exception("INVALID-ARGUMENT", "Arguments to <= should be numbers (integer or float)");
           return;
         }
-
-        float val1, val2;
 	  
         if(IS_FLOAT_OBJECT(v1))
           val1 = get_float_value(v1);
@@ -1065,14 +1113,17 @@ void eval()
       }
       else if(operator == GEQ)
       {
+        OBJECT_PTR v1, v2;
+        float val1, val2;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", ">= requires exactly two arguments");
           return;
         }
 
-        OBJECT_PTR v1 = car(reg_current_value_rib);
-        OBJECT_PTR v2 = CADR(reg_current_value_rib);
+        v1 = car(reg_current_value_rib);
+        v2 = CADR(reg_current_value_rib);
 
         if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
            (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -1080,9 +1131,7 @@ void eval()
           throw_exception("INVALID-ARGUMENT", "Arguments to >= should be numbers (integer or float)");
           return;
         }
-
-        float val1, val2;
-	  
+ 
         if(IS_FLOAT_OBJECT(v1))
           val1 = get_float_value(v1);
         else
@@ -1112,13 +1161,15 @@ void eval()
       }
       else if(operator == SETCAR)
       {
+        OBJECT_PTR car_obj;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "SETCAR requires two arguments");
           return;
         }
 
-        OBJECT_PTR car_obj = car(reg_current_value_rib);
+        car_obj = car(reg_current_value_rib);
 
         if((!(IS_CONS_OBJECT(car_obj))))
         {
@@ -1135,13 +1186,15 @@ void eval()
       }
       else if(operator == SETCDR)
       {
+        OBJECT_PTR car_obj;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "SETCDR requires two arguments");
           return;
         }
 
-        OBJECT_PTR car_obj = car(reg_current_value_rib);
+        car_obj = car(reg_current_value_rib);
 
         if((!(IS_CONS_OBJECT(car_obj))))
         {
@@ -1158,13 +1211,16 @@ void eval()
       }
       else if(operator == CREATE_PACKAGE)
       {
+        OBJECT_PTR package;
+        char *package_name;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "CREATE-PACKAGE requires exactly one argument");
           return;
         }
 
-        OBJECT_PTR package = car(reg_current_value_rib);
+        package = car(reg_current_value_rib);
 
         if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
         {
@@ -1172,7 +1228,7 @@ void eval()
           return;
         }
 
-        char *package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
+        package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
 
         /* if(!strcmp(package_name,"CORE")) */
 	/* { */
@@ -1195,13 +1251,16 @@ void eval()
       }
       else if(operator == IN_PACKAGE)
       {
+        OBJECT_PTR package;
+        char *package_name;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "IN-PACKAGE requires exactly one argument");
           return;
         }
 
-        OBJECT_PTR package = car(reg_current_value_rib);
+        package = car(reg_current_value_rib);
 
         if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
         {
@@ -1209,7 +1268,7 @@ void eval()
           return;
         }
 
-        char *package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
+        package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
 
         if(!strcmp(package_name,"CORE"))
 	{
@@ -1236,13 +1295,15 @@ void eval()
       }
       else if(operator == EXPAND_MACRO)
       {
+        OBJECT_PTR macro_body, res;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "EXPAND-MACRO requires exactly one argument");
           return;
         }
 
-        OBJECT_PTR macro_body = car(reg_current_value_rib);
+        macro_body = car(reg_current_value_rib);
 
         if(!IS_CONS_OBJECT(macro_body))
         {
@@ -1250,7 +1311,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR res = get_symbol_value(car(macro_body), reg_current_env);
+        res = get_symbol_value(car(macro_body), reg_current_env);
 
         if(car(res) == NIL)
 	{
@@ -1268,7 +1329,7 @@ void eval()
           /*                                            NIL)))), */
           /*                            car(macro_body)); */
 
-          /* eval(); */
+          /* eval(false); */
           /* if(in_error) */
           /*   return; */
 
@@ -1295,7 +1356,7 @@ void eval()
           //evaluate the macro invocation
           while(car(reg_next_expression) != NIL)
           {
-            eval();
+            eval(false);
             if(in_error)
               return;
           }
@@ -1306,13 +1367,15 @@ void eval()
       }
       else if(operator == APPLY)
       {
+        OBJECT_PTR obj, args;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "APPLY requires exactly two arguments");
           return;
         }        
 
-        OBJECT_PTR obj = car(reg_current_value_rib);
+        obj = car(reg_current_value_rib);
 
         if((!(IS_SYMBOL_OBJECT(obj))) &&
            (!(IS_CLOSURE_OBJECT(obj)))     &&
@@ -1322,7 +1385,8 @@ void eval()
           return;
         }
 
-        OBJECT_PTR args = CADR(reg_current_value_rib);
+        args = CADR(reg_current_value_rib);
+
         if(args != NIL && (!(IS_CONS_OBJECT(args))))
         {
           throw_exception("INVALID-ARGUMENT", "Second argument to APPLY should be a list of arguments");
@@ -1336,13 +1400,15 @@ void eval()
       }
       else if(operator == STRING)
       {
+        OBJECT_PTR string_literal;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "STRING requires exactly one argument, a literal string");
           return;
         }        
 
-        OBJECT_PTR string_literal = car(reg_current_value_rib);
+        string_literal = car(reg_current_value_rib);
 
         if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
         {
@@ -1358,13 +1424,15 @@ void eval()
       else if(operator == MAKE_ARRAY)
       {
         int len = length(reg_current_value_rib);
+        OBJECT_PTR size;
+
         if((len != 1) && (len != 2))
         {
           throw_exception("ARG-MISMATCH", "MAKE-ARRAY requires the size as the first parameter, and optionally, the default value as the second");
           return;
         }        
         
-        OBJECT_PTR size = car(reg_current_value_rib);
+        size = car(reg_current_value_rib);
 
         if((!(IS_INTEGER_OBJECT(size))))
         {
@@ -1379,15 +1447,19 @@ void eval()
       }
       else if(operator == ARRAY_SET)
       {
+        OBJECT_PTR array_obj, idx;
+        uintptr_t ptr;
+        int array_len, index;
+
         if(length(reg_current_value_rib) != 3)
         {
           throw_exception("ARG-MISMATCH", "ARRAY-SET requires exactly three arguments");
           return;
         }        
 
-        OBJECT_PTR array_obj = car(reg_current_value_rib);
+        array_obj = car(reg_current_value_rib);
 
-        uintptr_t ptr = array_obj & POINTER_MASK;
+        ptr = array_obj & POINTER_MASK;
 
         if((!(IS_ARRAY_OBJECT(array_obj))))
         {
@@ -1395,7 +1467,7 @@ void eval()
           return;
         }        
 
-        OBJECT_PTR idx = CADR(reg_current_value_rib);
+        idx = CADR(reg_current_value_rib);
 
         if((!(IS_INTEGER_OBJECT(idx))))
         {
@@ -1403,9 +1475,9 @@ void eval()
           return;
         }        
 
-        int array_len = get_int_value(get_heap(ptr, 0));
+        array_len = get_int_value(get_heap(ptr, 0));
 
-        int index = get_int_value(idx);
+        index = get_int_value(idx);
 
         if(index < 0 || (index >= array_len))
         {
@@ -1422,16 +1494,20 @@ void eval()
       }
       else if(operator == ARRAY_GET)
       {
+        OBJECT_PTR array_obj, idx;
+        uintptr_t ptr;
+        int index;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "ARRAY-GET requires exactly two arguments");
           return;
         }        
 
-        OBJECT_PTR array_obj = car(reg_current_value_rib);
-        uintptr_t ptr = array_obj & POINTER_MASK;
+        array_obj = car(reg_current_value_rib);
+        ptr = array_obj & POINTER_MASK;
 
-        OBJECT_PTR idx = CADR(reg_current_value_rib);
+        idx = CADR(reg_current_value_rib);
 
         if(!IS_INTEGER_OBJECT(idx))
         {
@@ -1439,7 +1515,7 @@ void eval()
           return;
         }        
 
-        int index = get_int_value(idx);
+        index = get_int_value(idx);
 
         if(IS_STRING_LITERAL_OBJECT(array_obj))
         {
@@ -1455,13 +1531,15 @@ void eval()
         }
         else
         {
+          int array_len;
+
           if(!IS_ARRAY_OBJECT(array_obj))
           {
             throw_exception("INVALID-ARGUMENT", "First argument to ARRAY-GET should be an array");
             return;
           }        
 
-          int array_len = get_int_value(get_heap(ptr, 0));
+          array_len = get_int_value(get_heap(ptr, 0));
 
           if(index < 0 || (index >= array_len))
           {
@@ -1477,13 +1555,15 @@ void eval()
       }
       else if(operator == SUB_ARRAY)
       {
+        OBJECT_PTR array, start, array_length;
+
         if(length(reg_current_value_rib) != 3)
         {
           throw_exception("ARG-MISMATCH", "SUB-ARRAY requires exactly three arguments");
           return;
         }        
 
-        OBJECT_PTR array = car(reg_current_value_rib);
+        array = car(reg_current_value_rib);
 
         if(!(IS_ARRAY_OBJECT(array)))
         {
@@ -1491,7 +1571,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR start = CADR(reg_current_value_rib);
+        start = CADR(reg_current_value_rib);
 
         if(!(IS_INTEGER_OBJECT(start)))
         {
@@ -1505,7 +1585,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR array_length = CADDR(reg_current_value_rib);
+        array_length = CADDR(reg_current_value_rib);
 
         if(!(IS_INTEGER_OBJECT(array_length)))
         {
@@ -1532,13 +1612,15 @@ void eval()
       }
       else if(operator == ARRAY_LENGTH)
       {
+        OBJECT_PTR array;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "ARRAY-LENGTH requires exactly one argument, an array object");
           return;
         }        
 
-        OBJECT_PTR array = car(reg_current_value_rib);
+        array = car(reg_current_value_rib);
 
         if(array == NIL)
         {
@@ -1566,13 +1648,15 @@ void eval()
       }
       else if(operator == PRINT_STRING)
       {
+        OBJECT_PTR str;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "PRINT-STRING requires exactly one argument, a string object");
           return;
         }        
 
-        OBJECT_PTR str = car(reg_current_value_rib);
+        str = car(reg_current_value_rib);
 
         if(!(is_string_object(str)) && (!(IS_STRING_LITERAL_OBJECT(str))))
         {
@@ -1590,13 +1674,15 @@ void eval()
       }
       else if(operator == CREATE_IMAGE)
       {
+        OBJECT_PTR file_name;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "CREATE-IMAGE requires exactly one argument, a string object denoting the file name of the image");
           return;
         }        
 
-        OBJECT_PTR file_name = car(reg_current_value_rib);
+        file_name = car(reg_current_value_rib);
 
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
@@ -1618,13 +1704,18 @@ void eval()
       }
       else if(operator == LOAD_FOREIGN_LIBRARY)
       {
+        OBJECT_PTR file_name;
+        void **temp;
+        char *fname;
+        void *ret;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "LOAD-FOREIGN-LIBRARY requires exactly one argument, a string object denoting the library name");
           return;
         }        
 
-        OBJECT_PTR file_name = car(reg_current_value_rib);
+        file_name = car(reg_current_value_rib);
 
         if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
         {
@@ -1640,7 +1731,7 @@ void eval()
 
         nof_dl_handles++;
   
-        void **temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
+        temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
 
         if(temp == NULL)
         {
@@ -1650,9 +1741,7 @@ void eval()
 
         dl_handles = temp;
 
-        char *fname = IS_STRING_LITERAL_OBJECT(file_name) ? strings[(int)file_name >> OBJECT_SHIFT] : get_string(file_name);
-
-        void *ret;
+        fname = IS_STRING_LITERAL_OBJECT(file_name) ? strings[(int)file_name >> OBJECT_SHIFT] : get_string(file_name);
 
         /* if(IS_STRING_LITERAL_OBJECT(file_name)) */
         /*   ret = dlopen(strings[(int)file_name >> OBJECT_SHIFT], RTLD_LAZY); */
@@ -1677,13 +1766,15 @@ void eval()
       }
       else if(operator == CALL_FOREIGN_FUNCTION)
       {
+        OBJECT_PTR fn_name, ret_type, args, rest_args;
+
         if(length(reg_current_value_rib) != 3)
         {
           throw_exception("ARG-MISMATCH", "CALL-FOREIGN-FUNCTION requires exactly three arguments");
           return;
         }        
 
-        OBJECT_PTR fn_name = car(reg_current_value_rib);
+        fn_name = car(reg_current_value_rib);
 
         if(!IS_STRING_LITERAL_OBJECT(fn_name) && !is_string_object(fn_name))
         {
@@ -1691,7 +1782,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR ret_type = CADR(reg_current_value_rib);
+        ret_type = CADR(reg_current_value_rib);
 
         if(!(ret_type == INTEGR        ||
              ret_type == FLOT          ||
@@ -1705,7 +1796,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR args = CADDR(reg_current_value_rib);
+        args = CADDR(reg_current_value_rib);
 
         if(args != NIL && !IS_CONS_OBJECT(args))
         {
@@ -1713,11 +1804,13 @@ void eval()
           return;
         }
 
-        OBJECT_PTR rest_args = args;
+        rest_args = args;
 
         while(rest_args != NIL)
         {
           OBJECT_PTR car_rest_args = car(rest_args);
+
+          OBJECT_PTR val, type;
 
           if(!IS_CONS_OBJECT(car_rest_args))
           {
@@ -1731,7 +1824,7 @@ void eval()
             return;
           }
 
-          OBJECT_PTR val = CAAR(rest_args);
+          val = CAAR(rest_args);
 
           if(!(IS_INTEGER_OBJECT(val)        ||
                IS_FLOAT_OBJECT(val)          ||
@@ -1758,7 +1851,7 @@ void eval()
             val = cdr(res);
           }
 
-          OBJECT_PTR type = CADAR(rest_args);
+          type = CADAR(rest_args);
 
           if(type == INTEGR)
           {
@@ -1848,7 +1941,7 @@ void eval()
 
         while(car(reg_next_expression) != NIL)
         {
-          eval();
+          eval(false);
           if(in_error)
           {
             throw_generic_exception("EVAL failed");
@@ -1864,6 +1957,14 @@ void eval()
         OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
 
         char form[500];
+
+        clock_t start, diff;
+        int msec;
+
+#ifdef GUI
+        char buf[100];
+#endif
+
         memset(form, '\0', 500);
         print_object_to_string(car(reg_current_value_rib), form, 0);
 
@@ -1877,14 +1978,11 @@ void eval()
                                                     cons(temp, car(reg_current_value_rib)))),
                                    car(reg_current_value_rib));
 
-        clock_t start, diff;
-        int msec;
-
         start = clock();
 
         while(car(reg_next_expression) != NIL)
         {
-          eval();
+          eval(false);
           if(in_error)
           {
             throw_generic_exception("TIME failed");
@@ -1896,7 +1994,6 @@ void eval()
         msec = diff * 1000 / CLOCKS_PER_SEC;
 
 #ifdef GUI
-        char buf[100];
         memset(buf, '\0', 100);
         sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
         print_to_transcript(buf);
@@ -1910,6 +2007,31 @@ void eval()
       else if(operator == PROFILE)
       {
         OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
+
+        double initial_wall_time;
+        clock_t initial_cpu_time;
+        unsigned int initial_mem_alloc;
+
+        OBJECT_PTR operator_to_be_used;
+
+        unsigned int count;
+        double elapsed_wall_time;
+        double elapsed_cpu_time;
+        unsigned int mem_alloc;
+
+        hashtable_entry_t *e;
+
+        profiling_datum_t *pd;
+
+        double final_wall_time;
+        clock_t final_cpu_time;
+        unsigned int final_mem_alloc;
+
+#ifdef GUI
+        char buf[1000];
+#endif
+
+        hashtable_entry_t *entries;
 
         if(temp == ERROR)
         {
@@ -1929,13 +2051,13 @@ void eval()
         cpu_time_var = clock();
         mem_alloc_var = memory_allocated();
 
-        double initial_wall_time = wall_time_var;
-        clock_t initial_cpu_time = cpu_time_var;
-        unsigned int initial_mem_alloc = mem_alloc_var;
+        initial_wall_time = wall_time_var;
+        initial_cpu_time = cpu_time_var;
+        initial_mem_alloc = mem_alloc_var;
 
         while(car(reg_next_expression) != NIL)
         {
-          eval();
+          eval(false);
           if(in_error)
           {
             hashtable_entry_t *entries = hashtable_entries(profiling_tab);
@@ -1953,8 +2075,6 @@ void eval()
           }
         }
 
-        OBJECT_PTR operator_to_be_used;
-
         if(IS_SYMBOL_OBJECT(last_operator))
           operator_to_be_used = last_operator;
         else
@@ -1968,12 +2088,7 @@ void eval()
                                             cons(car(get_source_object(last_operator)), NIL)));
         }
 
-        hashtable_entry_t *e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
-
-        unsigned int count;
-        double elapsed_wall_time;
-        double elapsed_cpu_time;
-        unsigned int mem_alloc;
+        e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
 
         if(e)
         {
@@ -1995,7 +2110,7 @@ void eval()
           mem_alloc = memory_allocated() - mem_alloc_var;
         }
 
-        profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+        pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
         pd->count = count;
         pd->elapsed_wall_time = elapsed_wall_time;
         pd->elapsed_cpu_time = elapsed_cpu_time;
@@ -2003,14 +2118,13 @@ void eval()
 
         hashtable_put(profiling_tab, (void *)operator_to_be_used, (void *)pd);
 
-        double final_wall_time = get_wall_time();
-        clock_t final_cpu_time = clock();
-        unsigned int final_mem_alloc = memory_allocated();
+        final_wall_time = get_wall_time();
+        final_cpu_time = clock();
+        final_mem_alloc = memory_allocated();
 
 #ifdef GUI
         create_profiler_window();
 
-        char buf[1000];
         memset(buf, '\0', 1000);
         sprintf(buf,
                 "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
@@ -2020,7 +2134,7 @@ void eval()
         print_to_transcript(buf);
 
 #else
-        hashtable_entry_t *entries = hashtable_entries(profiling_tab);
+        entries = hashtable_entries(profiling_tab);
 
         while(entries)
         {
@@ -2054,6 +2168,8 @@ void eval()
       }
       else if(operator == BREAK)
       {
+        in_break = true;
+
         debug_mode = true;
         debug_continuation = create_current_continuation();
         debug_env = reg_current_env;
@@ -2067,6 +2183,8 @@ void eval()
       }
       else if(operator == RESUME)
       {
+        in_break = false;
+
         debug_mode = false;
 
         reg_current_stack = get_heap(debug_continuation & POINTER_MASK, 0);
@@ -2086,13 +2204,18 @@ void eval()
       }
       else if(operator == LOAD_FILE)
       {
+        OBJECT_PTR arg;
+        FILE *temp;
+
+        int ret;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "LOAD-FILE requires exactly one argument");
           return;
         }        
 
-        OBJECT_PTR arg = car(reg_current_value_rib);
+        arg = car(reg_current_value_rib);
 
         if(!is_string_object(arg) && (!IS_STRING_LITERAL_OBJECT(arg)))
         {
@@ -2100,7 +2223,7 @@ void eval()
           return;
         }
 
-        FILE *temp = fopen(is_string_object(arg) ?  get_string(arg) : strings[(int)arg >> OBJECT_SHIFT], "r");
+        temp = fopen(is_string_object(arg) ?  get_string(arg) : strings[(int)arg >> OBJECT_SHIFT], "r");
 
         if(!temp)
         {
@@ -2115,11 +2238,9 @@ void eval()
           return;
         }
 
-        int ret;
-
         while(!yyparse())
         {
-          repl();
+          repl(2);
         }
         pop_yyin();
 
@@ -2201,13 +2322,15 @@ void eval()
       }
       else if(operator ==  ARRAYP)
       {
+        OBJECT_PTR obj;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "ARRAYP requires exactly one argument");
           return;
         }
 
-        OBJECT_PTR obj = car(reg_current_value_rib);
+        obj = car(reg_current_value_rib);
         reg_accumulator = (IS_ARRAY_OBJECT(obj) || IS_STRING_LITERAL_OBJECT(obj)) ? TRUE : NIL;
         reg_current_value_rib = NIL;
         reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
@@ -2250,13 +2373,15 @@ void eval()
       }
       else if(operator == LAMBDA_EXPRESSION)
       {
+        OBJECT_PTR obj;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "LAMBDA-EXPRESSION requires exactly one argument, a closure or macro object");
           return;
         }        
 
-        OBJECT_PTR obj = car(reg_current_value_rib);        
+        obj = car(reg_current_value_rib);        
 
         if(!IS_CLOSURE_OBJECT(obj) && !IS_MACRO_OBJECT(obj))
         {
@@ -2270,6 +2395,7 @@ void eval()
       }
       else if(operator == FORMAT)
       {
+        OBJECT_PTR rest;
         if(length(reg_current_value_rib) < 1)
         {
           throw_exception("ARG-MISMATCH", "FORMAT requires at least one argument, a format specification string");
@@ -2282,7 +2408,7 @@ void eval()
           return;
         }
         
-        OBJECT_PTR rest = reg_current_value_rib;
+        rest = reg_current_value_rib;
 
         while(rest != NIL)
         {
@@ -2328,13 +2454,15 @@ void eval()
       }
       else if(operator == RETURN_FROM)
       {
+        OBJECT_PTR cont;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "RETURN-FROM requires two parameters: the closure/macro from which to return, and the value to be returned");
           return;
         }
 
-        OBJECT_PTR cont = get_continuation_for_return(car(reg_current_value_rib));
+        cont = get_continuation_for_return(car(reg_current_value_rib));
 
         if(cont == NIL)
         {
@@ -2350,13 +2478,15 @@ void eval()
       }
       else if(operator == COMPILE)
       {
+        OBJECT_PTR temp;
+
         if(length(reg_current_value_rib) != 2)
         {
           throw_exception("ARG-MISMATCH", "COMPILE needs two arguments, an expression to be compiled and a 'next' expression");
           return;
         }
 
-        OBJECT_PTR temp = compile(car(reg_current_value_rib), CADR(reg_current_value_rib));
+        temp = compile(car(reg_current_value_rib), CADR(reg_current_value_rib));
 
         if(temp == ERROR)
         {
@@ -2370,13 +2500,15 @@ void eval()
       }
       else if(operator == SYMBL)
       {
+        OBJECT_PTR str;
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "SYMBOL needs one argument, a string object/literal");
           return;
         }
 
-        OBJECT_PTR str = car(reg_current_value_rib);
+        str = car(reg_current_value_rib);
         if(!IS_STRING_LITERAL_OBJECT(str) && !is_string_object(str))
         {
           throw_exception("INVALID-ARGUMENT", "SYMBOL needs one argument, a string object/literal");
@@ -2391,13 +2523,13 @@ void eval()
         {
           char msg[500];
 
-          memset(msg, '\0', 500);
-
           uintptr_t ptr = str & POINTER_MASK;
 
           int len = get_int_value(get_heap(ptr, 0));
 
           int i;
+
+          memset(msg, '\0', 500);
 
           for(i=1; i <= len; i++)
             msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
@@ -2410,13 +2542,16 @@ void eval()
       }
       else if(operator == SYMBOL_NAME)
       {
+        OBJECT_PTR sym;
+        char buf[SYMBOL_STRING_SIZE];
+
         if(length(reg_current_value_rib) != 1)
         {
           throw_exception("ARG-MISMATCH", "SYMBOL-NAME requires exactly one argument, a symbol object");
           return;
         }
 
-        OBJECT_PTR sym = car(reg_current_value_rib);
+        sym = car(reg_current_value_rib);
 
         if(!IS_SYMBOL_OBJECT(sym))
         {
@@ -2424,7 +2559,6 @@ void eval()
           return;
         }
 
-        char buf[SYMBOL_STRING_SIZE];
         memset(buf,'\0',SYMBOL_STRING_SIZE);
 
         print_symbol(sym, buf);
@@ -2435,6 +2569,12 @@ void eval()
       }
       else if(operator == UNBIND)
       {
+        OBJECT_PTR sym;
+
+        OBJECT_PTR rest = top_level_env;
+        OBJECT_PTR prev = NIL;
+        BOOLEAN symbol_exists = false;
+
         /* if(current_package == 0) */
         /* { */
         /*   throw_exception("ACCESS-VIOLATION","Core package cannot be updated"); */
@@ -2447,7 +2587,7 @@ void eval()
           return;
         }
 
-        OBJECT_PTR sym = car(reg_current_value_rib);
+        sym = car(reg_current_value_rib);
         /* OBJECT_PTR sym = cdr(get_qualified_symbol_object(packages[current_package].name, */
         /*                                                  get_symbol_name(car(reg_current_value_rib)))); */
 
@@ -2456,10 +2596,6 @@ void eval()
           throw_exception("INVALID-ARGUMENT", "Parameter to UNBIND should be a symbol object");
           return;
         }
-
-        OBJECT_PTR rest = top_level_env;
-        OBJECT_PTR prev = NIL;
-        BOOLEAN symbol_exists = false;
 
         while(rest != NIL)
         {
@@ -2528,10 +2664,12 @@ void eval()
     {
       if(IS_CLOSURE_OBJECT(reg_accumulator) || IS_MACRO_OBJECT(reg_accumulator))
       {
+        OBJECT_PTR params, params_env, rest_params, rest_args;
+
         continuations_map = cons(cons(reg_accumulator, create_current_continuation()),
                                  continuations_map);
 
-        OBJECT_PTR params = get_params_object(reg_accumulator);
+        params = get_params_object(reg_accumulator);
 
         //no longer valid because of &rest -- parameters may
         //not match the value rib
@@ -2541,10 +2679,10 @@ void eval()
         /*   return; */
         /* } */
 
-        OBJECT_PTR params_env = NIL;
+        params_env = NIL;
 
-        OBJECT_PTR rest_params = params;
-        OBJECT_PTR rest_args = reg_current_value_rib;
+        rest_params = params;
+        rest_args = reg_current_value_rib;
 
         while(rest_params != NIL)
         {
@@ -2609,13 +2747,16 @@ void eval()
   }
   else if(opcode == RETURN)
   {
+    OBJECT_PTR frame;
+    uintptr_t ptr;
+
     if(reg_current_stack == NIL)
       assert(false);
 
-    OBJECT_PTR frame = car(reg_current_stack);
+    frame = car(reg_current_stack);
     reg_current_stack = cdr(reg_current_stack);
 
-    uintptr_t ptr = frame & POINTER_MASK;
+    ptr = frame & POINTER_MASK;
     reg_next_expression   = get_heap(ptr,1);
     reg_current_env       = get_heap(ptr,2);
     reg_current_value_rib = get_heap(ptr,3);
@@ -2627,12 +2768,12 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
                              OBJECT_PTR rib,
                              OBJECT_PTR source_expression)
 {
+  uintptr_t ptr = object_alloc(5, ARRAY_TAG);
+  unsigned int *raw_ptr;
+
   log_function_entry("create_call_frame");
 
-  uintptr_t ptr = object_alloc(5, ARRAY_TAG);
-
   //see comment in main.c for why we're not using object_alloc()
-  unsigned int *raw_ptr;
   posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
   *((int *)raw_ptr) = 4;
 
@@ -2716,12 +2857,14 @@ void print_stack()
 
 OBJECT_PTR eval_backquote(OBJECT_PTR form)
 {
+  OBJECT_PTR car_obj;
+
   assert(is_valid_object(form));
 
   if(is_atom(form))
     return form;
 
-  OBJECT_PTR car_obj = car(form);
+  car_obj = car(form);
 
   assert(is_valid_object(car_obj));
 
@@ -2748,7 +2891,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 
       while(car(reg_next_expression) != NIL)
       {
-        eval();
+        eval(false);
         if(in_error)
         {
           throw_generic_exception("Evaluation of backquote failed(1)");
@@ -2804,7 +2947,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 
           while(car(reg_next_expression) != NIL)
           {
-            eval();
+            eval(false);
             if(in_error)
             {
               throw_generic_exception("Evaluation of backquote failed(2)");
@@ -2854,25 +2997,28 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 
 OBJECT_PTR eval_string(OBJECT_PTR literal)
 {
-  assert(IS_STRING_LITERAL_OBJECT(literal));
-
   char *str_val = strings[(int)literal >> OBJECT_SHIFT];
 
   char *ptr = NULL;
 
   int len = strlen(str_val);
 
-  //see comment in main.c for why we're not using object_alloc()
   unsigned int *raw_ptr1;
+
+  uintptr_t raw_ptr;
+
+  int i=1;
+
+  assert(IS_STRING_LITERAL_OBJECT(literal));
+
+  //see comment in main.c for why we're not using object_alloc()
   posix_memalign((void **)&raw_ptr1, 16, sizeof(unsigned int *));
   *((int *)raw_ptr1) = len;
 
-  uintptr_t raw_ptr = object_alloc(len + 1, ARRAY_TAG);
+  raw_ptr = object_alloc(len + 1, ARRAY_TAG);
 
   //set_heap(raw_ptr, 0, convert_int_to_object(len));
   set_heap(raw_ptr, 0, (uintptr_t)raw_ptr1 + INTEGER_TAG);
-
-  int i=1;
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
@@ -2885,21 +3031,24 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
 OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
 {
-  assert(IS_INTEGER_OBJECT(size));
-  
   int sz = get_int_value(size);
 
-  //see comment in main.c for why we're not using object_alloc()
   unsigned int *raw_ptr;
+
+  uintptr_t ptr;
+
+  int i;
+
+  assert(IS_INTEGER_OBJECT(size));
+
+  //see comment in main.c for why we're not using object_alloc()
   posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
   *((int *)raw_ptr) = sz;
 
-  uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
+  ptr = object_alloc(sz+1, ARRAY_TAG);
 
   //set_heap(ptr, 0, size);
   set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-
-  int i;
 
   for(i=0; i<sz; i++)
     set_heap(ptr, i + 1, default_value);
@@ -2909,24 +3058,26 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
 
 OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
 {
-
   OBJECT_PTR ret;
   int st = get_int_value(start);
   int len = get_int_value(length);
 
-  //see comment in main.c for why we're not using object_alloc()
   unsigned int *raw_ptr;
+
+  uintptr_t orig_ptr, ptr;
+
+  int i;
+
+  //see comment in main.c for why we're not using object_alloc()
   posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
   *((int *)raw_ptr) = len;
 
-  uintptr_t orig_ptr = array & POINTER_MASK;
+  orig_ptr = array & POINTER_MASK;
 
-  uintptr_t ptr = object_alloc(len + 1, ARRAY_TAG);
+   ptr = object_alloc(len + 1, ARRAY_TAG);
 
   //set_heap(ptr, 0, convert_int_to_object(len));
   set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-
-  int i;
 
   for(i=1; i<=len; i++)
     set_heap(ptr, i, get_heap(orig_ptr, st + i));
@@ -2963,11 +3114,11 @@ void print_backtrace()
 {
   OBJECT_PTR rest = (debug_mode ? debug_execution_stack : reg_current_stack);
 
+  int i=0;
+
   //to skip the two elements
   //corresponding to (throw ..)
   rest = cdr(cdr(rest));
-
-  int i=0;
 
   while(rest != NIL)
   {
@@ -2979,8 +3130,9 @@ void print_backtrace()
     i++;
     if((i % 20) == 0)
     {
+      char c;
       fprintf(stdout, "--- Press any key to continue (q to abort) ---");
-      char c = getchar();
+      c = getchar();
       if(c == 'q')
         return;
     }

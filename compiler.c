@@ -73,7 +73,6 @@ extern FILE *yyin;
 
 extern BOOLEAN debug_mode;
 
-OBJECT_PTR execution_stack;
 OBJECT_PTR debug_execution_stack;
 
 BOOLEAN in_error;
@@ -279,7 +278,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           //invoked in the middle of an evaluation?
           continuations_map = NIL;
 
-          eval();
+          eval(false);
 
           if(in_error)
           {
@@ -321,7 +320,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           //evaluate the macro invocation
           while(car(reg_next_expression) != NIL)
           {
-            eval();
+            eval(false);
             if(in_error)
             {
               printf("Compiling macro failed (2)\n");
@@ -422,7 +421,7 @@ int main(int argc, char **argv)
   {
     prompt();
     yyparse();
-    repl();
+    repl(1);
   }
 
 #endif
@@ -430,7 +429,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
-int repl()
+int repl(int mode)
 {
   if(!g_expr)
     return 0;
@@ -472,15 +471,13 @@ int repl()
     reg_current_value_rib = NIL;
     reg_current_stack = NIL;
 
-    execution_stack = NIL;    
-
     continuations_map = NIL;
 
     in_error = false;
 
     while(car(reg_next_expression) != NIL)
     {
-      eval();
+      eval(mode == 1);
       if(in_error)
       {
         fprintf(stdout, "Eval failed\n");
@@ -496,8 +493,6 @@ int repl()
       print_object(reg_accumulator);
 #endif
 
-    //delete_expression(g_expr);
-    //g_expr = NULL;
   }
   else
   {
@@ -521,14 +516,13 @@ int repl()
     reg_current_value_rib = NIL;
     reg_current_stack = NIL;
 
-    execution_stack = NIL;
     continuations_map = NIL;
 
     in_error = false;
 
     while(car(reg_next_expression) != NIL)
     {
-      eval();
+      eval(mode == 1);
       if(in_error)
         return 1;
     }
@@ -549,8 +543,8 @@ int repl()
                        get_symbol_object("EXCEPTION-HANDLERS"),
                        NIL);
 
-    if(!debug_mode)
-      gc(false, true);
+    //if(!debug_mode)
+    //  gc(false, true);
   }
 
   delete_expression(g_expr);
@@ -590,15 +584,13 @@ int load_core_library()
   reg_current_value_rib = NIL;
   reg_current_stack     = NIL;
 
-  execution_stack = NIL;
-
   continuations_map = NIL;
 
   in_error = false;
 
   while(car(reg_next_expression) != NIL)
   {
-    eval();
+    eval(false);
     if(in_error)
     {
       fprintf(stdout, "Eval failed while loading core library\n");
@@ -606,7 +598,7 @@ int load_core_library()
     }
   }
 
-  gc(false, true);
+  //gc(false, true);
 
   core_library_loaded = true;
 

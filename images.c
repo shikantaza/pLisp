@@ -43,7 +43,6 @@ extern char **strings;
 extern BOOLEAN debug_mode;
 extern OBJECT_PTR debug_continuation;
 extern OBJECT_PTR debug_env;
-extern OBJECT_PTR execution_stack;
 extern OBJECT_PTR debug_execution_stack;
 extern OBJECT_PTR reg_accumulator;
 extern OBJECT_PTR reg_next_expression;
@@ -247,7 +246,6 @@ void create_image(char *file_name)
   fprintf(fp, "\"debug_continuation\" : "   ); print_object1(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"debug_env\" : "            ); print_object1(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"debug_execution_stack\" : "); print_object1(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"execution_stack\" : "      ); print_object1(fp,execution_stack,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"reg_accumulator\" : "      ); print_object1(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"reg_next_expression\" : "  ); print_object1(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
   fprintf(fp, "\"reg_current_env\" : "      ); print_object1(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
@@ -514,9 +512,6 @@ void load_from_image(char *file_name)
 
   temp = cJSON_GetObjectItem(root, "debug_execution_stack");
   debug_execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
-
-  temp = cJSON_GetObjectItem(root, "execution_stack");
-  execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
 
   temp = cJSON_GetObjectItem(root, "reg_accumulator");
   reg_accumulator = convert_to_plisp_obj(root, heap, temp, hashtable);
