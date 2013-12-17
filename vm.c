@@ -886,7 +886,8 @@ void eval(BOOLEAN do_gc)
 
           uintptr_t ptr = error_string_obj & POINTER_MASK;
 
-          int len = get_int_value(get_heap(ptr, 0));
+          //int len = get_int_value(get_heap(ptr, 0));
+          int len = *((unsigned int *)ptr);
 
           int i;
 
@@ -1475,7 +1476,8 @@ void eval(BOOLEAN do_gc)
           return;
         }        
 
-        array_len = get_int_value(get_heap(ptr, 0));
+        //array_len = get_int_value(get_heap(ptr, 0));
+        array_len = *((unsigned int *)ptr);
 
         index = get_int_value(idx);
 
@@ -1539,7 +1541,8 @@ void eval(BOOLEAN do_gc)
             return;
           }        
 
-          array_len = get_int_value(get_heap(ptr, 0));
+          //array_len = get_int_value(get_heap(ptr, 0));
+          array_len = *((unsigned int *)ptr);
 
           if(index < 0 || (index >= array_len))
           {
@@ -1556,6 +1559,8 @@ void eval(BOOLEAN do_gc)
       else if(operator == SUB_ARRAY)
       {
         OBJECT_PTR array, start, array_length;
+
+        int len;
 
         if(length(reg_current_value_rib) != 3)
         {
@@ -1599,7 +1604,9 @@ void eval(BOOLEAN do_gc)
           return;
         }
 
-        if((get_int_value(start) + get_int_value(array_length)) > get_int_value(get_heap(array & POINTER_MASK, 0)))
+        len = *((unsigned int *)(array & POINTER_MASK));
+
+        if((get_int_value(start) + get_int_value(array_length)) > len)
         {
           throw_exception("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
           return;
@@ -1640,7 +1647,8 @@ void eval(BOOLEAN do_gc)
             return;
           }
 
-          reg_accumulator = get_heap(array & POINTER_MASK, 0);
+          //reg_accumulator = get_heap(array & POINTER_MASK, 0);
+          reg_accumulator = convert_int_to_object(*((unsigned int *)(array & POINTER_MASK)));
         }
 
         reg_current_value_rib = NIL;
@@ -2525,7 +2533,8 @@ void eval(BOOLEAN do_gc)
 
           uintptr_t ptr = str & POINTER_MASK;
 
-          int len = get_int_value(get_heap(ptr, 0));
+          //int len = get_int_value(get_heap(ptr, 0));
+          int len = *((unsigned int *)ptr);
 
           int i;
 
@@ -2774,11 +2783,12 @@ OBJECT_PTR create_call_frame(OBJECT_PTR next_expression,
   log_function_entry("create_call_frame");
 
   //see comment in main.c for why we're not using object_alloc()
-  posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
-  *((int *)raw_ptr) = 4;
+  //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr) = 4;
 
   //set_heap(ptr, 0, convert_int_to_object(4));
-  set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  *((unsigned int *)ptr) = 4;
 
   set_heap(ptr, 1, next_expression);
   set_heap(ptr, 2, env);
@@ -3001,7 +3011,7 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   char *ptr = NULL;
 
-  int len = strlen(str_val);
+  unsigned int len = strlen(str_val);
 
   unsigned int *raw_ptr1;
 
@@ -3012,13 +3022,14 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
   assert(IS_STRING_LITERAL_OBJECT(literal));
 
   //see comment in main.c for why we're not using object_alloc()
-  posix_memalign((void **)&raw_ptr1, 16, sizeof(unsigned int *));
-  *((int *)raw_ptr1) = len;
+  //posix_memalign((void **)&raw_ptr1, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr1) = len;
 
   raw_ptr = object_alloc(len + 1, ARRAY_TAG);
 
   //set_heap(raw_ptr, 0, convert_int_to_object(len));
-  set_heap(raw_ptr, 0, (uintptr_t)raw_ptr1 + INTEGER_TAG);
+  //set_heap(raw_ptr, 0, (uintptr_t)raw_ptr1 + INTEGER_TAG);
+  *((unsigned int *)raw_ptr) = len;
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
@@ -3042,13 +3053,14 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   assert(IS_INTEGER_OBJECT(size));
 
   //see comment in main.c for why we're not using object_alloc()
-  posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
-  *((int *)raw_ptr) = sz;
+  //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr) = sz;
 
   ptr = object_alloc(sz+1, ARRAY_TAG);
 
   //set_heap(ptr, 0, size);
-  set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  *((unsigned int *)ptr) = sz;
 
   for(i=0; i<sz; i++)
     set_heap(ptr, i + 1, default_value);
@@ -3069,15 +3081,16 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int i;
 
   //see comment in main.c for why we're not using object_alloc()
-  posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
-  *((int *)raw_ptr) = len;
+  //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr) = len;
 
   orig_ptr = array & POINTER_MASK;
 
-   ptr = object_alloc(len + 1, ARRAY_TAG);
+  ptr = object_alloc(len + 1, ARRAY_TAG);
 
   //set_heap(ptr, 0, convert_int_to_object(len));
-  set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  *((unsigned int *)ptr) = len;
 
   for(i=1; i<=len; i++)
     set_heap(ptr, i, get_heap(orig_ptr, st + i));

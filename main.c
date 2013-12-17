@@ -1358,7 +1358,8 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
     {
       uintptr_t ptr = obj & POINTER_MASK;
 
-      int len = get_int_value(get_heap(ptr, 0));
+      //int len = get_int_value(get_heap(ptr, 0));
+      unsigned int len = *((unsigned int *)ptr);
 
       unsigned int *raw_ptr;
 
@@ -1374,13 +1375,14 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       //while reporting the deallocation statistics,
       //and not otherwise; the size object and the array object
       //get moved to grey/black sets in unison).
-      posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
-      *((int *)raw_ptr) = len;
+      //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+      //*((int *)raw_ptr) = len;
 
       new_obj = object_alloc(len+1, ARRAY_TAG);
       
       //set_heap(new_obj, 0, get_heap(ptr, 0));
-      set_heap(new_obj, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+      //set_heap(new_obj, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+      *((unsigned int *)new_obj) = len;
 
       for(i=1; i<=len; i++)
 	set_heap(new_obj, i, clone_object(get_heap(ptr, i)));
@@ -2135,7 +2137,8 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
 
   uintptr_t ptr = array & POINTER_MASK;
 
-  int length = get_int_value(get_heap(ptr, 0));
+  //int length = get_int_value(get_heap(ptr, 0));
+  int length = *((unsigned int *)ptr);
 
   int i;
 
@@ -2168,7 +2171,8 @@ void print_array_object(OBJECT_PTR array)
 
   print_to_transcript("[");
 
-  length = get_int_value(get_heap(ptr, 0));
+  //length = get_int_value(get_heap(ptr, 0));
+  length = *((unsigned int *)ptr);
 
   for(i=0; i< length; i++)
   {
@@ -2185,7 +2189,8 @@ void print_array_object(OBJECT_PTR array)
 
   fprintf(stdout, "[");
 
-  length = get_int_value(get_heap(ptr, 0));
+  //length = get_int_value(get_heap(ptr, 0));
+  length = *((unsigned int *)ptr);
 
   for(i=0; i< length; i++)
   {
@@ -2207,7 +2212,8 @@ int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_l
 {
   uintptr_t ptr = string_object & POINTER_MASK;
 
-  int len = get_int_value(get_heap(ptr, 0));
+  //int len = get_int_value(get_heap(ptr, 0));
+  int len = *((unsigned int *)ptr);
 
   int i;
 
@@ -2227,7 +2233,8 @@ void print_string(OBJECT_PTR string_object)
 {
   uintptr_t ptr = string_object & POINTER_MASK;
 
-  int len = get_int_value(get_heap(ptr, 0));
+  //int len = get_int_value(get_heap(ptr, 0));
+  int len = *((unsigned int *)ptr);
 
   int i;
 
@@ -2276,7 +2283,8 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
 
   ptr = obj & POINTER_MASK;
 
-  len = get_int_value(get_heap(ptr, 0));
+  //len = get_int_value(get_heap(ptr, 0));
+  len = *((unsigned int *)ptr);
 
   for(i=1; i<=len; i++)
   {
@@ -2298,7 +2306,8 @@ char *get_string(OBJECT_PTR string_object)
 
   ptr = string_object & POINTER_MASK;
 
-  len = get_int_value(get_heap(ptr, 0));
+  //len = get_int_value(get_heap(ptr, 0));
+  len = *((unsigned int *)ptr);
 
   ret = (char *)malloc(len * sizeof(char));
 

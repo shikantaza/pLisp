@@ -214,11 +214,12 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
     {
       uintptr_t ptr = obj & POINTER_MASK;
 
-      OBJECT_PTR length_obj = get_heap(ptr, 0);
+      //OBJECT_PTR length_obj = get_heap(ptr, 0);
 
-      move_from_white_to_grey(length_obj);
+      //move_from_white_to_grey(length_obj);
 
-      int len = get_int_value(length_obj);
+      //int len = get_int_value(length_obj);
+      int len = *((unsigned int *)ptr);
 
       int i;
 
@@ -564,7 +565,7 @@ void dealloc(OBJECT_PTR ptr)
 
   unsigned int tag = ptr & BIT_MASK;
 
-  OBJECT_PTR array_size;
+  unsigned int array_size;
 
   switch(tag)
   {
@@ -572,9 +573,8 @@ void dealloc(OBJECT_PTR ptr)
       words_deallocated += 2;
       break;
     case ARRAY_TAG:
-      array_size = get_heap(ptr & POINTER_MASK, 0);
-      words_deallocated += get_int_value(array_size); //accounting for the array size object will be done through the dealloc() call below
-      dealloc(array_size);
+      array_size = *((unsigned int *)(ptr & POINTER_MASK));
+      words_deallocated += (array_size + 1);
       break;
     case CLOSURE_TAG:
       words_deallocated += 4;
