@@ -552,8 +552,10 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
   {
     ptr = object_alloc(2, CONS_TAG);
 
-    unsigned int car_ref = cJSON_GetArrayItem(heap_obj, 0)->valueint;
-    unsigned int cdr_ref = cJSON_GetArrayItem(heap_obj, 1)->valueint;
+    /* unsigned int car_ref = cJSON_GetArrayItem(heap_obj, 0)->valueint; */
+    /* unsigned int cdr_ref = cJSON_GetArrayItem(heap_obj, 1)->valueint; */
+    unsigned int car_ref = heap_obj->child->valueint;
+    unsigned int cdr_ref = heap_obj->child->next->valueint;
 
     if(is_dynamic_reference(car_ref))
     {
@@ -587,9 +589,12 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
 
     (*(unsigned int *)ptr) = len;
 
+    cJSON *temp = heap_obj->child;
+
     for(i=0; i<len; i++)
     {
-      unsigned int elem_ref = cJSON_GetArrayItem(heap_obj, i)->valueint;
+      /* unsigned int elem_ref = cJSON_GetArrayItem(heap_obj, i)->valueint; */
+      unsigned int elem_ref = temp->valueint;
       if(is_dynamic_reference(elem_ref))
       {
         hashtable_entry_t *e = hashtable_get(ht, (void *)elem_ref);
@@ -600,15 +605,16 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
       }
       else
         set_heap(ptr, i+1, elem_ref);
+
+      temp = temp->next;
     }
   }
   else if(object_type == CLOSURE_TAG || object_type == MACRO_TAG)
   {
     ptr = object_alloc(4, object_type);
 
-    assert(cJSON_GetArraySize(heap_obj) == 4);
-
-    unsigned int env_ref = cJSON_GetArrayItem(heap_obj, 0)->valueint;
+    //unsigned int env_ref = cJSON_GetArrayItem(heap_obj, 0)->valueint;
+    unsigned int env_ref = heap_obj->child->valueint;
     if(is_dynamic_reference(env_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)env_ref);
@@ -620,7 +626,8 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
     else
       set_heap(ptr, 0, env_ref);
 
-    unsigned int params_ref = cJSON_GetArrayItem(heap_obj, 1)->valueint;
+    /* unsigned int params_ref = cJSON_GetArrayItem(heap_obj, 1)->valueint; */
+    unsigned int params_ref = heap_obj->child->next->valueint;
     if(is_dynamic_reference(params_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)params_ref);
@@ -632,7 +639,8 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
     else
       set_heap(ptr, 1, params_ref);
 
-    unsigned int body_ref = cJSON_GetArrayItem(heap_obj, 2)->valueint;
+    /* unsigned int body_ref = cJSON_GetArrayItem(heap_obj, 2)->valueint; */
+    unsigned int body_ref = heap_obj->child->next->next->valueint;
     if(is_dynamic_reference(body_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)body_ref);
@@ -644,7 +652,8 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
     else
       set_heap(ptr, 2, body_ref);
 
-    unsigned int source_ref = cJSON_GetArrayItem(heap_obj, 3)->valueint;
+    /* unsigned int source_ref = cJSON_GetArrayItem(heap_obj, 3)->valueint; */
+    unsigned int source_ref = heap_obj->child->next->next->next->valueint;
     if(is_dynamic_reference(source_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)source_ref);
@@ -661,6 +670,7 @@ OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *
     ptr = object_alloc(1, CONTINUATION_TAG);
 
     unsigned int stack_ref = heap_obj->valueint;
+
     if(is_dynamic_reference(stack_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)stack_ref);
