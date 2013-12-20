@@ -87,6 +87,8 @@ extern unsigned int current_package;
 
 extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
+extern OBJECT_PTR CONS_NIL_NIL;
+extern OBJECT_PTR CONS_RETURN_NIL;
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -370,7 +372,13 @@ int main(int argc, char **argv)
     core_library_loaded = true;
 
     initialize_memory();
+
     load_from_image(argv[1]);
+
+    CONS_NIL_NIL = cons(NIL, NIL);
+    CONS_APPLY_NIL = cons(APPLY, NIL);
+    CONS_HALT_NIL = cons(HALT, NIL);
+    CONS_RETURN_NIL = cons(RETURN, NIL);
 
     fprintf(stdout, "done\n");
 

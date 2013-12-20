@@ -29,8 +29,6 @@
 #include "queue.h"
 #include "hashtable.h"
 
-static const int REF          = 11;
-
 extern OBJECT_PTR top_level_env;
 extern unsigned int current_package;
 extern unsigned int nof_packages;
@@ -58,24 +56,18 @@ extern void **dl_handles;
 
 extern unsigned int POINTER_MASK;
 
-inline void print_ref_json_object(FILE *fp, OBJECT_PTR obj, unsigned int *obj_count, hashtable_t *hashtable)
-{
-  if(obj == NIL)
-    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", SYMBOL, (int)obj);
-  else
-  {
-    hashtable_entry_t *e = hashtable_get(hashtable, (void *)obj);
+//forward declarations
+BOOLEAN is_dynamic_reference(unsigned int);
+void add_to_deserialization_queue(cJSON *, queue_t *, unsigned int, uintptr_t, unsigned int);
+OBJECT_PTR deserialize(cJSON *, unsigned int, hashtable_t *, queue_t *);
+void convert_heap(cJSON *, hashtable_t *, queue_t *);
 
-    if(e)
-      fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", REF, (int)e->value);
-    else
-    {
-      fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", REF, *obj_count);
-      hashtable_put(hashtable, (void *)obj, (void *)(*obj_count));
-      (*obj_count)++;
-    }
-  }
-}
+struct slot
+{
+  unsigned int ref;
+  OBJECT_PTR ptr;
+  unsigned int index;
+};
 
 void add_obj_to_print_list(queue_t *print_queue, OBJECT_PTR obj, hashtable_t *printed_objects)
 {
@@ -89,37 +81,36 @@ void add_obj_to_print_list(queue_t *print_queue, OBJECT_PTR obj, hashtable_t *pr
   queue_enqueue(print_queue, (void *)obj);
 }
 
-void print_immediate_object(FILE *fp, OBJECT_PTR obj)
+void print_json_object(FILE *fp, OBJECT_PTR obj, queue_t *print_queue, unsigned int *obj_count, hashtable_t *hashtable, hashtable_t *printed_objects)
 {
-  assert(IS_CHAR_OBJECT(obj)    ||
-         IS_SYMBOL_OBJECT(obj)  ||
-         IS_STRING_LITERAL_OBJECT(obj));
+  if(!is_valid_object(obj))
+    assert(false);
 
-  if(IS_CHAR_OBJECT(obj))
-    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", CHAR_TAG, (unsigned int)obj);
-  else if(IS_STRING_LITERAL_OBJECT(obj))
-    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", STRING_LITERAL_TAG, (unsigned int)obj);
-  else if(IS_SYMBOL_OBJECT(obj))
-    fprintf(fp, "{ \"t\" : %d, \"v\" : %d }", SYMBOL_TAG, (unsigned int)obj);
-}
-
-void print_object1(FILE *fp, OBJECT_PTR obj, queue_t *print_queue, unsigned int *obj_count, hashtable_t *hashtable, hashtable_t *printed_objects)
-{
   if(is_dynamic_memory_object(obj))
   {
-    print_ref_json_object(fp, obj, obj_count, hashtable);
+    hashtable_entry_t *e = hashtable_get(hashtable, (void *)obj);
+
+    if(e)
+      fprintf(fp, "%d", (int)e->value);
+    else
+    {
+      fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
+      hashtable_put(hashtable, (void *)obj, (void *)  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK) );
+      (*obj_count)++;
+    }
+
     add_obj_to_print_list(print_queue, obj, printed_objects);
   }
   else
-    print_immediate_object(fp, obj);
+    fprintf(fp, "%d", (unsigned int)obj);
 }
 
-void print_json_object(FILE *fp, 
-                       OBJECT_PTR obj, 
-                       queue_t *print_queue, 
-                       unsigned int *obj_count, 
-                       hashtable_t *hashtable, 
-                       hashtable_t *printed_objects)
+void print_heap_representation(FILE *fp, 
+                               OBJECT_PTR obj, 
+                               queue_t *print_queue, 
+                               unsigned int *obj_count, 
+                               hashtable_t *hashtable, 
+                               hashtable_t *printed_objects)
 {
   if(!is_dynamic_memory_object(obj))
   {
@@ -127,34 +118,28 @@ void print_json_object(FILE *fp,
     assert(false);
   }
 
-  fprintf(fp, "{ ");
-  //fprintf(fp, "{ \"ptr\" : %d, ", obj);
-
   if(IS_CONS_OBJECT(obj))
   {
     OBJECT_PTR car_obj = car(obj);
     OBJECT_PTR cdr_obj = cdr(obj);
 
-    fprintf(fp, "\"t\" : %d ,", CONS_TAG);
-    fprintf(fp, "\"v\" : [");
-    print_object1(fp, car_obj, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, "[");
+    print_json_object(fp, car_obj, print_queue, obj_count, hashtable, printed_objects);
     fprintf(fp, ", ");
-    print_object1(fp, cdr_obj, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, cdr_obj, print_queue, obj_count, hashtable, printed_objects);
     fprintf(fp, "] ");
   }
   else if(IS_ARRAY_OBJECT(obj))
   {
-    fprintf(fp, "\"t\" : %d,", ARRAY_TAG);
-    fprintf(fp, "\"v\" : [ ");
+    fprintf(fp, "[ ");
 
-    //int len = get_int_value(get_heap(obj & POINTER_MASK, 0));
     int len = *((unsigned int *)(obj & POINTER_MASK));
 
     int i;
 
     for(i=1; i<=len; i++)
     {
-      print_object1(fp, get_heap(obj & POINTER_MASK, i), print_queue, obj_count, hashtable, printed_objects);
+      print_json_object(fp, get_heap(obj & POINTER_MASK, i), print_queue, obj_count, hashtable, printed_objects);
 
       if(i != len)     fprintf(fp, ", ");
       else             fprintf(fp, " ");
@@ -169,31 +154,26 @@ void print_json_object(FILE *fp,
     OBJECT_PTR body   = get_body_object(obj);
     OBJECT_PTR source = get_source_object(obj);
 
-    fprintf(fp, "\"t\" : %d,", IS_CLOSURE_OBJECT(obj) ? CLOSURE_TAG : MACRO_TAG);
-    fprintf(fp, "\"v\" : [");
-    print_object1(fp, env, print_queue, obj_count, hashtable, printed_objects);
+    fprintf(fp, "[");
+    print_json_object(fp, env, print_queue, obj_count, hashtable, printed_objects);
     fprintf(fp, ", ");
-    print_object1(fp, params, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, params, print_queue, obj_count, hashtable, printed_objects);
     fprintf(fp, ", ");
-    print_object1(fp, body, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, body, print_queue, obj_count, hashtable, printed_objects);
     fprintf(fp, ", ");
-    print_object1(fp, source, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, source, print_queue, obj_count, hashtable, printed_objects);
     fprintf(fp, "] ");
   }
   else if(IS_CONTINUATION_OBJECT(obj))
   {
-    fprintf(fp, "\"t\" : %d,", CONTINUATION_TAG);
-    fprintf(fp, "\"v\" : ");
-    print_object1(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects);
   }
   else if(IS_INTEGER_OBJECT(obj))
-    fprintf(fp, "\"t\" : %d, \"v\" : %d ", INTEGER_TAG, get_int_value(obj));
+    fprintf(fp, "%d", get_int_value(obj));
   else if(IS_FLOAT_OBJECT(obj))
-    fprintf(fp, "\"t\" : %d, \"v\" : %d ", FLOAT_TAG,   get_float_value(obj));
+    fprintf(fp, "%f", get_float_value(obj));
   else
     assert(false);
-
-  fprintf(fp, "}");
 
   hashtable_put(printed_objects, (void *)obj, (void *)1);
 }
@@ -242,16 +222,16 @@ void create_image(char *file_name)
 
   fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
 
-  fprintf(fp, "\"top_level_env\" : "        ); print_object1(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
 
-  fprintf(fp, "\"debug_continuation\" : "   ); print_object1(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"debug_env\" : "            ); print_object1(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"debug_execution_stack\" : "); print_object1(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_accumulator\" : "      ); print_object1(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_next_expression\" : "  ); print_object1(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_env\" : "      ); print_object1(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_value_rib\" : "); print_object1(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_stack\" : "    ); print_object1(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_continuation\" : "   ); print_json_object(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_env\" : "            ); print_json_object(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_execution_stack\" : "); print_json_object(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_accumulator\" : "      ); print_json_object(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_next_expression\" : "  ); print_json_object(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_env\" : "      ); print_json_object(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_value_rib\" : "); print_json_object(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_stack\" : "    ); print_json_object(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
 
   fprintf(fp, "\"current_package\" : %d ",     current_package);                                                           fprintf(fp, ", ");
   fprintf(fp, "\"gen_sym_count\" : %d ",       gen_sym_count);                                                             fprintf(fp, ", ");
@@ -293,13 +273,11 @@ void create_image(char *file_name)
 
   fprintf(fp, "\"heap\" : [");
 
-  //add_obj_to_print_list(print_queue, top_level_env);
-
   while(!queue_is_empty(print_queue))
   {
     OBJECT_PTR obj = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
     assert(is_dynamic_memory_object(obj));
-    print_json_object(fp, obj, print_queue, obj_count, hashtable, printed_objects);
+    print_heap_representation(fp, obj, print_queue, obj_count, hashtable, printed_objects);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
   }
 
@@ -319,115 +297,95 @@ void create_image(char *file_name)
 
 }
 
-OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable_t *hashtable)
-{
-  /* cJSON *type = cJSON_GetObjectItem(obj, "t"); */
-  /* cJSON *value = cJSON_GetObjectItem(obj, "v"); */
-  cJSON *type = obj->child;
-  cJSON *value = obj->child->next;
-  
-  int str_type = type->valueint;
+/* OBJECT_PTR convert_to_plisp_obj(cJSON *root, cJSON *heap, cJSON * obj, hashtable_t *hashtable) */
+/* { */
+/*   int str_type = obj->valueint & BIT_MASK; */
 
-  int i;
+/*   int i; */
 
-  OBJECT_PTR ret;
+/*   OBJECT_PTR ret; */
 
-  BOOLEAN obj_to_be_created = false;
+/*   if(str_type < 1 || str_type > 10) */
+/*     assert(false); */
 
-  if(str_type == REF)
-  {
-    hashtable_entry_t *e = hashtable_get(hashtable, (void *)(value->valueint));
-    if(e)
-      ret = (OBJECT_PTR)(e->value);
-    else
-    {
-      cJSON *refobj = cJSON_GetArrayItem(heap, value->valueint);
+/*   hashtable_entry_t *e = hashtable_get(hashtable, (void *)(obj->valueint)); */
 
-      if(!refobj)
-      {
-        printf("%d\n", value->valueint);
-        printf("%d\n", cJSON_GetArraySize(heap));
-        assert(false);
-      }
+/*   if(str_type == SYMBOL_TAG         || */
+/*      str_type == STRING_LITERAL_TAG || */
+/*      str_type == CHAR_TAG) */
+/*     return (OBJECT_PTR)(obj->valueint); */
 
-      ret = convert_to_plisp_obj(root, heap, refobj, hashtable);
-      hashtable_put(hashtable, (void *)(value->valueint),(void *)ret);
-    }
-  }
-  else if(str_type == CONS_TAG)
-  {
-    uintptr_t ptr = object_alloc(2, CONS_TAG);
+/*   if(e) */
+/*   { */
+/*     assert(is_valid_object((OBJECT_PTR)(e->value))); */
+/*     return (OBJECT_PTR)(e->value); */
+/*   } */
 
-    set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
-    set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
+/*   cJSON *value = cJSON_GetArrayItem(heap, obj->valueint >> OBJECT_SHIFT); */
 
-    ret = ptr + CONS_TAG;
-  }
-  else if(str_type == ARRAY_TAG)
-  {
-    int size = cJSON_GetArraySize(value);
+/*   if(str_type == CONS_TAG) */
+/*   { */
+/*     uintptr_t ptr = object_alloc(2, CONS_TAG); */
+
+/*     set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable)); */
+/*     set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable)); */
+
+/*     ret = ptr + CONS_TAG; */
+/*   } */
+/*   else if(str_type == ARRAY_TAG) */
+/*   { */
+/*     int size = cJSON_GetArraySize(value); */
     
-    //see comment in main.c for why we're not using object_alloc()
-    //unsigned int *raw_ptr;
-    //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
-    //*((int *)raw_ptr) = size;
+/*     uintptr_t ptr = object_alloc(size + 1, ARRAY_TAG); */
 
-    uintptr_t ptr = object_alloc(size + 1, ARRAY_TAG);
+/*     *((unsigned int *)(ptr & POINTER_MASK)) = size; */
 
-    //set_heap(ptr, 0, convert_int_to_object(size));
-    //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-    *((unsigned int *)ptr) = size;
+/*     for(i=0; i<size; i++) */
+/*       set_heap(ptr, i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable)); */
 
-    for(i=0; i<size; i++)
-      set_heap(ptr, i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable));
+/*     ret = ptr + ARRAY_TAG; */
+/*   } */
+/*   else if(str_type == CLOSURE_TAG || str_type == MACRO_TAG) */
+/*   { */
+/*     uintptr_t ptr = object_alloc(4, str_type); */
 
-    ret = ptr + ARRAY_TAG;
-  }
-  else if(str_type == CLOSURE_TAG || str_type == MACRO_TAG)
-  {
-    uintptr_t ptr = object_alloc(4, str_type);
+/*     set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable)); */
+/*     set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable)); */
+/*     set_heap(ptr, 2, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 2), hashtable)); */
+/*     set_heap(ptr, 3, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 3), hashtable)); */
 
-    set_heap(ptr, 0, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 0), hashtable));
-    set_heap(ptr, 1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 1), hashtable));
-    set_heap(ptr, 2, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 2), hashtable));
-    set_heap(ptr, 3, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, 3), hashtable));
+/*     ret = ptr + str_type; */
+/*   } */
+/*   else if(str_type == CONTINUATION_TAG) */
+/*   { */
+/*     uintptr_t ptr = object_alloc(1, CONTINUATION_TAG); */
+/*     set_heap(ptr, 0, convert_to_plisp_obj(root, heap, value, hashtable)); */
+/*     ret = ptr + CONTINUATION_TAG; */
+/*   } */
+/*   else if(str_type == INTEGER_TAG) */
+/*   { */
+/*     ret = convert_int_to_object(value->valueint); */
+/*   } */
+/*   else if(str_type == FLOAT_TAG) */
+/*   { */
+/*     ret = convert_float_to_object((float)value->valuedouble); */
+/*   } */
+/*   else */
+/*   { */
+/*     printf("%d\n", str_type); */
+/*     assert(false); */
+/*   } */
 
-    ret = ptr + str_type;
-  }
-  else if(str_type == CONTINUATION_TAG)
-  {
-    uintptr_t ptr = object_alloc(1, CONTINUATION_TAG);
-    set_heap(ptr, 0, convert_to_plisp_obj(root, heap, value, hashtable));
-    ret = ptr + CONTINUATION_TAG;
-  }
-  else if(str_type == INTEGER_TAG)
-  {
-    ret = convert_int_to_object(value->valueint);
-  }
-  else if(str_type == FLOAT_TAG)
-  {
-    ret = convert_float_to_object((float)value->valuedouble);
-  }
-  else if(str_type == SYMBOL_TAG         ||
-          str_type == STRING_LITERAL_TAG ||
-          str_type == CHAR_TAG)
-  {
-    ret = (OBJECT_PTR)(value->valueint);
-  }
-  else
-  {
-    printf("%d\n", str_type);
-    assert(false);
-  }
+/*   if(!is_valid_object(ret)) */
+/*   { */
+/*     printf("%d\n", ret); */
+/*     assert(false); */
+/*   } */
 
-  if(!is_valid_object(ret))
-  {
-    printf("%d\n", ret);
-    assert(false);
-  }
+/*   hashtable_put(hashtable, (void *)(obj->valueint),(void *)ret); */
 
-  return ret;
-}
+/*   return ret; */
+/* } */
 
 void load_from_image(char *file_name)
 {
@@ -498,40 +456,253 @@ void load_from_image(char *file_name)
     }
   }
 
-  hashtable_t *hashtable = hashtable_create(1000001);
+  hashtable_t *hashtable = hashtable_create(1001);
 
   temp = cJSON_GetObjectItem(root, "debug_mode");
   debug_mode = strcmp(temp->valuestring, "true") ? false : true;
 
-  temp = cJSON_GetObjectItem(root, "top_level_env");
-  top_level_env = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "top_level_env"); */
+  /* top_level_env = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "debug_continuation");
-  debug_continuation = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "debug_continuation"); */
+  /* debug_continuation = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "debug_env");
-  debug_env = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "debug_env"); */
+  /* debug_env = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "debug_execution_stack");
-  debug_execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "debug_execution_stack"); */
+  /* debug_execution_stack = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "reg_accumulator");
-  reg_accumulator = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "reg_accumulator"); */
+  /* reg_accumulator = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "reg_next_expression");
-  reg_next_expression = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "reg_next_expression"); */
+  /* reg_next_expression = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "reg_current_env");
-  reg_current_env = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "reg_current_env"); */
+  /* reg_current_env = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "reg_current_value_rib");
-  reg_current_value_rib = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "reg_current_value_rib"); */
+  /* reg_current_value_rib = convert_to_plisp_obj(root, heap, temp, hashtable); */
 
-  temp = cJSON_GetObjectItem(root, "reg_current_stack");
-  reg_current_stack = convert_to_plisp_obj(root, heap, temp, hashtable);
+  /* temp = cJSON_GetObjectItem(root, "reg_current_stack"); */
+  /* reg_current_stack = convert_to_plisp_obj(root, heap, temp, hashtable); */
+
+  queue_t *q = queue_create();
+
+  top_level_env         = deserialize(heap, cJSON_GetObjectItem(root, "top_level_env")->valueint,         hashtable, q);
+  debug_continuation    = deserialize(heap, cJSON_GetObjectItem(root, "debug_continuation")->valueint,    hashtable, q);
+  debug_env             = deserialize(heap, cJSON_GetObjectItem(root, "debug_env")->valueint,             hashtable, q);
+  debug_execution_stack = deserialize(heap, cJSON_GetObjectItem(root, "debug_execution_stack")->valueint, hashtable, q);
+  reg_accumulator       = deserialize(heap, cJSON_GetObjectItem(root, "reg_accumulator")->valueint,       hashtable, q);
+  reg_next_expression   = deserialize(heap, cJSON_GetObjectItem(root, "reg_next_expression")->valueint,   hashtable, q);
+  reg_current_env       = deserialize(heap, cJSON_GetObjectItem(root, "reg_current_env")->valueint,       hashtable, q);
+  reg_current_value_rib = deserialize(heap, cJSON_GetObjectItem(root, "reg_current_value_rib")->valueint, hashtable, q);
+  reg_current_stack     = deserialize(heap, cJSON_GetObjectItem(root, "reg_current_stack")->valueint,     hashtable, q);
+
+  convert_heap(heap, hashtable, q);
 
   hashtable_delete(hashtable);
+  queue_delete(q);
 
   cJSON_Delete(root);
 }
 
+BOOLEAN is_dynamic_reference(unsigned int ref)
+{
+  unsigned int type = ref & BIT_MASK;
+
+  return type == CONS_TAG         ||
+         type == ARRAY_TAG        ||
+         type == CLOSURE_TAG      ||
+         type == MACRO_TAG        ||
+         type == CONTINUATION_TAG ||
+         type == INTEGER_TAG      ||
+         type == FLOAT_TAG;
+}
+
+void add_to_deserialization_queue(cJSON *heap, queue_t *q, unsigned int ref, uintptr_t ptr, unsigned int index)
+{
+  struct slot *s = (struct slot *)malloc(sizeof(struct slot));
+  s->ref = ref;
+  s->ptr = ptr;
+  s->index = index;
+  queue_enqueue(q, s);
+}
+
+OBJECT_PTR deserialize(cJSON *heap, unsigned int ref, hashtable_t *ht, queue_t *q)
+{
+  unsigned int object_type = ref & BIT_MASK;
+
+  if(object_type == SYMBOL_TAG ||
+     object_type == STRING_LITERAL_TAG ||
+     object_type == CHAR_TAG)
+    return (OBJECT_PTR)ref;
+
+  hashtable_entry_t *e = hashtable_get(ht, (void *)ref);
+
+  if(e)
+    return (OBJECT_PTR)e->value;
+
+  cJSON *heap_obj = cJSON_GetArrayItem(heap, ref >> OBJECT_SHIFT);
+
+  uintptr_t ptr;
+
+  if(object_type == CONS_TAG)
+  {
+    ptr = object_alloc(2, CONS_TAG);
+
+    unsigned int car_ref = cJSON_GetArrayItem(heap_obj, 0)->valueint;
+    unsigned int cdr_ref = cJSON_GetArrayItem(heap_obj, 1)->valueint;
+
+    if(is_dynamic_reference(car_ref))
+    {
+       hashtable_entry_t *e = hashtable_get(ht, (void *)car_ref);
+      if(e)
+        set_heap(ptr, 0, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, car_ref, ptr, 0);
+    }
+    else
+      set_heap(ptr, 0, car_ref);
+
+    if(is_dynamic_reference(cdr_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)cdr_ref);
+      if(e)
+        set_heap(ptr, 1, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1);
+    }
+    else
+      set_heap(ptr, 1, cdr_ref);
+
+  }
+  else if(object_type == ARRAY_TAG)
+  {
+    int i;
+    int len = cJSON_GetArraySize(heap_obj);
+
+    ptr = object_alloc(len + 1, ARRAY_TAG);
+
+    (*(unsigned int *)ptr) = len;
+
+    for(i=0; i<len; i++)
+    {
+      unsigned int elem_ref = cJSON_GetArrayItem(heap_obj, i)->valueint;
+      if(is_dynamic_reference(elem_ref))
+      {
+        hashtable_entry_t *e = hashtable_get(ht, (void *)elem_ref);
+        if(e)
+          set_heap(ptr, i+1, (OBJECT_PTR)(e->value));
+        else
+          add_to_deserialization_queue(heap, q, elem_ref, ptr, i+1);
+      }
+      else
+        set_heap(ptr, i+1, elem_ref);
+    }
+  }
+  else if(object_type == CLOSURE_TAG || object_type == MACRO_TAG)
+  {
+    ptr = object_alloc(4, object_type);
+
+    assert(cJSON_GetArraySize(heap_obj) == 4);
+
+    unsigned int env_ref = cJSON_GetArrayItem(heap_obj, 0)->valueint;
+    if(is_dynamic_reference(env_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)env_ref);
+      if(e)
+        set_heap(ptr, 0, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, env_ref, ptr, 0);
+    }
+    else
+      set_heap(ptr, 0, env_ref);
+
+    unsigned int params_ref = cJSON_GetArrayItem(heap_obj, 1)->valueint;
+    if(is_dynamic_reference(params_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)params_ref);
+      if(e)
+        set_heap(ptr, 1, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, params_ref, ptr, 1);
+    }
+    else
+      set_heap(ptr, 1, params_ref);
+
+    unsigned int body_ref = cJSON_GetArrayItem(heap_obj, 2)->valueint;
+    if(is_dynamic_reference(body_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)body_ref);
+      if(e)
+        set_heap(ptr, 2, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, body_ref, ptr, 2);
+    }
+    else
+      set_heap(ptr, 2, body_ref);
+
+    unsigned int source_ref = cJSON_GetArrayItem(heap_obj, 3)->valueint;
+    if(is_dynamic_reference(source_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)source_ref);
+      if(e)
+        set_heap(ptr, 3, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, source_ref, ptr, 3);
+    }
+    else
+      set_heap(ptr, 3, source_ref);
+  }
+  else if(object_type == CONTINUATION_TAG)
+  {
+    ptr = object_alloc(1, CONTINUATION_TAG);
+
+    unsigned int stack_ref = heap_obj->valueint;
+    if(is_dynamic_reference(stack_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)stack_ref);
+      if(e)
+        set_heap(ptr, 0, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, stack_ref, ptr, 0);
+    }
+    else
+      set_heap(ptr, 0, stack_ref);
+  }
+  else if(object_type == INTEGER_TAG)
+  {
+    ptr = object_alloc(1, INTEGER_TAG);
+    (*(unsigned int *)ptr) = heap_obj->valueint;
+  }
+  else if(object_type == FLOAT_TAG)
+  {
+    ptr = object_alloc(1, FLOAT_TAG);
+    (*(float *)ptr) = (float)heap_obj->valuedouble;
+  }
+
+  hashtable_put(ht, (void *)ref, (void *)(ptr + object_type));
+
+  return ptr + object_type;
+}
+
+void convert_heap(cJSON *heap, hashtable_t *ht, queue_t *q)
+{
+  while(!queue_is_empty(q))
+  {
+    struct slot *slot_obj = (struct slot *)queue_dequeue(q)->data;
+
+    unsigned int ref = slot_obj->ref;
+
+    hashtable_entry_t *e = hashtable_get(ht, (void *)ref);
+
+    if(e)
+      set_heap(slot_obj->ptr, slot_obj->index, (OBJECT_PTR)e->value);
+    else
+      set_heap(slot_obj->ptr, slot_obj->index, deserialize(heap, ref, ht, q));
+
+    free(slot_obj);
+  }
+}
