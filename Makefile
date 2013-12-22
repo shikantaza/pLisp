@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o cJSON.o queue.o hashtable.o
+OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o
 
 #TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
 
@@ -53,6 +53,18 @@ bison.o:	plisp.tab.c
 
 plisp.tab.c:	plisp.y
 		bison -d -v plisp.y
+
+json_parser.o:	json_parser.tab.c
+		$(CC) $(CFLAGS) -c json_parser.tab.c -o json_parser.o
+
+json_parser.tab.c:	json_parser.y
+		bison -d -v -Dapi.prefix=json json_parser.y
+
+json_lex.o:	json.lex.yy.c
+		$(CC) $(CFLAGS) -c json.lex.yy.c -o json_lex.o
+
+json.lex.yy.c:	json.lex 
+		flex -P json -o json.lex.yy.c json.lex
 
 main.o:		main.c
 		$(CC) $(CFLAGS) -c main.c -o main.o
@@ -93,8 +105,8 @@ event_handlers.o:	./gui/event_handlers.c
 hash.o:		hash.c
 		$(CC) $(CFLAGS) -c hash.c -o hash.o
 
-cJSON.o:	./cJSON/cJSON.c
-		$(CC) $(CFLAGS) -c ./cJSON/cJSON.c -o cJSON.o
+json.o:		json.c
+		$(CC) $(CFLAGS) -c json.c -o json.o
 
 queue.o:	queue.c
 		$(CC) $(CFLAGS) -c queue.c -o queue.o
@@ -114,7 +126,7 @@ main.o		: plisp.h memory.h
 compiler.o	: plisp.h
 vm.o		: plisp.h memory.h
 util.o		: util.h
-images.o	: plisp.h memory.h queue.h cJSON/cJSON.h hashtable.h
+images.o	: plisp.h memory.h queue.h json.h hashtable.h
 ffi.o		: plisp.h
 memory.o	: plisp.h memory.h
 
@@ -122,10 +134,12 @@ ui.o		: plisp.h
 
 event_handlers.o	: plisp.h
 
-cJSON.o		: cJSON/cJSON.h
+#json_lex.o	: json_parser.tab.h json.h
+json_parser.o	: json_parser.tab.c json.h
+json.o		: json.h
 
 hashtable.o	: hashtable.h
 
 clean:
-	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h plisp.output plisp.exe libplisp.so libtest.so *.stackdump
+	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h json.lex.yy.c json_parser.tab.h json_parser.tab.c plisp.output plisp.exe libplisp.so libtest.so *.stackdump
 
