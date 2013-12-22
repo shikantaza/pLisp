@@ -141,5 +141,5 @@ json.o		: json.h
 hashtable.o	: hashtable.h
 
 clean:
-	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h json.lex.yy.c json_parser.tab.h json_parser.tab.c plisp.output plisp.exe libplisp.so libtest.so *.stackdump
+	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h json.lex.yy.c json_parser.tab.h json_parser.tab.c plisp.output json_parser.output plisp.exe libplisp.so libtest.so *.stackdump
 
