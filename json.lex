@@ -28,7 +28,7 @@
 
 [-+]?[0-9]+             { jsonlval.integer_value = atoi(yytext); return T_INTEGER; }
 [-+]?[0-9]*\.?[0-9]*    { jsonlval.float_value = atof(yytext); return T_FLOAT; }
-\"(\\.|[^\\"])*\"       { jsonlval.string_value = substring(yytext, 1, strlen(yytext)-2); return T_STRING_LITERAL; }
+\"(\\.|[^\\"])*\"       { jsonlval.string_value = (char *)substring(yytext, 1, strlen(yytext)-2); return T_STRING_LITERAL; }
 \{                      return T_LEFT_CURLY_BRACE;
 \}                      return T_RIGHT_CURLY_BRACE;
 \[                      return T_LEFT_SQUARE_BRACE;

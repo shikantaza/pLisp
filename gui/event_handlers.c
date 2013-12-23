@@ -920,7 +920,7 @@ void save_image()
 
   gdk_window_set_cursor(win, cursor);
 
-  gdk_cursor_unref(cursor);
+  g_object_unref(cursor);
   while( gtk_events_pending() )
     gtk_main_iteration();
 

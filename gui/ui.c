@@ -149,33 +149,48 @@ GtkToolbar *create_workspace_toolbar()
   GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
   toolbar = gtk_toolbar_new ();
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_ICONS);
   gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Load file (Ctrl-O)",                   /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           load_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(load_source_file),      /* a signal */
-                           (GtkWidget *)workspace_window);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Load file (Ctrl-O)",                   /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          load_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(load_source_file),      /\* a signal *\/ */
+  /*                          (GtkWidget *)workspace_window); */
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Evaluate (Ctrl+Enter)",                /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           eval_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(eval_expression),       /* a signal */
-                           (GtkWidget *)workspace_window);
+  GtkToolItem *load_button = gtk_tool_button_new(load_icon, NULL);
+  gtk_tool_item_set_tooltip_text(load_button, "Load file (Ctrl-O)");
+  g_signal_connect (load_button, "clicked", G_CALLBACK (load_source_file), workspace_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, load_button, 0);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Close (Ctrl-W)",                       /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           exit_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(close_window),          /* a signal */
-                           (GtkWidget *)workspace_window);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Evaluate (Ctrl+Enter)",                /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          eval_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(eval_expression),       /\* a signal *\/ */
+  /*                          (GtkWidget *)workspace_window); */
+
+  GtkToolItem *eval_button = gtk_tool_button_new(eval_icon, NULL);
+  gtk_tool_item_set_tooltip_text(eval_button, "Evaluate (Ctrl+Enter)");
+  g_signal_connect (eval_button, "clicked", G_CALLBACK (eval_expression), workspace_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, eval_button, 1);
+
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Close (Ctrl-W)",                       /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          exit_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(close_window),          /\* a signal *\/ */
+  /*                          (GtkWidget *)workspace_window); */
+
+  GtkToolItem *close_button = gtk_tool_button_new(exit_icon, NULL);
+  gtk_tool_item_set_tooltip_text(close_button, "Close (Ctrl-W)");
+  g_signal_connect (close_button, "clicked", G_CALLBACK (close_window), workspace_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 2);
 
   return (GtkToolbar *)toolbar;
 }
@@ -216,7 +231,7 @@ void create_workspace_window()
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  vbox = gtk_vbox_new (FALSE, 5);
+  vbox = gtk_vbox_new(FALSE, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_workspace_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   
@@ -350,57 +365,82 @@ GtkToolbar *create_system_browser_toolbar()
   GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
   toolbar = gtk_toolbar_new ();
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_ICONS);
   gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "New package (Ctrl-K)",                 /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           new_package_icon,                       /* icon widget */
-                           GTK_SIGNAL_FUNC(new_package),            /* a signal */
-                           NULL);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "New package (Ctrl-K)",                 /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          new_package_icon,                       /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(new_package),            /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *new_package_button = gtk_tool_button_new(new_package_icon, NULL);
+  gtk_tool_item_set_tooltip_text(new_package_button, "New package (Ctrl-K)");
+  g_signal_connect (new_package_button, "clicked", G_CALLBACK (new_package), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, new_package_button, 0);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "New symbol (Ctrl-N)",                  /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           new_symbol_icon,                        /* icon widget */
-                           GTK_SIGNAL_FUNC(new_symbol),            /* a signal */
-                           (GtkWidget *)system_browser_window);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "New symbol (Ctrl-N)",                  /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          new_symbol_icon,                        /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(new_symbol),            /\* a signal *\/ */
+  /*                          (GtkWidget *)system_browser_window); */
+  GtkToolItem *new_symbol_button = gtk_tool_button_new(new_symbol_icon, NULL);
+  gtk_tool_item_set_tooltip_text(new_symbol_button, "New symbol (Ctrl-N)");
+  g_signal_connect (new_symbol_button, "clicked", G_CALLBACK (new_symbol), workspace_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, new_symbol_button, 1);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Accept (Ctrl-S)",                      /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           accept_icon,                            /* icon widget */
-                           GTK_SIGNAL_FUNC(accept),                /* a signal */
-                           (GtkWidget *)system_browser_window);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Accept (Ctrl-S)",                      /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          accept_icon,                            /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(accept),                /\* a signal *\/ */
+  /*                          (GtkWidget *)system_browser_window); */
+  GtkToolItem *accept_button = gtk_tool_button_new(accept_icon, NULL);
+  gtk_tool_item_set_tooltip_text(accept_button, "Accept (Ctrl-S)");
+  g_signal_connect (accept_button, "clicked", G_CALLBACK (accept), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, accept_button, 2);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Delete symbol (Ctrl-X)",               /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           delete_icon,                            /* icon widget */
-                           GTK_SIGNAL_FUNC(delete_pkg_or_sym),     /* a signal */
-                           NULL);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Refresh (F5)",                         /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           refresh_icon,                           /* icon widget */
-                           GTK_SIGNAL_FUNC(refresh_sys_browser),   /* a signal */
-                           NULL);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Delete symbol (Ctrl-X)",               /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          delete_icon,                            /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(delete_pkg_or_sym),     /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *delete_button = gtk_tool_button_new(delete_icon, NULL);
+  gtk_tool_item_set_tooltip_text(delete_button, "Delete symbol (Ctrl-X)");
+  g_signal_connect (delete_button, "clicked", G_CALLBACK (delete_pkg_or_sym), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, delete_button, 3);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Close (Ctrl-W)",                       /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           exit_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(close_window),          /* a signal */
-                           (GtkWidget *)system_browser_window);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Refresh (F5)",                         /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          refresh_icon,                           /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(refresh_sys_browser),   /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *refresh_button = gtk_tool_button_new(refresh_icon, NULL);
+  gtk_tool_item_set_tooltip_text(refresh_button, "Refresh (F5)");
+  g_signal_connect (refresh_button, "clicked", G_CALLBACK (refresh_sys_browser), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, refresh_button, 4);
+
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Close (Ctrl-W)",                       /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          exit_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(close_window),          /\* a signal *\/ */
+  /*                          (GtkWidget *)system_browser_window); */
+  GtkToolItem *close_button = gtk_tool_button_new(exit_icon, NULL);
+  gtk_tool_item_set_tooltip_text(close_button, "Close (Ctrl-W)");
+  g_signal_connect (close_button, "clicked", G_CALLBACK (close_window), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 5);
 
   return (GtkToolbar *)toolbar;
 }
@@ -457,9 +497,9 @@ void create_system_browser_window()
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)packages_list);
   gtk_container_add(GTK_CONTAINER (scrolled_win2), (GtkWidget *)symbols_list);
 
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_box_pack_start_defaults (GTK_BOX (hbox), scrolled_win1);
-  gtk_box_pack_start_defaults (GTK_BOX (hbox), scrolled_win2);
+  hbox = gtk_hbox_new(FALSE, 5);
+  gtk_box_pack_start(GTK_BOX (hbox), scrolled_win1, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX (hbox), scrolled_win2, TRUE, TRUE, 0);
 
   GtkWidget *scrolled_win;
 
@@ -475,7 +515,7 @@ void create_system_browser_window()
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  vbox = gtk_vbox_new (FALSE, 5);
+  vbox = gtk_vbox_new(FALSE, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_system_browser_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
@@ -524,51 +564,70 @@ GtkToolbar *create_transcript_toolbar()
   GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit.png");
 
   toolbar = gtk_toolbar_new ();
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_ICONS);
   gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
   //gtk_toolbar_set_space_size (GTK_TOOLBAR (toolbar), 5);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Load image (Ctrl-L)",                  /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           load_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(load_image_file),       /* a signal */
-                           NULL);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Load image (Ctrl-L)",                  /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          load_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(load_image_file),       /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *load_button = gtk_tool_button_new(load_icon, NULL);
+  gtk_tool_item_set_tooltip_text(load_button, "Load image (Ctrl-L)");
+  g_signal_connect (load_button, "clicked", G_CALLBACK (load_image_file), transcript_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, load_button, 0);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Save image (Ctrl-S)",                  /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           save_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(save_image_file),       /* a signal */
-                           NULL);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Save image (Ctrl-S)",                  /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          save_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(save_image_file),       /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *save_button = gtk_tool_button_new(save_icon, NULL);
+  gtk_tool_item_set_tooltip_text(save_button, "Save image (Ctrl-S)");
+  g_signal_connect (save_button, "clicked", G_CALLBACK (save_image_file), transcript_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, save_button, 1);
 
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Show workspace window (F7)",           /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          workspace_icon,                         /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(show_workspace_win),    /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *workspace_button = gtk_tool_button_new(workspace_icon, NULL);
+  gtk_tool_item_set_tooltip_text(workspace_button, "Show workspace window (F7)");
+  g_signal_connect (workspace_button, "clicked", G_CALLBACK (show_workspace_win), transcript_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, workspace_button, 2);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Show workspace window (F7)",           /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           workspace_icon,                         /* icon widget */
-                           GTK_SIGNAL_FUNC(show_workspace_win),    /* a signal */
-                           NULL);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                        /\* button label *\/ */
+  /*                          "System Browser (F9)",                       /\* button's tooltip *\/ */
+  /*                          "Private",                                   /\* tooltip private info *\/ */
+  /*                          browser_icon,                                /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(show_system_browser_win),    /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *browser_button = gtk_tool_button_new(browser_icon, NULL);
+  gtk_tool_item_set_tooltip_text(browser_button, "System Browser (F9)");
+  g_signal_connect (browser_button, "clicked", G_CALLBACK (show_system_browser_win), transcript_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, browser_button, 3);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                        /* button label */
-                           "System Browser (F9)",                       /* button's tooltip */
-                           "Private",                                   /* tooltip private info */
-                           browser_icon,                                /* icon widget */
-                           GTK_SIGNAL_FUNC(show_system_browser_win),    /* a signal */
-                           NULL);
-
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Exit (Ctrl-W)",                        /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           exit_icon,                              /* icon widget */
-                           GTK_SIGNAL_FUNC(quit),                  /* a signal */
-                           NULL);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Exit (Ctrl-W)",                        /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          exit_icon,                              /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(quit),                  /\* a signal *\/ */
+  /*                          NULL); */
+  GtkToolItem *exit_button = gtk_tool_button_new(exit_icon, NULL);
+  gtk_tool_item_set_tooltip_text(exit_button, "Exit (Ctrl-W)");
+  g_signal_connect (exit_button, "clicked", G_CALLBACK (quit), transcript_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, exit_button, 4);
 
   return (GtkToolbar *)toolbar;
 }
@@ -614,7 +673,7 @@ void create_transcript_window()
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  vbox = gtk_vbox_new (FALSE, 5);
+  vbox = gtk_vbox_new(FALSE, 5);
 
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_transcript_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
@@ -662,10 +721,10 @@ void error_window(char *msg)
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_box_pack_start_defaults (GTK_BOX (hbox), ok);
+  hbox = gtk_hbox_new(FALSE, 5);
+  gtk_box_pack_start(GTK_BOX (hbox), ok, FALSE, FALSE, 0);
 
-  vbox = gtk_vbox_new (FALSE, 5);
+  vbox = gtk_vbox_new(FALSE, 5);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
 
@@ -776,26 +835,33 @@ GtkToolbar *create_debugger_toolbar()
   GtkWidget *abort_icon = gtk_image_new_from_file ("icons/abort.png");
 
   toolbar = gtk_toolbar_new ();
-  gtk_toolbar_set_orientation (GTK_TOOLBAR (toolbar), GTK_ORIENTATION_HORIZONTAL);
-  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_BOTH);
+  gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
+  gtk_toolbar_set_style (GTK_TOOLBAR (toolbar), GTK_TOOLBAR_ICONS);
   gtk_container_set_border_width (GTK_CONTAINER (toolbar), 5);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Resume (F5)",                          /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           resume_icon,                            /* icon widget */
-                           GTK_SIGNAL_FUNC(resume_from_debugger),  /* a signal */
-                           (GtkWidget *)debugger_window);
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Resume (F5)",                          /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          resume_icon,                            /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(resume_from_debugger),  /\* a signal *\/ */
+  /*                          (GtkWidget *)debugger_window); */
+  GtkToolItem *resume_button = gtk_tool_button_new(resume_icon, NULL);
+  gtk_tool_item_set_tooltip_text(resume_button, "Resume (F5)");
+  g_signal_connect (resume_button, "clicked", G_CALLBACK (resume_from_debugger), debugger_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, resume_button, 0);
 
-  gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                   
-                           NULL,                                   /* button label */
-                           "Abort",                                /* button's tooltip */
-                           "Private",                              /* tooltip private info */
-                           abort_icon,                             /* icon widget */
-                           GTK_SIGNAL_FUNC(abort_debugger),        /* a signal */
-                           (GtkWidget *)debugger_window);
-
+  /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
+  /*                          NULL,                                   /\* button label *\/ */
+  /*                          "Abort",                                /\* button's tooltip *\/ */
+  /*                          "Private",                              /\* tooltip private info *\/ */
+  /*                          abort_icon,                             /\* icon widget *\/ */
+  /*                          GTK_SIGNAL_FUNC(abort_debugger),        /\* a signal *\/ */
+  /*                          (GtkWidget *)debugger_window); */
+  GtkToolItem *abort_button = gtk_tool_button_new(abort_icon, NULL);
+  gtk_tool_item_set_tooltip_text(abort_button, "Abort");
+  g_signal_connect (abort_button, "clicked", G_CALLBACK (abort_debugger), debugger_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, abort_button, 1);
   return (GtkToolbar *)toolbar;
 }
 
@@ -849,13 +915,13 @@ void create_debug_window()
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)frames_list);
   gtk_container_add(GTK_CONTAINER (scrolled_win2), (GtkWidget *)variables_list);
 
-  hbox1 = gtk_hbox_new (FALSE, 5);
-  hbox2 = gtk_hbox_new (FALSE, 5);
+  hbox1 = gtk_hbox_new(FALSE, 5);
+  hbox2 = gtk_hbox_new(FALSE, 5);
 
-  gtk_box_pack_start_defaults (GTK_BOX (hbox1), scrolled_win1);
-  gtk_box_pack_start_defaults (GTK_BOX (hbox2), scrolled_win2);
+  gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX (hbox2), scrolled_win2, TRUE, TRUE, 0);
 
-  vbox = gtk_vbox_new (FALSE, 5);
+  vbox = gtk_vbox_new(FALSE, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox2, TRUE, TRUE, 0);
@@ -999,11 +1065,11 @@ void create_profiler_window()
 
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)operators_list);
 
-  hbox1 = gtk_hbox_new (FALSE, 5);
+  hbox1 = gtk_hbox_new(FALSE, 5);
 
-  gtk_box_pack_start_defaults (GTK_BOX (hbox1), scrolled_win1);
+  gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, FALSE, FALSE, 0);
 
-  vbox = gtk_vbox_new (FALSE, 5);
+  vbox = gtk_vbox_new(FALSE, 5);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
 
   //uncomment this to add status bar
