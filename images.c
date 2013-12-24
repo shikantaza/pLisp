@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <dlfcn.h>
+#include <gtk/gtk.h>
 
 #include "plisp.h"
 #include "memory.h"
@@ -48,6 +49,8 @@ extern OBJECT_PTR reg_current_env;
 extern OBJECT_PTR reg_current_value_rib;
 extern OBJECT_PTR reg_current_stack;
 
+extern BOOLEAN in_break;
+
 extern OBJECT_PTR NIL;
 
 extern int nof_dl_handles;
@@ -55,6 +58,28 @@ extern char *foreign_library_names[];
 extern void **dl_handles;
 
 extern unsigned int POINTER_MASK;
+
+extern GtkWindow *workspace_window;
+extern GtkTextBuffer *workspace_buffer;
+
+extern GtkWindow *transcript_window;
+extern GtkTextBuffer *transcript_buffer;
+
+extern GtkWindow *debugger_window;
+
+extern GtkWindow *system_browser_window;
+extern GtkTextBuffer *system_browser_buffer;
+extern GtkTextView *system_browser_textview;
+extern GtkStatusbar *system_browser_statusbar;
+
+extern GtkWindow *profiler_window;
+
+extern hashtable_t *profiling_tab;
+
+extern GtkTreeView *packages_list;
+extern GtkTreeView *symbols_list;
+
+extern OBJECT_PTR DEFUN, DEFMACRO;
 
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
@@ -221,6 +246,7 @@ void create_image(char *file_name)
   fprintf(fp, "{ ");
 
   fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
+  fprintf(fp, "\"in_break\" : \"%s\"",       in_break ? "true" : "false");                                             fprintf(fp, ", ");
 
   fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
 
@@ -270,6 +296,93 @@ void create_image(char *file_name)
   fprintf(fp, "]");
 
   fprintf(fp, ", ");
+  
+  if(profiler_window)
+  {
+    int posx, posy, width, height;
+
+    gtk_window_get_position(profiler_window, &posx, &posy);
+    gtk_window_get_size(profiler_window, &width, &height);
+
+    fprintf(fp, 
+            "\"profiler\" : [ %d, %d, %d, %d, [", 
+            posx, posy, width, height);
+
+    hashtable_entry_t **entries = profiling_tab->entries;
+
+    int i, count = profiling_tab->hash_size;
+
+    BOOLEAN first_printed = false;
+
+    for(i=0; i<count; i++)
+    {
+      if(profiling_tab->entries[i])
+      {
+        if(first_printed)
+          fprintf(fp, ", ");
+
+        hashtable_entry_t *e = profiling_tab->entries[i];
+
+        while(e)
+        {
+          OBJECT_PTR operator = (OBJECT_PTR)e->ptr;
+
+          profiling_datum_t *pd = (profiling_datum_t *)e->value;
+
+          fprintf(fp, "[ ");
+          print_json_object(fp, operator, print_queue, obj_count, hashtable, printed_objects);
+          fprintf(fp, ", %d, %f, %f, %d, %d", 
+                  pd->count,
+                  (float)pd->elapsed_wall_time,
+                  (float)pd->elapsed_cpu_time,
+                  pd->mem_allocated,
+                  pd->mem_deallocated);
+          fprintf(fp, " ]");
+
+          e = e->next;
+
+          if(e)
+            fprintf(fp, ",");
+        }
+
+        if(!first_printed)
+          first_printed = true;
+      }
+    }
+    fprintf(fp, "]], ");
+  }
+
+  if(system_browser_window)
+  {
+    int posx, posy, width, height;
+
+    gtk_window_get_position(system_browser_window, &posx, &posy);
+    gtk_window_get_size(system_browser_window, &width, &height);
+
+    GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
+    GtkTreeModel *model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+    GtkTreeIter  iter1;
+    gint id = -1;
+
+    if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list)), &model1, &iter1))
+      gtk_tree_model_get(model1, &iter1, 1, &id, -1);
+
+    GtkListStore *store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+    GtkTreeModel *model2 = gtk_tree_view_get_model (GTK_TREE_VIEW (symbols_list));
+    GtkTreeIter  iter2;
+    gint ptr = -1;
+
+    if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list)), &model2, &iter2))
+      gtk_tree_model_get(model2, &iter2, 1, &ptr, -1);
+
+    fprintf(fp, 
+            "\"system_browser\" : [ %d, %d, %d, %d, %d, ", 
+            posx, posy, width, height, id);
+
+    print_json_object(fp, ptr, print_queue, obj_count, hashtable, printed_objects);
+
+    fprintf(fp, "], ");
+  }
 
   fprintf(fp, "\"heap\" : [");
 
@@ -285,7 +398,112 @@ void create_image(char *file_name)
   hashtable_delete(hashtable);
   hashtable_delete(printed_objects);
 
-  fprintf(fp, "]}");
+  fprintf(fp, "]");
+
+  if(workspace_window)
+  {
+    int posx, posy, width, height;
+    GtkTextIter start, end;
+
+    char text[MAX_STRING_LENGTH];
+
+    char *workspace_text;
+
+    gtk_text_buffer_get_start_iter(workspace_buffer, &start);
+    gtk_text_buffer_get_end_iter(workspace_buffer, &end);
+
+    int len;
+
+    int i=0, j=0;
+
+    workspace_text = strdup(gtk_text_buffer_get_text(workspace_buffer, &start, &end, FALSE));
+
+    len = strlen(workspace_text);
+
+    memset(text, '\0', MAX_STRING_LENGTH);
+
+    while(i<len)
+    {
+      if(workspace_text[i] == '\"')
+      {
+        text[j] = '\\';
+        text[j+1] = '\"';
+        j += 2;
+      }
+      else
+      {
+        text[j] = workspace_text[i];
+        j++;
+      }
+      i++;
+    }
+
+    gtk_window_get_position(workspace_window, &posx, &posy);
+    gtk_window_get_size(workspace_window, &width, &height);
+
+    fprintf(fp, 
+            ", \"workspace\" : [ %d, %d, %d, %d, \"%s\" ]", 
+            posx, posy, width, height, text);
+  }
+
+  if(debugger_window)
+  {
+    int posx, posy, width, height;
+
+    gtk_window_get_position(debugger_window, &posx, &posy);
+    gtk_window_get_size(debugger_window, &width, &height);
+
+    fprintf(fp, 
+            ", \"debugger\" : [ %d, %d, %d, %d ]", 
+            posx, posy, width, height);
+  }
+
+  //begin transcript window serialization
+  int posx, posy, width, height;
+  GtkTextIter start, end;
+
+  char text[MAX_STRING_LENGTH];
+
+  char *transcript_text;
+
+  gtk_text_buffer_get_start_iter(transcript_buffer, &start);
+  gtk_text_buffer_get_end_iter(transcript_buffer, &end);
+
+  int len;
+
+  int ii=0, jj=0;
+
+  transcript_text = strdup(gtk_text_buffer_get_text(transcript_buffer, &start, &end, FALSE));
+
+  len = strlen(transcript_text);
+
+  memset(text, '\0', MAX_STRING_LENGTH);
+
+  while(ii<len)
+  {
+    if(transcript_text[ii] == '\"')
+    {
+      text[jj] = '\\';
+      text[jj+1] = '\"';
+      jj += 2;
+    }
+    else
+    {
+      text[jj] = transcript_text[ii];
+      jj++;
+    }
+    ii++;
+  }
+
+  gtk_window_get_position(transcript_window, &posx, &posy);
+  gtk_window_get_size(transcript_window, &width, &height);
+
+  fprintf(fp, 
+          ", \"transcript\" : [ %d, %d, %d, %d, \"%s\" ]", 
+          posx, posy, width, height, text);
+  //end transcript window serialization
+
+  fprintf(fp, "}");
 
   fclose(fp);
 
@@ -456,6 +674,9 @@ void load_from_image(char *file_name)
   temp = JSON_get_object_item(root, "debug_mode");
   debug_mode = strcmp(temp->strvalue, "true") ? false : true;
 
+  temp = JSON_get_object_item(root, "in_break");
+  in_break = strcmp(temp->strvalue, "true") ? false : true;
+
   queue_t *q = queue_create();
 
   top_level_env         = deserialize(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q);
@@ -468,10 +689,211 @@ void load_from_image(char *file_name)
   reg_current_value_rib = deserialize(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q);
   reg_current_stack     = deserialize(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q);
 
+  struct JSONObject *profiler = JSON_get_object_item(root, "profiler");
+
+  if(profiler)
+  {
+    profiling_tab = hashtable_create(1000001);
+
+    struct JSONObject *entries = JSON_get_array_item(profiler, 4);
+
+    int size = JSON_get_array_size(entries);
+
+    int i;
+
+    for(i=0; i<size; i++)
+    {
+      struct JSONObject *entry = JSON_get_array_item(entries, i);
+      OBJECT_PTR operator = deserialize(heap, JSON_get_array_item(entry, 0)->ivalue, hashtable, q);
+
+      profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+
+      pd->count             = JSON_get_array_item(entry, 1)->ivalue;
+      pd->elapsed_wall_time = JSON_get_array_item(entry, 2)->fvalue;
+      pd->elapsed_cpu_time  = JSON_get_array_item(entry, 3)->fvalue;
+      pd->mem_allocated     = JSON_get_array_item(entry, 4)->ivalue;
+      pd->mem_deallocated   = JSON_get_array_item(entry, 5)->ivalue;
+
+      hashtable_put(profiling_tab, (void *)operator, (void *)pd);
+      
+    }
+  }
+
+  struct JSONObject *system_browser = JSON_get_object_item(root, "system_browser");
+  OBJECT_PTR obj1;
+
+  if(system_browser)
+    obj1 = deserialize(heap, JSON_get_array_item(system_browser, 5)->ivalue, hashtable, q);
+
   convert_heap(heap, hashtable, q);
+
+  if(system_browser)
+  {
+
+    create_system_browser_window(JSON_get_array_item(system_browser, 0)->ivalue,
+                                 JSON_get_array_item(system_browser, 1)->ivalue,
+                                 JSON_get_array_item(system_browser, 2)->ivalue,
+                                 JSON_get_array_item(system_browser, 3)->ivalue);
+
+    int id = JSON_get_array_item(system_browser, 4)->ivalue;
+
+    if(id != -1)
+    {
+      remove_all_from_list(symbols_list);
+
+      GtkListStore *store2;
+      GtkTreeIter  iter2;
+
+      store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+
+      OBJECT_PTR rest = top_level_env;
+
+      while(rest != NIL)
+      {
+        OBJECT_PTR sym = CAAR(rest);
+
+        if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+        {
+          gtk_list_store_append(store2, &iter2);
+          gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
+          gtk_list_store_set(store2, &iter2, 1, sym, -1);
+        }
+
+        rest = cdr(rest);
+      }
+    }
+
+    //
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+
+    OBJECT_PTR obj = cdr(get_symbol_value_from_env(obj1, top_level_env));
+
+    gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
+
+    gtk_text_view_set_editable(system_browser_textview, FALSE);
+
+    if(IS_CLOSURE_OBJECT(obj))
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      OBJECT_PTR temp = cons(DEFUN, 
+                             cons(obj1,
+                                  cons(get_params_object(obj),
+                                       get_source_object(obj))));
+
+      print_object_to_string(temp, buf, 0);
+
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+
+      gtk_text_view_set_editable(system_browser_textview, TRUE);
+    }
+    else if(IS_MACRO_OBJECT(obj))
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      OBJECT_PTR temp = cons(DEFMACRO, 
+                             cons(obj1,
+                                  cons(get_params_object(obj),
+                                       get_source_object(obj))));
+
+      print_object_to_string(temp, buf, 0);
+
+
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_view_set_editable(system_browser_textview, TRUE);
+    }
+    else if(IS_CONTINUATION_OBJECT(obj))
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      print_object_to_string(obj, buf, 0);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+    }
+    else
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      print_object_to_string(obj, buf, 0);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_view_set_editable(system_browser_textview, FALSE);
+    }
+
+    gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
+    //
+
+    //TODO: select the package and symbol
+  }
+
+  if(profiler)
+    create_profiler_window(JSON_get_array_item(profiler, 0)->ivalue,
+                           JSON_get_array_item(profiler, 1)->ivalue,
+                           JSON_get_array_item(profiler, 2)->ivalue,
+                           JSON_get_array_item(profiler, 3)->ivalue);
 
   hashtable_delete(hashtable);
   queue_delete(q);
+
+  struct JSONObject *workspace = JSON_get_object_item(root, "workspace");
+
+  if(workspace)
+  {
+    char text[MAX_STRING_LENGTH];
+    int i=0, j=0, len;
+    char *json_text = JSON_get_array_item(workspace, 4)->strvalue;
+    
+    len = strlen(json_text);
+
+    while(i<len)
+    {
+      if(json_text[i] != '\\')
+      {
+        text[j] = json_text[i];
+        j++;
+      }
+      i++;
+    }
+
+    create_workspace_window(JSON_get_array_item(workspace, 0)->ivalue,
+                            JSON_get_array_item(workspace, 1)->ivalue,
+                            JSON_get_array_item(workspace, 2)->ivalue,
+                            JSON_get_array_item(workspace, 3)->ivalue,
+                            text);
+  }
+
+  struct JSONObject *debugger = JSON_get_object_item(root, "debugger");
+
+  if(debugger)
+  {
+    create_debug_window(JSON_get_array_item(debugger, 0)->ivalue,
+                        JSON_get_array_item(debugger, 1)->ivalue,
+                        JSON_get_array_item(debugger, 2)->ivalue,
+                        JSON_get_array_item(debugger, 3)->ivalue);
+  }
+
+
+  struct JSONObject *transcript = JSON_get_object_item(root, "transcript");
+
+  assert(transcript);
+
+  char text[MAX_STRING_LENGTH];
+  memset(text, '\0', MAX_STRING_LENGTH);
+  int ii=0, jj=0, len;
+  char *json_text = JSON_get_array_item(transcript, 4)->strvalue;
+    
+  len = strlen(json_text);
+
+  while(ii<len)
+  {
+    if(json_text[ii] != '\\')
+    {
+      text[jj] = json_text[ii];
+      jj++;
+    }
+    ii++;
+  }
+
+  create_transcript_window(JSON_get_array_item(transcript, 0)->ivalue,
+                           JSON_get_array_item(transcript, 1)->ivalue,
+                           JSON_get_array_item(transcript, 2)->ivalue,
+                           JSON_get_array_item(transcript, 3)->ivalue,
+                           text);
 
   JSON_delete_object(root);
 }

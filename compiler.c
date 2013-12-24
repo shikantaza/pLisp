@@ -26,6 +26,26 @@
 
 #include "plisp.h"
 
+#define DEFAULT_TRANSCRIPT_POSX 650
+#define DEFAULT_TRANSCRIPT_POSY 200
+
+#define DEFAULT_TRANSCRIPT_WIDTH 600
+#define DEFAULT_TRANSCRIPT_HEIGHT 400
+
+char *default_transcript_text =  "Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
+                                 "pLisp is free software: you can redistribute it and/or modify\n"
+                                 "it under the terms of the GNU General Public License as published by\n"
+                                 "the Free Software Foundation, either version 3 of the License, or\n"
+                                 "(at your option) any later version.\n\n"
+                                 "pLisp is distributed in the hope that it will be useful,\n"
+                                 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+                                 "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+                                 "GNU General Public License for more details.\n\n"
+                                 "You should have received a copy of the GNU General Public License\n"
+                                 "along with pLisp.  If not, see <http://www.gnu.org/licenses/>.\n\n"
+                                 "This is the transcript window. Results of evaluating expressions\n"
+                                 "(entered in the workspace window) will be displayed here.\n\n";
+
 extern OBJECT_PTR CADR(OBJECT_PTR);
 extern OBJECT_PTR CDDR(OBJECT_PTR);
 extern OBJECT_PTR CADDR(OBJECT_PTR);
@@ -373,6 +393,8 @@ int main(int argc, char **argv)
 
     initialize_memory();
 
+    loaded_image_file_name = strdup(argv[1]);
+
     load_from_image(argv[1]);
 
     CONS_NIL_NIL = cons(NIL, NIL);
@@ -381,8 +403,6 @@ int main(int argc, char **argv)
     CONS_RETURN_NIL = cons(RETURN, NIL);
 
     fprintf(stdout, "done\n");
-
-    loaded_image_file_name = strdup(argv[1]);
 
     //create_transcript_window() is called in both
     //if and else clauses because if we do it
@@ -395,10 +415,11 @@ int main(int argc, char **argv)
     //been created yet.
 
 #ifdef GUI
-  create_transcript_window();
-  print_to_transcript("Image loaded successfully\n");
-  if(debug_mode)
-    create_debug_window();
+    //done in load_image_file itself
+    //create_transcript_window();
+    //print_to_transcript("Image loaded successfully\n");
+    //if(debug_mode)
+    //create_debug_window();
 #endif
 
   }
@@ -407,7 +428,11 @@ int main(int argc, char **argv)
     initialize();
 
 #ifdef GUI
-    create_transcript_window();
+    create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
+                             DEFAULT_TRANSCRIPT_POSY,
+                             DEFAULT_TRANSCRIPT_WIDTH,
+                             DEFAULT_TRANSCRIPT_HEIGHT,
+                             default_transcript_text);
 #endif
 
     if(load_core_library())

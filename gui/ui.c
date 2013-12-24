@@ -195,14 +195,14 @@ GtkToolbar *create_workspace_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
-void create_workspace_window()
+void create_workspace_window(int posx, int posy, int width, int height, char *text)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
   workspace_window = (GtkWindow *)win;
 
-  gtk_window_set_default_size((GtkWindow *)win, 600, 400);
-  gtk_window_move((GtkWindow *)win, 650, 200); 
+  gtk_window_set_default_size((GtkWindow *)win, width, height);
+  gtk_window_move((GtkWindow *)win, posx, posy); 
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -218,10 +218,11 @@ void create_workspace_window()
 
   workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
-  print_to_workspace("; This is the workspace; type pLisp expressions here.\n");
-  print_to_workspace("; To evaluate an expression, enter the expression\n");
-  print_to_workspace("; and press Ctrl+Enter when the expression is complete\n");
-  print_to_workspace("; (indicated by the highlighted matching parens).\n");
+  /* print_to_workspace("; This is the workspace; type pLisp expressions here.\n"); */
+  /* print_to_workspace("; To evaluate an expression, enter the expression\n"); */
+  /* print_to_workspace("; and press Ctrl+Enter when the expression is complete\n"); */
+  /* print_to_workspace("; (indicated by the highlighted matching parens).\n"); */
+  print_to_workspace(text);
 
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 
@@ -445,7 +446,7 @@ GtkToolbar *create_system_browser_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
-void create_system_browser_window()
+void create_system_browser_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -455,8 +456,11 @@ void create_system_browser_window()
   GtkWidget *vbox, *hbox;
 
   gtk_window_set_title((GtkWindow *)win, "pLisp System Browser");
-  gtk_window_set_default_size((GtkWindow *)win, 600, 400);
-  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+
+  /* gtk_window_set_default_size((GtkWindow *)win, 600, 400); */
+  /* gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER); */
+  gtk_window_set_default_size(system_browser_window, width, height);
+  gtk_window_move(system_browser_window, posx, posy); 
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -527,7 +531,11 @@ void create_system_browser_window()
 
   gtk_widget_show_all(win);
 
-  gtk_widget_grab_focus((GtkWidget *)packages_list);
+  //commented out because if we're restoring the system browser from
+  //an image, this will wrongly set focus to the first package,
+  //though the symbols and definition will be that of the package
+  //selected at the time the image was created
+  //gtk_widget_grab_focus((GtkWidget *)packages_list);
 
   new_symbol_being_created = false;
 
@@ -632,7 +640,7 @@ GtkToolbar *create_transcript_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
-void create_transcript_window()
+void create_transcript_window(int posx, int posy, int width, int height, char *text)
 {
   GtkWidget *scrolled_win, *vbox;
 
@@ -641,8 +649,10 @@ void create_transcript_window()
   //gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
   update_transcript_title();
 
-  gtk_window_set_default_size((GtkWindow *)transcript_window, 600, 400);
-  gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
+  /* gtk_window_set_default_size((GtkWindow *)transcript_window, 600, 400); */
+  /* gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER); */
+  gtk_window_set_default_size(transcript_window, width, height);
+  gtk_window_move(transcript_window, posx, posy); 
     
   g_signal_connect (transcript_window, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -654,7 +664,6 @@ void create_transcript_window()
                    "key_press_event", 
                    G_CALLBACK (handle_key_press_events), 
                    NULL);
-
     
   gtk_container_set_border_width (GTK_CONTAINER (transcript_window), 10);
   
@@ -682,7 +691,8 @@ void create_transcript_window()
   
   gtk_widget_show_all((GtkWidget *)transcript_window);
 
-  print_ui_copyright_notice();
+  //print_ui_copyright_notice();
+  print_to_transcript(text);
 }
 
 void show_error_dialog(char *msg)
@@ -865,7 +875,7 @@ GtkToolbar *create_debugger_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
-void create_debug_window()
+void create_debug_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -875,8 +885,11 @@ void create_debug_window()
   GtkWidget *vbox, *hbox1, *hbox2;
 
   gtk_window_set_title((GtkWindow *)win, "pLisp Debugger");
-  gtk_window_set_default_size((GtkWindow *)win, 600, 400);
-  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+
+  /* gtk_window_set_default_size((GtkWindow *)win, 600, 400); */
+  /* gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER); */
+  gtk_window_set_default_size(debugger_window, width, height);
+  gtk_window_move(debugger_window, posx, posy); 
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -996,46 +1009,84 @@ void populate_operators_list(GtkTreeView *list)
 
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
 
-  hashtable_entry_t *e = hashtable_entries(profiling_tab);
+  hashtable_entry_t **entries = profiling_tab->entries;
 
-  while(e)
+  int i, count = profiling_tab->hash_size;
+
+  for(i=0; i<count; i++)
   {
-    OBJECT_PTR operator = (OBJECT_PTR)e->ptr;
+    if(profiling_tab->entries[i])
+    {
+      hashtable_entry_t *e = profiling_tab->entries[i];
 
-    profiling_datum_t *pd = (profiling_datum_t *)e->value;
+      while(e)
+      {
+        OBJECT_PTR operator = (OBJECT_PTR)e->ptr;
 
-    gtk_list_store_append(store, &iter);
+        profiling_datum_t *pd = (profiling_datum_t *)e->value;
 
-    char buf1[MAX_STRING_LENGTH];
-    memset(buf1, '\0', MAX_STRING_LENGTH);
+        gtk_list_store_append(store, &iter);
 
-    OBJECT_PTR temp_obj = operator;
+        char buf1[MAX_STRING_LENGTH];
+        memset(buf1, '\0', MAX_STRING_LENGTH);
 
-    /* if(IS_SYMBOL_OBJECT(operator)) */
-    /*    temp_obj = operator; */
-    /* else */
-    /*   temp_obj = cons(LAMBDA, */
-    /*                   cons(get_params_object(operator), */
-    /*                        cons(car(get_source_object(operator)), NIL))); */
+        OBJECT_PTR temp_obj = operator;
 
-    print_object_to_string(temp_obj, buf1, 0);
+        print_object_to_string(temp_obj, buf1, 0);
 
-    unsigned int count = pd->count;
-    double elapsed_wall_time = pd->elapsed_wall_time;
-    double elapsed_cpu_time = pd->elapsed_cpu_time;
-    unsigned int mem_alloc = pd->mem_allocated;
-    unsigned int mem_dealloc = pd->mem_deallocated;
+        unsigned int count = pd->count;
+        double elapsed_wall_time = pd->elapsed_wall_time;
+        double elapsed_cpu_time = pd->elapsed_cpu_time;
+        unsigned int mem_alloc = pd->mem_allocated;
+        unsigned int mem_dealloc = pd->mem_deallocated;
+        
+        gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem_alloc, 5, mem_dealloc, -1);
 
-    gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem_alloc, 5, mem_dealloc, -1);
-
-    hashtable_entry_t *temp = e->next;
-    free(e->value);
-    free(e);
-    e = temp;
+        e = e->next;
+      }
+    }
   }
+
+  /* hashtable_entry_t *e = hashtable_entries(profiling_tab); */
+
+  /* while(e) */
+  /* { */
+  /*   OBJECT_PTR operator = (OBJECT_PTR)e->ptr; */
+
+  /*   profiling_datum_t *pd = (profiling_datum_t *)e->value; */
+
+  /*   gtk_list_store_append(store, &iter); */
+
+  /*   char buf1[MAX_STRING_LENGTH]; */
+  /*   memset(buf1, '\0', MAX_STRING_LENGTH); */
+
+  /*   OBJECT_PTR temp_obj = operator; */
+
+  /*   /\* if(IS_SYMBOL_OBJECT(operator)) *\/ */
+  /*   /\*    temp_obj = operator; *\/ */
+  /*   /\* else *\/ */
+  /*   /\*   temp_obj = cons(LAMBDA, *\/ */
+  /*   /\*                   cons(get_params_object(operator), *\/ */
+  /*   /\*                        cons(car(get_source_object(operator)), NIL))); *\/ */
+
+  /*   print_object_to_string(temp_obj, buf1, 0); */
+
+  /*   unsigned int count = pd->count; */
+  /*   double elapsed_wall_time = pd->elapsed_wall_time; */
+  /*   double elapsed_cpu_time = pd->elapsed_cpu_time; */
+  /*   unsigned int mem_alloc = pd->mem_allocated; */
+  /*   unsigned int mem_dealloc = pd->mem_deallocated; */
+
+  /*   gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem_alloc, 5, mem_dealloc, -1); */
+
+  /*   hashtable_entry_t *temp = e->next; */
+  /*   /\* free(e->value); *\/ */
+  /*   /\* free(e); *\/ */
+  /*   e = temp; */
+  /* } */
 }
 
-void create_profiler_window()
+void create_profiler_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -1045,8 +1096,11 @@ void create_profiler_window()
   GtkWidget *vbox, *hbox1;
 
   gtk_window_set_title((GtkWindow *)win, "pLisp Profiler");
-  gtk_window_set_default_size((GtkWindow *)win, 600, 400);
-  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+
+  /* gtk_window_set_default_size((GtkWindow *)win, 600, 400); */
+  /* gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER); */
+  gtk_window_set_default_size(profiler_window, width, height);
+  gtk_window_move(profiler_window, posx, posy); 
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -1067,7 +1121,7 @@ void create_profiler_window()
 
   hbox1 = gtk_hbox_new(FALSE, 5);
 
-  gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, TRUE, TRUE, 0);
 
   vbox = gtk_vbox_new(FALSE, 5);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);

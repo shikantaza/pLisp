@@ -29,6 +29,16 @@
 
 #include "hashtable.h"
 
+#define DEFAULT_DEBUG_WINDOW_POSX 650
+#define DEFAULT_DEBUG_WINDOW_POSY 200
+#define DEFAULT_DEBUG_WINDOW_WIDTH 600
+#define DEFAULT_DEBUG_WINDOW_HEIGHT 400
+
+#define DEFAULT_PROFILER_WINDOW_POSX 650
+#define DEFAULT_PROFILER_WINDOW_POSY 200
+#define DEFAULT_PROFILER_WINDOW_WIDTH 600
+#define DEFAULT_PROFILER_WINDOW_HEIGHT 400
+
 //#include "util.h"
 double get_wall_time();
 
@@ -224,6 +234,8 @@ OBJECT_PTR prev_debug_continuation;
 OBJECT_PTR prev_debug_execution_stack;
 OBJECT_PTR prev_continuations_map;
 
+BOOLEAN profiling_in_progress;
+
 void eval(BOOLEAN do_gc)
 {
   static unsigned int count = 0;
@@ -245,7 +257,7 @@ void eval(BOOLEAN do_gc)
     }
   }
 
-  if(opcode == APPLY && profiling_tab)
+  if(opcode == APPLY && profiling_in_progress)
   {
     last_operator = reg_accumulator;
 
@@ -2041,6 +2053,8 @@ void eval(BOOLEAN do_gc)
 
         hashtable_entry_t *entries;
 
+        profiling_in_progress = true;
+
         if(temp == ERROR)
         {
           throw_generic_exception("PROFILE: Compilation failed");
@@ -2068,17 +2082,10 @@ void eval(BOOLEAN do_gc)
           eval(false);
           if(in_error)
           {
-            hashtable_entry_t *entries = hashtable_entries(profiling_tab);
+            hashtable_delete(profiling_tab);
+            profiling_tab = NULL;
 
-            while(entries)
-            {
-              hashtable_entry_t *temp = entries->next;
-              free(entries->value);
-              free(entries);
-              entries = temp;
-            }
-
-            throw_generic_exception("TIME failed");
+            throw_generic_exception("PROFILE failed");
             return;
           }
         }
@@ -2131,7 +2138,10 @@ void eval(BOOLEAN do_gc)
         final_mem_alloc = memory_allocated();
 
 #ifdef GUI
-        create_profiler_window();
+        create_profiler_window(DEFAULT_PROFILER_WINDOW_POSX,
+                               DEFAULT_PROFILER_WINDOW_POSY,
+                               DEFAULT_PROFILER_WINDOW_WIDTH,
+                               DEFAULT_PROFILER_WINDOW_HEIGHT);
 
         memset(buf, '\0', 1000);
         sprintf(buf,
@@ -2141,35 +2151,19 @@ void eval(BOOLEAN do_gc)
                 final_mem_alloc - initial_mem_alloc);
         print_to_transcript(buf);
 
+        //deleting profiling_tab will be done in the delete_event in the UI code
+
 #else
-        entries = hashtable_entries(profiling_tab);
-
-        while(entries)
-        {
-          /* OBJECT_PTR operator = (OBJECT_PTR)entries->ptr; */
-
-          /* char str[50]; */
-          /* memset(str, '\0', 50); */
-          /* print_object_to_string(operator, str, 0); */
-
-          /* profiling_datum_t *pd = (profiling_datum_t *)entries->value; */
-
-          /* printf("%s : %d %lf\n", str, pd->count, pd->elapsed_time); */
-
-          hashtable_entry_t *temp = entries->next;
-          free(entries->value);
-          free(entries);
-          entries = temp;
-        }
-
         printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
                final_wall_time - initial_wall_time,
                (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
                final_mem_alloc - initial_mem_alloc);
-#endif
 
         hashtable_delete(profiling_tab);
         profiling_tab = NULL;
+#endif
+
+        profiling_in_progress = false;
 
         reg_current_value_rib = NIL;
         reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
@@ -2186,7 +2180,10 @@ void eval(BOOLEAN do_gc)
         debug_execution_stack = reg_current_stack;
 
 #ifdef GUI
-        create_debug_window();
+        create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+                            DEFAULT_DEBUG_WINDOW_POSY,
+                            DEFAULT_DEBUG_WINDOW_WIDTH,
+                            DEFAULT_DEBUG_WINDOW_HEIGHT);
 #endif
       }
       else if(operator == RESUME)
@@ -2819,7 +2816,10 @@ void raise_error(char *err_str)
 
   debug_execution_stack = reg_current_stack;
 
-  create_debug_window();
+  create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+                      DEFAULT_DEBUG_WINDOW_POSY,
+                      DEFAULT_DEBUG_WINDOW_WIDTH,
+                      DEFAULT_DEBUG_WINDOW_HEIGHT);
 #else
   fprintf(stdout, "%s\n", err_str);
 #endif

@@ -5,6 +5,25 @@
 
 #include "../util.h"
 
+#include "../hashtable.h"
+
+#define DEFAULT_SYSTEM_BROWSER_POSX 650
+#define DEFAULT_SYSTEM_BROWSER_POSY 200
+
+#define DEFAULT_SYSTEM_BROWSER_WIDTH 600
+#define DEFAULT_SYSTEM_BROWSER_HEIGHT 400
+
+#define DEFAULT_WORKSPACE_POSX 650
+#define DEFAULT_WORKSPACE_POSY 200
+
+#define DEFAULT_WORKSPACE_WIDTH 600
+#define DEFAULT_WORKSPACE_HEIGHT 400
+
+char *default_workspace_text =  "; This is the workspace; type pLisp expressions here.\n"
+                                "; To evaluate an expression, enter the expression\n"
+                                "; and press Ctrl+Enter when the expression is complete\n"
+                                "; (indicated by the highlighted matching parens).\n";
+
 extern OBJECT_PTR CAAR(OBJECT_PTR);
 
 extern GtkTextBuffer *transcript_buffer;
@@ -14,6 +33,7 @@ extern GtkWindow *transcript_window;
 extern GtkWindow *workspace_window;
 extern GtkWindow *system_browser_window;
 extern GtkWindow *debugger_window;
+extern GtkWindow *profiler_window;
 
 extern GtkTreeView *packages_list;
 extern GtkTreeView *symbols_list;
@@ -49,12 +69,16 @@ extern void refresh_system_browser();
 
 extern BOOLEAN system_changed;
 
+extern hashtable_t *profiling_tab;
+
 void evaluate();
 void close_application_window(GtkWidget **);
 void show_workspace_window();
 void load_image();
 void save_image();
 void set_focus_to_last_row(GtkTreeView *);
+
+void show_system_browser_window();
 
 extern BOOLEAN in_error;
 
@@ -194,6 +218,12 @@ gboolean delete_event( GtkWidget *widget,
     close_application_window((GtkWidget **)&debugger_window);
     if(!in_error)
       call_repl("(ABORT)");
+  }
+  else if(widget == (GtkWidget *)profiler_window)
+  {
+    close_application_window((GtkWidget **)&profiler_window);
+    hashtable_delete(profiling_tab);
+    profiling_tab = NULL;
   }
 
   return FALSE;
@@ -663,7 +693,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_F7)
     show_workspace_window();
   else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_F9)
-    create_system_browser_window();
+    show_system_browser_window();
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
     quit_application();
   else if(widget == (GtkWidget *)debugger_window && event->keyval == GDK_F5)
@@ -681,7 +711,11 @@ void load_source_file(GtkWidget *widget,
 void show_workspace_window()
 {
   if(workspace_window == NULL)
-    create_workspace_window();
+    create_workspace_window(DEFAULT_WORKSPACE_POSX,
+                            DEFAULT_WORKSPACE_POSY,
+                            DEFAULT_WORKSPACE_WIDTH,
+                            DEFAULT_WORKSPACE_HEIGHT,
+                            default_workspace_text);
   else
   {
     gtk_window_present(workspace_window);
@@ -737,7 +771,10 @@ void save_image_file(GtkWidget *widget,
 void show_system_browser_window()
 {
   if(system_browser_window == NULL)
-    create_system_browser_window();
+    create_system_browser_window(DEFAULT_SYSTEM_BROWSER_POSX,
+                                 DEFAULT_SYSTEM_BROWSER_POSY,
+                                 DEFAULT_SYSTEM_BROWSER_WIDTH,
+                                 DEFAULT_SYSTEM_BROWSER_HEIGHT);
   else
     gtk_window_present(system_browser_window);
 }
