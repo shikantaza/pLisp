@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define SYMBOL_STRING_SIZE 100
+
 #define MAX_STRING_LENGTH 16192
 
 #define YY_NO_INPUT

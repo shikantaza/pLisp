@@ -379,7 +379,10 @@ void create_image(char *file_name)
             "\"system_browser\" : [ %d, %d, %d, %d, %d, ", 
             posx, posy, width, height, id);
 
-    print_json_object(fp, ptr, print_queue, obj_count, hashtable, printed_objects);
+    if(ptr != -1)
+      print_json_object(fp, ptr, print_queue, obj_count, hashtable, printed_objects);
+    else
+      fprintf(fp, "-1");
 
     fprintf(fp, "], ");
   }
@@ -722,8 +725,14 @@ void load_from_image(char *file_name)
   struct JSONObject *system_browser = JSON_get_object_item(root, "system_browser");
   OBJECT_PTR obj1;
 
+  int sym_ptr;
+
   if(system_browser)
-    obj1 = deserialize(heap, JSON_get_array_item(system_browser, 5)->ivalue, hashtable, q);
+  {
+    sym_ptr = JSON_get_array_item(system_browser, 5)->ivalue;
+    if(sym_ptr != -1)
+      obj1 = deserialize(heap, sym_ptr, hashtable, q);
+  }
 
   convert_heap(heap, hashtable, q);
 
@@ -739,6 +748,13 @@ void load_from_image(char *file_name)
 
     if(id != -1)
     {
+      char s[4];
+      memset(s, '\0', 4);
+      sprintf(s,"%d", id);
+
+      //select the selected package
+      gtk_tree_view_set_cursor(packages_list, gtk_tree_path_new_from_string(s), NULL, FALSE);
+
       remove_all_from_list(symbols_list);
 
       GtkListStore *store2;
@@ -763,62 +779,84 @@ void load_from_image(char *file_name)
       }
     }
 
-    //
-    char buf[MAX_STRING_LENGTH];
-    memset(buf, '\0', MAX_STRING_LENGTH);
-
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env(obj1, top_level_env));
-
-    gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
-
-    gtk_text_view_set_editable(system_browser_textview, FALSE);
-
-    if(IS_CLOSURE_OBJECT(obj))
+    if(sym_ptr != -1)
     {
+      GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list));
+      gboolean is_not_empty;
+      GtkTreeIter iter;
+      is_not_empty = gtk_tree_model_get_iter_first(model, &iter); 
+
+      int i=0;
+      char s1[4];
+
+      while(is_not_empty == TRUE)
+      {
+        gchar *s;
+        gtk_tree_model_get(model, &iter, 0, &s, -1);
+
+        if(!strcmp(s, get_symbol_name(obj1)))
+        {
+          memset(s1, '\0', 4);
+          sprintf(s1,"%d", i);
+          gtk_tree_view_set_cursor(symbols_list, gtk_tree_path_new_from_string(s1), NULL, FALSE);
+          break;
+        }
+        is_not_empty = gtk_tree_model_iter_next(model, &iter);
+        i++;
+      }
+
+      char buf[MAX_STRING_LENGTH];
       memset(buf, '\0', MAX_STRING_LENGTH);
-      OBJECT_PTR temp = cons(DEFUN, 
-                             cons(obj1,
-                                  cons(get_params_object(obj),
-                                       get_source_object(obj))));
 
-      print_object_to_string(temp, buf, 0);
+      OBJECT_PTR obj = cdr(get_symbol_value_from_env(obj1, top_level_env));
 
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
-      gtk_text_view_set_editable(system_browser_textview, TRUE);
-    }
-    else if(IS_MACRO_OBJECT(obj))
-    {
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      OBJECT_PTR temp = cons(DEFMACRO, 
-                             cons(obj1,
-                                  cons(get_params_object(obj),
-                                       get_source_object(obj))));
-
-      print_object_to_string(temp, buf, 0);
-
-
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
-      gtk_text_view_set_editable(system_browser_textview, TRUE);
-    }
-    else if(IS_CONTINUATION_OBJECT(obj))
-    {
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(obj, buf, 0);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
-    }
-    else
-    {
-      memset(buf, '\0', MAX_STRING_LENGTH);
-      print_object_to_string(obj, buf, 0);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, FALSE);
+
+      if(IS_CLOSURE_OBJECT(obj))
+      {
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        OBJECT_PTR temp = cons(DEFUN, 
+                               cons(obj1,
+                                    cons(get_params_object(obj),
+                                         get_source_object(obj))));
+
+        print_object_to_string(temp, buf, 0);
+
+        gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+
+        gtk_text_view_set_editable(system_browser_textview, TRUE);
+      }
+      else if(IS_MACRO_OBJECT(obj))
+      {
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        OBJECT_PTR temp = cons(DEFMACRO, 
+                               cons(obj1,
+                                    cons(get_params_object(obj),
+                                         get_source_object(obj))));
+
+        print_object_to_string(temp, buf, 0);
+
+        gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+        gtk_text_view_set_editable(system_browser_textview, TRUE);
+      }
+      else if(IS_CONTINUATION_OBJECT(obj))
+      {
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(obj, buf, 0);
+        gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      }
+      else
+      {
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(obj, buf, 0);
+        gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+        gtk_text_view_set_editable(system_browser_textview, FALSE);
+      }
+
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
     }
-
-    gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
-    //
-
-    //TODO: select the package and symbol
   }
 
   if(profiler)

@@ -185,8 +185,6 @@ extern FILE *yyin;
 
 char err_buf[500];
 
-#define SYMBOL_STRING_SIZE 100
-
 BOOLEAN debug_mode = false;
 
 int nof_dl_handles = 0;
