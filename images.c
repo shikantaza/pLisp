@@ -84,8 +84,8 @@ extern OBJECT_PTR DEFUN, DEFMACRO;
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
 void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, uintptr_t, unsigned int);
-OBJECT_PTR deserialize(struct JSONObject *, unsigned int, hashtable_t *, queue_t *);
-void convert_heap(struct JSONObject *, hashtable_t *, queue_t *);
+OBJECT_PTR deserialize_internal(struct JSONObject *, unsigned int, hashtable_t *, queue_t *, BOOLEAN);
+void convert_heap(struct JSONObject *, hashtable_t *, queue_t *, BOOLEAN);
 
 struct slot
 {
@@ -102,11 +102,17 @@ void add_obj_to_print_list(queue_t *print_queue, OBJECT_PTR obj, hashtable_t *pr
   if(queue_item_exists(print_queue, (void *)obj) || hashtable_get(printed_objects, (void *)obj))
     return;
 
-  assert(is_dynamic_memory_object(obj));
+  //assert(is_dynamic_memory_object(obj));
   queue_enqueue(print_queue, (void *)obj);
 }
 
-void print_json_object(FILE *fp, OBJECT_PTR obj, queue_t *print_queue, unsigned int *obj_count, hashtable_t *hashtable, hashtable_t *printed_objects)
+void print_json_object(FILE *fp, 
+                       OBJECT_PTR obj, 
+                       queue_t *print_queue, 
+                       unsigned int *obj_count,
+                       hashtable_t *hashtable, 
+                       hashtable_t *printed_objects,
+                       BOOLEAN single_object)
 {
   if(!is_valid_object(obj))
     assert(false);
@@ -127,7 +133,17 @@ void print_json_object(FILE *fp, OBJECT_PTR obj, queue_t *print_queue, unsigned 
     add_obj_to_print_list(print_queue, obj, printed_objects);
   }
   else
-    fprintf(fp, "%d", (unsigned int)obj);
+  {
+    if(single_object)
+    {
+      fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
+      (*obj_count)++;
+
+      add_obj_to_print_list(print_queue, obj, printed_objects);
+    }
+    else
+      fprintf(fp, "%d", (unsigned int)obj);
+  }
 }
 
 void print_heap_representation(FILE *fp, 
@@ -135,9 +151,25 @@ void print_heap_representation(FILE *fp,
                                queue_t *print_queue, 
                                unsigned int *obj_count, 
                                hashtable_t *hashtable, 
-                               hashtable_t *printed_objects)
+                               hashtable_t *printed_objects,
+                               BOOLEAN single_object)
 {
-  if(!is_dynamic_memory_object(obj))
+  if(single_object)
+  {
+    if(IS_SYMBOL_OBJECT(obj))
+    {
+      char s[SYMBOL_STRING_SIZE];
+      print_qualified_symbol(obj, s);
+      fprintf(fp, "\"%s\" ", s);
+      return;
+    }
+    else if(IS_STRING_LITERAL_OBJECT(obj))
+      fprintf(fp, "\"%s\"", strings[obj >> OBJECT_SHIFT]);
+    else if(IS_CHAR_OBJECT(obj))
+      fprintf(fp, "%d ", obj >> OBJECT_SHIFT);
+  }
+
+  if(!single_object && !is_dynamic_memory_object(obj))
   {
     printf("%d\n", (int)obj);
     assert(false);
@@ -149,9 +181,9 @@ void print_heap_representation(FILE *fp,
     OBJECT_PTR cdr_obj = cdr(obj);
 
     fprintf(fp, "[");
-    print_json_object(fp, car_obj, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, car_obj, print_queue, obj_count, hashtable, printed_objects, single_object);
     fprintf(fp, ", ");
-    print_json_object(fp, cdr_obj, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, cdr_obj, print_queue, obj_count, hashtable, printed_objects, single_object);
     fprintf(fp, "] ");
   }
   else if(IS_ARRAY_OBJECT(obj))
@@ -164,7 +196,7 @@ void print_heap_representation(FILE *fp,
 
     for(i=1; i<=len; i++)
     {
-      print_json_object(fp, get_heap(obj & POINTER_MASK, i), print_queue, obj_count, hashtable, printed_objects);
+      print_json_object(fp, get_heap(obj & POINTER_MASK, i), print_queue, obj_count, hashtable, printed_objects, single_object);
 
       if(i != len)     fprintf(fp, ", ");
       else             fprintf(fp, " ");
@@ -180,25 +212,25 @@ void print_heap_representation(FILE *fp,
     OBJECT_PTR source = get_source_object(obj);
 
     fprintf(fp, "[");
-    print_json_object(fp, env, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, env, print_queue, obj_count, hashtable, printed_objects, single_object);
     fprintf(fp, ", ");
-    print_json_object(fp, params, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, params, print_queue, obj_count, hashtable, printed_objects, single_object);
     fprintf(fp, ", ");
-    print_json_object(fp, body, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, body, print_queue, obj_count, hashtable, printed_objects, single_object);
     fprintf(fp, ", ");
-    print_json_object(fp, source, print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, source, print_queue, obj_count, hashtable, printed_objects, single_object);
     fprintf(fp, "] ");
   }
   else if(IS_CONTINUATION_OBJECT(obj))
   {
-    print_json_object(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects);
+    print_json_object(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects, single_object);
   }
   else if(IS_INTEGER_OBJECT(obj))
     fprintf(fp, "%d", get_int_value(obj));
   else if(IS_FLOAT_OBJECT(obj))
     fprintf(fp, "%f", get_float_value(obj));
   else
-    assert(false);
+    if(!single_object)assert(false);
 
   hashtable_put(printed_objects, (void *)obj, (void *)1);
 }
@@ -248,16 +280,16 @@ void create_image(char *file_name)
   fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
   fprintf(fp, "\"in_break\" : \"%s\"",       in_break ? "true" : "false");                                             fprintf(fp, ", ");
 
-  fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
 
-  fprintf(fp, "\"debug_continuation\" : "   ); print_json_object(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"debug_env\" : "            ); print_json_object(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"debug_execution_stack\" : "); print_json_object(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_accumulator\" : "      ); print_json_object(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_next_expression\" : "  ); print_json_object(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_env\" : "      ); print_json_object(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_value_rib\" : "); print_json_object(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_stack\" : "    ); print_json_object(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_continuation\" : "   ); print_json_object(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_env\" : "            ); print_json_object(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_execution_stack\" : "); print_json_object(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_accumulator\" : "      ); print_json_object(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_next_expression\" : "  ); print_json_object(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_env\" : "      ); print_json_object(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_value_rib\" : "); print_json_object(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_stack\" : "    ); print_json_object(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
 
   fprintf(fp, "\"current_package\" : %d ",     current_package);                                                           fprintf(fp, ", ");
   fprintf(fp, "\"gen_sym_count\" : %d ",       gen_sym_count);                                                             fprintf(fp, ", ");
@@ -330,7 +362,7 @@ void create_image(char *file_name)
           profiling_datum_t *pd = (profiling_datum_t *)e->value;
 
           fprintf(fp, "[ ");
-          print_json_object(fp, operator, print_queue, obj_count, hashtable, printed_objects);
+          print_json_object(fp, operator, print_queue, obj_count, hashtable, printed_objects, false);
           fprintf(fp, ", %d, %f, %f, %d, %d", 
                   pd->count,
                   (float)pd->elapsed_wall_time,
@@ -380,7 +412,7 @@ void create_image(char *file_name)
             posx, posy, width, height, id);
 
     if(ptr != -1)
-      print_json_object(fp, ptr, print_queue, obj_count, hashtable, printed_objects);
+      print_json_object(fp, ptr, print_queue, obj_count, hashtable, printed_objects, false);
     else
       fprintf(fp, "-1");
 
@@ -393,7 +425,7 @@ void create_image(char *file_name)
   {
     OBJECT_PTR obj = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
     assert(is_dynamic_memory_object(obj));
-    print_heap_representation(fp, obj, print_queue, obj_count, hashtable, printed_objects);
+    print_heap_representation(fp, obj, print_queue, obj_count, hashtable, printed_objects, false);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
   }
 
@@ -682,15 +714,15 @@ void load_from_image(char *file_name)
 
   queue_t *q = queue_create();
 
-  top_level_env         = deserialize(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q);
-  debug_continuation    = deserialize(heap, JSON_get_object_item(root, "debug_continuation")->ivalue,    hashtable, q);
-  debug_env             = deserialize(heap, JSON_get_object_item(root, "debug_env")->ivalue,             hashtable, q);
-  debug_execution_stack = deserialize(heap, JSON_get_object_item(root, "debug_execution_stack")->ivalue, hashtable, q);
-  reg_accumulator       = deserialize(heap, JSON_get_object_item(root, "reg_accumulator")->ivalue,       hashtable, q);
-  reg_next_expression   = deserialize(heap, JSON_get_object_item(root, "reg_next_expression")->ivalue,   hashtable, q);
-  reg_current_env       = deserialize(heap, JSON_get_object_item(root, "reg_current_env")->ivalue,       hashtable, q);
-  reg_current_value_rib = deserialize(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q);
-  reg_current_stack     = deserialize(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q);
+  top_level_env         = deserialize_internal(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q, false);
+  debug_continuation    = deserialize_internal(heap, JSON_get_object_item(root, "debug_continuation")->ivalue,    hashtable, q, false);
+  debug_env             = deserialize_internal(heap, JSON_get_object_item(root, "debug_env")->ivalue,             hashtable, q, false);
+  debug_execution_stack = deserialize_internal(heap, JSON_get_object_item(root, "debug_execution_stack")->ivalue, hashtable, q, false);
+  reg_accumulator       = deserialize_internal(heap, JSON_get_object_item(root, "reg_accumulator")->ivalue,       hashtable, q, false);
+  reg_next_expression   = deserialize_internal(heap, JSON_get_object_item(root, "reg_next_expression")->ivalue,   hashtable, q, false);
+  reg_current_env       = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_env")->ivalue,       hashtable, q, false);
+  reg_current_value_rib = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q, false);
+  reg_current_stack     = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q, false);
 
   struct JSONObject *profiler = JSON_get_object_item(root, "profiler");
 
@@ -707,7 +739,7 @@ void load_from_image(char *file_name)
     for(i=0; i<size; i++)
     {
       struct JSONObject *entry = JSON_get_array_item(entries, i);
-      OBJECT_PTR operator = deserialize(heap, JSON_get_array_item(entry, 0)->ivalue, hashtable, q);
+      OBJECT_PTR operator = deserialize_internal(heap, JSON_get_array_item(entry, 0)->ivalue, hashtable, q, false);
 
       profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
 
@@ -731,10 +763,10 @@ void load_from_image(char *file_name)
   {
     sym_ptr = JSON_get_array_item(system_browser, 5)->ivalue;
     if(sym_ptr != -1)
-      obj1 = deserialize(heap, sym_ptr, hashtable, q);
+      obj1 = deserialize_internal(heap, sym_ptr, hashtable, q, false);
   }
 
-  convert_heap(heap, hashtable, q);
+  convert_heap(heap, hashtable, q, false);
 
   if(system_browser)
   {
@@ -1039,15 +1071,15 @@ void load_from_image(char *file_name)
 
 /*   queue_t *q = queue_create(); */
 
-/*   top_level_env         = deserialize(heap, cJSON_GetObjectItem(root, "top_level_env")->valueint,         hashtable, q); */
-/*   debug_continuation    = deserialize(heap, cJSON_GetObjectItem(root, "debug_continuation")->valueint,    hashtable, q); */
-/*   debug_env             = deserialize(heap, cJSON_GetObjectItem(root, "debug_env")->valueint,             hashtable, q); */
-/*   debug_execution_stack = deserialize(heap, cJSON_GetObjectItem(root, "debug_execution_stack")->valueint, hashtable, q); */
-/*   reg_accumulator       = deserialize(heap, cJSON_GetObjectItem(root, "reg_accumulator")->valueint,       hashtable, q); */
-/*   reg_next_expression   = deserialize(heap, cJSON_GetObjectItem(root, "reg_next_expression")->valueint,   hashtable, q); */
-/*   reg_current_env       = deserialize(heap, cJSON_GetObjectItem(root, "reg_current_env")->valueint,       hashtable, q); */
-/*   reg_current_value_rib = deserialize(heap, cJSON_GetObjectItem(root, "reg_current_value_rib")->valueint, hashtable, q); */
-/*   reg_current_stack     = deserialize(heap, cJSON_GetObjectItem(root, "reg_current_stack")->valueint,     hashtable, q); */
+/*   top_level_env         = deserialize_internal(heap, cJSON_GetObjectItem(root, "top_level_env")->valueint,         hashtable, q); */
+/*   debug_continuation    = deserialize_internal(heap, cJSON_GetObjectItem(root, "debug_continuation")->valueint,    hashtable, q); */
+/*   debug_env             = deserialize_internal(heap, cJSON_GetObjectItem(root, "debug_env")->valueint,             hashtable, q); */
+/*   debug_execution_stack = deserialize_internal(heap, cJSON_GetObjectItem(root, "debug_execution_stack")->valueint, hashtable, q); */
+/*   reg_accumulator       = deserialize_internal(heap, cJSON_GetObjectItem(root, "reg_accumulator")->valueint,       hashtable, q); */
+/*   reg_next_expression   = deserialize_internal(heap, cJSON_GetObjectItem(root, "reg_next_expression")->valueint,   hashtable, q); */
+/*   reg_current_env       = deserialize_internal(heap, cJSON_GetObjectItem(root, "reg_current_env")->valueint,       hashtable, q); */
+/*   reg_current_value_rib = deserialize_internal(heap, cJSON_GetObjectItem(root, "reg_current_value_rib")->valueint, hashtable, q); */
+/*   reg_current_stack     = deserialize_internal(heap, cJSON_GetObjectItem(root, "reg_current_stack")->valueint,     hashtable, q); */
 
 /*   convert_heap(heap, hashtable, q); */
 
@@ -1079,14 +1111,55 @@ void add_to_deserialization_queue(struct JSONObject *heap, queue_t *q, unsigned 
   queue_enqueue(q, s);
 }
 
-OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *ht, queue_t *q)
+OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hashtable_t *ht, queue_t *q, BOOLEAN single_object)
 {
   unsigned int object_type = ref & BIT_MASK;
 
   if(object_type == SYMBOL_TAG ||
      object_type == STRING_LITERAL_TAG ||
      object_type == CHAR_TAG)
-    return (OBJECT_PTR)ref;
+  {
+    if(single_object)
+    {
+      if(object_type == STRING_LITERAL_TAG)
+        return get_string_object(JSON_get_array_item(heap, ref >> OBJECT_SHIFT)->strvalue);
+      else if(object_type == SYMBOL_TAG)
+      {
+        char *symbol_name = JSON_get_array_item(heap, ref >> OBJECT_SHIFT)->strvalue;
+        int colon_location = 0;
+        int i;
+
+        for(i=0; i<strlen(symbol_name); i++)
+          if(symbol_name[i] == ':') { colon_location = i; break; }
+
+        if(colon_location != 0) //qualified symbol_name
+        {
+          char *package_name = (char *)substring(symbol_name, 0, colon_location - 1);
+          char *sym_name = (char *)substring(symbol_name, colon_location + 1, strlen(symbol_name) - colon_location - 1);
+
+          int package_index = find_package(package_name);
+
+          if(package_index == NOT_FOUND)
+          {
+            create_package(package_name);
+            packages[nof_packages-1].nof_symbols = 1;
+            packages[nof_packages-1].symbols = (char **)malloc(sizeof(char *));
+            packages[nof_packages-1].symbols[0] = strdup(sym_name);
+          }            
+            
+          return get_qualified_symbol_object(package_name, sym_name);
+        }
+        else
+          return get_symbol_object(symbol_name);
+      }
+      else
+      {
+        return ((JSON_get_array_item(heap, ref >> OBJECT_SHIFT)->ivalue) << OBJECT_SHIFT) + CHAR_TAG;
+      }
+    }
+    else
+      return (OBJECT_PTR)ref;
+  }
 
   hashtable_entry_t *e = hashtable_get(ht, (void *)ref);
 
@@ -1113,7 +1186,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, car_ref, ptr, 0);
     }
     else
-      set_heap(ptr, 0, car_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, car_ref, ptr, 0); else set_heap(ptr, 0, car_ref);
 
     if(is_dynamic_reference(cdr_ref))
     {
@@ -1124,7 +1197,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1);
     }
     else
-      set_heap(ptr, 1, cdr_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1); else set_heap(ptr, 1, cdr_ref);
 
   }
   else if(object_type == ARRAY_TAG)
@@ -1148,7 +1221,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
           add_to_deserialization_queue(heap, q, elem_ref, ptr, i+1);
       }
       else
-        set_heap(ptr, i+1, elem_ref);
+        if(single_object) add_to_deserialization_queue(heap, q, elem_ref, ptr, i+1); else set_heap(ptr, i+1, elem_ref);
     }
   }
   else if(object_type == CLOSURE_TAG || object_type == MACRO_TAG)
@@ -1165,7 +1238,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, env_ref, ptr, 0);
     }
     else
-      set_heap(ptr, 0, env_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, env_ref, ptr, 0); else set_heap(ptr, 0, env_ref);
 
     unsigned int params_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
     if(is_dynamic_reference(params_ref))
@@ -1177,7 +1250,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, params_ref, ptr, 1);
     }
     else
-      set_heap(ptr, 1, params_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, params_ref, ptr, 1); else set_heap(ptr, 1, params_ref);
 
     unsigned int body_ref = JSON_get_array_item(heap_obj, 2)->ivalue;
     if(is_dynamic_reference(body_ref))
@@ -1189,7 +1262,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, body_ref, ptr, 2);
     }
     else
-      set_heap(ptr, 2, body_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, body_ref, ptr, 2); else set_heap(ptr, 2, body_ref);
 
     unsigned int source_ref = JSON_get_array_item(heap_obj, 3)->ivalue;
     if(is_dynamic_reference(source_ref))
@@ -1201,7 +1274,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, source_ref, ptr, 3);
     }
     else
-      set_heap(ptr, 3, source_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, source_ref, ptr, 3); else set_heap(ptr, 3, source_ref);
   }
   else if(object_type == CONTINUATION_TAG)
   {
@@ -1218,7 +1291,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
         add_to_deserialization_queue(heap, q, stack_ref, ptr, 0);
     }
     else
-      set_heap(ptr, 0, stack_ref);
+      if(single_object) add_to_deserialization_queue(heap, q, stack_ref, ptr, 0); else set_heap(ptr, 0, stack_ref);
   }
   else if(object_type == INTEGER_TAG)
   {
@@ -1236,7 +1309,7 @@ OBJECT_PTR deserialize(struct JSONObject *heap, unsigned int ref, hashtable_t *h
   return ptr + object_type;
 }
 
-void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q)
+void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q, BOOLEAN single_object)
 {
   while(!queue_is_empty(q))
   {
@@ -1249,8 +1322,88 @@ void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q)
     if(e)
       set_heap(slot_obj->ptr, slot_obj->index, (OBJECT_PTR)e->value);
     else
-      set_heap(slot_obj->ptr, slot_obj->index, deserialize(heap, ref, ht, q));
+      set_heap(slot_obj->ptr, slot_obj->index, deserialize_internal(heap, ref, ht, q, single_object));
 
     free(slot_obj);
   }
+}
+
+int serialize(OBJECT_PTR obj, char *file_name)
+{
+  FILE *fp = fopen(file_name, "w");  
+
+  if(!fp)
+  {
+    printf("Unable to open file %s\n", file_name);
+    return -1;
+  }
+
+  unsigned int *obj_count = (unsigned int *)malloc(sizeof(unsigned int));
+
+  *obj_count = 0;
+
+  queue_t *print_queue = queue_create();
+  hashtable_t *hashtable = hashtable_create(1001);
+  hashtable_t *printed_objects = hashtable_create(1001);
+
+  fprintf(fp, "{ ");
+  fprintf(fp, "\"object\" : " ); 
+  print_json_object(fp, obj, print_queue, obj_count, hashtable, printed_objects, true); 
+  fprintf(fp, ", ");
+
+  fprintf(fp, "\"heap\" : [");
+
+  while(!queue_is_empty(print_queue))
+  {
+    OBJECT_PTR obj1 = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
+    print_heap_representation(fp, obj1, print_queue, obj_count, hashtable, printed_objects, true);
+    if(!queue_is_empty(print_queue))fprintf(fp, ", ");
+  }
+
+  fprintf(fp, "]}");
+
+  fclose(fp);
+
+  free(obj_count);
+
+  queue_delete(print_queue);
+  hashtable_delete(hashtable);
+  hashtable_delete(printed_objects);
+
+  return 0;
+}
+
+int deserialize(char *file_name)
+{
+  struct JSONObject *root = JSON_parse(file_name);
+
+  if(!root)
+  {
+    printf("Unable to parse file %s\n", file_name);
+    return -1;
+  }
+
+  struct JSONObject *heap = JSON_get_object_item(root, "heap");
+
+  if(!heap)
+  {
+    printf("No heap found in file\n");
+    JSON_delete_object(root);
+    return -1;
+  }
+
+  queue_t *q = queue_create();
+  hashtable_t *hashtable = hashtable_create(1001);
+
+  OBJECT_PTR object = deserialize_internal(heap, JSON_get_object_item(root, "object")->ivalue, hashtable, q, true);
+
+  convert_heap(heap, hashtable, q, true);
+
+  hashtable_delete(hashtable);
+  queue_delete(q);
+
+  JSON_delete_object(root);
+
+  return object;
+
 }

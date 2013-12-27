@@ -176,6 +176,9 @@ extern OBJECT_PTR LEQ;
 extern OBJECT_PTR GEQ;
 extern OBJECT_PTR NEQ;
 
+extern OBJECT_PTR SAVE_OBJECT;
+extern OBJECT_PTR LOAD_OBJECT;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -2656,6 +2659,68 @@ void eval(BOOLEAN do_gc)
         debug_mode = false;
 
         return;
+      }
+      else if(operator == SAVE_OBJECT)
+      {
+        if(length(reg_current_value_rib) != 2)
+        {
+          throw_exception("ARG-MISMATCH", "SAVE-OBJECT requires exactly two arguments, an object and a file name");
+          return;
+        }
+        
+        OBJECT_PTR obj = car(reg_current_value_rib);
+        
+        OBJECT_PTR file_name = CADR(reg_current_value_rib);
+
+        if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
+        {
+          throw_exception("INVALID-ARGUMENT", "Second argument to SAVE-OBJECT should be a string object or a string literal denoting the file name");
+          return;
+        }
+
+        if(is_string_object(file_name))
+          serialize(obj, get_string(file_name));
+        else
+          serialize(obj, strings[(int)file_name >> OBJECT_SHIFT]);
+
+        reg_accumulator = NIL;
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+      }
+      else if(operator == LOAD_OBJECT)
+      {
+        if(length(reg_current_value_rib) != 1)
+        {
+          throw_exception("ARG-MISMATCH", "LOAD-OBJECT requires exactly one argument, a file name");
+          return;
+        }
+        
+        OBJECT_PTR file_name = car(reg_current_value_rib);
+
+        if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
+        {
+          throw_exception("INVALID-ARGUMENT", "Argument to LOAD-OBJECT should be a string object or a string literal denoting the file name");
+          return;
+        }
+
+        int ret;
+
+        if(is_string_object(file_name))
+          ret = deserialize(get_string(file_name));
+        else
+          ret = deserialize(strings[(int)file_name >> OBJECT_SHIFT]);
+
+        if(ret == -1)
+        {
+          throw_exception("EXCEPTION", "Error in LOAD-OBJECT");
+          return;
+        }
+
+        reg_accumulator = ret;
+
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
       else
       {
