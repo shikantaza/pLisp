@@ -374,13 +374,25 @@ int format(OBJECT_PTR args)
     return -1;
   }
 
-  OBJECT_PTR rest_args = args;
+  int    i_val, *i_val_ptr;
+  double d_val, *d_val_ptr;
+  char   c_val, *c_val_ptr;
 
   i=0;
 
-  int   i_val, *i_val_ptr;
-  double d_val, *d_val_ptr;
-  char  c_val, *c_val_ptr;
+  arg_types[i] = &ffi_type_sint;
+  arg_values[i] = (int *)malloc(sizeof(int));
+
+  if(car(args) == NIL)
+    i_val = 1; //stdout
+  else
+    i_val = get_int_value(car(args));
+
+  *(int *)arg_values[i] = i_val;
+
+  i++;
+
+  OBJECT_PTR rest_args = cdr(args);
 
   while(rest_args != NIL)
   {
@@ -435,7 +447,7 @@ int format(OBJECT_PTR args)
 
   ffi_arg ret_val;
 
-  ffi_call(&cif, (void *)printf, &ret_val, arg_values);
+  ffi_call(&cif, (void *)fprintf, &ret_val, arg_values);
 
   free_arg_values_for_format(arg_types, arg_values, args, nof_args);
 
@@ -474,7 +486,7 @@ void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args
 #ifdef GUI
 int format_for_gui(OBJECT_PTR args)
 {
-  int nof_args = length(args) + 1;
+  int nof_args = length(args);
   int i;
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
@@ -492,20 +504,31 @@ int format_for_gui(OBJECT_PTR args)
     return -1;
   }
 
+  int    i_val, *i_val_ptr;
+  double d_val, *d_val_ptr;
+  char   c_val, *c_val_ptr;
+
   char buf[MAX_STRING_LENGTH];
   memset(buf, '\0', MAX_STRING_LENGTH);
 
-  arg_types[0] = &ffi_type_pointer;
-  arg_values[0] = (char **)malloc(sizeof(char *));
-  *(char **)arg_values[0] = buf;
+  if(car(args) == NIL)
+  {
+    arg_types[0] = &ffi_type_pointer;
+    arg_values[0] = (char **)malloc(sizeof(char *));
+    *(char **)arg_values[0] = buf;
+  }
+  else
+  {
+    arg_types[0] = &ffi_type_sint;
+    arg_values[0] = (int *)malloc(sizeof(int));
 
-  OBJECT_PTR rest_args = args;
+    i_val = get_int_value(car(args));
+    *(int *)arg_values[0] = i_val;
+  }
+
+  OBJECT_PTR rest_args = cdr(args);
 
   i=1;
-
-  int   i_val, *i_val_ptr;
-  double d_val, *d_val_ptr;
-  char  c_val, *c_val_ptr;
 
   while(rest_args != NIL)
   {
@@ -560,14 +583,18 @@ int format_for_gui(OBJECT_PTR args)
 
   ffi_arg ret_val;
 
-  ffi_call(&cif, (void *)sprintf, &ret_val, arg_values);
+  if(car(args) == NIL)
+    ffi_call(&cif, (void *)sprintf, &ret_val, arg_values);
+  else
+    ffi_call(&cif, (void *)fprintf, &ret_val, arg_values);
 
   free_arg_values_for_format(arg_types+1, arg_values+1, args, nof_args-1);
 
   free(arg_values);
   free(arg_types);
 
-  print_to_transcript(buf);
+  if(car(args) == NIL)
+    print_to_transcript(buf);
 
   return 0;
 }

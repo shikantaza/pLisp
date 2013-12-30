@@ -210,3 +210,20 @@ void free_memory(void *ptr)
   free(ptr);
 }
 
+int open_file(char *file_name, char *mode)
+{
+  if(!file_name || !mode)
+    return -1;
+
+  FILE *fp = fopen(file_name, mode);
+
+  if(!fp)
+    return -1;
+
+  return (uintptr_t)fp;
+}
+
+void close_file(int fp)
+{
+  fclose((FILE*)fp);
+}

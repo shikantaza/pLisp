@@ -928,12 +928,32 @@ void eval(BOOLEAN do_gc)
       }
       else if(operator == NEWLINE)
       {
+        if(length(reg_current_value_rib) != 1)
+        {
+          throw_exception("ARG-MISMATCH", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
+          return;
+        }
+
+        if(car(reg_current_value_rib) != NIL && !IS_INTEGER_OBJECT(car(reg_current_value_rib)))
+        {
+          throw_exception("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
+          return;
+        }
+
+        if(car(reg_current_value_rib) != NIL)
+        {
+          fprintf((FILE *)get_int_value(car(reg_current_value_rib)), "\n");
+        }
+        else
+        {
 #ifdef GUI
         print_to_transcript("\n");
 #else
         fprintf(stdout, "\n");
 #endif
-        reg_accumulator = car(reg_current_value_rib);
+        }
+
+        reg_accumulator = NIL;
         reg_current_value_rib = NIL;
         reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
       }
@@ -2404,19 +2424,25 @@ void eval(BOOLEAN do_gc)
       else if(operator == FORMAT)
       {
         OBJECT_PTR rest;
-        if(length(reg_current_value_rib) < 1)
+        if(length(reg_current_value_rib) < 2)
         {
-          throw_exception("ARG-MISMATCH", "FORMAT requires at least one argument, a format specification string");
+          throw_exception("ARG-MISMATCH", "FORMAT requires at least two arguments, a file descriptor and a format specification string");
           return;
         }
 
-        if(!IS_STRING_LITERAL_OBJECT(car(reg_current_value_rib)) && !is_string_object(car(reg_current_value_rib)))
+        if(car(reg_current_value_rib) != NIL && !IS_INTEGER_OBJECT(car(reg_current_value_rib)))
         {
-          throw_exception("INVALID-ARGUMENT", "First parameter to FORMAT must be a format specification string");
+          throw_exception("INVALID-ARGUMENT", "First parameter to FORMAT must be NIL or an integer denoting a file descriptor");
+          return;
+        }
+
+        if(!IS_STRING_LITERAL_OBJECT(CADR(reg_current_value_rib)) && !is_string_object(CADR(reg_current_value_rib)))
+        {
+          throw_exception("INVALID-ARGUMENT", "Second parameter to FORMAT must be a format specification string");
           return;
         }
         
-        rest = reg_current_value_rib;
+        rest = cdr(reg_current_value_rib);
 
         while(rest != NIL)
         {

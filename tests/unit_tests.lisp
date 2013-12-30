@@ -15,8 +15,8 @@
 ;;  You should have received a copy of the GNU General Public License
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-(format "Running unit test cases...")
-(newline)
+(format nil "Running unit test cases...")
+(newline nil)
 
 (define passed-cases 0)
 (define failed-cases 0)
@@ -24,21 +24,21 @@
 (defmacro test-condition (id condition)
   `(try (if ,condition 
             (incf passed-cases)
-          (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases)))
+          (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases)))
         (catch (e)
-          (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases)))))
+          (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases)))))
 
 (defmacro test-exception (id body excp)
   `(try ,body
         (catch (e)
           (if (eq (car e) ,excp)
               (incf passed-cases)
-            (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases))))))
+            (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases))))))
 
 (defmacro test-happy-case (id body)
   `(progn (try ,body
                (catch (e)
-                 (progn (format "Test case #%d failed" ,id) (newline) (incf failed-cases))))
+                 (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases))))
           (incf passed-cases)))
 
 ;;car
@@ -750,29 +750,31 @@
 ;format
 (test-exception 278 (format) 'arg-mismatch)
 
-(test-exception 279 (format 1) 'invalid-argument)
+(test-exception 279 (format 1) 'arg-mismatch)
 
-(test-exception 280 (format "%d" 'a) 'invalid-argument)
+(test-exception 2791 (format 1 2) 'invalid-argument)
 
-(test-exception 281 (format "%d" (make-array 3)) 'invalid-argument)
+(test-exception 280 (format nil "%d" 'a) 'invalid-argument)
 
-(test-exception 282 (format "%d" (lambda (x) x)) 'invalid-argument)
+(test-exception 281 (format nil "%d" (make-array 3)) 'invalid-argument)
 
-(test-exception 283 (format "%d" (macro (x) x)) 'invalid-argument)
+(test-exception 282 (format nil "%d" (lambda (x) x)) 'invalid-argument)
+
+(test-exception 283 (format nil "%d" (macro (x) x)) 'invalid-argument)
 
 (let ((cont))
   (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 284(format "%d" cont) 'invalid-argument))
+  (test-exception 284(format nil "%d" cont) 'invalid-argument))
 
-(test-happy-case 285 (progn (format "Diagnostic from test case #285") (newline)))
+(test-happy-case 285 (progn (format nil "Diagnostic from test case #285") (newline nil)))
 
-(test-happy-case 286 (progn (format "Diagnostic from test case #%d %d" 286 10) (newline)))
+(test-happy-case 286 (progn (format nil "Diagnostic from test case #%d %d" 286 10) (newline nil)))
 
-(test-happy-case 287 (progn (format "Diagnostic from test case #%d %0.2f" 287 3.1415) (newline)))
+(test-happy-case 287 (progn (format nil "Diagnostic from test case #%d %0.2f" 287 3.1415) (newline nil)))
 
-(test-happy-case 288 (progn (format "Diagnostic from test case #%d %c" 288 #\a) (newline)))
+(test-happy-case 288 (progn (format nil "Diagnostic from test case #%d %c" 288 #\a) (newline nil)))
 
-(test-happy-case 289 (progn (format "Diagnostic from test case #%d %s" 289 "abc") (newline)))
+(test-happy-case 289 (progn (format nil "Diagnostic from test case #%d %s" 289 "abc") (newline nil)))
 ;end-format
 
 ;clone
@@ -853,12 +855,13 @@
 (test-exception 312 an-undefined-symbol 'symbol-not-bound)
 ;end symbol not bound
 
-(format "%d of %d test cases passed (%.2f%%)" 
+(format nil 
+        "%d of %d test cases passed (%.2f%%)" 
         passed-cases 
         (+ passed-cases failed-cases) 
         (/ (* 100.0 passed-cases) (* 1.0 (+ passed-cases failed-cases))))
 
 (if (not (eq failed-cases 0))
-    (format "ATTENTION! Some unit test cases have failed."))
+    (format nil "ATTENTION! Some unit test cases have failed."))
 
-(newline)
+(newline nil)

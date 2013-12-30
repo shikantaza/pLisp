@@ -539,6 +539,8 @@
 
 (load-file "graph.lisp")
 
+(load-file "io.lisp")
+
 (create-package "user")
 
 (in-package "user")
