@@ -1134,7 +1134,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
 
         if(colon_location != 0) //qualified symbol_name
         {
-          char *package_name = (char *)substring(symbol_name, 0, colon_location - 1);
+          char *package_name = (char *)substring(symbol_name, 0, colon_location);
           char *sym_name = (char *)substring(symbol_name, colon_location + 1, strlen(symbol_name) - colon_location - 1);
 
           int package_index = find_package(package_name);
@@ -1147,7 +1147,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
             packages[nof_packages-1].symbols[0] = strdup(sym_name);
           }            
             
-          return get_qualified_symbol_object(package_name, sym_name);
+          return cdr(get_qualified_symbol_object(package_name, sym_name));
         }
         else
           return get_symbol_object(symbol_name);
