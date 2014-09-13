@@ -537,7 +537,7 @@
 
 (load-file "statistics.lisp")
 
-(load-file "graph.lisp")
+;(load-file "graph.lisp")
 
 (load-file "io.lisp")
 

@@ -5,7 +5,7 @@
 #include "../memory.h"
 #include "../hashtable.h"
 
-#define FONT "Courier Bold 9"
+#define FONT "Andale Mono Bold 9"
 
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;
@@ -214,7 +214,7 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
 
   GtkWidget *textview = gtk_text_view_new ();
 
-  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 
   workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
@@ -232,7 +232,7 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_workspace_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   
@@ -477,7 +477,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   packages_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(packages_list), TRUE);
-  gtk_widget_modify_font(GTK_WIDGET(packages_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(packages_list), pango_font_description_from_string(FONT));
 
   initialize_packages_list((GtkTreeView *)packages_list);
 
@@ -485,7 +485,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   symbols_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(symbols_list), TRUE);
-  gtk_widget_modify_font(GTK_WIDGET(symbols_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(symbols_list), pango_font_description_from_string(FONT));
 
   initialize_symbols_list((GtkTreeView *)symbols_list);
   gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(symbols_list, 0), 0);
@@ -501,7 +501,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)packages_list);
   gtk_container_add(GTK_CONTAINER (scrolled_win2), (GtkWidget *)symbols_list);
 
-  hbox = gtk_hbox_new(FALSE, 5);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   gtk_box_pack_start(GTK_BOX (hbox), scrolled_win1, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX (hbox), scrolled_win2, TRUE, TRUE, 0);
 
@@ -511,7 +511,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   system_browser_textview = (GtkTextView *)textview;
 
-  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
   //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
 
   system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
@@ -519,7 +519,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_system_browser_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
@@ -675,14 +675,14 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
   gtk_text_view_set_cursor_visible((GtkTextView *)textview, FALSE);
   gtk_widget_set_sensitive(textview, FALSE);
 
-  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 
   transcript_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_transcript_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
@@ -719,7 +719,7 @@ void error_window(char *msg)
 
   GtkWidget *textview = gtk_text_view_new ();
 
-  gtk_widget_modify_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
   gtk_text_buffer_insert_at_cursor(gtk_text_view_get_buffer((GtkTextView *)textview), msg, -1);
 
   ok = gtk_button_new_with_label("OK");
@@ -731,10 +731,10 @@ void error_window(char *msg)
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-  hbox = gtk_hbox_new(FALSE, 5);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   gtk_box_pack_start(GTK_BOX (hbox), ok, FALSE, FALSE, 0);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
 
@@ -906,7 +906,7 @@ void create_debug_window(int posx, int posy, int width, int height)
 
   frames_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(frames_list), TRUE);
-  gtk_widget_modify_font(GTK_WIDGET(frames_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(frames_list), pango_font_description_from_string(FONT));
 
   initialize_frames_list((GtkTreeView *)frames_list);
 
@@ -915,7 +915,7 @@ void create_debug_window(int posx, int posy, int width, int height)
 
   variables_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(variables_list), TRUE);
-  gtk_widget_modify_font(GTK_WIDGET(variables_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(variables_list), pango_font_description_from_string(FONT));
 
   initialize_variables_list((GtkTreeView *)variables_list);
   gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(variables_list, 0), 0);
@@ -928,13 +928,13 @@ void create_debug_window(int posx, int posy, int width, int height)
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)frames_list);
   gtk_container_add(GTK_CONTAINER (scrolled_win2), (GtkWidget *)variables_list);
 
-  hbox1 = gtk_hbox_new(FALSE, 5);
-  hbox2 = gtk_hbox_new(FALSE, 5);
+  hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+  hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
   gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX (hbox2), scrolled_win2, TRUE, TRUE, 0);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox2, TRUE, TRUE, 0);
@@ -1111,7 +1111,7 @@ void create_profiler_window(int posx, int posy, int width, int height)
 
   operators_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(operators_list), TRUE);
-  gtk_widget_modify_font(GTK_WIDGET(operators_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(operators_list), pango_font_description_from_string(FONT));
 
   initialize_operators_list((GtkTreeView *)operators_list);
 
@@ -1119,11 +1119,11 @@ void create_profiler_window(int posx, int posy, int width, int height)
 
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)operators_list);
 
-  hbox1 = gtk_hbox_new(FALSE, 5);
+  hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
   gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, TRUE, TRUE, 0);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
 
   //uncomment this to add status bar

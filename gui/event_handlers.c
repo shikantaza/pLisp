@@ -381,9 +381,11 @@ int get_new_package_name(char *buf)
   dialog = gtk_dialog_new_with_buttons("Create Package",
                                        action_triggering_window,
                                        GTK_DIALOG_DESTROY_WITH_PARENT, 
-                                       GTK_STOCK_OK,
+                                       //GTK_STOCK_OK,
+                                       "OK",
                                        GTK_RESPONSE_ACCEPT,
-                                       GTK_STOCK_CANCEL,
+                                       //GTK_STOCK_CANCEL,
+                                       "Cancel",
                                        GTK_RESPONSE_REJECT,
                                        NULL);
 
@@ -615,8 +617,8 @@ void load_source()
   dialog = gtk_file_chooser_dialog_new ("Load pLisp source file",
                                         (GtkWindow *)workspace_window,
                                         GTK_FILE_CHOOSER_ACTION_OPEN,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                        "Cancel", GTK_RESPONSE_CANCEL,
+                                        "Open", GTK_RESPONSE_ACCEPT,
                                         NULL);
 
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
@@ -654,10 +656,10 @@ void close_application_window(GtkWidget **window)
 
 gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
-  if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_l)
+  if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
     load_source();
   //else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
-  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_Return)
+  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
   {
     action_triggering_window = workspace_window;
     evaluate();
@@ -666,37 +668,37 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1);
     return TRUE;
   }
-  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
+  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
     close_application_window((GtkWidget **)&workspace_window);
-  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_k)
+  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_k)
     create_new_package();
-  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_n)
+  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_n)
   {
     action_triggering_window = system_browser_window;
     create_new_symbol();
   }
-  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_s)
+  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s)
   {
     action_triggering_window = system_browser_window;
     system_browser_accept();
   }
-  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_x)
+  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_x)
     delete_package_or_symbol();
-  else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_F5)
+  else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_KEY_F5)
     refresh_system_browser();
-  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
+  else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
     close_application_window((GtkWidget **)&system_browser_window);
-  else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_l)
+  else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
     load_image();
-  else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_s)
+  else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s)
     save_image();
-  else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_F7)
+  else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_KEY_F7)
     show_workspace_window();
-  else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_F9)
+  else if(widget == (GtkWidget *)transcript_window && event->keyval == GDK_KEY_F9)
     show_system_browser_window();
-  else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_w)
+  else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
     quit_application();
-  else if(widget == (GtkWidget *)debugger_window && event->keyval == GDK_F5)
+  else if(widget == (GtkWidget *)debugger_window && event->keyval == GDK_KEY_F5)
     resume();
 
   return FALSE;
@@ -735,8 +737,8 @@ void load_image()
   dialog = gtk_file_chooser_dialog_new ("Load pLisp Image",
                                         (GtkWindow *)transcript_window,
                                         GTK_FILE_CHOOSER_ACTION_OPEN,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                        GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                        "Cancel", GTK_RESPONSE_CANCEL,
+                                        "Open", GTK_RESPONSE_ACCEPT,
                                         NULL);
 
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
@@ -937,8 +939,8 @@ void save_image()
     dialog = gtk_file_chooser_dialog_new ("Save pLisp Image",
                                           (GtkWindow *)transcript_window,
                                           GTK_FILE_CHOOSER_ACTION_SAVE,
-                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                          "Cancel", GTK_RESPONSE_CANCEL,
+                                          "Open", GTK_RESPONSE_ACCEPT,
                                           NULL);
 
     if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
@@ -1214,7 +1216,7 @@ gboolean handle_code_edit_key_press(GtkWidget *widget, GdkEventKey *event, gpoin
     }
   }
 
-  if(event->keyval ==  GDK_Return)
+  if(event->keyval ==  GDK_KEY_Return)
   {
     GtkTextIter iter, line_start;
     gtk_text_buffer_get_iter_at_mark(buffer, &iter, gtk_text_buffer_get_insert(buffer));

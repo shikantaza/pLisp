@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <stdint.h>
 
 #ifdef GUI
 #include <gtk/gtk.h>

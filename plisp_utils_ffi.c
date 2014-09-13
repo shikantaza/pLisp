@@ -32,6 +32,7 @@ commands to build .so file:
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 
 float plisp_random()
 {

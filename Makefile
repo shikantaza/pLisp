@@ -20,18 +20,15 @@ OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ff
 #TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
-CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-2.0`
+CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0`
 
 all:	plisp libplisp.so libtest.so
 
-libplisp.so:	plisp_utils_ffi.o plisp_graph_ffi.o
-		$(CC) $(CFLAGS) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o plisp_graph_ffi.o `pkg-config --libs libffi` `pkg-config --libs gtk+-2.0`
+libplisp.so:	plisp_utils_ffi.o
+		$(CC) $(CFLAGS) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
 
 plisp_utils_ffi.o:	plisp_utils_ffi.c
 		$(CC) $(CFLAGS) -c plisp_utils_ffi.c -o plisp_utils_ffi.o
-
-plisp_graph_ffi.o:	plisp_graph_ffi.c
-		$(CC) $(CFLAGS) -c plisp_graph_ffi.c -o plisp_graph_ffi.o
 
 libtest.so:	test_so.o
 		$(CC) -shared -Wl,-soname,libtest.so -o libtest.so test_so.o
@@ -40,7 +37,7 @@ libtest.so:	test_so.o
 #		$(CC) $(CFLAGS) $(TEST_MEMORY_OBJS) -o test_memory
 
 plisp:	$(OBJS)
-		$(CC) $(CFLAGS) $(OBJS) -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-2.0`
+		$(CC) $(CFLAGS) $(OBJS) -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
 
 lex.o:	lex.yy.c
 		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o
@@ -58,7 +55,7 @@ json_parser.o:	json_parser.tab.c
 		$(CC) $(CFLAGS) -c json_parser.tab.c -o json_parser.o
 
 json_parser.tab.c:	json_parser.y
-		bison -d -v -Dapi.prefix=json json_parser.y
+		bison -d -v --name-prefix=json json_parser.y
 
 json_lex.o:	json.lex.yy.c
 		$(CC) $(CFLAGS) -c json.lex.yy.c -o json_lex.o
@@ -97,10 +94,10 @@ ffi.o:		ffi.c
 		$(CC) $(CFLAGS) -c ffi.c -o ffi.o
 
 ui.o:		./gui/ui.c
-		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/ui.c -o ui.o
+		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -c ./gui/ui.c -o ui.o
 
 event_handlers.o:	./gui/event_handlers.c
-		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-2.0` -c ./gui/event_handlers.c -o event_handlers.o
+		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -c ./gui/event_handlers.c -o event_handlers.o
 
 hash.o:		hash.c
 		$(CC) $(CFLAGS) -c hash.c -o hash.o
