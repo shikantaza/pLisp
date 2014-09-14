@@ -519,7 +519,7 @@ void cleanup()
 
   log_function_entry("cleanup");
 
-  if(yyin != stdin)
+  if(yyin != stdin && yyin)
     fclose(yyin);
 
   delete_expression(g_expr);

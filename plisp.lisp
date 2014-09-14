@@ -326,7 +326,7 @@
 (defmacro mapcan (f &rest lists)  
   `(flatten (mapcar ,f ,@lists))) 
 
-(load-foreign-library "libplisp.so")
+(load-foreign-library "./libplisp.so")
 
 ;needed because FORMAT does not handle newlines
 (defmacro println ()
