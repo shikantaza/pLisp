@@ -31,7 +31,7 @@
 #define DEFAULT_TRANSCRIPT_POSY 350
 
 #define DEFAULT_TRANSCRIPT_WIDTH 600
-#define DEFAULT_TRANSCRIPT_HEIGHT 400
+#define DEFAULT_TRANSCRIPT_HEIGHT 420
 
 char *default_transcript_text =  "Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
                                  "pLisp is free software: you can redistribute it and/or modify\n"

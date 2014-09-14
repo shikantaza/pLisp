@@ -5,7 +5,7 @@
 #include "../memory.h"
 #include "../hashtable.h"
 
-#define FONT "Andale Mono Bold 9"
+#define FONT "Monospace Bold 9"
 
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;
@@ -652,7 +652,8 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
   /* gtk_window_set_default_size((GtkWindow *)transcript_window, 600, 400); */
   /* gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER); */
   gtk_window_set_default_size(transcript_window, width, height);
-  gtk_window_move(transcript_window, posx, posy); 
+  //gtk_window_move(transcript_window, posx, posy); 
+  gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
     
   g_signal_connect (transcript_window, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -673,7 +674,7 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
 
   gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
   gtk_text_view_set_cursor_visible((GtkTextView *)textview, FALSE);
-  gtk_widget_set_sensitive(textview, FALSE);
+  //gtk_widget_set_sensitive(textview, FALSE);
 
   gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 
