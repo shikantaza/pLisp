@@ -905,6 +905,7 @@ void load_from_image(char *file_name)
   if(workspace)
   {
     char text[MAX_STRING_LENGTH];
+    memset(text, '\0', MAX_STRING_LENGTH);
     int i=0, j=0, len;
     char *json_text = JSON_get_array_item(workspace, 4)->strvalue;
     
