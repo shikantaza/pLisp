@@ -768,9 +768,11 @@ void load_from_image(char *file_name)
 
   convert_heap(heap, hashtable, q, false);
 
+  if(system_browser_window)
+    close_application_window(&system_browser_window);
+
   if(system_browser)
   {
-
     create_system_browser_window(JSON_get_array_item(system_browser, 0)->ivalue,
                                  JSON_get_array_item(system_browser, 1)->ivalue,
                                  JSON_get_array_item(system_browser, 2)->ivalue,
@@ -891,6 +893,9 @@ void load_from_image(char *file_name)
     }
   }
 
+  if(profiler_window)
+    close_application_window(&profiler_window);
+
   if(profiler)
     create_profiler_window(JSON_get_array_item(profiler, 0)->ivalue,
                            JSON_get_array_item(profiler, 1)->ivalue,
@@ -901,6 +906,9 @@ void load_from_image(char *file_name)
   queue_delete(q);
 
   struct JSONObject *workspace = JSON_get_object_item(root, "workspace");
+
+  if(workspace_window)
+    close_application_window(&workspace_window);
 
   if(workspace)
   {
@@ -930,14 +938,14 @@ void load_from_image(char *file_name)
 
   struct JSONObject *debugger = JSON_get_object_item(root, "debugger");
 
+  if(debugger_window)
+    close_application_window(&debugger_window);
+
   if(debugger)
-  {
     create_debug_window(JSON_get_array_item(debugger, 0)->ivalue,
                         JSON_get_array_item(debugger, 1)->ivalue,
                         JSON_get_array_item(debugger, 2)->ivalue,
                         JSON_get_array_item(debugger, 3)->ivalue);
-  }
-
 
   struct JSONObject *transcript = JSON_get_object_item(root, "transcript");
 
@@ -960,17 +968,28 @@ void load_from_image(char *file_name)
     ii++;
   }
 
-  //hack; find a better way to
-  //destroy the transcript window
-  gtk_widget_hide(transcript_window);
-  transcript_window = NULL;
+  if(transcript_window)
+  {
+    gtk_window_set_default_size(transcript_window,
+				JSON_get_array_item(transcript, 2)->ivalue,
+				JSON_get_array_item(transcript, 3)->ivalue);
 
-  create_transcript_window(JSON_get_array_item(transcript, 0)->ivalue,
-                           JSON_get_array_item(transcript, 1)->ivalue,
-                           JSON_get_array_item(transcript, 2)->ivalue,
-                           JSON_get_array_item(transcript, 3)->ivalue,
-                           text,
-			   true);
+    gtk_window_move(transcript_window,
+		    JSON_get_array_item(transcript, 0)->ivalue,
+		    JSON_get_array_item(transcript, 1)->ivalue); 
+    
+    gtk_text_buffer_set_text(transcript_buffer, "", 0);
+    print_to_transcript(text);
+    update_transcript_title();
+  }
+  else
+  {
+    create_transcript_window(JSON_get_array_item(transcript, 0)->ivalue,
+			     JSON_get_array_item(transcript, 1)->ivalue,
+			     JSON_get_array_item(transcript, 2)->ivalue,
+			     JSON_get_array_item(transcript, 3)->ivalue,
+			     text);
+  }
 
   JSON_delete_object(root);
 }

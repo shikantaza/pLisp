@@ -640,7 +640,7 @@ GtkToolbar *create_transcript_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
-void create_transcript_window(int posx, int posy, int width, int height, char *text, BOOLEAN from_image)
+void create_transcript_window(int posx, int posy, int width, int height, char *text)
 {
   GtkWidget *scrolled_win, *vbox;
 
@@ -653,10 +653,7 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
   /* gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER); */
   gtk_window_set_default_size(transcript_window, width, height);
 
-  if(from_image)
-    gtk_window_move(transcript_window, posx, posy); 
-  else
-    gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
+  gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
       
   g_signal_connect (transcript_window, "delete-event",
                     G_CALLBACK (delete_event), NULL);

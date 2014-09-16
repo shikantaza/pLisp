@@ -435,8 +435,7 @@ int main(int argc, char **argv)
                              DEFAULT_TRANSCRIPT_POSY,
                              DEFAULT_TRANSCRIPT_WIDTH,
                              DEFAULT_TRANSCRIPT_HEIGHT,
-                             default_transcript_text,
-			     false);
+                             default_transcript_text);
 #endif
 
     if(load_core_library())
