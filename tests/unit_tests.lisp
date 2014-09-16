@@ -547,9 +547,9 @@
 
 (test-exception 192 (load-foreign-library 1) 'invalid-argument)
 
-(test-happy-case 193 (load-foreign-library "libtest.so"))
+(test-happy-case 193 (load-foreign-library "./libtest.so"))
 
-(test-happy-case 194 (load-foreign-library (string "libtest.so")))
+(test-happy-case 194 (load-foreign-library (string "./libtest.so")))
 ;end load-foreign-library
 
 ;call-foreign-function
@@ -597,7 +597,7 @@
       (x (string "abc"))
       (f 19.56))
 
-  (load-foreign-library "libtest.so")
+  (load-foreign-library "./libtest.so")
 
 
   (test-condition 215 (eq (call-foreign-function "fn_ret_int" 'integer

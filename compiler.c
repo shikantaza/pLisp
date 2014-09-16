@@ -33,6 +33,8 @@
 #define DEFAULT_TRANSCRIPT_WIDTH 600
 #define DEFAULT_TRANSCRIPT_HEIGHT 420
 
+extern GtkWindow *transcript_window;
+
 char *default_transcript_text =  "Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
                                  "pLisp is free software: you can redistribute it and/or modify\n"
                                  "it under the terms of the GNU General Public License as published by\n"
@@ -433,7 +435,8 @@ int main(int argc, char **argv)
                              DEFAULT_TRANSCRIPT_POSY,
                              DEFAULT_TRANSCRIPT_WIDTH,
                              DEFAULT_TRANSCRIPT_HEIGHT,
-                             default_transcript_text);
+                             default_transcript_text,
+			     false);
 #endif
 
     if(load_core_library())

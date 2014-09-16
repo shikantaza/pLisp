@@ -960,11 +960,17 @@ void load_from_image(char *file_name)
     ii++;
   }
 
+  //hack; find a better way to
+  //destroy the transcript window
+  gtk_widget_hide(transcript_window);
+  transcript_window = NULL;
+
   create_transcript_window(JSON_get_array_item(transcript, 0)->ivalue,
                            JSON_get_array_item(transcript, 1)->ivalue,
                            JSON_get_array_item(transcript, 2)->ivalue,
                            JSON_get_array_item(transcript, 3)->ivalue,
-                           text);
+                           text,
+			   true);
 
   JSON_delete_object(root);
 }
