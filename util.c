@@ -112,3 +112,26 @@ double get_wall_time()
   }
   return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
+
+char *conv_to_lower_case_preserve_strings(char *str)
+{
+  char *ptr = NULL;
+
+  int in_quote = 0;
+
+  for(ptr=str;*ptr;ptr++) 
+  {
+    if(*ptr == '"')
+    {
+      if(ptr == str || (ptr != str && *(ptr-1) != '\\'))
+	in_quote = !in_quote;
+    }
+    else
+    {
+      if(!in_quote)
+	*ptr=tolower(*ptr); 
+    }
+  }
+
+  return str;
+}

@@ -879,7 +879,7 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
 
       print_object_to_string(temp, buf, 0);
 
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
 
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
@@ -902,14 +902,14 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
       print_object_to_string(temp, buf, 0);
 
 
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
     else if(IS_CONTINUATION_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       print_object_to_string(obj, buf, 0);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
     }
     else
     {
@@ -917,7 +917,7 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
       /* print_object_to_string(cons(DEFINE, */
       /*                             cons((OBJECT_PTR)ptr, cons(obj, NIL))), buf, 0); */
       print_object_to_string(obj, buf, 0);
-      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)convert_to_lower_case(buf), -1);
+      gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, FALSE);
     }
 
