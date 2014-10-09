@@ -179,6 +179,8 @@ extern OBJECT_PTR NEQ;
 extern OBJECT_PTR SAVE_OBJECT;
 extern OBJECT_PTR LOAD_OBJECT;
 
+extern OBJECT_PTR COMPILEFN;
+
 extern OBJECT_PTR top_level_env;
 
 extern char **strings;
@@ -214,6 +216,25 @@ extern unsigned int POINTER_MASK;
 extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR CONS_RETURN_NIL;
+
+extern int refer(OBJECT_PTR);
+extern void constant(OBJECT_PTR);
+extern int assign(OBJECT_PTR);
+extern int define(OBJECT_PTR);
+extern int add();
+extern int sub();
+extern int eq();
+extern void closure(OBJECT_PTR);
+extern void macro(OBJECT_PTR);
+extern void conti();
+extern void frame(OBJECT_PTR);
+extern void argument();
+extern void return_op();
+extern void bind_formal_parameters(OBJECT_PTR);
+
+extern cmpfn compile_function(OBJECT_PTR, char *);
+
+extern hashtable_t *native_functions;
 
 //variables related to profiling
 double wall_time_var;
@@ -339,76 +360,22 @@ void eval(BOOLEAN do_gc)
   }
   else if(opcode == REFER)
   {
-    if(is_special_form(CADR(exp)))
-    {
-      reg_accumulator = CADR(exp);
-    }
-    else
-    {
-      /* OBJECT_PTR symbol_given = CADR(exp); */
-      /* OBJECT_PTR symbol_to_be_used; */
-
-      /* int package_index = symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT); */
-
-      /* if(package_index != current_package) */
-      /* { */
-      /*   if(package_index == CORE_PACKAGE_INDEX) */
-      /*     symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given))); */
-      /*   else */
-      /*   { */
-      /*     //throw_exception("ACCESS-VIOLATION", "Attempt to define symbol in a package while in a different package"); */
-      /*     //return; */
-      /*     symbol_to_be_used = symbol_given; */
-      /*   } */
-      /* } */
-      /* else */
-      /*   symbol_to_be_used = symbol_given; */
-
-      OBJECT_PTR symbol_to_be_used = CADR(exp);
-
-      OBJECT_PTR res = get_symbol_value(symbol_to_be_used,
-                                        debug_mode ? debug_env : reg_current_env);
-
-      if(car(res) != NIL)
-        reg_accumulator = cdr(res);
-      else
-      {
-        OBJECT_PTR res1;
-
-        symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp))));
-
-        res1 = get_symbol_value(symbol_to_be_used,
-                                debug_mode ? debug_env : reg_current_env);
-
-        if(car(res1) != NIL)
-          reg_accumulator = cdr(res1);
-        else
-        {
-          char buf[SYMBOL_STRING_SIZE];
-          print_qualified_symbol(symbol_to_be_used, buf);
-          sprintf(err_buf, "Symbol not bound(1): %s", buf);
-          throw_exception("SYMBOL-NOT-BOUND", err_buf);
-          return;
-        }
-      }
-    }
+    refer(CADR(exp));
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CONSTANT)
   {
-    reg_accumulator = CADR(exp);
+    constant(CADR(exp));
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CLOSE)
   {
-    /* reg_accumulator = create_closure_object(reg_current_env, CADR(exp), CADDR(exp), CADDDR(exp)); */
-    /* reg_next_expression = CADDDDR(exp); */
-    reg_accumulator = create_closure_object(reg_current_env, second(exp), third(exp), fourth(exp));
+    closure(exp);
     reg_next_expression = fifth(exp);
   }
   else if(opcode == MACRO)
   {
-    reg_accumulator = create_macro_object(reg_current_env, CADR(exp), CADDR(exp), CADDDR(exp));
+    macro(exp);
     reg_next_expression = CADDDDR(exp);
   }
   else if(opcode == TEST)
@@ -466,49 +433,17 @@ void eval(BOOLEAN do_gc)
   }
   else if(opcode == ASSIGN)
   {
-    OBJECT_PTR symbol_to_be_used = CADR(exp);
-
-    if(update_environment(reg_current_env, symbol_to_be_used, reg_accumulator) == NIL)
-    {
-      symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(CADR(exp))));
-
-      if(update_environment(reg_current_env, symbol_to_be_used, reg_accumulator) == NIL)
-      {
-        char buf[SYMBOL_STRING_SIZE];
-        print_qualified_symbol(symbol_to_be_used, buf);
-        sprintf(err_buf, "Symbol not bound(2): %s", buf);
-        throw_exception("SYMBOL-NOT-BOUND", err_buf);
-        return;
-      }
-    }
+    assign(CADR(exp));
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == DEFINE)
   {
-    OBJECT_PTR symbol_given = CADR(exp);
-    OBJECT_PTR symbol_to_be_used;
-
-    int package_index = (int)symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
-
-    if(package_index != current_package)
-    {
-      if(package_index == CORE_PACKAGE_INDEX)
-        symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given)));
-      else
-        symbol_to_be_used = symbol_given;
-    }
-    else
-      symbol_to_be_used = symbol_given;
-
-    add_to_top_level_environment(symbol_to_be_used, reg_accumulator);
-
-    reg_accumulator = symbol_to_be_used;
+    define(CADR(exp));
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CONTI)
   {
-    reg_accumulator = create_current_continuation();
-    reg_current_value_rib = NIL;
+    conti();
     reg_next_expression = CADR(exp);
   }
   else if(opcode == NUATE) //this never gets called
@@ -520,18 +455,12 @@ void eval(BOOLEAN do_gc)
   }
   else if(opcode == FRAME)
   {
-    reg_current_stack = cons(create_call_frame(CADR(exp),
-                                               reg_current_env,
-                                               reg_current_value_rib,
-                                               cdr(reg_next_expression)),
-                             reg_current_stack);
-
-    reg_current_value_rib = NIL;
+    frame(exp);
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == ARGUMENT)
   {
-    reg_current_value_rib = cons(reg_accumulator, reg_current_value_rib);
+    argument();
     reg_next_expression = CADR(exp);
   }
   else if(opcode == APPLY)
@@ -563,20 +492,7 @@ void eval(BOOLEAN do_gc)
       }
       else if(operator == EQ)
       {
-        OBJECT_PTR v1, v2;
-
-        if(length(reg_current_value_rib) != 2)
-        {
-          throw_exception("ARG-MISMATCH", "EQ expects two arguments");
-          return;
-        }
-
-        v1 = car(reg_current_value_rib);
-        v2 = CADR(reg_current_value_rib);
-
-        reg_accumulator = equal(v1, v2) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	eq();
       }
       else if(operator == NEQ)
       {
@@ -684,103 +600,11 @@ void eval(BOOLEAN do_gc)
       }
       else if(operator == ADD)
       {
-        float sum = 0;
-        OBJECT_PTR rest = reg_current_value_rib;
-        BOOLEAN is_float = false;
-
-        if(length(reg_current_value_rib) < 2)
-        {
-          throw_exception("ARG-MISMATCH", "Operator '+' requires at least two arguments");
-          return;
-        }
-
-        while(rest != NIL)
-	{
-          OBJECT_PTR val = car(rest);
-          if(IS_FLOAT_OBJECT(val))
-	  {
-            is_float = true;
-            sum += get_float_value(val);
-          }
-          else if(IS_INTEGER_OBJECT(val))
-            sum += get_int_value(val);
-          else
-          {
-            throw_exception("INVALID-ARGUMENT", "Argument to operator '+' should be a number");
-            return;            
-          }
-
-          rest = cdr(rest);
-        }
-
-        if(is_float)
-          reg_accumulator = convert_float_to_object(sum);
-        else
-          reg_accumulator = convert_int_to_object((int)sum);
-
-          reg_current_value_rib = NIL;
-          reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
+	add();
       }
       else if(operator == SUB)
       {
-        float val;
-        BOOLEAN is_float = false;
-
-        OBJECT_PTR first;
-        OBJECT_PTR rest;
-
-        float sum = 0;
-
-        if(length(reg_current_value_rib) < 2)
-        {
-          throw_exception("ARG-MISMATCH", "Operator '-' requires at least two arguments");
-          return;
-        }
-        
-        first = car(reg_current_value_rib);
-
-        if(IS_FLOAT_OBJECT(first))
-	{
-          is_float = true;
-          val = get_float_value(first);
-        }
-        else if(IS_INTEGER_OBJECT(first))
-          val = get_int_value(first);
-        else
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to operator '-' should be a number");
-          return;
-        }
-
-        rest = cdr(reg_current_value_rib);
-
-        while(rest != NIL)
-	{
-          OBJECT_PTR val = car(rest);
-
-          if(IS_FLOAT_OBJECT(val))
-	  {
-            is_float = true;
-            sum += get_float_value(val);
-          }
-          else if(IS_INTEGER_OBJECT(val))
-            sum += get_int_value(val);
-          else
-          {
-            throw_exception("INVALID-ARGUMENT", "Argument to operator '-' should be a number");
-            return;
-          }
-
-          rest = cdr(rest);
-        }
-
-        if(is_float)
-          reg_accumulator = convert_float_to_object(val - sum);
-        else
-          reg_accumulator = convert_int_to_object((int)(val - sum));
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
+	sub();
       }
       else if(operator == MULT)
       {
@@ -2748,6 +2572,39 @@ void eval(BOOLEAN do_gc)
         reg_current_value_rib = NIL;
         reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
       }
+      else if(operator == COMPILEFN)
+      {
+        if(length(reg_current_value_rib) != 1)
+        {
+          throw_exception("ARG-MISMATCH", "COMPILE-FN requires exactly one arguments a closure object");
+          return;
+        }
+
+        OBJECT_PTR obj = car(reg_current_value_rib);
+
+        if(!(IS_CLOSURE_OBJECT(obj)))
+        {
+          throw_exception("INVALID-ARGUMENT", "Argument to COMPILE-FN should be a closure object");
+          return;
+        }
+
+	char err_buf1[500];
+	memset(err_buf1, 500, '\0');
+
+	cmpfn fn = compile_function(obj, err_buf1);
+
+        if(!fn)
+        {
+	  memset(err_buf, 500, '\0');
+	  sprintf(err_buf, "Error in COMPILE-FN: %s", err_buf1);
+          throw_exception("EXCEPTION", err_buf);
+          return;
+        }
+
+	reg_accumulator = NIL;
+        reg_current_value_rib = NIL;
+        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
+      }
       else
       {
 	char buf[SYMBOL_STRING_SIZE];
@@ -2761,65 +2618,22 @@ void eval(BOOLEAN do_gc)
     {
       if(IS_CLOSURE_OBJECT(reg_accumulator) || IS_MACRO_OBJECT(reg_accumulator))
       {
-        OBJECT_PTR params, params_env, rest_params, rest_args;
+	bind_formal_parameters(reg_accumulator);
 
-        continuations_map = cons(cons(reg_accumulator, create_current_continuation()),
-                                 continuations_map);
+	if(IS_CLOSURE_OBJECT(reg_accumulator))
+	{
+	  hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
+	  if(e)
+	  {
+	    cmpfn fn = (cmpfn)e->value;
+	    fn();
+	  }
+	  else
+	    reg_next_expression = get_body_object(reg_accumulator); 
+	}
+	else
+	  reg_next_expression = get_body_object(reg_accumulator); 
 
-        params = get_params_object(reg_accumulator);
-
-        //no longer valid because of &rest -- parameters may
-        //not match the value rib
-        /* if(length(params) != length(reg_current_value_rib)) */
-        /* { */
-        /*   throw_generic_exception("Arguments to function not supplied\n"); */
-        /*   return; */
-        /* } */
-
-        params_env = NIL;
-
-        rest_params = params;
-        rest_args = reg_current_value_rib;
-
-        while(rest_params != NIL)
-        {
-          int package_index = (int)car(rest_params) >> (SYMBOL_BITS + OBJECT_SHIFT);
-          int symbol_index =  ((int)car(rest_params) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
-          char *param_name = packages[package_index].symbols[symbol_index];
-
-          if(!strcmp(param_name, "&REST"))
-          {
-            if(params_env == NIL)
-              params_env = cons(cons(CADR(rest_params), rest_args), NIL);
-            else
-            {
-              uintptr_t ptr = last_cell(params_env) & POINTER_MASK;
-              set_heap(ptr, 1, 
-                       cons(cons(CADR(rest_params),rest_args), NIL));            
-            }
-            break;
-          }
-          else
-          {
-            if(params_env == NIL)
-              params_env = cons(cons(car(rest_params), car(rest_args)), NIL);
-            else
-            {
-              uintptr_t ptr = last_cell(params_env) & POINTER_MASK;
-              set_heap(ptr, 1, 
-                       cons(cons(car(rest_params),car(rest_args)), NIL));
-            }
-          }
-
-          rest_params = cdr(rest_params);
-          rest_args = cdr(rest_args);
-        }
-
-        reg_current_env = cons(params_env, get_env_list(reg_accumulator));
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = get_body_object(reg_accumulator); 
       }
       else if(IS_CONTINUATION_OBJECT(reg_accumulator))
       {
@@ -2844,19 +2658,7 @@ void eval(BOOLEAN do_gc)
   }
   else if(opcode == RETURN)
   {
-    OBJECT_PTR frame;
-    uintptr_t ptr;
-
-    if(reg_current_stack == NIL)
-      assert(false);
-
-    frame = car(reg_current_stack);
-    reg_current_stack = cdr(reg_current_stack);
-
-    ptr = frame & POINTER_MASK;
-    reg_next_expression   = get_heap(ptr,1);
-    reg_current_env       = get_heap(ptr,2);
-    reg_current_value_rib = get_heap(ptr,3);
+    return_op();
   }
 }
 
@@ -2938,7 +2740,7 @@ void print_stack()
 
     uintptr_t ptr = frame & POINTER_MASK;
 
-    printf("---- begin frame %0x----\n, frame");
+    printf("---- begin frame %0x----\n", frame);
     printf("Next expression: ");
     print_object(get_heap(ptr,1));
     printf("\n");

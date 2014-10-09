@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o
+OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o
 
 #TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
-CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0`
+CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` -I/usr/local/include -L/usr/local/lib/tcc
 
 all:	plisp libplisp.so libtest.so
 
@@ -37,7 +37,7 @@ libtest.so:	test_so.o
 #		$(CC) $(CFLAGS) $(TEST_MEMORY_OBJS) -o test_memory
 
 plisp:	$(OBJS)
-		$(CC) $(CFLAGS) $(OBJS) -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
+		$(CC) $(CFLAGS) $(OBJS) -ltcc -ldl -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
 
 lex.o:	lex.yy.c
 		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o
@@ -111,6 +111,9 @@ queue.o:	queue.c
 hashtable.o:	hashtable.c
 		$(CC) $(CFLAGS) -c hashtable.c -o hashtable.o
 
+native_compiler.o:	native_compiler.c
+		$(CC) $(CFLAGS) -c native_compiler.c -o native_compiler.o
+
 test_so.o:	test_so.c
 		$(CC) -c test_so.c -o test_so.o
 
@@ -137,6 +140,7 @@ json.o		: json.h
 
 hashtable.o	: hashtable.h
 
+native_compiler.o	: plisp.h
 clean:
 	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h json.lex.yy.c json_parser.tab.h json_parser.tab.c plisp.output json_parser.output plisp.exe libplisp.so libtest.so *.stackdump
 

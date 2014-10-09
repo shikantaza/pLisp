@@ -123,6 +123,8 @@ typedef struct profiling_datum
   double elapsed_cpu_time;
 } profiling_datum_t;
 
+typedef void (*cmpfn)();
+
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);
