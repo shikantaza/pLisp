@@ -29,16 +29,6 @@
 
 #include "hashtable.h"
 
-#define DEFAULT_DEBUG_WINDOW_POSX 650
-#define DEFAULT_DEBUG_WINDOW_POSY 200
-#define DEFAULT_DEBUG_WINDOW_WIDTH 600
-#define DEFAULT_DEBUG_WINDOW_HEIGHT 400
-
-#define DEFAULT_PROFILER_WINDOW_POSX 650
-#define DEFAULT_PROFILER_WINDOW_POSY 200
-#define DEFAULT_PROFILER_WINDOW_WIDTH 600
-#define DEFAULT_PROFILER_WINDOW_HEIGHT 400
-
 //#include "util.h"
 double get_wall_time();
 
@@ -231,6 +221,8 @@ extern void frame(OBJECT_PTR);
 extern void argument();
 extern void return_op();
 extern void bind_formal_parameters(OBJECT_PTR);
+
+extern void break1();
 
 extern cmpfn compile_function(OBJECT_PTR, char *);
 
@@ -2017,21 +2009,22 @@ void eval(BOOLEAN do_gc)
       }
       else if(operator == BREAK)
       {
-        in_break = true;
+/*         in_break = true; */
 
-        debug_mode = true;
-        debug_continuation = create_current_continuation();
-        debug_env = reg_current_env;
-        reg_next_expression = NIL;
+/*         debug_mode = true; */
+/*         debug_continuation = create_current_continuation(); */
+/*         debug_env = reg_current_env; */
+/*         reg_next_expression = NIL; */
 
-        debug_execution_stack = reg_current_stack;
+/*         debug_execution_stack = reg_current_stack; */
 
-#ifdef GUI
-        create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-                            DEFAULT_DEBUG_WINDOW_POSY,
-                            DEFAULT_DEBUG_WINDOW_WIDTH,
-                            DEFAULT_DEBUG_WINDOW_HEIGHT);
-#endif
+/* #ifdef GUI */
+/*         create_debug_window(DEFAULT_DEBUG_WINDOW_POSX, */
+/*                             DEFAULT_DEBUG_WINDOW_POSY, */
+/*                             DEFAULT_DEBUG_WINDOW_WIDTH, */
+/*                             DEFAULT_DEBUG_WINDOW_HEIGHT); */
+/* #endif */
+	break1();
       }
       else if(operator == RESUME)
       {

@@ -36,6 +36,8 @@ extern OBJECT_PTR ADD;
 extern OBJECT_PTR SUB;
 extern OBJECT_PTR EQ;
 
+extern OBJECT_PTR BREAK;
+
 extern OBJECT_PTR top_level_env;
 
 extern OBJECT_PTR reg_accumulator;
@@ -48,6 +50,10 @@ extern OBJECT_PTR continuations_map;
 
 extern OBJECT_PTR debug_env;
 extern BOOLEAN debug_mode;
+extern OBJECT_PTR debug_continuation;
+extern OBJECT_PTR debug_execution_stack;
+
+extern BOOLEAN in_break;
 
 extern unsigned int current_package;
 extern package_t *packages;
@@ -411,6 +417,25 @@ void bind_formal_parameters(fn_macro_obj)
   reg_current_value_rib = NIL;
 }
 
+void break1()
+{
+  in_break = true;
+
+  debug_mode = true;
+  debug_continuation = create_current_continuation();
+  debug_env = reg_current_env;
+  reg_next_expression = NIL;
+
+  debug_execution_stack = reg_current_stack;
+
+#ifdef GUI
+  create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+		      DEFAULT_DEBUG_WINDOW_POSY,
+		      DEFAULT_DEBUG_WINDOW_WIDTH,
+		      DEFAULT_DEBUG_WINDOW_HEIGHT);
+#endif
+}
+
 unsigned int compile_to_c(OBJECT_PTR exp, 
 			  char *buf, 
 			  unsigned int filled_len, 
@@ -457,6 +482,17 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
+	}
+	else if(CADR(exp) == BREAK)
+        {
+	  //not handling BREAK statements in compiled code for now
+	  /* len += sprintf(buf+filled_len+len, "break1();\n"); */
+	  /* temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures); */
+	  /* if(temp == -1) */
+	  /*   return -1; */
+	  /* len += temp; */
+	  sprintf(err_buf, "Function contains BREAK expressions. Please remove them");
+	  return -1;
 	}
 	//TODO: other special operators
 	else //it's a user-defined closure object
@@ -571,7 +607,7 @@ unsigned int compile_to_c(OBJECT_PTR exp,
   else if(car_exp == ASSIGN)
   {
     len += sprintf(buf+filled_len+len, "if(assign(%d))\n  return 1;\n",CADR(exp));
-    temp = compile_to_c(CADDR(exp), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+    temp = compile_to_c(car(CADDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -647,6 +683,8 @@ TCCState *create_tcc_state()
   tcc_add_symbol(tcc_state, "return_op",              return_op);
   tcc_add_symbol(tcc_state, "halt_op",                halt_op);
   tcc_add_symbol(tcc_state, "bind_formal_parameters", bind_formal_parameters);
+
+  tcc_add_symbol(tcc_state, "break1",                 break1);
 
   if(!tcc_states)
   {
