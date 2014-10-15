@@ -23,6 +23,7 @@ extern OBJECT_PTR CONSTANT;
 extern OBJECT_PTR CLOSE;
 extern OBJECT_PTR MACRO;
 extern OBJECT_PTR TEST;
+
 extern OBJECT_PTR ASSIGN;
 extern OBJECT_PTR CONTI;
 extern OBJECT_PTR FRAME;
@@ -37,6 +38,39 @@ extern OBJECT_PTR SUB;
 extern OBJECT_PTR EQ;
 
 extern OBJECT_PTR BREAK;
+extern OBJECT_PTR CONS;
+
+extern OBJECT_PTR NEQ;
+extern OBJECT_PTR NOT;
+extern OBJECT_PTR ATOM;
+extern OBJECT_PTR CAR;
+extern OBJECT_PTR CDR;
+extern OBJECT_PTR MULT;
+extern OBJECT_PTR DIV;
+extern OBJECT_PTR ERROR;
+extern OBJECT_PTR PRINT;
+extern OBJECT_PTR NEWLINE;
+
+extern OBJECT_PTR LST;
+extern OBJECT_PTR BACKQUOTE;
+extern OBJECT_PTR LISTP;
+extern OBJECT_PTR SYMBOL_VALUE;
+extern OBJECT_PTR GT;
+extern OBJECT_PTR LT;
+extern OBJECT_PTR LEQ;
+extern OBJECT_PTR GEQ;
+extern OBJECT_PTR GENSYM;
+extern OBJECT_PTR SETCAR;
+
+extern OBJECT_PTR SETCDR;
+extern OBJECT_PTR CREATE_PACKAGE;
+extern OBJECT_PTR IN_PACKAGE;
+extern OBJECT_PTR EXPAND_MACRO;
+extern OBJECT_PTR STRING;
+extern OBJECT_PTR MAKE_ARRAY;
+extern OBJECT_PTR ARRAY_SET;
+extern OBJECT_PTR ARRAY_GET;
+extern OBJECT_PTR SUB_ARRAY;
 
 extern OBJECT_PTR top_level_env;
 
@@ -59,6 +93,7 @@ extern unsigned int current_package;
 extern package_t *packages;
 
 extern OBJECT_PTR CONS_RETURN_NIL;
+extern OBJECT_PTR CONS_APPLY_NIL;
 
 extern OBJECT_PTR TRUE;
 
@@ -68,6 +103,10 @@ extern OBJECT_PTR first(OBJECT_PTR);
 extern OBJECT_PTR second(OBJECT_PTR);
 extern OBJECT_PTR third(OBJECT_PTR);
 extern OBJECT_PTR fourth(OBJECT_PTR);
+
+extern char **strings;
+
+extern BOOLEAN in_error;
 
 TCCState **tcc_states = NULL;
 unsigned int nof_tcc_states = 0;
@@ -359,6 +398,7 @@ int eq()
 
   reg_accumulator = equal(v1, v2) ? TRUE : NIL;
   reg_current_value_rib = NIL;
+
   reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
 
   return 0;
@@ -436,6 +476,1085 @@ void break1()
 #endif
 }
 
+unsigned int cons_compiled()
+{
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "CONS expects two arguments");
+    return 1;
+  }
+
+  reg_accumulator = cons(car(reg_current_value_rib), CADR(reg_current_value_rib));
+  reg_current_value_rib = NIL;
+
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int neq()
+{
+  OBJECT_PTR v1, v2;
+
+  if(length(reg_current_value_rib) != 2)
+    {
+      throw_exception("ARG-MISMATCH", "NEQ expects two arguments");
+      return 1;
+    }
+
+  v1 = car(reg_current_value_rib);
+  v2 = CADR(reg_current_value_rib);
+
+  reg_accumulator = equal(v1, v2) ? NIL : TRUE;
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int not()
+{
+  OBJECT_PTR v;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "NOT expects one argument");
+    return 1;
+  }
+
+  v = car(reg_current_value_rib);
+
+  reg_accumulator = (v == NIL) ? TRUE : NIL;
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int atom()
+{
+  OBJECT_PTR v;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_generic_exception("ATOM expects one argument");
+    return 1;
+  }
+
+  v = car(reg_current_value_rib);
+
+  reg_accumulator = is_atom(v) ? TRUE : NIL;
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int car_compiled()
+{
+  OBJECT_PTR car_obj;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("NOT-A-CONS", "CAR expects one argument, a CONS object");
+    return 1;
+  }
+
+  car_obj = car(reg_current_value_rib);
+        
+  if(car_obj == NIL)
+    reg_accumulator = NIL;
+  else
+  {
+    if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
+    {
+      throw_exception("NOT-A-CONS", "Argument to CAR should be a CONS object");
+      return 1;
+    }
+    reg_accumulator = CAAR(reg_current_value_rib);
+  }
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int cdr_compiled()
+{
+  OBJECT_PTR car_obj;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("NOT-A-CONS", "CDR expects one argument, a CONS object");
+    return 1;
+  }
+
+  car_obj = car(reg_current_value_rib);
+        
+  if(car_obj == NIL)
+    reg_accumulator = NIL;
+  else
+  {
+    if(!IS_CONS_OBJECT(car(reg_current_value_rib)))
+    {
+      throw_exception("NOT-A-CONS", "Argument to CDR should be a CONS object");
+      return 1;
+    }
+
+    reg_accumulator = CDAR(reg_current_value_rib);
+  }
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));   
+
+  return 0;
+}
+
+unsigned int mult()
+{
+  float sum = 1;
+  OBJECT_PTR rest = reg_current_value_rib;
+  BOOLEAN is_float = false;
+
+  if(length(reg_current_value_rib) < 2)
+  {
+    throw_exception("ARG-MISMATCH", "Operator '*' requires at least two arguments");
+    return 1;
+  }
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR val = car(rest);
+
+    if(IS_FLOAT_OBJECT(val))
+    {
+      is_float = true;
+      sum *= get_float_value(val);
+    }
+    else if(IS_INTEGER_OBJECT(val))
+      sum *= get_int_value(val);
+    else
+    {
+      throw_exception("INVALID-ARGUMENT", "Argument to operator '*' should be a number");
+      return 1;
+    }
+
+    rest = cdr(rest);
+  }
+
+  if(is_float)
+    reg_accumulator = convert_float_to_object(sum);
+  else
+    reg_accumulator = convert_int_to_object((int)sum);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
+
+  return 0;
+}
+
+unsigned int div_compiled()
+{
+  float val;
+  BOOLEAN is_float = false;
+
+  OBJECT_PTR first;        
+  OBJECT_PTR rest;
+
+  float sum = 1;
+
+  if(length(reg_current_value_rib) < 2)
+  {
+    throw_exception("ARG-MISMATCH", "Operator '/' requires at least two arguments");
+    return 1;
+  }
+
+  first = car(reg_current_value_rib);
+
+  if(IS_FLOAT_OBJECT(first))
+  {
+    is_float = true;
+    val = get_float_value(first);
+  }
+  else if(IS_INTEGER_OBJECT(first))
+    val = get_int_value(first);
+  else
+  {
+    throw_exception("INVALID-ARGUMENT", "Argument to operator '/' should be a number");
+    return 1;
+  }
+
+  rest = cdr(reg_current_value_rib);
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR val = car(rest);
+
+    if(IS_FLOAT_OBJECT(val))
+    {
+      is_float = true;
+      sum *= get_float_value(val);
+    }
+    else if(IS_INTEGER_OBJECT(val))
+      sum *= get_int_value(val);
+    else
+    {
+      throw_exception("INVALID-ARGUMENT", "Argument to operator '/' should be a number");
+      return 1;
+    }
+
+      rest = cdr(rest);
+  }
+
+  if(sum == 0)
+  {
+    throw_exception("DIV-BY-ZERO-EXCEPTION", "Division by zero");
+    return 1;
+  }
+
+  if(is_float)
+    reg_accumulator = convert_float_to_object(val / sum);
+  else
+    reg_accumulator = convert_int_to_object((int)(val / sum));
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));   
+
+  return 0;
+}
+
+unsigned int error()
+{
+  OBJECT_PTR error_string_obj = car(reg_current_value_rib);
+
+  if(IS_STRING_LITERAL_OBJECT(error_string_obj))
+    raise_error(strdup(strings[(int)error_string_obj >> OBJECT_SHIFT]));
+  else if(is_string_object(error_string_obj))
+  {
+    char msg[500];
+
+    uintptr_t ptr = error_string_obj & POINTER_MASK;
+
+    //int len = get_int_value(get_heap(ptr, 0));
+    int len = *((unsigned int *)ptr);
+
+    int i;
+
+    memset(msg, '\0', 500);
+
+    for(i=1; i <= len; i++)
+      msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
+
+    raise_error(msg);
+  }
+
+  return 0;
+}
+
+unsigned int print()
+{
+  print_object(car(reg_current_value_rib));
+#ifdef GUI
+  print_to_transcript("\n");
+#else
+  fprintf(stdout, "\n");
+#endif
+  reg_accumulator = car(reg_current_value_rib);
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int newline()
+{
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
+    return;
+  }
+
+  if(car(reg_current_value_rib) != NIL && !IS_INTEGER_OBJECT(car(reg_current_value_rib)))
+  {
+    throw_exception("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
+    return;
+  }
+
+  if(car(reg_current_value_rib) != NIL)
+  {
+    fprintf((FILE *)get_int_value(car(reg_current_value_rib)), "\n");
+  }
+  else
+  {
+#ifdef GUI
+    print_to_transcript("\n");
+#else
+    fprintf(stdout, "\n");
+#endif
+  }
+
+  reg_accumulator = NIL;
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int lst()
+{
+  OBJECT_PTR rest = reg_current_value_rib;
+
+  reg_accumulator = NIL;
+
+  while(rest != NIL)
+  {
+    if(reg_accumulator == NIL)
+      reg_accumulator = cons(car(rest), NIL);
+    else
+    {
+      uintptr_t ptr = last_cell(reg_accumulator) & POINTER_MASK;
+      set_heap(ptr, 1, 
+	       cons(car(rest), NIL));         
+    }
+
+    rest = cdr(rest);
+  }
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int backquote()
+{
+  reg_accumulator = eval_backquote(car(reg_current_value_rib));
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int listp()
+{
+  OBJECT_PTR arg;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "LISTP requires exactly one argument");
+    return 1;
+  }
+
+  arg = car(reg_current_value_rib);
+
+  if(arg == NIL)
+    reg_accumulator = TRUE;
+  else
+    reg_accumulator = IS_CONS_OBJECT(arg) ? TRUE : NIL;
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int symbol_value()
+{
+  OBJECT_PTR sym, res;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "SYMBOL-VALUE requires exactly one argument");
+    return 1;
+  }
+
+  sym = car(reg_current_value_rib);
+
+  if(!IS_SYMBOL_OBJECT(sym))
+  {
+    throw_exception("INVALID-ARGUMENT", "Argument to SYMBOL-VALUE should be a symbol object");
+    return 1;
+  }
+
+  res = get_symbol_value(sym, reg_current_env);
+
+  if(car(res) == NIL)
+  {
+    throw_exception("SYMBOL-NOT-BOUND", "Symbol not bound");
+    return 1;
+  }
+
+  reg_accumulator = cdr(res);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int gt()
+{
+  OBJECT_PTR v1, v2;
+  float val1, val2;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "> requires exactly two arguments");
+    return 1;
+  }
+
+  v1 = car(reg_current_value_rib);
+  v2 = CADR(reg_current_value_rib);
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Arguments to > should be numbers (integer or float)");
+    return 1;
+  }
+
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  reg_accumulator = (val1 > val2) ? TRUE : NIL;        
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int lt()
+{
+  OBJECT_PTR v1, v2;
+  float val1, val2;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "< requires exactly two arguments");
+    return 1;
+  }
+
+  v1 = car(reg_current_value_rib);
+  v2 = CADR(reg_current_value_rib);
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Arguments to < should be numbers (integer or float)");
+    return 1;
+  }
+ 
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  reg_accumulator = (val1 < val2) ? TRUE : NIL;        
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int leq()
+{
+  OBJECT_PTR v1, v2;
+  float val1, val2;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "<= requires exactly two arguments");
+    return 1;
+  }
+
+  v1 = car(reg_current_value_rib);
+  v2 = CADR(reg_current_value_rib);
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Arguments to <= should be numbers (integer or float)");
+    return 1;
+  }
+	  
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  reg_accumulator = (val1 <= val2) ? TRUE : NIL;        
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int geq()
+{
+  OBJECT_PTR v1, v2;
+  float val1, val2;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", ">= requires exactly two arguments");
+    return 1;
+  }
+
+  v1 = car(reg_current_value_rib);
+  v2 = CADR(reg_current_value_rib);
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Arguments to >= should be numbers (integer or float)");
+    return 1;
+  }
+ 
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  reg_accumulator = (val1 >= val2) ? TRUE : NIL;        
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int gensym_compiled()
+{
+  if(reg_current_value_rib != NIL)
+  {
+    throw_exception("ARG-MISMATCH", "GEMSYM requires no argument");
+    return 1;
+  }
+
+  reg_accumulator = gensym();
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int setcar()
+{
+  OBJECT_PTR car_obj;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "SETCAR requires two arguments");
+    return 1;
+  }
+
+  car_obj = car(reg_current_value_rib);
+
+  if((!(IS_CONS_OBJECT(car_obj))))
+  {
+    throw_exception("ARG-MISMATCH", "First argument to SETCAR should be a CONS object");
+    return 1;
+  }
+
+  set_heap(car_obj & POINTER_MASK, 0, CADR(reg_current_value_rib));
+
+  reg_accumulator = CADR(reg_current_value_rib);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int setcdr()
+{
+  OBJECT_PTR car_obj;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "SETCDR requires two arguments");
+    return 1;
+  }
+
+  car_obj = car(reg_current_value_rib);
+
+  if((!(IS_CONS_OBJECT(car_obj))))
+  {
+    throw_exception("ARG-MISMATCH", "First argument to SETCDR should be a CONS object");
+    return 1;
+  }
+
+  set_heap(car_obj & POINTER_MASK, 1, CADR(reg_current_value_rib));
+
+  reg_accumulator = CADR(reg_current_value_rib);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int create_package_compiled()
+{
+  OBJECT_PTR package;
+  char *package_name;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "CREATE-PACKAGE requires exactly one argument");
+    return 1;
+  }
+
+  package = car(reg_current_value_rib);
+
+  if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
+  {
+    throw_exception("INVALID-ARGUMENT", "CREATE-PACKAGE requires a string object or string literal as its argument");
+    return 1;
+  }
+
+  package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
+
+  /* if(!strcmp(package_name,"CORE")) */
+  /* { */
+  /*   throw_exception("CORE-PACKAGE-EXISTS", "Core package already exists"); */
+  /*   return 1; */
+  /* } */
+
+  if(find_package(package_name) != NOT_FOUND)
+  {
+    throw_exception("PACKAGE-ALREADY-EXISTS", "Package already exists");
+    return 1;
+  }
+
+  create_package(package_name);
+
+  reg_accumulator = package;
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int in_package()
+{
+  OBJECT_PTR package;
+  char *package_name;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "IN-PACKAGE requires exactly one argument");
+    return 1;
+  }
+
+  package = car(reg_current_value_rib);
+
+  if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
+  {
+    throw_exception("INVALID-ARGUMENT", "IN-PACKAGE requires a string object or string literal as its argument");
+    return 1;
+  }
+
+  package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
+
+  if(!strcmp(package_name,"CORE"))
+  {
+    throw_exception("ACCESS-VIOLATION","Core package cannot be updated");
+    return 1;
+  }
+  else
+  {
+    int index = find_package(package_name);
+    if(index == NOT_FOUND)
+    {
+      throw_exception("PACKAGE-NOT-FOUND", "Package does not exist");
+      return 1;
+    }
+    else
+    {
+      current_package = index;
+      reg_accumulator = NIL;
+    }
+  }
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int expand_macro()
+{
+  OBJECT_PTR macro_body, res;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "EXPAND-MACRO requires exactly one argument");
+    return 1;
+  }
+
+  macro_body = car(reg_current_value_rib);
+
+  if(!IS_CONS_OBJECT(macro_body))
+  {
+    throw_exception("INVALID-ARGUMENT", "EXPAND-MACRO requires a CONS form as argument");
+    return 1;
+  }
+
+  res = get_symbol_value(car(macro_body), reg_current_env);
+
+  if(car(res) == NIL)
+  {
+    throw_exception("MACRO-UNDEFINED", "Macro undefined");
+    return 1;
+  }
+  else
+  {
+    OBJECT_PTR obj = cdr(res);
+    OBJECT_PTR args = cdr(macro_body);
+
+    /* reg_next_expression = cons(cons(FRAME, */
+    /*                                 (cons(cons(cons(HALT, NIL), car(macro_body)), */
+    /*                                       cons(cons(cons(APPLY, NIL), car(macro_body)), */
+    /*                                            NIL)))), */
+    /*                            car(macro_body)); */
+
+    /* eval(false); */
+    /* if(in_error) */
+    /*   return 1; */
+
+    reg_current_value_rib = NIL;
+
+    //build the value rib
+    while(args != NIL)
+    {
+      if(reg_current_value_rib == NIL)
+	reg_current_value_rib = cons(car(args), NIL);
+      else
+      {
+	uintptr_t ptr = last_cell(reg_current_value_rib) & POINTER_MASK;
+	set_heap(ptr, 1, 
+		 cons(car(args), NIL));         
+      }
+      args = cdr(args);
+    }
+
+    //place the macro object in the accumulator (to invoke APPLY)
+    reg_accumulator = obj;
+    reg_next_expression = cons(CONS_APPLY_NIL, car(macro_body));
+          
+    //evaluate the macro invocation
+    while(car(reg_next_expression) != NIL)
+    {
+      eval(false);
+      if(in_error)
+	return;
+    }
+  }        
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int apply()
+{
+  OBJECT_PTR obj, args;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "APPLY requires exactly two arguments");
+    return 1;
+  }        
+
+  obj = car(reg_current_value_rib);
+
+  if((!(IS_SYMBOL_OBJECT(obj))) &&
+     (!(IS_CLOSURE_OBJECT(obj)))     &&
+     (!(IS_CONTINUATION_OBJECT(obj))))
+  {
+    throw_exception("INVALID-ARGUMENT", "First argument to APPLY should be a special form, a closure or a continuation");
+    return 1;
+  }
+
+  args = CADR(reg_current_value_rib);
+
+  if(args != NIL && (!(IS_CONS_OBJECT(args))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Second argument to APPLY should be a list of arguments");
+    return 1;
+  }
+
+  reg_accumulator = obj;
+  reg_current_value_rib = args;
+
+  reg_next_expression = cons(CONS_APPLY_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int string()
+{
+  OBJECT_PTR string_literal;
+
+  if(length(reg_current_value_rib) != 1)
+  {
+    throw_exception("ARG-MISMATCH", "STRING requires exactly one argument, a literal string");
+    return 1;
+  }        
+
+  string_literal = car(reg_current_value_rib);
+
+  if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Argument to STRING should be a literal string");
+    return 1;
+  }        
+ 
+  reg_accumulator = eval_string(string_literal);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int make_array()
+{
+  int len = length(reg_current_value_rib);
+  OBJECT_PTR size;
+
+  if((len != 1) && (len != 2))
+  {
+    throw_exception("ARG-MISMATCH", "MAKE-ARRAY requires the size as the first parameter, and optionally, the default value as the second");
+    return 1;
+  }        
+        
+  size = car(reg_current_value_rib);
+
+  if((!(IS_INTEGER_OBJECT(size))))
+  {
+    throw_exception("INVALID-ARGUMENT", "First argument to MAKE-ARRAY should be the size of the array (integer)");
+    return 1;
+  }        
+
+  reg_accumulator = eval_make_array(size, CADR(reg_current_value_rib));
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int array_set()
+{
+  OBJECT_PTR array_obj, idx;
+  uintptr_t ptr;
+  int array_len, index;
+
+  if(length(reg_current_value_rib) != 3)
+  {
+    throw_exception("ARG-MISMATCH", "ARRAY-SET requires exactly three arguments");
+    return 1;
+  }        
+
+  array_obj = car(reg_current_value_rib);
+
+  ptr = array_obj & POINTER_MASK;
+
+  if((!(IS_ARRAY_OBJECT(array_obj))))
+  {
+    throw_exception("INVALID-ARGUMENT", "First argument to ARRAY-SET should be an array");
+    return 1;
+  }        
+
+  idx = CADR(reg_current_value_rib);
+
+  if((!(IS_INTEGER_OBJECT(idx))))
+  {
+    throw_exception("INVALID-ARGUMENT", "Second argument to ARRAY-SET should be an integer (index into the array)");
+    return 1;
+  }        
+
+  //array_len = get_int_value(get_heap(ptr, 0));
+  array_len = *((unsigned int *)ptr);
+
+  index = get_int_value(idx);
+
+  if(index < 0 || (index >= array_len))
+  {
+    throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
+    return 1;
+  }        
+ 
+  set_heap(ptr, index + 1, CADDR(reg_current_value_rib));
+
+  reg_accumulator = CADDR(reg_current_value_rib);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int array_get()
+{
+  OBJECT_PTR array_obj, idx;
+  uintptr_t ptr;
+  int index;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "ARRAY-GET requires exactly two arguments");
+    return 1;
+  }        
+
+  array_obj = car(reg_current_value_rib);
+  ptr = array_obj & POINTER_MASK;
+
+  idx = CADR(reg_current_value_rib);
+
+  if(!IS_INTEGER_OBJECT(idx))
+  {
+    throw_exception("INVALID-ARGUMENT", "Second argument to ARRAY-GET should be an integer (index into the array)");
+    return 1;
+  }        
+
+  index = get_int_value(idx);
+
+  if(IS_STRING_LITERAL_OBJECT(array_obj))
+  {
+    char *str = strings[(int)array_obj >> OBJECT_SHIFT];
+
+    if(index < 0 || index >= strlen(str))
+    {
+      throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
+      return 1;
+    }        
+
+    reg_accumulator = (OBJECT_PTR)((str[index] << OBJECT_SHIFT) + CHAR_TAG);
+  }
+  else
+  {
+    int array_len;
+
+    if(!IS_ARRAY_OBJECT(array_obj))
+    {
+      throw_exception("INVALID-ARGUMENT", "First argument to ARRAY-GET should be an array");
+      return 1;
+    }        
+
+    //array_len = get_int_value(get_heap(ptr, 0));
+    array_len = *((unsigned int *)ptr);
+
+    if(index < 0 || (index >= array_len))
+    {
+      throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
+      return 1;
+    }        
+
+    reg_accumulator = get_heap(ptr, index + 1);
+  }
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
+unsigned int sub_array()
+{
+  OBJECT_PTR array, start, array_length;
+
+  int len;
+
+  if(length(reg_current_value_rib) != 3)
+  {
+    throw_exception("ARG-MISMATCH", "SUB-ARRAY requires exactly three arguments");
+    return 1;
+  }        
+
+  array = car(reg_current_value_rib);
+
+  if(!(IS_ARRAY_OBJECT(array)))
+  {
+    throw_exception("INVALID-ARGUMENT", "First argument to SUB-ARRAY should be an ARRAY object");
+    return 1;
+  }
+
+  start = CADR(reg_current_value_rib);
+
+  if(!(IS_INTEGER_OBJECT(start)))
+  {
+    throw_exception("INVALID-ARGUMENT", "Second argument to SUB-ARRAY should be an integer (start index)");
+    return 1;
+  }
+
+  if(!(get_int_value(start) >= 0))
+  {
+    throw_exception("INVALID-ARGUMENT", "Second argument to SUB-ARRAY should be a non-negative integer");
+    return 1;
+  }
+
+  array_length = CADDR(reg_current_value_rib);
+
+  if(!(IS_INTEGER_OBJECT(array_length)))
+  {
+    throw_exception("INVALID-ARGUMENT", "Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
+    return 1;
+  }
+
+  if(!(get_int_value(array_length) >= 0))
+  {
+    throw_exception("INVALID-ARGUMENT", "Third argument to SUB-ARRAY should be a non-negative integer");
+    return 1;
+  }
+
+  len = *((unsigned int *)(array & POINTER_MASK));
+
+  if((get_int_value(start) + get_int_value(array_length)) > len)
+  {
+    throw_exception("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
+    return 1;
+  }
+
+  reg_accumulator = eval_sub_array(array, start, array_length);
+
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
 unsigned int compile_to_c(OBJECT_PTR exp, 
 			  char *buf, 
 			  unsigned int filled_len, 
@@ -494,6 +1613,257 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	  sprintf(err_buf, "Function contains BREAK expressions. Please remove them");
 	  return -1;
 	}
+	else if(CADR(exp) == CONS)
+        {
+	  len += sprintf(buf+filled_len+len, "if(cons_compiled())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+
+	else if(CADR(exp) == NEQ)
+        {
+	  len += sprintf(buf+filled_len+len, "if(neq())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == NOT)
+        {
+	  len += sprintf(buf+filled_len+len, "if(not())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == ATOM)
+        {
+	  len += sprintf(buf+filled_len+len, "if(atom())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == CAR)
+        {
+	  len += sprintf(buf+filled_len+len, "if(car_compiled())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == CDR)
+        {
+	  len += sprintf(buf+filled_len+len, "if(cdr_compiled())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == MULT)
+        {
+	  len += sprintf(buf+filled_len+len, "if(mult())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == DIV)
+        {
+	  len += sprintf(buf+filled_len+len, "if(div_compiled())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == ERROR)
+        {
+	  len += sprintf(buf+filled_len+len, "if(error())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == PRINT)
+        {
+	  len += sprintf(buf+filled_len+len, "if(print())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == NEWLINE)
+        {
+	  len += sprintf(buf+filled_len+len, "if(newline())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == LST)
+        {
+	  len += sprintf(buf+filled_len+len, "if(lst())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == BACKQUOTE)
+        {
+	  len += sprintf(buf+filled_len+len, "if(backquote())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == LISTP)
+        {
+	  len += sprintf(buf+filled_len+len, "if(listp())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == SYMBOL_VALUE)
+        {
+	  len += sprintf(buf+filled_len+len, "if(symbol_value())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == GT)
+        {
+	  len += sprintf(buf+filled_len+len, "if(gt())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == LT)
+        {
+	  len += sprintf(buf+filled_len+len, "if(lt())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == LEQ)
+        {
+	  len += sprintf(buf+filled_len+len, "if(leq())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == GEQ)
+        {
+	  len += sprintf(buf+filled_len+len, "if(geq())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == GENSYM)
+        {
+	  len += sprintf(buf+filled_len+len, "if(gensym_compiled())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == SETCAR)
+        {
+	  len += sprintf(buf+filled_len+len, "if(setcar())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == SETCDR)
+        {
+	  len += sprintf(buf+filled_len+len, "if(setcdr())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == CREATE_PACKAGE)
+        {
+	  len += sprintf(buf+filled_len+len, "if(create_package_compiled())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == IN_PACKAGE)
+        {
+	  len += sprintf(buf+filled_len+len, "if(in_package())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == EXPAND_MACRO)
+        {
+	  len += sprintf(buf+filled_len+len, "if(expand_macro())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == APPLY)
+        {
+	  len += sprintf(buf+filled_len+len, "if(apply())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == STRING)
+        {
+	  len += sprintf(buf+filled_len+len, "if(string())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == MAKE_ARRAY)
+        {
+	  len += sprintf(buf+filled_len+len, "if(make_array())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == ARRAY_SET)
+        {
+	  len += sprintf(buf+filled_len+len, "if(array_set())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == ARRAY_GET)
+        {
+	  len += sprintf(buf+filled_len+len, "if(array_get())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+	else if(CADR(exp) == SUB_ARRAY)
+        {
+	  len += sprintf(buf+filled_len+len, "if(sub_array())\n  return 1;\n");
+	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	}
+
+
 	//TODO: other special operators
 	else //it's a user-defined closure object
         {
@@ -685,6 +2055,40 @@ TCCState *create_tcc_state()
   tcc_add_symbol(tcc_state, "bind_formal_parameters", bind_formal_parameters);
 
   tcc_add_symbol(tcc_state, "break1",                 break1);
+  tcc_add_symbol(tcc_state, "cons_compiled",          cons_compiled);
+
+  tcc_add_symbol(tcc_state, "neq",                     neq);
+  tcc_add_symbol(tcc_state, "not",                     not);
+  tcc_add_symbol(tcc_state, "atom",                    atom);
+  tcc_add_symbol(tcc_state, "car_compiled",            car_compiled);
+  tcc_add_symbol(tcc_state, "cdr_compiled",            cdr_compiled);
+  tcc_add_symbol(tcc_state, "mult",                    mult);
+  tcc_add_symbol(tcc_state, "div_compiled",            div_compiled);
+  tcc_add_symbol(tcc_state, "error",                   error);
+  tcc_add_symbol(tcc_state, "print",                   print);
+  tcc_add_symbol(tcc_state, "newline",                 newline);
+
+  tcc_add_symbol(tcc_state, "lst",                     lst);
+  tcc_add_symbol(tcc_state, "backquote",               backquote);
+  tcc_add_symbol(tcc_state, "listp",                   listp);
+  tcc_add_symbol(tcc_state, "symbol_value",            symbol_value);
+  tcc_add_symbol(tcc_state, "gt",                      gt);
+  tcc_add_symbol(tcc_state, "lt",                      lt);
+  tcc_add_symbol(tcc_state, "leq",                     leq);
+  tcc_add_symbol(tcc_state, "geq",                     geq);
+  tcc_add_symbol(tcc_state, "gensym_compiled",         gensym_compiled);
+  tcc_add_symbol(tcc_state, "setcar",                  setcar);
+
+  tcc_add_symbol(tcc_state, "setcdr",                  setcdr);
+  tcc_add_symbol(tcc_state, "create_package_compiled", create_package_compiled);
+  tcc_add_symbol(tcc_state, "in_package",              in_package);
+  tcc_add_symbol(tcc_state, "expand_macro",            expand_macro);
+  tcc_add_symbol(tcc_state, "apply",                   apply);
+  tcc_add_symbol(tcc_state, "string",                  string);
+  tcc_add_symbol(tcc_state, "make_array",              make_array);
+  tcc_add_symbol(tcc_state, "array_set",               array_set);
+  tcc_add_symbol(tcc_state, "array_get",               array_get);
+  tcc_add_symbol(tcc_state, "sub_array",               sub_array);
 
   if(!tcc_states)
   {
