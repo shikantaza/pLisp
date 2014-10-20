@@ -258,6 +258,43 @@ extern unsigned int array_set();
 extern unsigned int array_get();
 extern unsigned int sub_array();
 
+extern unsigned int array_length();
+extern unsigned int print_string_compiled();
+extern unsigned int create_image_compiled();
+extern unsigned int load_foreign_library_compiled();
+extern unsigned int call_foreign_function_compiled();
+extern unsigned int env();
+extern unsigned int eval_compiled();
+extern unsigned int time_compiled();
+extern unsigned int profile();
+extern unsigned int resume_compiled();
+
+extern unsigned int backtrace();
+extern unsigned int load_file();
+extern unsigned int consp();
+extern unsigned int integerp();
+extern unsigned int floatp();
+extern unsigned int characterp();
+extern unsigned int symbolp();
+extern unsigned int stringp();
+extern unsigned int arrayp();
+extern unsigned int closurep();
+
+extern unsigned int macrop();
+extern unsigned int continuationp();
+extern unsigned int lambda_expression();
+extern unsigned int format_compiled();
+extern unsigned int clone();
+extern unsigned int return_from();
+extern unsigned int compile_compiled();
+extern unsigned int symbl();
+extern unsigned int symbol_name();
+extern unsigned int unbind();
+extern unsigned int abort_compiled();
+extern unsigned int save_object();
+extern unsigned int load_object();
+extern unsigned int compilefn();
+
 extern cmpfn compile_function(OBJECT_PTR, char *);
 
 extern hashtable_t *native_functions;
@@ -642,1133 +679,143 @@ void eval(BOOLEAN do_gc)
       }
       else if(operator == ARRAY_LENGTH)
       {
-        OBJECT_PTR array;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "ARRAY-LENGTH requires exactly one argument, an array object");
-          return;
-        }        
-
-        array = car(reg_current_value_rib);
-
-        if(array == NIL)
-        {
-          reg_accumulator = convert_int_to_object(0);
-          reg_current_value_rib = NIL;
-          reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
-          return;
-        }
-
-        if(IS_STRING_LITERAL_OBJECT(array))
-          reg_accumulator = convert_int_to_object(strlen(strings[(int)array >> OBJECT_SHIFT]));
-        else
-        {
-          if(!(IS_ARRAY_OBJECT(array)))
-          {
-            throw_exception("INVALID-ARGUMENT", "Argument to ARRAY-LENGTH should be an ARRAY object");
-            return;
-          }
-
-          //reg_accumulator = get_heap(array & POINTER_MASK, 0);
-          reg_accumulator = convert_int_to_object(*((unsigned int *)(array & POINTER_MASK)));
-        }
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	array_length();
       }
       else if(operator == PRINT_STRING)
       {
-        OBJECT_PTR str;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "PRINT-STRING requires exactly one argument, a string object");
-          return;
-        }        
-
-        str = car(reg_current_value_rib);
-
-        if(!(is_string_object(str)) && (!(IS_STRING_LITERAL_OBJECT(str))))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to PRINT_STRING should be a string object");
-          return;
-        }
-
-        print_object(str);
-        fprintf(stdout, "\n");
-
-        reg_accumulator = NIL;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	print_string_compiled();
       }
       else if(operator == CREATE_IMAGE)
       {
-        OBJECT_PTR file_name;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "CREATE-IMAGE requires exactly one argument, a string object denoting the file name of the image");
-          return;
-        }        
-
-        file_name = car(reg_current_value_rib);
-
-        if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to CREATE-IMAGE should be a string object or a string literal denoting the file name of the image");
-          return;
-        }
-
-        if(is_string_object(file_name))
-          create_image(get_string(file_name));
-        else
-          create_image(strings[(int)file_name >> OBJECT_SHIFT]);
-
-        system_changed = false;
-
-        reg_accumulator = NIL;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	create_image_compiled();
       }
       else if(operator == LOAD_FOREIGN_LIBRARY)
       {
-        OBJECT_PTR file_name;
-        void **temp;
-        char *fname;
-        void *ret;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "LOAD-FOREIGN-LIBRARY requires exactly one argument, a string object denoting the library name");
-          return;
-        }        
-
-        file_name = car(reg_current_value_rib);
-
-        if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to LOAD-FOREIGN-LIBRARY should be a string object denoting the library name");
-          return;
-        }
-
-        if(nof_dl_handles == MAX_FOREIGN_LIBRARY_COUNT)
-        {
-          throw_generic_exception("Maximum number of foreign libraries has been exceeded");
-          return;
-        }
-
-        nof_dl_handles++;
-  
-        temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
-
-        if(temp == NULL)
-        {
-          throw_exception("OUT-OF-MEMORY", "Unable to extend memory for dl_handles");
-          return;
-        }
-
-        dl_handles = temp;
-
-        fname = IS_STRING_LITERAL_OBJECT(file_name) ? strings[(int)file_name >> OBJECT_SHIFT] : get_string(file_name);
-
-        /* if(IS_STRING_LITERAL_OBJECT(file_name)) */
-        /*   ret = dlopen(strings[(int)file_name >> OBJECT_SHIFT], RTLD_LAZY); */
-        /* else */
-        /*   ret = dlopen(get_string(file_name), RTLD_LAZY); */
-        ret = dlopen(fname, RTLD_LAZY);
-
-        if(!ret)
-        {
-          throw_exception("FFI-OPEN-FAILED", "dl_open() failed");
-          return;
-        }
-
-        dl_handles[nof_dl_handles - 1] = ret;
-
-        foreign_library_names[nof_dl_handles - 1] = strdup(fname);
-
-        reg_accumulator = NIL;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	load_foreign_library_compiled();
       }
       else if(operator == CALL_FOREIGN_FUNCTION)
       {
-        OBJECT_PTR fn_name, ret_type, args, rest_args;
-
-        if(length(reg_current_value_rib) != 3)
-        {
-          throw_exception("ARG-MISMATCH", "CALL-FOREIGN-FUNCTION requires exactly three arguments");
-          return;
-        }        
-
-        fn_name = car(reg_current_value_rib);
-
-        if(!IS_STRING_LITERAL_OBJECT(fn_name) && !is_string_object(fn_name))
-        {
-          throw_exception("INVALID-ARGUMENT", "First argument to CALL-FOREIGN-FUNCTION should be the funtion name (string)");
-          return;
-        }
-
-        ret_type = CADR(reg_current_value_rib);
-
-        if(!(ret_type == INTEGR        ||
-             ret_type == FLOT          ||
-             ret_type == CHAR          ||
-             ret_type == VOID          ||
-             /* ret_type == INT_POINTER   || */ //not handling int and float pointer return values
-             /* ret_type == FLOAT_POINTER || */
-             ret_type == CHAR_POINTER))
-        {
-          throw_exception("INVALID-ARGUMENT", "Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
-          return;
-        }
-
-        args = CADDR(reg_current_value_rib);
-
-        if(args != NIL && !IS_CONS_OBJECT(args))
-        {
-          throw_exception("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 1");
-          return;
-        }
-
-        rest_args = args;
-
-        while(rest_args != NIL)
-        {
-          OBJECT_PTR car_rest_args = car(rest_args);
-
-          OBJECT_PTR val, type;
-
-          if(!IS_CONS_OBJECT(car_rest_args))
-          {
-            throw_exception("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 2");
-            return;
-          }
-
-          if(length(car_rest_args) != 2)
-          {
-            throw_exception("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 3");
-            return;
-          }
-
-          val = CAAR(rest_args);
-
-          if(!(IS_INTEGER_OBJECT(val)        ||
-               IS_FLOAT_OBJECT(val)          ||
-               IS_CHAR_OBJECT(val)           ||
-               IS_STRING_LITERAL_OBJECT(val) ||
-               is_string_object(val)         ||
-               IS_SYMBOL_OBJECT(val)))
-          {
-            throw_exception("INVALID-ARGUMENT", "Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
-            return;
-          }
-
-          if(IS_SYMBOL_OBJECT(val))
-          {
-            OBJECT_PTR res = get_symbol_value(val, reg_current_env);
-            if(car(res) == NIL)
-            {
-              char buf[SYMBOL_STRING_SIZE];
-              print_qualified_symbol(val, buf);
-              sprintf(err_buf, "Symbol not bound(3): %s", buf);
-              throw_exception("SYMBOL-NOT-BOUND", err_buf);
-              return;
-            }
-            val = cdr(res);
-          }
-
-          type = CADAR(rest_args);
-
-          if(type == INTEGR)
-          {
-            if(!IS_INTEGER_OBJECT(val))
-            {
-              throw_exception("ARG-MISMATCH", "Argument type mismatch: integer expected");
-              return;
-            }
-          }          
-          else if(type == FLOT)
-          {
-            if(!IS_FLOAT_OBJECT(val))
-            {
-              throw_exception("ARG-MISMATCH", "Argument type mismatch: float expected");
-              return;
-            }
-          }
-          else if(type == CHAR)
-          {
-            if(!IS_CHAR_OBJECT(val))
-            {
-              throw_exception("ARG-MISMATCH", "Argument type mismatch: character expected");
-              return;
-            }
-          }
-          else if(type == CHAR_POINTER)
-          {
-            if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
-            {
-              throw_exception("ARG-MISMATCH", "Argument type mismatch: string object/literal expected");
-              return;
-            }
-          }
-          else if(type == INT_POINTER)
-          {
-            if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
-            {
-              throw_exception("ARG-MISMATCH", "Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
-              return;
-            }
-          }
-          else if(type == FLOAT_POINTER)
-          {
-            if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
-            {
-              throw_exception("ARG-MISMATCH", "Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
-              return;
-            }
-          }
-          else
-          {
-            throw_exception("INVALID-ARGUMENT", "call_foreign_function(): non-primitive object type not handled");
-            return;
-          }
-
-          rest_args = cdr(rest_args);
-        }
-
-        reg_accumulator = call_foreign_function(fn_name, ret_type, args);
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	call_foreign_function_compiled();
       }
       else if(operator == ENV)
       {
-        reg_accumulator = cons(top_level_env, debug_mode ? debug_env : reg_current_env);
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	env();
       }
       else if(operator == EVAL)
       {
-        OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
-
-        if(temp == ERROR)
-        {
-          throw_generic_exception("EVAL: Compilation failed");
-          return;
-        }
-
-        /* reg_next_expression = cons(cons(FRAME, cons(cons(cons(HALT, NIL), car(reg_current_value_rib)), */
-        /*                                             cons(cons(temp, NIL), car(reg_current_value_rib)))), */
-        /*                            car(reg_current_value_rib)); */
-        reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, car(reg_current_value_rib)),
-                                                    cons(temp, car(reg_current_value_rib)))),
-                                   car(reg_current_value_rib));
-
-        while(car(reg_next_expression) != NIL)
-        {
-          eval(false);
-          if(in_error)
-          {
-            throw_generic_exception("EVAL failed");
-            return;
-          }
-        }
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	eval_compiled();
       }
       else if(operator == TIME)
       {
-        OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
-
-        char form[500];
-
-        clock_t start, diff;
-        int msec;
-
-#ifdef GUI
-        char buf[100];
-#endif
-
-        memset(form, '\0', 500);
-        print_object_to_string(car(reg_current_value_rib), form, 0);
-
-        if(temp == ERROR)
-        {
-          throw_generic_exception("TIME: Compilation failed");
-          return;
-        }
-
-        reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, car(reg_current_value_rib)),
-                                                    cons(temp, car(reg_current_value_rib)))),
-                                   car(reg_current_value_rib));
-
-        start = clock();
-
-        while(car(reg_next_expression) != NIL)
-        {
-          eval(false);
-          if(in_error)
-          {
-            throw_generic_exception("TIME failed");
-            return;
-          }
-        }
-
-        diff = clock() - start;
-        msec = diff * 1000 / CLOCKS_PER_SEC;
-
-#ifdef GUI
-        memset(buf, '\0', 100);
-        sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
-        print_to_transcript(buf);
-#else
-        printf("%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
-#endif
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	time_compiled();
       }
       else if(operator == PROFILE)
       {
-        OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
-
-        double initial_wall_time;
-        clock_t initial_cpu_time;
-        unsigned int initial_mem_alloc;
-
-        OBJECT_PTR operator_to_be_used;
-
-        unsigned int count;
-        double elapsed_wall_time;
-        double elapsed_cpu_time;
-        unsigned int mem_alloc;
-
-        hashtable_entry_t *e;
-
-        profiling_datum_t *pd;
-
-        double final_wall_time;
-        clock_t final_cpu_time;
-        unsigned int final_mem_alloc;
-
-#ifdef GUI
-        char buf[1000];
-#endif
-
-        hashtable_entry_t *entries;
-
-        profiling_in_progress = true;
-
-        if(temp == ERROR)
-        {
-          throw_generic_exception("PROFILE: Compilation failed");
-          return;
-        }
-
-        reg_next_expression = cons(cons(FRAME, cons(cons(CONS_HALT_NIL, car(reg_current_value_rib)),
-                                                    cons(temp, car(reg_current_value_rib)))),
-                                   car(reg_current_value_rib));
-
-        profiling_tab = hashtable_create(1000001);
-
-        prev_operator = NIL;
-
-        wall_time_var = get_wall_time();
-        cpu_time_var = clock();
-        mem_alloc_var = memory_allocated();
-
-        initial_wall_time = wall_time_var;
-        initial_cpu_time = cpu_time_var;
-        initial_mem_alloc = mem_alloc_var;
-
-        while(car(reg_next_expression) != NIL)
-        {
-          eval(false);
-          if(in_error)
-          {
-            hashtable_delete(profiling_tab);
-            profiling_tab = NULL;
-
-            throw_generic_exception("PROFILE failed");
-            return;
-          }
-        }
-
-        if(IS_SYMBOL_OBJECT(last_operator))
-          operator_to_be_used = last_operator;
-        else
-        {
-          OBJECT_PTR res = get_symbol_from_value(last_operator, reg_current_env);
-          if(car(res) != NIL)
-            operator_to_be_used = cdr(res);
-          else
-            operator_to_be_used = cons(LAMBDA,
-                                       cons(get_params_object(last_operator),
-                                            cons(car(get_source_object(last_operator)), NIL)));
-        }
-
-        e = hashtable_get(profiling_tab, (void *)operator_to_be_used);
-
-        if(e)
-        {
-          profiling_datum_t *pd = (profiling_datum_t *)e->value;
-
-          count = pd->count + 1;
-          elapsed_wall_time = pd->elapsed_wall_time + get_wall_time() - wall_time_var;
-          elapsed_cpu_time = pd->elapsed_cpu_time + (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-          mem_alloc = pd->mem_allocated + memory_allocated() - mem_alloc_var;
-
-          free(pd);
-          hashtable_remove(profiling_tab, (void *)operator_to_be_used);
-        }
-        else
-        {
-          count = 1;
-          elapsed_wall_time = get_wall_time() - wall_time_var;
-          elapsed_cpu_time = (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-          mem_alloc = memory_allocated() - mem_alloc_var;
-        }
-
-        pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
-        pd->count = count;
-        pd->elapsed_wall_time = elapsed_wall_time;
-        pd->elapsed_cpu_time = elapsed_cpu_time;
-        pd->mem_allocated = mem_alloc;
-
-        hashtable_put(profiling_tab, (void *)operator_to_be_used, (void *)pd);
-
-        final_wall_time = get_wall_time();
-        final_cpu_time = clock();
-        final_mem_alloc = memory_allocated();
-
-#ifdef GUI
-        create_profiler_window(DEFAULT_PROFILER_WINDOW_POSX,
-                               DEFAULT_PROFILER_WINDOW_POSY,
-                               DEFAULT_PROFILER_WINDOW_WIDTH,
-                               DEFAULT_PROFILER_WINDOW_HEIGHT);
-
-        memset(buf, '\0', 1000);
-        sprintf(buf,
-                "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
-                final_wall_time - initial_wall_time,
-                (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-                final_mem_alloc - initial_mem_alloc);
-        print_to_transcript(buf);
-
-        //deleting profiling_tab will be done in the delete_event in the UI code
-
-#else
-        printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
-               final_wall_time - initial_wall_time,
-               (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-               final_mem_alloc - initial_mem_alloc);
-
-        hashtable_delete(profiling_tab);
-        profiling_tab = NULL;
-#endif
-
-        profiling_in_progress = false;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	profile();
       }
       else if(operator == BREAK)
       {
-/*         in_break = true; */
-
-/*         debug_mode = true; */
-/*         debug_continuation = create_current_continuation(); */
-/*         debug_env = reg_current_env; */
-/*         reg_next_expression = NIL; */
-
-/*         debug_execution_stack = reg_current_stack; */
-
-/* #ifdef GUI */
-/*         create_debug_window(DEFAULT_DEBUG_WINDOW_POSX, */
-/*                             DEFAULT_DEBUG_WINDOW_POSY, */
-/*                             DEFAULT_DEBUG_WINDOW_WIDTH, */
-/*                             DEFAULT_DEBUG_WINDOW_HEIGHT); */
-/* #endif */
 	break1();
       }
       else if(operator == RESUME)
       {
-        in_break = false;
-
-        debug_mode = false;
-
-        reg_current_stack = get_heap(debug_continuation & POINTER_MASK, 0);
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
-
-        debug_execution_stack = NIL;
-
-        return;
+	resume_compiled();
       }
       else if(operator == BACKTRACE)
       {
-        print_backtrace();
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
-        return;
+	backtrace();
       }
       else if(operator == LOAD_FILE)
       {
-        OBJECT_PTR arg;
-        FILE *temp;
-
-        int ret;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "LOAD-FILE requires exactly one argument");
-          return;
-        }        
-
-        arg = car(reg_current_value_rib);
-
-        if(!is_string_object(arg) && (!IS_STRING_LITERAL_OBJECT(arg)))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to LOAD-FILE should be a string");
-          return;
-        }
-
-        temp = fopen(is_string_object(arg) ?  get_string(arg) : strings[(int)arg >> OBJECT_SHIFT], "r");
-
-        if(!temp)
-        {
-          throw_exception("FILE-OPEN-ERROR", "LOAD-FILE unable to open file");
-          return;
-        }
-
-        if(set_up_new_yyin(temp))
-        {
-          printf("error\n");
-          throw_exception("FILE-READ-ERROR", "Unable to read from file");
-          return;
-        }
-
-        while(!yyparse())
-        {
-          repl(2);
-        }
-        pop_yyin();
-
-        reg_accumulator = NIL;
-
-        reg_current_value_rib = NIL;
+	load_file();
       }
       else if(operator == CONSP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "CONSP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_CONS_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	consp();
       }
       else if(operator ==  INTEGERP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "INTEGERP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_INTEGER_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	integerp();
       }
       else if(operator ==  FLOATP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "FLOATP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_FLOAT_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	floatp();
       }
       else if(operator ==  CHARACTERP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "CHARACTERP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_CHAR_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	characterp();
       }
       else if(operator ==  SYMBOLP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "SYMBOLP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_SYMBOL_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	symbolp();
       }
       else if(operator ==  STRINGP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "STRINGP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = (IS_STRING_LITERAL_OBJECT(car(reg_current_value_rib)) || is_string_object(car(reg_current_value_rib))) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	stringp();
       }
       else if(operator ==  ARRAYP)
       {
-        OBJECT_PTR obj;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "ARRAYP requires exactly one argument");
-          return;
-        }
-
-        obj = car(reg_current_value_rib);
-        reg_accumulator = (IS_ARRAY_OBJECT(obj) || IS_STRING_LITERAL_OBJECT(obj)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	arrayp();
       }
       else if(operator ==  CLOSUREP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "CLOSUREP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_CLOSURE_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	closurep();
       }
       else if(operator ==  MACROP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "MACROP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_MACRO_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	macrop();
       }
       else if(operator ==  CONTINUATIONP)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "CONTINUATIONP requires exactly one argument");
-          return;
-        }
-
-        reg_accumulator = IS_CONTINUATION_OBJECT(car(reg_current_value_rib)) ? TRUE : NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	continuationp();
       }
       else if(operator == LAMBDA_EXPRESSION)
       {
-        OBJECT_PTR obj;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "LAMBDA-EXPRESSION requires exactly one argument, a closure or macro object");
-          return;
-        }        
-
-        obj = car(reg_current_value_rib);        
-
-        if(!IS_CLOSURE_OBJECT(obj) && !IS_MACRO_OBJECT(obj))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to LAMBDA-EXPRESSION should be a closure or macro object");
-          return;
-        }
-
-        reg_accumulator = cons(get_params_object(obj),
-                               get_body_object(obj));
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	lambda_expression();
       }
       else if(operator == FORMAT)
       {
-        OBJECT_PTR rest;
-        if(length(reg_current_value_rib) < 2)
-        {
-          throw_exception("ARG-MISMATCH", "FORMAT requires at least two arguments, a file descriptor and a format specification string");
-          return;
-        }
-
-        if(car(reg_current_value_rib) != NIL && !IS_INTEGER_OBJECT(car(reg_current_value_rib)))
-        {
-          throw_exception("INVALID-ARGUMENT", "First parameter to FORMAT must be NIL or an integer denoting a file descriptor");
-          return;
-        }
-
-        if(!IS_STRING_LITERAL_OBJECT(CADR(reg_current_value_rib)) && !is_string_object(CADR(reg_current_value_rib)))
-        {
-          throw_exception("INVALID-ARGUMENT", "Second parameter to FORMAT must be a format specification string");
-          return;
-        }
-        
-        rest = cdr(reg_current_value_rib);
-
-        while(rest != NIL)
-        {
-          OBJECT_PTR val = car(rest);
-
-          if(!(IS_INTEGER_OBJECT(val)        ||
-               IS_FLOAT_OBJECT(val)          ||
-               IS_CHAR_OBJECT(val)           ||
-               IS_STRING_LITERAL_OBJECT(val) ||
-               is_string_object(val)))
-          {
-            throw_exception("INVALID-ARGUMENT", "Parameters to FORMAT should be integers, floats, characters or strings");
-            return;
-          }
-
-          rest = cdr(rest);
-        }
-
-#ifdef GUI
-        if(format_for_gui(reg_current_value_rib) == -1)
-#else
-        if(format(reg_current_value_rib) == -1)
-#endif
-        {
-          //error message would have been set in format()
-          return;
-        }
-
-        reg_accumulator = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	format_compiled();
       }
       else if(operator == CLONE)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "CLONE takes exactly one parameter, the object to be cloned");
-          return;
-        }
-
-        reg_accumulator  = clone_object(car(reg_current_value_rib));
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	clone();
       }
       else if(operator == RETURN_FROM)
       {
-        OBJECT_PTR cont;
-
-        if(length(reg_current_value_rib) != 2)
-        {
-          throw_exception("ARG-MISMATCH", "RETURN-FROM requires two parameters: the closure/macro from which to return, and the value to be returned");
-          return;
-        }
-
-        cont = get_continuation_for_return(car(reg_current_value_rib));
-
-        if(cont == NIL)
-        {
-          throw_exception("INVALID-ARGUMENT", "RETURN-FROM passed non-existent closure/macro object");
-          return;
-        }
-
-        reg_current_stack = get_heap(cont & POINTER_MASK, 0);
-
-        reg_accumulator = CADR(reg_current_value_rib);
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	return_from();
       }
       else if(operator == COMPILE)
       {
-        OBJECT_PTR temp;
-
-        if(length(reg_current_value_rib) != 2)
-        {
-          throw_exception("ARG-MISMATCH", "COMPILE needs two arguments, an expression to be compiled and a 'next' expression");
-          return;
-        }
-
-        temp = compile(car(reg_current_value_rib), CADR(reg_current_value_rib));
-
-        if(temp == ERROR)
-        {
-          throw_generic_exception("COMPILE failed");
-          return;
-        }
-
-        reg_accumulator = car(temp);
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	compile_compiled();
       }
       else if(operator == SYMBL)
       {
-        OBJECT_PTR str;
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "SYMBOL needs one argument, a string object/literal");
-          return;
-        }
-
-        str = car(reg_current_value_rib);
-        if(!IS_STRING_LITERAL_OBJECT(str) && !is_string_object(str))
-        {
-          throw_exception("INVALID-ARGUMENT", "SYMBOL needs one argument, a string object/literal");
-          return;
-        }
-
-        if(IS_STRING_LITERAL_OBJECT(str))
-        {
-          reg_accumulator = get_symbol_object((char *)convert_to_upper_case(strdup(strings[(int)str >> OBJECT_SHIFT])));
-        }
-        else if(is_string_object(str))
-        {
-          char msg[500];
-
-          uintptr_t ptr = str & POINTER_MASK;
-
-          //int len = get_int_value(get_heap(ptr, 0));
-          int len = *((unsigned int *)ptr);
-
-          int i;
-
-          memset(msg, '\0', 500);
-
-          for(i=1; i <= len; i++)
-            msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
-
-          reg_accumulator = get_symbol_object((char *)convert_to_upper_case(msg));
-        }
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	symbl();
       }
       else if(operator == SYMBOL_NAME)
       {
-        OBJECT_PTR sym;
-        char buf[SYMBOL_STRING_SIZE];
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "SYMBOL-NAME requires exactly one argument, a symbol object");
-          return;
-        }
-
-        sym = car(reg_current_value_rib);
-
-        if(!IS_SYMBOL_OBJECT(sym))
-        {
-          throw_exception("INVALID-ARGUMENT", "Parameter to SYMBOL_NAME should be a symbol object");
-          return;
-        }
-
-        memset(buf,'\0',SYMBOL_STRING_SIZE);
-
-        print_symbol(sym, buf);
-
-        reg_accumulator = (OBJECT_PTR)((add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG);
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	symbol_name();
       }
       else if(operator == UNBIND)
       {
-        OBJECT_PTR sym;
-
-        OBJECT_PTR rest = top_level_env;
-        OBJECT_PTR prev = NIL;
-        BOOLEAN symbol_exists = false;
-
-        /* if(current_package == 0) */
-        /* { */
-        /*   throw_exception("ACCESS-VIOLATION","Core package cannot be updated"); */
-        /*   return; */
-        /* } */
-
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "UNBIND requires exactly one argument, a symbol object");
-          return;
-        }
-
-        sym = car(reg_current_value_rib);
-        /* OBJECT_PTR sym = cdr(get_qualified_symbol_object(packages[current_package].name, */
-        /*                                                  get_symbol_name(car(reg_current_value_rib)))); */
-
-        if(!IS_SYMBOL_OBJECT(sym))
-        {
-          throw_exception("INVALID-ARGUMENT", "Parameter to UNBIND should be a symbol object");
-          return;
-        }
-
-        while(rest != NIL)
-        {
-
-          if(CAAR(rest) == sym)
-          {
-            symbol_exists = true;
-            if(prev == NIL)
-              top_level_env = cdr(top_level_env);
-            else
-              set_heap(prev & POINTER_MASK, 1, cdr(rest));
-            break;
-          }
-
-          prev = rest;
-          rest = cdr(rest);
-        }
-
-        if(!symbol_exists)
-        {
-          char buf[SYMBOL_STRING_SIZE];
-          print_qualified_symbol(sym, buf);
-          sprintf(err_buf, "Symbol not bound(5): %s", buf);
-          throw_exception("SYMBOL-NOT-BOUND", err_buf);
-          return;
-        }
-
-        reg_accumulator = NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	unbind();
       }
       else if(operator == ABORT)
       {
-        if(!debug_mode)
-        {
-          throw_exception("EXCEPTION", "ABORT must be invoked only in debug mode");
-          return;
-        }
-
-        reg_current_env = NIL;
-
-        reg_current_value_rib = NIL;
-        reg_current_stack = NIL;
-
-        continuations_map = NIL;
-
-        reg_accumulator = NIL;
-        reg_next_expression = NIL;
-
-        in_error = false;
-
-        debug_mode = false;
-
-        return;
+	abort_compiled();
       }
       else if(operator == SAVE_OBJECT)
       {
-        if(length(reg_current_value_rib) != 2)
-        {
-          throw_exception("ARG-MISMATCH", "SAVE-OBJECT requires exactly two arguments, an object and a file name");
-          return;
-        }
-        
-        OBJECT_PTR obj = car(reg_current_value_rib);
-        
-        OBJECT_PTR file_name = CADR(reg_current_value_rib);
-
-        if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
-        {
-          throw_exception("INVALID-ARGUMENT", "Second argument to SAVE-OBJECT should be a string object or a string literal denoting the file name");
-          return;
-        }
-
-        if(is_string_object(file_name))
-          serialize(obj, get_string(file_name));
-        else
-          serialize(obj, strings[(int)file_name >> OBJECT_SHIFT]);
-
-        reg_accumulator = NIL;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	save_object();
       }
       else if(operator == LOAD_OBJECT)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "LOAD-OBJECT requires exactly one argument, a file name");
-          return;
-        }
-        
-        OBJECT_PTR file_name = car(reg_current_value_rib);
-
-        if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to LOAD-OBJECT should be a string object or a string literal denoting the file name");
-          return;
-        }
-
-        int ret;
-
-        if(is_string_object(file_name))
-          ret = deserialize(get_string(file_name));
-        else
-          ret = deserialize(strings[(int)file_name >> OBJECT_SHIFT]);
-
-        if(ret == -1)
-        {
-          throw_exception("EXCEPTION", "Error in LOAD-OBJECT");
-          return;
-        }
-
-        reg_accumulator = ret;
-
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
+	load_object();
       }
       else if(operator == COMPILEFN)
       {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_exception("ARG-MISMATCH", "COMPILE-FN requires exactly one arguments a closure object");
-          return;
-        }
-
-        OBJECT_PTR obj = car(reg_current_value_rib);
-
-        if(!(IS_CLOSURE_OBJECT(obj)))
-        {
-          throw_exception("INVALID-ARGUMENT", "Argument to COMPILE-FN should be a closure object");
-          return;
-        }
-
-	char err_buf1[500];
-	memset(err_buf1, 500, '\0');
-
-	cmpfn fn = compile_function(obj, err_buf1);
-
-        if(!fn)
-        {
-	  memset(err_buf, 500, '\0');
-	  sprintf(err_buf, "Error in COMPILE-FN: %s", err_buf1);
-          throw_exception("EXCEPTION", err_buf);
-          return;
-        }
-
-	reg_accumulator = NIL;
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));        
+	compilefn();
       }
       else
       {
