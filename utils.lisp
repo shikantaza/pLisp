@@ -50,6 +50,9 @@
                       (permutations (remove x lst 1) (- n 1))))
             lst)))
 
+(defun all-elements-exist-p (lst1 lst2)
+  (my-and (mapcar (lambda (x) (find x lst2 eq)) lst1)))
+
 (defun same-list-p (lst1 lst2)
   (and (eq (length lst1) (length lst2))
        (all-elements-exist-p lst1 lst2)
@@ -59,9 +62,6 @@
   (if (null lst) 
       't
       (and (not (null (car lst))) (my-and (cdr lst)))))
-
-(defun all-elements-exist-p (lst1 lst2)
-  (my-and (mapcar (lambda (x) (find x lst2 eq)) lst1)))
 
 (defun combinations (lst n)
   (remove-duplicates (permutations lst n) same-list-p))

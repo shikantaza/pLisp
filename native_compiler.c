@@ -193,7 +193,7 @@ int dummy()
   return 0;
 }
 
-int refer(OBJECT_PTR sym)
+unsigned int refer(OBJECT_PTR sym)
 {
   if(is_special_form(sym))
   {
@@ -234,9 +234,10 @@ int refer(OBJECT_PTR sym)
   return 0;
 }
 
-void constant(OBJECT_PTR c)
+unsigned int constant(OBJECT_PTR c)
 {
   reg_accumulator = c;
+  return 0;
 }
 
 unsigned int closure(OBJECT_PTR exp)
@@ -249,19 +250,16 @@ unsigned int closure(OBJECT_PTR exp)
   char err_buf1[500];
   memset(err_buf1, 500, '\0');
 
-  //TODO: uncomment this for automatic compilation
-  //of closures when they're defined.
-  //there are issues with this, needs further investigation
-  /* cmpfn fn = compile_function(fn_obj, err_buf1); */
+  cmpfn fn = compile_function(fn_obj, err_buf1);
 
-  /* if(!fn) */
-  /* { */
-  /*   memset(err_buf, 500, '\0'); */
-  /*   sprintf(err_buf, "Error in COMPILE-FN: %s", err_buf1); */
-  /*   printf("%s\n", err_buf); */
-  /*   throw_exception("EXCEPTION", err_buf); */
-  /*   return 1; */
-  /* } */
+  if(!fn)
+  {
+    memset(err_buf, 500, '\0');
+    sprintf(err_buf, "Error in COMPILE-FN: %s", err_buf1);
+    printf("%s\n", err_buf);
+    throw_exception("EXCEPTION", err_buf);
+    return 1;
+  }
 
   reg_accumulator = fn_obj;
 
@@ -273,15 +271,16 @@ OBJECT_PTR get_reg_accumulator()
   return reg_accumulator;
 }
 
-void macro(OBJECT_PTR exp)
+unsigned int macro(OBJECT_PTR exp)
 {
   reg_accumulator = create_macro_object(reg_current_env, 
 				        second(exp), 
 					third(exp), 
 					fourth(exp));
+  return 0;
 }
 
-int assign(OBJECT_PTR sym)
+unsigned int assign(OBJECT_PTR sym)
 {
   OBJECT_PTR symbol_to_be_used = sym;
 
@@ -303,13 +302,14 @@ int assign(OBJECT_PTR sym)
   return 0;
 }
 
-void conti()
+unsigned int conti()
 {
   reg_accumulator = create_current_continuation();
   reg_current_value_rib = NIL;
+  return 0;
 }
 
-void frame(OBJECT_PTR exp)
+unsigned int frame(OBJECT_PTR exp)
 {
   reg_current_stack = cons(create_call_frame(CADR(exp),
 					     reg_current_env,
@@ -318,14 +318,16 @@ void frame(OBJECT_PTR exp)
 			   reg_current_stack);
 
   reg_current_value_rib = NIL;
+  return 0;
 }
 
-void argument()
+unsigned int argument()
 {
   reg_current_value_rib = cons(reg_accumulator, reg_current_value_rib);
+  return 0;
 }
 
-void return_op()
+unsigned int return_op()
 {
   OBJECT_PTR frame;
   uintptr_t ptr;
@@ -340,14 +342,17 @@ void return_op()
   reg_next_expression   = get_heap(ptr,1);
   reg_current_env       = get_heap(ptr,2);
   reg_current_value_rib = get_heap(ptr,3);
+
+  return 0;
 }
 
-void halt_op()
+unsigned int halt_op()
 {
   reg_next_expression = NIL;
+  return 0;
 }
 
-void define(OBJECT_PTR sym)
+unsigned int define(OBJECT_PTR sym)
 {
     OBJECT_PTR symbol_given = sym;
     OBJECT_PTR symbol_to_be_used;
@@ -367,9 +372,11 @@ void define(OBJECT_PTR sym)
     add_to_top_level_environment(symbol_to_be_used, reg_accumulator);
 
     reg_accumulator = symbol_to_be_used;
+
+    return 0;
 }
 
-int add()
+unsigned int add()
 {
   float sum = 0;
   OBJECT_PTR rest = reg_current_value_rib;
@@ -411,7 +418,7 @@ int add()
   return 0;
 }
 
-int sub()
+unsigned int sub()
 {
   float val;
   BOOLEAN is_float = false;
@@ -475,7 +482,7 @@ int sub()
   return 0;
 }
 
-int eq()
+unsigned int eq()
 {
   OBJECT_PTR v1, v2;
 
@@ -549,7 +556,7 @@ void bind_formal_parameters(fn_macro_obj)
   reg_current_value_rib = NIL;
 }
 
-void break1()
+unsigned int break1()
 {
   in_break = true;
 
@@ -566,6 +573,8 @@ void break1()
 		      DEFAULT_DEBUG_WINDOW_WIDTH,
 		      DEFAULT_DEBUG_WINDOW_HEIGHT);
 #endif
+
+  return 0;
 }
 
 unsigned int cons_compiled()
@@ -2852,6 +2861,344 @@ unsigned int compilefn()
   return 0;
 }
 
+unsigned int apply_compiled()
+{
+  OBJECT_PTR operator = reg_accumulator;
+
+  if(IS_SYMBOL_OBJECT(operator))
+  {
+    char val[SYMBOL_STRING_SIZE];
+    print_symbol(operator, val);
+        
+    if(operator == CONS)
+    {
+      cons_compiled();
+    }
+    else if(operator == EQ)
+    {
+      eq();
+    }
+    else if(operator == NEQ)
+    {
+      neq();
+    }
+    else if(operator == NOT)
+    {
+      not();
+    }
+    else if(operator == ATOM)
+    {
+      atom();
+    }
+    else if(operator == CAR)
+    {
+      car_compiled();
+    }
+    else if(operator == CDR)
+    {
+      cdr_compiled();
+    }
+    else if(operator == ADD)
+    {
+      add();
+    }
+    else if(operator == SUB)
+    {
+      sub();
+    }
+    else if(operator == MULT)
+    {
+      mult();
+    }
+    else if(operator == DIV)
+    {
+      div_compiled();
+    }
+    else if(operator == ERROR)
+    {
+      error();
+    }
+    else if(operator == PRINT)
+    {
+      print();
+    }
+    else if(operator == NEWLINE)
+    {
+      newline();
+    }
+    else if(operator == LST)
+    {
+      lst();
+    }
+    else if(operator == BACKQUOTE)
+    {
+      backquote();
+    }
+    else if(operator == LISTP)
+    {
+      listp();
+    }
+    else if(operator == SYMBOL_VALUE)
+    {
+      symbol_value();
+    }
+    else if(operator == GT)
+    {
+      gt();
+    }
+    else if(operator == LT)
+    {
+      lt();
+    }
+    else if(operator == LEQ)
+    {
+      leq();
+    }
+    else if(operator == GEQ)
+    {
+      geq();
+    }
+    else if(operator == GENSYM)
+    {
+      gensym_compiled();
+    }
+    else if(operator == SETCAR)
+    {
+      setcar();
+    }
+    else if(operator == SETCDR)
+    {
+      setcdr();
+    }
+    else if(operator == CREATE_PACKAGE)
+    {
+      create_package_compiled();
+    }
+    else if(operator == IN_PACKAGE)
+    {
+      in_package();
+    }
+    else if(operator == EXPAND_MACRO)
+    {
+      expand_macro();
+    }
+    else if(operator == APPLY)
+    {
+      apply();
+    }
+    else if(operator == STRING)
+    {
+      string();
+    }
+    else if(operator == MAKE_ARRAY)
+    {
+      make_array();
+    }
+    else if(operator == ARRAY_SET)
+    {
+      array_set();
+    }
+    else if(operator == ARRAY_GET)
+    {
+      array_get();
+    }
+    else if(operator == SUB_ARRAY)
+    {
+      sub_array();
+    }
+    else if(operator == ARRAY_LENGTH)
+    {
+      array_length();
+    }
+    else if(operator == PRINT_STRING)
+    {
+      print_string_compiled();
+    }
+    else if(operator == CREATE_IMAGE)
+    {
+      create_image_compiled();
+    }
+    else if(operator == LOAD_FOREIGN_LIBRARY)
+    {
+      load_foreign_library_compiled();
+    }
+    else if(operator == CALL_FOREIGN_FUNCTION)
+    {
+      call_foreign_function_compiled();
+    }
+    else if(operator == ENV)
+    {
+      env();
+    }
+    else if(operator == EVAL)
+    {
+      eval_compiled();
+    }
+    else if(operator == TIME)
+    {
+      time_compiled();
+    }
+    else if(operator == PROFILE)
+    {
+      profile();
+    }
+    else if(operator == BREAK)
+    {
+      break1();
+    }
+    else if(operator == RESUME)
+    {
+      resume_compiled();
+    }
+    else if(operator == BACKTRACE)
+    {
+      backtrace();
+    }
+    else if(operator == LOAD_FILE)
+    {
+      load_file();
+    }
+    else if(operator == CONSP)
+    {
+      consp();
+    }
+    else if(operator ==  INTEGERP)
+    {
+      integerp();
+    }
+    else if(operator ==  FLOATP)
+    {
+      floatp();
+    }
+    else if(operator ==  CHARACTERP)
+    {
+      characterp();
+    }
+    else if(operator ==  SYMBOLP)
+    {
+      symbolp();
+    }
+    else if(operator ==  STRINGP)
+    {
+      stringp();
+    }
+    else if(operator ==  ARRAYP)
+    {
+      arrayp();
+    }
+    else if(operator ==  CLOSUREP)
+    {
+      closurep();
+    }
+    else if(operator ==  MACROP)
+    {
+      macrop();
+    }
+    else if(operator ==  CONTINUATIONP)
+    {
+      continuationp();
+    }
+    else if(operator == LAMBDA_EXPRESSION)
+    {
+      lambda_expression();
+    }
+    else if(operator == FORMAT)
+    {
+      format_compiled();
+    }
+    else if(operator == CLONE)
+    {
+      clone();
+    }
+    else if(operator == RETURN_FROM)
+    {
+      return_from();
+    }
+    else if(operator == COMPILE)
+    {
+      compile_compiled();
+    }
+    else if(operator == SYMBL)
+    {
+      symbl();
+    }
+    else if(operator == SYMBOL_NAME)
+    {
+      symbol_name();
+    }
+    else if(operator == UNBIND)
+    {
+      unbind();
+    }
+    else if(operator == ABORT)
+    {
+      abort_compiled();
+    }
+    else if(operator == SAVE_OBJECT)
+    {
+      save_object();
+    }
+    else if(operator == LOAD_OBJECT)
+    {
+      load_object();
+    }
+    else if(operator == COMPILEFN)
+    {
+      compilefn();
+    }
+    else
+    {
+      char buf[SYMBOL_STRING_SIZE];
+      print_qualified_symbol(operator, buf);
+      sprintf(err_buf, "Symbol not bound(4): %s", buf);
+      throw_exception("SYMBOL-NOT-BOUND", err_buf);
+      return 1;
+    }
+  }
+  else //user-defined operator (closure, macro, or continuation)
+  {
+    if(IS_CLOSURE_OBJECT(reg_accumulator) || IS_MACRO_OBJECT(reg_accumulator))
+    {
+      bind_formal_parameters(reg_accumulator);
+
+      if(IS_CLOSURE_OBJECT(reg_accumulator))
+      {
+	hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
+	if(e)
+	{
+	  cmpfn fn = (cmpfn)e->value;
+	  fn();
+	}
+	else
+	  reg_next_expression = get_body_object(reg_accumulator); 
+      }
+      else
+	reg_next_expression = get_body_object(reg_accumulator); 
+    }
+    else if(IS_CONTINUATION_OBJECT(reg_accumulator))
+    {
+      if(length(reg_current_value_rib) != 1)
+      {
+	throw_generic_exception("Continuations take exactly one argument");
+	return 1;
+      }
+
+      reg_current_stack = get_heap(reg_accumulator & POINTER_MASK, 0);
+
+      reg_accumulator = car(reg_current_value_rib);
+      reg_current_value_rib = NIL;
+      reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+    }
+    else
+    {
+      throw_generic_exception("Illegal operator");
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 unsigned int compile_to_c(OBJECT_PTR exp, 
 			  char *buf, 
 			  unsigned int filled_len, 
@@ -2902,7 +3249,7 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	else if(CADR(exp) == BREAK)
         {
 	  //not handling BREAK statements in compiled code for now
-	  /* len += sprintf(buf+filled_len+len, "break1();\n"); */
+	  /* len += sprintf(buf+filled_len+len, "if(break1())\n  return 1;\n"); */
 	  /* temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures); */
 	  /* if(temp == -1) */
 	  /*   return -1; */
@@ -3431,13 +3778,14 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	    return -1;
 	  len += temp;
 	}
-
-
-	//TODO: other special operators
 	else //it's a user-defined closure object
         {
 	  //TODO: does calling refer() to get at the closure object
 	  //work for all cases?
+
+	  //refer() places the closure object in reg_accumulator, this may
+	  //be a problem if the contents of reg_accumulator is needed elsewhere,
+	  //so we preserve its contents
 
 	  OBJECT_PTR prev_reg_accumulator = reg_accumulator;
 	  OBJECT_PTR fn_object;
@@ -3450,10 +3798,6 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	    sprintf(err_buf, "Call to undefined closure (%s)", buf);
 	    return -1;
 	  }
-
-	  //refer() places the closure object in reg_accumulator, this may
-	  //be a problem if the contents of reg_accumulator is needed elsewhere,
-	  //so we preserve its contents
 
 	  fn_object = reg_accumulator;
 	  reg_accumulator = prev_reg_accumulator;
@@ -3487,7 +3831,7 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 
 	  len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object);
 
-	  len += sprintf(buf+filled_len+len, "if(f_%d())\n  return;\n", fn_object);
+	  len += sprintf(buf+filled_len+len, "if(f_%d())\n  return 1;\n", fn_object);
 	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
@@ -3504,9 +3848,17 @@ unsigned int compile_to_c(OBJECT_PTR exp,
       len += temp;
     }
   }
+  else if(car_exp == APPLY)
+  {
+    len += sprintf(buf+filled_len+len, "if(apply_compiled())\n return 1;\n");
+    temp = compile_to_c(car(CADR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+    if(temp == -1)
+      return -1;
+    len += temp;    
+  }
   else if(car_exp == CONSTANT)
   {
-    len += sprintf(buf+filled_len+len, "constant(%d);\n", CADR(exp));
+    len += sprintf(buf+filled_len+len, "if(constant(%d))\n  return 1;\n", CADR(exp));
     temp = compile_to_c(car(car(CDDR(exp))), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
@@ -3515,15 +3867,15 @@ unsigned int compile_to_c(OBJECT_PTR exp,
   else if(car_exp == CLOSE)
   {
     len += sprintf(buf+filled_len+len, "if(closure(%d))\n  return 1;\n", exp);
-    temp = compile_to_c(fifth(exp), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+    temp = compile_to_c(car(fifth(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
   }
   else if(car_exp == MACRO)
   {
-    len += sprintf(buf+filled_len+len, "macro(%d);\n", exp);
-    temp = compile_to_c(fifth(exp), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+    len += sprintf(buf+filled_len+len, "if(macro(%d))\n  return 1;\n", exp);
+    temp = compile_to_c(car(fifth(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -3553,15 +3905,15 @@ unsigned int compile_to_c(OBJECT_PTR exp,
   }
   else if(car_exp == CONTI)
   {
-    len += sprintf(buf+filled_len+len, "conti();\n");
-    temp = compile_to_c(CADR(exp), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+    len += sprintf(buf+filled_len+len, "if(conti())\n  return 1;\n");
+    temp = compile_to_c(car(CADR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
   }
   else if (car_exp == FRAME)
   {
-    len += sprintf(buf+filled_len+len, "frame(%d);\n", exp);
+    len += sprintf(buf+filled_len+len, "if(frame(%d))\n  return 1;\n", exp);
     temp = compile_to_c(car(CADDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
@@ -3569,7 +3921,7 @@ unsigned int compile_to_c(OBJECT_PTR exp,
   }
   else if(car_exp == ARGUMENT)
   {
-    len += sprintf(buf+filled_len+len, "argument();\n");
+    len += sprintf(buf+filled_len+len, "if(argument())\n  return 1;\n");
     temp = compile_to_c(car(CADR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
@@ -3577,19 +3929,25 @@ unsigned int compile_to_c(OBJECT_PTR exp,
   }
   else if(car_exp == RETURN)
   {
-    len += sprintf(buf+filled_len+len, "return_op();\n");
+    len += sprintf(buf+filled_len+len, "if(return_op())\n return 1;\n");
   }
   else if(car_exp == HALT)
   {
-    len += sprintf(buf+filled_len+len, "halt_op();\n");
+    len += sprintf(buf+filled_len+len, "if(halt_op())\n  return 1;\n");
   }
   else if(car_exp == DEFINE)
   {
-    len += sprintf(buf+filled_len+len, "define(%d);\n", CADR(exp));
-    temp = compile_to_c(CADDR(exp), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
+    len += sprintf(buf+filled_len+len, "if(define(%d))\n return 1;\n", CADR(exp));
+    temp = compile_to_c(car(CADDR(exp)), buf, filled_len+len, err_buf, s, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
+  }
+  else
+  {
+    //print_object(car_exp);
+    //getchar();
+    assert(false);
   }
 
   return len;
@@ -3695,6 +4053,8 @@ TCCState *create_tcc_state()
   tcc_add_symbol(tcc_state, "save_object",                    save_object);
   tcc_add_symbol(tcc_state, "load_object",                    load_object);
   tcc_add_symbol(tcc_state, "compilefn",                      compilefn);
+
+  tcc_add_symbol(tcc_state, "apply_compiled",                 apply_compiled);
 
   if(!tcc_states)
   {

@@ -207,22 +207,22 @@ extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR CONS_RETURN_NIL;
 
-extern int refer(OBJECT_PTR);
-extern void constant(OBJECT_PTR);
-extern int assign(OBJECT_PTR);
-extern int define(OBJECT_PTR);
-extern int add();
-extern int sub();
-extern int eq();
-extern void closure(OBJECT_PTR);
-extern void macro(OBJECT_PTR);
-extern void conti();
-extern void frame(OBJECT_PTR);
-extern void argument();
-extern void return_op();
-extern void bind_formal_parameters(OBJECT_PTR);
+extern unsigned int refer(OBJECT_PTR);
+extern unsigned int constant(OBJECT_PTR);
+extern unsigned int assign(OBJECT_PTR);
+extern unsigned int define(OBJECT_PTR);
+extern unsigned int add();
+extern unsigned int sub();
+extern unsigned int eq();
+extern unsigned int closure(OBJECT_PTR);
+extern unsigned int macro(OBJECT_PTR);
+extern unsigned int conti();
+extern unsigned int frame(OBJECT_PTR);
+extern unsigned int argument();
+extern unsigned int return_op();
+extern unsigned int bind_formal_parameters(OBJECT_PTR);
 
-extern void break1();
+extern unsigned int break1();
 extern unsigned int cons_compiled();
 
 extern unsigned int neq();
@@ -295,9 +295,13 @@ extern unsigned int save_object();
 extern unsigned int load_object();
 extern unsigned int compilefn();
 
+extern unsigned int apply_compiled();
+
 extern cmpfn compile_function(OBJECT_PTR, char *);
 
 extern hashtable_t *native_functions;
+
+extern BOOLEAN core_library_loaded;
 
 //variables related to profiling
 double wall_time_var;
@@ -419,26 +423,30 @@ void eval(BOOLEAN do_gc)
 
   if(opcode == HALT)
   {
-    reg_next_expression = NIL;
+    halt_op();
   }
   else if(opcode == REFER)
   {
-    refer(CADR(exp));
+    if(refer(CADR(exp)))
+       return;
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CONSTANT)
   {
-    constant(CADR(exp));
+    if(constant(CADR(exp)))
+      return;
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CLOSE)
   {
-    closure(exp);
+    if(closure(exp))
+      return;
     reg_next_expression = fifth(exp);
   }
   else if(opcode == MACRO)
   {
-    macro(exp);
+    if(macro(exp))
+      return;
     reg_next_expression = CADDDDR(exp);
   }
   else if(opcode == TEST)
@@ -496,17 +504,20 @@ void eval(BOOLEAN do_gc)
   }
   else if(opcode == ASSIGN)
   {
-    assign(CADR(exp));
+    if(assign(CADR(exp)))
+      return;
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == DEFINE)
   {
-    define(CADR(exp));
+    if(define(CADR(exp)))
+      return;
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == CONTI)
   {
-    conti();
+    if(conti())
+      return;
     reg_next_expression = CADR(exp);
   }
   else if(opcode == NUATE) //this never gets called
@@ -518,355 +529,19 @@ void eval(BOOLEAN do_gc)
   }
   else if(opcode == FRAME)
   {
-    frame(exp);
+    if(frame(exp))
+      return;
     reg_next_expression = CADDR(exp);
   }
   else if(opcode == ARGUMENT)
   {
-    argument();
+    if(argument())
+      return;
     reg_next_expression = CADR(exp);
   }
   else if(opcode == APPLY)
   {
-    OBJECT_PTR operator = reg_accumulator;
-
-    //OBJECT_PTR res = get_symbol_from_value(reg_accumulator, reg_current_env);
-
-    /* continuations_map = cons(cons(operator, create_current_continuation()), */
-    /*                          continuations_map); */
-
-    //primitive operators
-    if(IS_SYMBOL_OBJECT(operator))
-    {
-      char val[SYMBOL_STRING_SIZE];
-      print_symbol(operator, val);
-        
-      if(operator == CONS)
-      {
-	cons_compiled();
-      }
-      else if(operator == EQ)
-      {
-	eq();
-      }
-      else if(operator == NEQ)
-      {
-	neq();
-      }
-      else if(operator == NOT)
-      {
-	not();
-      }
-      else if(operator == ATOM)
-      {
-	atom();
-      }
-      else if(operator == CAR)
-      {
-	car_compiled();
-      }
-      else if(operator == CDR)
-      {
-	cdr_compiled();
-      }
-      else if(operator == ADD)
-      {
-	add();
-      }
-      else if(operator == SUB)
-      {
-	sub();
-      }
-      else if(operator == MULT)
-      {
-	mult();
-      }
-      else if(operator == DIV)
-      {
-	div_compiled();
-      }
-      else if(operator == ERROR)
-      {
-	error();
-      }
-      else if(operator == PRINT)
-      {
-	print();
-      }
-      else if(operator == NEWLINE)
-      {
-	newline();
-      }
-      else if(operator == LST)
-      {
-	lst();
-      }
-      else if(operator == BACKQUOTE)
-      {
-	backquote();
-      }
-      else if(operator == LISTP)
-      {
-	listp();
-      }
-      else if(operator == SYMBOL_VALUE)
-      {
-	symbol_value();
-      }
-      else if(operator == GT)
-      {
-	gt();
-      }
-      else if(operator == LT)
-      {
-	lt();
-      }
-      else if(operator == LEQ)
-      {
-	leq();
-      }
-      else if(operator == GEQ)
-      {
-	geq();
-      }
-      else if(operator == GENSYM)
-      {
-	gensym_compiled();
-      }
-      else if(operator == SETCAR)
-      {
-	setcar();
-      }
-      else if(operator == SETCDR)
-      {
-	setcdr();
-      }
-      else if(operator == CREATE_PACKAGE)
-      {
-	create_package_compiled();
-      }
-      else if(operator == IN_PACKAGE)
-      {
-	in_package();
-      }
-      else if(operator == EXPAND_MACRO)
-      {
-	expand_macro();
-      }
-      else if(operator == APPLY)
-      {
-	apply();
-      }
-      else if(operator == STRING)
-      {
-	string();
-      }
-      else if(operator == MAKE_ARRAY)
-      {
-	make_array();
-      }
-      else if(operator == ARRAY_SET)
-      {
-	array_set();
-      }
-      else if(operator == ARRAY_GET)
-      {
-	array_get();
-      }
-      else if(operator == SUB_ARRAY)
-      {
-	sub_array();
-      }
-      else if(operator == ARRAY_LENGTH)
-      {
-	array_length();
-      }
-      else if(operator == PRINT_STRING)
-      {
-	print_string_compiled();
-      }
-      else if(operator == CREATE_IMAGE)
-      {
-	create_image_compiled();
-      }
-      else if(operator == LOAD_FOREIGN_LIBRARY)
-      {
-	load_foreign_library_compiled();
-      }
-      else if(operator == CALL_FOREIGN_FUNCTION)
-      {
-	call_foreign_function_compiled();
-      }
-      else if(operator == ENV)
-      {
-	env();
-      }
-      else if(operator == EVAL)
-      {
-	eval_compiled();
-      }
-      else if(operator == TIME)
-      {
-	time_compiled();
-      }
-      else if(operator == PROFILE)
-      {
-	profile();
-      }
-      else if(operator == BREAK)
-      {
-	break1();
-      }
-      else if(operator == RESUME)
-      {
-	resume_compiled();
-      }
-      else if(operator == BACKTRACE)
-      {
-	backtrace();
-      }
-      else if(operator == LOAD_FILE)
-      {
-	load_file();
-      }
-      else if(operator == CONSP)
-      {
-	consp();
-      }
-      else if(operator ==  INTEGERP)
-      {
-	integerp();
-      }
-      else if(operator ==  FLOATP)
-      {
-	floatp();
-      }
-      else if(operator ==  CHARACTERP)
-      {
-	characterp();
-      }
-      else if(operator ==  SYMBOLP)
-      {
-	symbolp();
-      }
-      else if(operator ==  STRINGP)
-      {
-	stringp();
-      }
-      else if(operator ==  ARRAYP)
-      {
-	arrayp();
-      }
-      else if(operator ==  CLOSUREP)
-      {
-	closurep();
-      }
-      else if(operator ==  MACROP)
-      {
-	macrop();
-      }
-      else if(operator ==  CONTINUATIONP)
-      {
-	continuationp();
-      }
-      else if(operator == LAMBDA_EXPRESSION)
-      {
-	lambda_expression();
-      }
-      else if(operator == FORMAT)
-      {
-	format_compiled();
-      }
-      else if(operator == CLONE)
-      {
-	clone();
-      }
-      else if(operator == RETURN_FROM)
-      {
-	return_from();
-      }
-      else if(operator == COMPILE)
-      {
-	compile_compiled();
-      }
-      else if(operator == SYMBL)
-      {
-	symbl();
-      }
-      else if(operator == SYMBOL_NAME)
-      {
-	symbol_name();
-      }
-      else if(operator == UNBIND)
-      {
-	unbind();
-      }
-      else if(operator == ABORT)
-      {
-	abort_compiled();
-      }
-      else if(operator == SAVE_OBJECT)
-      {
-	save_object();
-      }
-      else if(operator == LOAD_OBJECT)
-      {
-	load_object();
-      }
-      else if(operator == COMPILEFN)
-      {
-	compilefn();
-      }
-      else
-      {
-	char buf[SYMBOL_STRING_SIZE];
-	print_qualified_symbol(operator, buf);
-	sprintf(err_buf, "Symbol not bound(4): %s", buf);
-        throw_exception("SYMBOL-NOT-BOUND", err_buf);
-        return;
-      }
-    }
-    else //user-defined operator (closure, macro, or continuation)
-    {
-      if(IS_CLOSURE_OBJECT(reg_accumulator) || IS_MACRO_OBJECT(reg_accumulator))
-      {
-	bind_formal_parameters(reg_accumulator);
-
-	if(IS_CLOSURE_OBJECT(reg_accumulator))
-	{
-	  hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
-	  if(e)
-	  {
-	    cmpfn fn = (cmpfn)e->value;
-	    fn();
-	  }
-	  else
-	    reg_next_expression = get_body_object(reg_accumulator); 
-	}
-	else
-	  reg_next_expression = get_body_object(reg_accumulator); 
-
-      }
-      else if(IS_CONTINUATION_OBJECT(reg_accumulator))
-      {
-        if(length(reg_current_value_rib) != 1)
-        {
-          throw_generic_exception("Continuations take exactly one argument");
-          return;
-        }
-
-        reg_current_stack = get_heap(reg_accumulator & POINTER_MASK, 0);
-
-        reg_accumulator = car(reg_current_value_rib);
-        reg_current_value_rib = NIL;
-        reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
-      }
-      else
-      {
-        throw_generic_exception("Illegal operator");
-        return;
-      }
-    }
+    apply_compiled();
   }
   else if(opcode == RETURN)
   {
@@ -1302,16 +977,18 @@ OBJECT_PTR get_continuation_for_return(OBJECT_PTR obj)
 
 void throw_generic_exception(char *err_str)
 {
-  /* reg_current_value_rib = cons(cons(get_symbol_object("EXCEPTION"), get_string_object(err_str)), NIL); */
-
-  /* //basically (REFER THROW (APPLY)) */
-  /* reg_next_expression = cons(cons(REFER, cons(get_symbol_object("THROW"),cons(cons(cons(APPLY, NIL), NIL), NIL))), NIL); */
-
   throw_exception("EXCEPTION", err_str);
 }
 
 void throw_exception(char *excp, char *err_str)
 {
+  if(!core_library_loaded)
+  {
+    printf("Exception %s: %s\n", excp, err_str);
+    cleanup();
+    exit(1);
+  }
+
   //printf("In throw_exception() %s %s\n", excp, err_str);
   //getchar();
   reg_current_value_rib = cons(cons(get_symbol_object(excp), (OBJECT_PTR)get_string_object(err_str)), NIL);

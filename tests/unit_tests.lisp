@@ -803,16 +803,16 @@
 
 (test-exception 297 (return-from 1 2 3) 'arg-mismatch)
 
-(let ((x)
-      (val))
+(define x 0)
 
-  (defun f (n)
-    (if (> n 0)
+(defun f (n)
+  (if (> n 0)
       (progn (set x 10) 
-             (return-from f 20)))
-    (set x 30)
-    40)
+	     (return-from f 20)))
+  (set x 30)
+  40)
 
+(let ((val))
   (set val (f 10))
   (test-condition 298 (and (eq x 10) (eq val 20)))
 
