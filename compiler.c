@@ -398,9 +398,16 @@ int main(int argc, char **argv)
 
     initialize_memory();
 
+    initialize_tcc();
+
     loaded_image_file_name = strdup(argv[1]);
 
-    load_from_image(argv[1]);
+    if(load_from_image(argv[1]))
+    {
+      printf("Unable to load image from file %s\n", argv[1]);
+      cleanup();
+      exit(1);
+    }
 
     CONS_NIL_NIL = cons(NIL, NIL);
     CONS_APPLY_NIL = cons(APPLY, NIL);

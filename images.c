@@ -640,11 +640,15 @@ void create_image(char *file_name)
 /*   return ret; */
 /* } */
 
-void load_from_image(char *file_name)
+int load_from_image(char *file_name)
 {
   int i, j;
 
   struct JSONObject *root = JSON_parse(file_name);
+
+  if(!root)
+    return 1;
+
   struct JSONObject *heap = JSON_get_object_item(root, "heap");
 
   struct JSONObject *temp;
@@ -992,6 +996,8 @@ void load_from_image(char *file_name)
   }
 
   JSON_delete_object(root);
+
+  return 0;
 }
 
 /* void load_from_image(char *file_name) */

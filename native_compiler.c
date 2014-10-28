@@ -238,7 +238,7 @@ unsigned int constant(OBJECT_PTR c)
 {
   reg_accumulator = c;
   return 0;
-}
+} 
 
 unsigned int closure(OBJECT_PTR exp)
 {
@@ -3164,13 +3164,24 @@ unsigned int apply_compiled()
       if(IS_CLOSURE_OBJECT(reg_accumulator))
       {
 	hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
+	cmpfn fn;
+
 	if(e)
 	{
-	  cmpfn fn = (cmpfn)e->value;
-	  fn();
+	  fn = (cmpfn)e->value;
 	}
 	else
-	  reg_next_expression = get_body_object(reg_accumulator); 
+	{
+	  char err_buf1[500];
+	  memset(err_buf1, '\0', 500);
+	  fn = compile_function(reg_accumulator, err_buf1);
+	}
+
+	if(!fn)
+	  assert(false);
+
+	//reg_next_expression = get_body_object(reg_accumulator); 
+	fn();
       }
       else
 	reg_next_expression = get_body_object(reg_accumulator); 
@@ -3218,7 +3229,7 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 
   if(car_exp == REFER)
   {
-    if(car(car(CADDR(exp))) == APPLY)
+    if(car(CADDR(exp)) == APPLY)
     {
       if(IS_SYMBOL_OBJECT(CADR(exp)))
       {
@@ -3815,17 +3826,31 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	  }
 	  else
 	  {
-	    if(*called_closures == NULL)
+	    BOOLEAN closure_already_exists = false;
+	    int i;
+	    for(i=0; i< *nof_called_closures; i++)
 	    {
-	      *called_closures = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
-	      *nof_called_closures = 1;
-	      *called_closures[0] = fn_object;
+	      if(*called_closures[i] == fn_object)
+	      {
+		closure_already_exists = true;
+		break;
+	      }
 	    }
-	    else
+
+	    if(!closure_already_exists)
 	    {
-	      *nof_called_closures++;
-	      *called_closures = (OBJECT_PTR *)realloc(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR));
-	      *called_closures[*nof_called_closures-1] = fn_object;	      
+	      if(*called_closures == NULL)
+	      {
+		*called_closures = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
+		*nof_called_closures = 1;
+		*called_closures[0] = fn_object;
+	      }
+	      else
+	      {
+		*nof_called_closures++;
+		*called_closures = (OBJECT_PTR *)realloc(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR));
+		*called_closures[*nof_called_closures-1] = fn_object;	      
+	      }
 	    }
 	  }
 
@@ -4074,6 +4099,11 @@ TCCState *create_tcc_state()
 
 cmpfn compile_function(OBJECT_PTR fn, char *err_buf)
 {
+  hashtable_entry_t *e = hashtable_get(native_functions, (void *)fn);
+
+  if(e)
+    return (cmpfn)e->value;
+
   char buf[MAX_STRING_LENGTH];
   memset(buf, MAX_STRING_LENGTH, '\0');
 
@@ -4114,7 +4144,8 @@ cmpfn compile_function(OBJECT_PTR fn, char *err_buf)
     memset(cname, 20, '\0');
     sprintf(cname, "f_%d", called_closures[i]);
 
-    tcc_add_symbol(tcc_state, cname, dummy);
+    if(called_closures[i] != fn)
+      tcc_add_symbol(tcc_state, cname, dummy);
   }
 
   if (tcc_compile_string(tcc_state, buf) == -1)
@@ -4127,6 +4158,9 @@ cmpfn compile_function(OBJECT_PTR fn, char *err_buf)
 
   for(i=0; i<nof_called_closures; i++)
   {
+    if(called_closures[i] == fn)
+      continue;
+
     memset(cname, 20, '\0');
     sprintf(cname, "f_%d", called_closures[i]);    
 
@@ -4139,7 +4173,8 @@ cmpfn compile_function(OBJECT_PTR fn, char *err_buf)
       return NULL;      
     }
 
-    tcc_add_symbol(tcc_state, cname, fn1);
+    if(!tcc_get_symbol(tcc_state, cname))
+      tcc_add_symbol(tcc_state, cname, fn1);
   }
 
   if (tcc_relocate(tcc_state, TCC_RELOCATE_AUTO) < 0)
@@ -4154,6 +4189,8 @@ cmpfn compile_function(OBJECT_PTR fn, char *err_buf)
     free(called_closures);
 
   cmpfn ret = tcc_get_symbol(tcc_state, fname);
+
+  assert(ret != NULL);
 
   hashtable_put(native_functions, (void *)fn, (void *)ret);
 

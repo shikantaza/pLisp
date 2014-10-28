@@ -158,7 +158,7 @@ void free_all_objects()
 
   unsigned int count = memory_deallocated();
 
-  assert(!is_set_empty(BLACK));
+  //assert(!is_set_empty(BLACK));
 
   while(!is_set_empty(BLACK))
   {

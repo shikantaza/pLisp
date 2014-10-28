@@ -225,7 +225,7 @@ OBJECT_PTR convert_float_to_object(float);
 void print_array_object(OBJECT_PTR);
 
 void create_image(char *);
-void load_from_image(char *);
+int load_from_image(char *);
 
 OBJECT_PTR load_foreign_library(OBJECT_PTR, OBJECT_PTR);
 
