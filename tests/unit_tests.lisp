@@ -822,11 +822,11 @@
 ;end return-from
 
 ;compile
-(test-exception 300 (compile) 'arg-mismatch)
+(test-exception 300 (compile1) 'arg-mismatch)
 
-(test-exception 301 (compile 1) 'arg-mismatch)
+(test-exception 301 (compile1 1) 'arg-mismatch)
 
-(test-exception 302 (compile 1 2 3) 'arg-mismatch)
+(test-exception 302 (compile1 1 2 3) 'arg-mismatch)
 ;end compile
 
 ;symbol

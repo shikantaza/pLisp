@@ -1822,7 +1822,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[63] = strdup("FORMAT");
   packages[CORE_PACKAGE_INDEX].symbols[64] = strdup("CLONE");
   packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("RETURN");
-  packages[CORE_PACKAGE_INDEX].symbols[66] = strdup("COMPILE");
+  packages[CORE_PACKAGE_INDEX].symbols[66] = strdup("COMPILE1");
   packages[CORE_PACKAGE_INDEX].symbols[67] = strdup("RETURN-FROM");
   packages[CORE_PACKAGE_INDEX].symbols[68] = strdup("SYMBOL");
   packages[CORE_PACKAGE_INDEX].symbols[69] = strdup("SYMBOL-NAME");

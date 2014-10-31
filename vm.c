@@ -211,95 +211,13 @@ extern unsigned int refer(OBJECT_PTR);
 extern unsigned int constant(OBJECT_PTR);
 extern unsigned int assign(OBJECT_PTR);
 extern unsigned int define(OBJECT_PTR);
-extern unsigned int add();
-extern unsigned int sub();
-extern unsigned int eq();
 extern unsigned int closure(OBJECT_PTR);
 extern unsigned int macro(OBJECT_PTR);
 extern unsigned int conti();
 extern unsigned int frame(OBJECT_PTR);
 extern unsigned int argument();
 extern unsigned int return_op();
-extern unsigned int bind_formal_parameters(OBJECT_PTR);
-
-extern unsigned int break1();
-extern unsigned int cons_compiled();
-
-extern unsigned int neq();
-extern unsigned int not();
-extern unsigned int atom();
-extern unsigned int car_compiled();
-extern unsigned int cdr_compiled();
-extern unsigned int mult();
-extern unsigned int div_compiled();
-extern unsigned int error();
-extern unsigned int print();
-extern unsigned int newline();
-
-extern unsigned int lst();
-extern unsigned int backquote();
-extern unsigned int listp();
-extern unsigned int symbol_value();
-extern unsigned int gt();
-extern unsigned int lt();
-extern unsigned int leq();
-extern unsigned int geq();
-extern unsigned int gensym_compiled();
-extern unsigned int setcar();
-
-extern unsigned int setcdr();
-extern unsigned int create_package_compiled();
-extern unsigned int in_package();
-extern unsigned int expand_macro();
-extern unsigned int apply();
-extern unsigned int string();
-extern unsigned int make_array();
-extern unsigned int array_set();
-extern unsigned int array_get();
-extern unsigned int sub_array();
-
-extern unsigned int array_length();
-extern unsigned int print_string_compiled();
-extern unsigned int create_image_compiled();
-extern unsigned int load_foreign_library_compiled();
-extern unsigned int call_foreign_function_compiled();
-extern unsigned int env();
-extern unsigned int eval_compiled();
-extern unsigned int time_compiled();
-extern unsigned int profile();
-extern unsigned int resume_compiled();
-
-extern unsigned int backtrace();
-extern unsigned int load_file();
-extern unsigned int consp();
-extern unsigned int integerp();
-extern unsigned int floatp();
-extern unsigned int characterp();
-extern unsigned int symbolp();
-extern unsigned int stringp();
-extern unsigned int arrayp();
-extern unsigned int closurep();
-
-extern unsigned int macrop();
-extern unsigned int continuationp();
-extern unsigned int lambda_expression();
-extern unsigned int format_compiled();
-extern unsigned int clone();
-extern unsigned int return_from();
-extern unsigned int compile_compiled();
-extern unsigned int symbl();
-extern unsigned int symbol_name();
-extern unsigned int unbind();
-extern unsigned int abort_compiled();
-extern unsigned int save_object();
-extern unsigned int load_object();
-extern unsigned int compilefn();
-
 extern unsigned int apply_compiled();
-
-extern cmpfn compile_function(OBJECT_PTR, char *);
-
-extern hashtable_t *native_functions;
 
 extern BOOLEAN core_library_loaded;
 
@@ -681,6 +599,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 
       while(car(reg_next_expression) != NIL)
       {
+	//print_object(car(reg_next_expression));printf("\n");getchar();
         eval(false);
         if(in_error)
         {
