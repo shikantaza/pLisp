@@ -3192,7 +3192,7 @@ unsigned int apply_compiled()
 	}
 	//reg_next_expression = get_body_object(reg_accumulator); 
 	/* if(expanding_macro) */
-	/*   reg_next_expression = get_body_object(reg_accumulator);  */
+	/*   reg_next_expression = get_body_object(reg_accumulator); */
 	/* else */
 	  fn();
       }
@@ -3823,6 +3823,8 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	    return -1;
 	  }
 
+	  assert(IS_CLOSURE_OBJECT(reg_accumulator));
+
 	  fn_object = reg_accumulator;
 	  reg_accumulator = prev_reg_accumulator;
 
@@ -3830,36 +3832,41 @@ unsigned int compile_to_c(OBJECT_PTR exp,
 	  int i;
 	  for(i=0; i< *nof_called_closures; i++)
 	  {
-	    if(*called_closures[i] == fn_object)
+	    if((*called_closures)[i] == fn_object)
 	    {
 	      closure_already_exists = true;
 	      break;
 	    }
 	  }
 
-	  if(!closure_already_exists)
+	  if(!closure_already_exists && IS_CLOSURE_OBJECT(fn_object))
 	  {
 	    if(*called_closures == NULL)
 	    {
 	      *called_closures = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
+	      assert(*called_closures != NULL);
 	      *nof_called_closures = 1;
-	      *called_closures[0] = fn_object;
+	      (*called_closures)[0] = fn_object;
 	    }
 	    else
 	    {
-	      *nof_called_closures++;
+	      (*nof_called_closures)++;
 	      *called_closures = (OBJECT_PTR *)realloc(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR));
-	      *called_closures[*nof_called_closures-1] = fn_object;	      
+	      assert(*called_closures != NULL);
+	      (*called_closures)[*nof_called_closures-1] = fn_object;	      
 	    }
 	  }
 
-	  len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object);
+	  if(IS_CLOSURE_OBJECT(fn_object))
+	  {
+	    len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object);
 
-	  len += sprintf(buf+filled_len+len, "if(f_%d())\n  return 1;\n", fn_object);
-	  temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
-	  if(temp == -1)
-	    return -1;
-	  len += temp;
+	    len += sprintf(buf+filled_len+len, "if(f_%d())\n  return 1;\n", fn_object);
+	    temp = compile_to_c(car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	    if(temp == -1)
+	      return -1;
+	    len += temp;
+	  }
 	}
       }
     } //end of if(car(car(CADDR(exp))) == APPLY)
@@ -3937,6 +3944,7 @@ unsigned int compile_to_c(OBJECT_PTR exp,
   }
   else if (car_exp == FRAME)
   {
+    //TODO: need to replace this with calls to compile_to_c() for car(CADR(exp)) and car(CADDR(exp))
     len += sprintf(buf+filled_len+len, "if(frame(%d))\n  return 1;\n", exp);
     temp = compile_to_c(car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
@@ -4135,8 +4143,6 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
 
   len += sprintf(buf+len, "return 0;\n");
   sprintf(buf+len, "}");
-
-  printf("%s\n", buf);
 
   char cname[20];
 
