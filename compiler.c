@@ -108,8 +108,6 @@ BOOLEAN core_library_loaded = false;
 
 char *loaded_image_file_name = NULL;
 
-BOOLEAN expanding_macro;
-
 extern unsigned int current_package;
 
 extern OBJECT_PTR CONS_APPLY_NIL;
@@ -291,8 +289,6 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
 
       if(car(res) != NIL)
       {
-	expanding_macro = true;
-
         if(IS_MACRO_OBJECT(cdr(res)))
         {
           reg_next_expression = cons(cons(FRAME,
@@ -363,8 +359,6 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           //we return the original source expression
           //that was compiled to facilitate debugging
 
-	  expanding_macro = false;
-          
           //return compile(reg_accumulator, next);
           return cons(car(compile(reg_accumulator, next)), exp);
 
