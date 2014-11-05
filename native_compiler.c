@@ -10,6 +10,8 @@
 
 #include "hashtable.h"
 
+#include "util.h"
+
 extern void initialize();
 extern OBJECT_PTR cons();
 extern OBJECT_PTR CADR(OBJECT_PTR);
