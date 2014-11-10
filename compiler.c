@@ -572,6 +572,35 @@ int repl(int mode)
         return 1;
     }
 
+    //TODO: uncomment this to compile any expression that is fed to the REPL
+    //(needs to be debugged)
+    /* char buf[500]; */
+    /* memset(buf, 500, '\0'); */
+
+    /* cmpfn fn = compile_closure(create_closure_object(NIL, NIL, reg_next_expression, exp), buf); */
+
+    /* if(!fn) */
+    /* { */
+    /*   raise_error("Unable to compile expression to native code"); */
+    /*   return 1; */
+    /* } */
+    
+    /* if(fn()) */
+    /* { */
+    /*   char str[100]; */
+    /*   char buf1[500]; */
+
+    /*   memset(str, 100, '\0'); */
+    /*   memset(buf1, 500, '\0'); */
+
+    /*   print_object_to_string(cdr(car(reg_current_value_rib)), str, 0); */
+    /*   sprintf(buf, "%s: %s", get_symbol_name(car(car(reg_current_value_rib))), substring(str,1, strlen(str)-2)); */
+
+    /*   raise_error(buf); */
+
+    /*   return 1; */
+    /* } */
+
 #ifdef GUI
     if(!in_error && core_library_loaded && !debug_mode)
     {
