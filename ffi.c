@@ -384,7 +384,7 @@ int format(OBJECT_PTR args)
   arg_values[i] = (int *)malloc(sizeof(int));
 
   if(car(args) == NIL)
-    i_val = 1; //stdout
+    i_val = stdout;
   else
     i_val = get_int_value(car(args));
 

@@ -86,6 +86,8 @@ extern abort_debugger(GtkWidget *, gpointer);
 
 extern BOOLEAN in_break;
 
+extern BOOLEAN headless_mode;
+
 typedef struct
 {
   GtkWidget *textview;
@@ -105,13 +107,18 @@ void transcript_backspace()
 
 void print_to_transcript(char * str)
 {
-  gtk_text_buffer_insert_at_cursor(transcript_buffer, str, -1);
+  if(headless_mode)
+    fprintf(stdout, "%s", str);
+  else
+  {
+    gtk_text_buffer_insert_at_cursor(transcript_buffer, str, -1);
 
-  //scroll to the end of the text
-  GtkTextIter iter;
-  gtk_text_buffer_get_end_iter (transcript_buffer, &iter);
-  gtk_text_view_scroll_to_iter(transcript_textview,
-                               &iter, 0.0, FALSE, 0, 0);
+    //scroll to the end of the text
+    GtkTextIter iter;
+    gtk_text_buffer_get_end_iter (transcript_buffer, &iter);
+    gtk_text_view_scroll_to_iter(transcript_textview,
+				 &iter, 0.0, FALSE, 0, 0);
+  }
 }
 
 void print_to_workspace(char * str)

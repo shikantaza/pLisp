@@ -495,50 +495,53 @@ void create_image(char *file_name)
             posx, posy, width, height);
   }
 
-  //begin transcript window serialization
-  int posx, posy, width, height;
-  GtkTextIter start, end;
-
-  char text[MAX_STRING_LENGTH];
-
-  char *transcript_text;
-
-  gtk_text_buffer_get_start_iter(transcript_buffer, &start);
-  gtk_text_buffer_get_end_iter(transcript_buffer, &end);
-
-  int len;
-
-  int ii=0, jj=0;
-
-  transcript_text = strdup(gtk_text_buffer_get_text(transcript_buffer, &start, &end, FALSE));
-
-  len = strlen(transcript_text);
-
-  memset(text, '\0', MAX_STRING_LENGTH);
-
-  while(ii<len)
+  if(transcript_window)
   {
-    if(transcript_text[ii] == '\"')
+    //begin transcript window serialization
+    int posx, posy, width, height;
+    GtkTextIter start, end;
+
+    char text[MAX_STRING_LENGTH];
+
+    char *transcript_text;
+
+    gtk_text_buffer_get_start_iter(transcript_buffer, &start);
+    gtk_text_buffer_get_end_iter(transcript_buffer, &end);
+
+    int len;
+
+    int ii=0, jj=0;
+
+    transcript_text = strdup(gtk_text_buffer_get_text(transcript_buffer, &start, &end, FALSE));
+
+    len = strlen(transcript_text);
+
+    memset(text, '\0', MAX_STRING_LENGTH);
+
+    while(ii<len)
     {
-      text[jj] = '\\';
-      text[jj+1] = '\"';
-      jj += 2;
+      if(transcript_text[ii] == '\"')
+      {
+	text[jj] = '\\';
+	text[jj+1] = '\"';
+	jj += 2;
+      }
+      else
+      {
+	text[jj] = transcript_text[ii];
+	jj++;
+      }
+      ii++;
     }
-    else
-    {
-      text[jj] = transcript_text[ii];
-      jj++;
-    }
-    ii++;
+
+    gtk_window_get_position(transcript_window, &posx, &posy);
+    gtk_window_get_size(transcript_window, &width, &height);
+
+    fprintf(fp, 
+	    ", \"transcript\" : [ %d, %d, %d, %d, \"%s\" ]", 
+	    posx, posy, width, height, text);
+    //end transcript window serialization
   }
-
-  gtk_window_get_position(transcript_window, &posx, &posy);
-  gtk_window_get_size(transcript_window, &width, &height);
-
-  fprintf(fp, 
-          ", \"transcript\" : [ %d, %d, %d, %d, \"%s\" ]", 
-          posx, posy, width, height, text);
-  //end transcript window serialization
 
   fprintf(fp, "}");
 

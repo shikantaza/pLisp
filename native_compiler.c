@@ -181,6 +181,8 @@ extern BOOLEAN system_changed;
 
 extern char *foreign_library_names[];
 
+extern headless_mode;
+
 TCCState *tcc_state = NULL;
 /* TCCState **tcc_states = NULL; */
 /* unsigned int nof_tcc_states = 0; */
@@ -2546,14 +2548,22 @@ unsigned int format_compiled()
       rest = cdr(rest);
   }
 
-#ifdef GUI
-  if(format_for_gui(reg_current_value_rib) == -1)
-#else
-  if(format(reg_current_value_rib) == -1)
-#endif
+  if(headless_mode)
   {
-    //error message would have been set in format()
-    return 1;
+    if(format(reg_current_value_rib) == -1)
+      return 1;
+  }
+  else
+  {
+#ifdef GUI
+    if(format_for_gui(reg_current_value_rib) == -1)
+#else
+    if(format(reg_current_value_rib) == -1)
+#endif
+    {
+      //error message would have been set in format()
+      return 1;
+    }
   }
 
   reg_accumulator = NIL;
