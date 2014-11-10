@@ -640,7 +640,7 @@ void cleanup_memory()
   grey  = NULL;
   black = NULL;
 
-  printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
+  //printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
 }
 
 void recreate_black()

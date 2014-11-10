@@ -221,6 +221,8 @@ extern unsigned int apply_compiled();
 
 extern BOOLEAN core_library_loaded;
 
+extern BOOLEAN headless_mode;
+
 //variables related to profiling
 double wall_time_var;
 clock_t cpu_time_var;
@@ -504,23 +506,30 @@ OBJECT_PTR create_current_continuation()
 
 void raise_error(char *err_str)
 {
+  if(headless_mode)
+  {
+    fprintf(stdout, "%s\n", err_str);
+  }
+  else
+  {
 #ifdef GUI
-  show_error_dialog(err_str);
+    show_error_dialog(err_str);
 
-  debug_mode = true;
-  debug_continuation = create_current_continuation();
-  debug_env = reg_current_env;
-  reg_next_expression = NIL;
+    debug_mode = true;
+    debug_continuation = create_current_continuation();
+    debug_env = reg_current_env;
+    reg_next_expression = NIL;
 
-  debug_execution_stack = reg_current_stack;
+    debug_execution_stack = reg_current_stack;
 
-  create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-                      DEFAULT_DEBUG_WINDOW_POSY,
-                      DEFAULT_DEBUG_WINDOW_WIDTH,
-                      DEFAULT_DEBUG_WINDOW_HEIGHT);
+    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+			DEFAULT_DEBUG_WINDOW_POSY,
+			DEFAULT_DEBUG_WINDOW_WIDTH,
+			DEFAULT_DEBUG_WINDOW_HEIGHT);
 #else
-  fprintf(stdout, "%s\n", err_str);
+    fprintf(stdout, "%s\n", err_str);
 #endif
+  }
 
   //to stay commented out till we are
   //able to prpvide a meaningful backtrace

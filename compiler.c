@@ -108,6 +108,8 @@ BOOLEAN core_library_loaded = false;
 
 char *loaded_image_file_name = NULL;
 
+BOOLEAN headless_mode = false;
+
 extern unsigned int current_package;
 
 extern OBJECT_PTR CONS_APPLY_NIL;
@@ -385,6 +387,42 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
 
 int main(int argc, char **argv)
 {
+  //headless mode. plisp can be invoked
+  //as 'plisp -e '<exp>', and it will
+  //terminate after printing the results 
+  //of evaluating <exp>. It will load a default
+  //image called plisp.image before this evaluation.
+  //the idea is to set up the default image with
+  //the definitions that will be invoked (directly
+  //or indirectly) in plisp.image beforehand.
+  if(argc == 3 && !strcmp(argv[1], "-e"))
+  {
+    headless_mode = true;
+
+    initialize();
+
+    if(load_from_image("./plisp.image"))
+    {
+      printf("Unable to load image from file plisp.image\n");
+      cleanup();
+      exit(1);
+    }
+
+    CONS_NIL_NIL = cons(NIL, NIL);
+    CONS_APPLY_NIL = cons(APPLY, NIL);
+    CONS_HALT_NIL = cons(HALT, NIL);
+    CONS_RETURN_NIL = cons(RETURN, NIL);
+
+    core_library_loaded = true;
+
+    yy_scan_string(argv[2]);
+    yyparse();
+    repl(1);
+    cleanup();
+
+    exit(0);
+  }
+
 #ifdef GUI
   gtk_init(&argc, &argv);
 #endif
@@ -601,17 +639,28 @@ int repl(int mode)
     /*   return 1; */
     /* } */
 
-#ifdef GUI
-    if(!in_error && core_library_loaded && !debug_mode)
+    if(headless_mode && core_library_loaded)
     {
-      print_object(reg_accumulator);
-      print_to_transcript("\n");
-    }
-#else
-    if(yyin == stdin && !in_error  && !debug_mode)
-      print_object(reg_accumulator);
-#endif
+      char buf[500];
+      memset(buf, 500, '\0');
 
+      print_object_to_string(reg_accumulator, buf, 0);
+
+      fprintf(stdout, "%s\n", buf);
+    }
+    else
+    {
+#ifdef GUI
+      if(!in_error && core_library_loaded && !debug_mode)
+      {
+	print_object(reg_accumulator);
+	print_to_transcript("\n");
+      }
+#else
+      if(yyin == stdin && !in_error  && !debug_mode)
+	print_object(reg_accumulator);
+#endif
+    }
     //reset the EXCEPTION-HANDLERS variable
     update_environment(cons(top_level_env, NIL),
                        get_symbol_object("EXCEPTION-HANDLERS"),
@@ -630,13 +679,16 @@ int repl(int mode)
 int load_core_library()
 {
 
+  if(!headless_mode)
+  {
 #ifdef GUI
   print_to_transcript("Loading core library...");
 #else
   fprintf(stdout, "Loading core library...");
   fflush(stdout);
 #endif
-  
+  }
+
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
@@ -676,12 +728,15 @@ int load_core_library()
 
   core_library_loaded = true;
 
+  if(!headless_mode)
+  {
 #ifdef GUI
   print_to_transcript(" done\n");
 #else
   //hack to prevent message being overwritten
   fprintf(stdout, "Loading core library... done\n");
 #endif
+  }
 
   return 0;  
 }

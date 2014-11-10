@@ -81,6 +81,8 @@ extern GtkTreeView *symbols_list;
 
 extern OBJECT_PTR DEFUN, DEFMACRO;
 
+extern BOOLEAN headless_mode;
+
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
 void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, uintptr_t, unsigned int);
@@ -727,6 +729,13 @@ int load_from_image(char *file_name)
   reg_current_env       = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_env")->ivalue,       hashtable, q, false);
   reg_current_value_rib = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q, false);
   reg_current_stack     = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q, false);
+
+  if(headless_mode)
+  {
+    convert_heap(heap, hashtable, q, false);
+    JSON_delete_object(root);
+    return 0;
+  }
 
   struct JSONObject *profiler = JSON_get_object_item(root, "profiler");
 
