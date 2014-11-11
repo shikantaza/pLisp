@@ -62,6 +62,8 @@ extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
 
 extern hashtable_t *ht;
 
+extern BOOLEAN console_mode, single_expression_mode;
+
 //forward declarations
 
 void dealloc(OBJECT_PTR);
@@ -527,18 +529,18 @@ uintptr_t object_alloc(int size, int tag)
 
   if(err)
   {
+    if(!console_mode && !single_expression_mode)
+    {
+      char buf[MAX_STRING_LENGTH];
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      int len=0;
+      len += sprintf(buf, "Unable to allocate memory; posix_memalign error = %d\n", err);
+      show_error_dialog(buf);
+    }
+    else
+      printf("Unable to allocate memory; posix_memalign error = %d\n", err);
 
-#ifdef GUI
-    char buf[MAX_STRING_LENGTH];
-    memset(buf, '\0', MAX_STRING_LENGTH);
-    int len=0;
-    len += sprintf(buf, "Unable to allocate memory; posix_memalign error = %d\n", err);
-    show_error_dialog(buf);
-#else
-    printf("Unable to allocate memory; posix_memalign error = %d\n", err);
-#endif
-
-    printf("Unable to allocate memory; posix_memalign error = %d\n", err);
+    //printf("Unable to allocate memory; posix_memalign error = %d\n", err);
 
     cleanup();
     exit(1);

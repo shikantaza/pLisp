@@ -47,6 +47,8 @@ extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
 
+extern BOOLEAN console_mode, single_expression_mode;
+
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 
@@ -483,7 +485,6 @@ void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args
   }
 }
 
-#ifdef GUI
 int format_for_gui(OBJECT_PTR args)
 {
   int nof_args = length(args);
@@ -598,5 +599,3 @@ int format_for_gui(OBJECT_PTR args)
 
   return 0;
 }
-
-#endif

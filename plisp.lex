@@ -29,6 +29,8 @@ int yyerror(char *s);
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
 
+extern BOOLEAN console_mode;
+
 //for handling (load-file ...)
 int set_up_new_yyin(FILE *fp)
 {
@@ -60,10 +62,11 @@ void pop_yyin()
 
   if(--include_stack_ptr == 0)
   {
-#ifndef GUI
-    yyin = stdin;
-    yyrestart(yyin);
-#endif
+    if(console_mode)
+    {
+      yyin = stdin;
+      yyrestart(yyin);
+    }
   }
   else
   {

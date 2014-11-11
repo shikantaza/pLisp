@@ -20,7 +20,7 @@ OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ff
 #TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
 
 CC	= gcc
-CFLAGS	= -g -DGUI `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` -I/usr/local/include -L/usr/local/lib
+CFLAGS	= -g `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` -I/usr/local/include -L/usr/local/lib
 
 all:	plisp libplisp.so libtest.so
 

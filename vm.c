@@ -221,7 +221,7 @@ extern unsigned int apply_compiled();
 
 extern BOOLEAN core_library_loaded;
 
-extern BOOLEAN headless_mode;
+extern BOOLEAN console_mode, single_expression_mode;
 
 //variables related to profiling
 double wall_time_var;
@@ -506,13 +506,8 @@ OBJECT_PTR create_current_continuation()
 
 void raise_error(char *err_str)
 {
-  if(headless_mode)
+  if(!console_mode && !single_expression_mode)
   {
-    fprintf(stdout, "%s\n", err_str);
-  }
-  else
-  {
-#ifdef GUI
     show_error_dialog(err_str);
 
     debug_mode = true;
@@ -526,10 +521,9 @@ void raise_error(char *err_str)
 			DEFAULT_DEBUG_WINDOW_POSY,
 			DEFAULT_DEBUG_WINDOW_WIDTH,
 			DEFAULT_DEBUG_WINDOW_HEIGHT);
-#else
-    fprintf(stdout, "%s\n", err_str);
-#endif
   }
+  else
+    fprintf(stdout, "%s\n", err_str);
 
   //to stay commented out till we are
   //able to prpvide a meaningful backtrace

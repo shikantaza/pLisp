@@ -86,7 +86,7 @@ extern abort_debugger(GtkWidget *, gpointer);
 
 extern BOOLEAN in_break;
 
-extern BOOLEAN headless_mode;
+extern BOOLEAN console_mode;
 
 typedef struct
 {
@@ -107,7 +107,7 @@ void transcript_backspace()
 
 void print_to_transcript(char * str)
 {
-  if(headless_mode)
+  if(console_mode)
     fprintf(stdout, "%s", str);
   else
   {

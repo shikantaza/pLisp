@@ -36,6 +36,8 @@ extern FILE *yyin;
 
 extern void print_to_workspace();
 
+extern BOOLEAN console_mode, single_expression_mode;
+
 %}
 
 %union{
@@ -211,11 +213,10 @@ expressions:
 
 int yyerror(char *s)
 {
-#ifdef GUI
-  print_to_workspace("Syntax error in expression");
-#else
-  fprintf(stdout, "Syntax error in expression\n");
-#endif
+  if(!console_mode && !single_expression_mode)
+    print_to_workspace("Syntax error in expression");
+  else
+    fprintf(stdout, "Syntax error in expression\n");
 
   return 1;
   //prompt();

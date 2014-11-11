@@ -181,7 +181,7 @@ extern BOOLEAN system_changed;
 
 extern char *foreign_library_names[];
 
-extern headless_mode;
+extern BOOLEAN console_mode, single_expression_mode;
 
 TCCState *tcc_state = NULL;
 /* TCCState **tcc_states = NULL; */
@@ -603,12 +603,11 @@ unsigned int break1()
 
   debug_execution_stack = reg_current_stack;
 
-#ifdef GUI
-  create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-		      DEFAULT_DEBUG_WINDOW_POSY,
-		      DEFAULT_DEBUG_WINDOW_WIDTH,
-		      DEFAULT_DEBUG_WINDOW_HEIGHT);
-#endif
+  if(!console_mode && !single_expression_mode)
+    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+			DEFAULT_DEBUG_WINDOW_POSY,
+			DEFAULT_DEBUG_WINDOW_WIDTH,
+			DEFAULT_DEBUG_WINDOW_HEIGHT);
 
   return 0;
 }
@@ -892,11 +891,10 @@ unsigned int error()
 unsigned int print()
 {
   print_object(car(reg_current_value_rib));
-#ifdef GUI
-  print_to_transcript("\n");
-#else
-  fprintf(stdout, "\n");
-#endif
+  if(!console_mode && !single_expression_mode)
+    print_to_transcript("\n");
+  else
+    fprintf(stdout, "\n");
   reg_accumulator = car(reg_current_value_rib);
   reg_current_value_rib = NIL;
   reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
@@ -924,11 +922,10 @@ unsigned int newline()
   }
   else
   {
-#ifdef GUI
-    print_to_transcript("\n");
-#else
-    fprintf(stdout, "\n");
-#endif
+    if(!console_mode && !single_expression_mode)
+      print_to_transcript("\n");
+    else
+      fprintf(stdout, "\n");
   }
 
   reg_accumulator = NIL;
@@ -2065,9 +2062,7 @@ unsigned int time_compiled()
   clock_t start, diff;
   int msec;
 
-#ifdef GUI
   char buf[100];
-#endif
 
   memset(form, '\0', 500);
   print_object_to_string(car(reg_current_value_rib), form, 0);
@@ -2097,13 +2092,14 @@ unsigned int time_compiled()
   diff = clock() - start;
   msec = diff * 1000 / CLOCKS_PER_SEC;
 
-#ifdef GUI
-  memset(buf, '\0', 100);
-  sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
-  print_to_transcript(buf);
-#else
-  printf("%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
-#endif
+  if(!console_mode && !single_expression_mode)
+  {
+    memset(buf, '\0', 100);
+    sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
+    print_to_transcript(buf);
+  }
+  else
+    printf("%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
 
   reg_current_value_rib = NIL;
   reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
@@ -2134,9 +2130,7 @@ unsigned int profile()
   clock_t final_cpu_time;
   unsigned int final_mem_alloc;
 
-#ifdef GUI
   char buf[1000];
-#endif
 
   hashtable_entry_t *entries;
 
@@ -2224,31 +2218,33 @@ unsigned int profile()
   final_cpu_time = clock();
   final_mem_alloc = memory_allocated();
 
-#ifdef GUI
-  create_profiler_window(DEFAULT_PROFILER_WINDOW_POSX,
-			 DEFAULT_PROFILER_WINDOW_POSY,
-			 DEFAULT_PROFILER_WINDOW_WIDTH,
-			 DEFAULT_PROFILER_WINDOW_HEIGHT);
+  if(!console_mode && !single_expression_mode)
+  {
+    create_profiler_window(DEFAULT_PROFILER_WINDOW_POSX,
+			   DEFAULT_PROFILER_WINDOW_POSY,
+			   DEFAULT_PROFILER_WINDOW_WIDTH,
+			   DEFAULT_PROFILER_WINDOW_HEIGHT);
 
-  memset(buf, '\0', 1000);
-  sprintf(buf,
-	  "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
-	  final_wall_time - initial_wall_time,
-	  (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-	  final_mem_alloc - initial_mem_alloc);
-  print_to_transcript(buf);
+    memset(buf, '\0', 1000);
+    sprintf(buf,
+	    "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+	    final_wall_time - initial_wall_time,
+	    (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
+	    final_mem_alloc - initial_mem_alloc);
+    print_to_transcript(buf);
 
-  //deleting profiling_tab will be done in the delete_event in the UI code
+    //deleting profiling_tab will be done in the delete_event in the UI code
+  }
+  else
+  {
+    printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+	   final_wall_time - initial_wall_time,
+	   (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
+	   final_mem_alloc - initial_mem_alloc);
 
-#else
-  printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
-	 final_wall_time - initial_wall_time,
-	 (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-	 final_mem_alloc - initial_mem_alloc);
-
-  hashtable_delete(profiling_tab);
-  profiling_tab = NULL;
-#endif
+    hashtable_delete(profiling_tab);
+    profiling_tab = NULL;
+  }
 
   profiling_in_progress = false;
 
@@ -2548,21 +2544,23 @@ unsigned int format_compiled()
       rest = cdr(rest);
   }
 
-  if(headless_mode)
+  if(console_mode)
   {
     if(format(reg_current_value_rib) == -1)
       return 1;
   }
   else
   {
-#ifdef GUI
-    if(format_for_gui(reg_current_value_rib) == -1)
-#else
-    if(format(reg_current_value_rib) == -1)
-#endif
+    if(!console_mode && !single_expression_mode)
     {
+      if(format_for_gui(reg_current_value_rib) == -1)
+	return 1;
+    }
+    else
+    {
+      if(format(reg_current_value_rib) == -1)
       //error message would have been set in format()
-      return 1;
+	return 1;
     }
   }
 

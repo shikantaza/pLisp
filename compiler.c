@@ -21,9 +21,10 @@
 #include <assert.h>
 #include <stdint.h>
 
-#ifdef GUI
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <gtk/gtk.h>
-#endif
 
 #include "plisp.h"
 
@@ -33,9 +34,7 @@
 #define DEFAULT_TRANSCRIPT_WIDTH 600
 #define DEFAULT_TRANSCRIPT_HEIGHT 420
 
-#ifdef GUI
 extern GtkWindow *transcript_window;
-#endif
 
 char *default_transcript_text =  "Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
                                  "pLisp is free software: you can redistribute it and/or modify\n"
@@ -108,7 +107,9 @@ BOOLEAN core_library_loaded = false;
 
 char *loaded_image_file_name = NULL;
 
-BOOLEAN headless_mode = false;
+BOOLEAN console_mode = false;
+BOOLEAN image_mode = false;
+BOOLEAN single_expression_mode = false;
 
 extern unsigned int current_package;
 
@@ -387,50 +388,46 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
 
 int main(int argc, char **argv)
 {
-  //headless mode. plisp can be invoked
-  //as 'plisp -e '<exp>', and it will
-  //terminate after printing the results 
-  //of evaluating <exp>. It will load a default
-  //image called plisp.image before this evaluation.
-  //the idea is to set up the default image with
-  //the definitions that will be invoked (directly
-  //or indirectly) in plisp.image beforehand.
-  if(argc == 3 && !strcmp(argv[1], "-e"))
+  int opt, i;
+  char *expression;
+
+  while((opt = getopt(argc, argv, "i:ce:")) != -1)
   {
-    headless_mode = true;
-
-    initialize();
-
-    if(load_from_image("./plisp.image"))
+    switch(opt)
     {
-      printf("Unable to load image from file plisp.image\n");
-      cleanup();
-      exit(1);
+      case 'i':
+	image_mode = true;
+	loaded_image_file_name = strdup(optarg);
+	break;
+      case 'c':
+	console_mode = true;
+	break;
+      case 'e':
+	single_expression_mode = true;
+	expression = strdup(optarg);
+	break;
+      default:
+	fprintf(stderr, "Usage: %s [-i imagefile] [-c [exp]]\n", argv[0]);
+	exit(EXIT_FAILURE);
     }
-
-    CONS_NIL_NIL = cons(NIL, NIL);
-    CONS_APPLY_NIL = cons(APPLY, NIL);
-    CONS_HALT_NIL = cons(HALT, NIL);
-    CONS_RETURN_NIL = cons(RETURN, NIL);
-
-    core_library_loaded = true;
-
-    yy_scan_string(argv[2]);
-    yyparse();
-    repl(1);
-    cleanup();
-
-    exit(0);
   }
 
-#ifdef GUI
-  gtk_init(&argc, &argv);
-#endif
-
-  if(argc == 2)
+  if(console_mode && single_expression_mode)
   {
-    fprintf(stdout, "Loading image...");
-    fflush(stdout);
+    fprintf(stderr, "-c and -e options cannot be invoked together\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!console_mode && !single_expression_mode)
+    gtk_init(&argc, &argv);
+
+  if(image_mode)
+  {
+    if(!single_expression_mode)
+    {
+      fprintf(stdout, "Loading image...");
+      fflush(stdout);
+    }
 
     core_library_loaded = true;
 
@@ -438,11 +435,9 @@ int main(int argc, char **argv)
 
     initialize_tcc();
 
-    loaded_image_file_name = strdup(argv[1]);
-
-    if(load_from_image(argv[1]))
+    if(load_from_image(loaded_image_file_name))
     {
-      printf("Unable to load image from file %s\n", argv[1]);
+      printf("Unable to load image from file %s\n", loaded_image_file_name);
       cleanup();
       exit(1);
     }
@@ -452,62 +447,54 @@ int main(int argc, char **argv)
     CONS_HALT_NIL = cons(HALT, NIL);
     CONS_RETURN_NIL = cons(RETURN, NIL);
 
-    fprintf(stdout, "done\n");
-
-    //create_transcript_window() is called in both
-    //if and else clauses because if we do it
-    //before, the trancript window's
-    //title, which depends on the loaded file's
-    //name, will not be updated. If we do it
-    //after, the "Loading core library..."
-    //message cannot be sent to the transcript,
-    //as the transcript window has not
-    //been created yet.
-
-#ifdef GUI
-    //done in load_image_file itself
-    //create_transcript_window();
-    //print_to_transcript("Image loaded successfully\n");
-    //if(debug_mode)
-    //create_debug_window();
-#endif
-
+    if(!single_expression_mode)
+      fprintf(stdout, "done\n");    
   }
   else
   {
     initialize();
 
-#ifdef GUI
-    create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
-                             DEFAULT_TRANSCRIPT_POSY,
-                             DEFAULT_TRANSCRIPT_WIDTH,
-                             DEFAULT_TRANSCRIPT_HEIGHT,
-                             default_transcript_text);
-#endif
+    if(!console_mode && !single_expression_mode)
+      create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
+			       DEFAULT_TRANSCRIPT_POSY,
+			       DEFAULT_TRANSCRIPT_WIDTH,
+			       DEFAULT_TRANSCRIPT_HEIGHT,
+			       default_transcript_text);
 
     if(load_core_library())
     {
       cleanup();
       exit(1);
     }
+
+    core_library_loaded = true;
   }
 
-#ifdef GUI
-  gtk_main();
-#else
-
-  print_copyright_notice();
-
-  welcome();
-
-  while(1)
+  if(single_expression_mode)
   {
-    prompt();
+    yy_scan_string(expression);
     yyparse();
     repl(1);
+    cleanup();
+
+    exit(0);    
   }
 
-#endif
+  if(console_mode)
+  {
+    print_copyright_notice();
+    welcome();
+    while(1)
+    {
+      prompt();
+      yyparse();
+      repl(1);
+    }
+  }
+  else
+  {
+    gtk_main();
+  }
 
   return 0;
 }
@@ -521,9 +508,9 @@ int repl(int mode)
 				 !strcmp(g_expr->atom_value,"EXIT") ||
 				 !strcmp(g_expr->atom_value,"Q") ))
   {
-#ifndef GUI
-    fprintf(stdout, "Bye.\n");
-#endif
+    if(console_mode)
+      fprintf(stdout, "Bye.\n");
+
     cleanup();
     exit(0);
   }
@@ -568,14 +555,16 @@ int repl(int mode)
       }
     }
 
-#ifdef GUI
-    if(!in_error)
-      print_object(reg_accumulator);
-#else
-    if(yyin == stdin && !in_error)
-      print_object(reg_accumulator);
-#endif
-
+    if(!console_mode)
+    {
+      if(!in_error)
+	print_object(reg_accumulator);
+    }
+    else
+    {
+      if(yyin == stdin && !in_error)
+	print_object(reg_accumulator);
+    }
   }
   else
   {
@@ -639,7 +628,7 @@ int repl(int mode)
     /*   return 1; */
     /* } */
 
-    if(headless_mode && core_library_loaded)
+    if((console_mode || single_expression_mode) && core_library_loaded)
     {
       char buf[500];
       memset(buf, 500, '\0');
@@ -650,16 +639,19 @@ int repl(int mode)
     }
     else
     {
-#ifdef GUI
-      if(!in_error && core_library_loaded && !debug_mode)
+      if(!console_mode && !single_expression_mode)
       {
-	print_object(reg_accumulator);
-	print_to_transcript("\n");
+	if(!in_error && core_library_loaded && !debug_mode)
+	{
+	  print_object(reg_accumulator);
+	  print_to_transcript("\n");
+	}
       }
-#else
-      if(yyin == stdin && !in_error  && !debug_mode)
-	print_object(reg_accumulator);
-#endif
+      else
+      {
+	if(yyin == stdin && !in_error  && !debug_mode)
+	  print_object(reg_accumulator);
+      }
     }
     //reset the EXCEPTION-HANDLERS variable
     update_environment(cons(top_level_env, NIL),
@@ -678,15 +670,12 @@ int repl(int mode)
 
 int load_core_library()
 {
-
-  if(!headless_mode)
+  if(!console_mode && !single_expression_mode)
+    print_to_transcript("Loading core library...");
+  else if(console_mode)
   {
-#ifdef GUI
-  print_to_transcript("Loading core library...");
-#else
-  fprintf(stdout, "Loading core library...");
-  fflush(stdout);
-#endif
+    fprintf(stdout, "Loading core library...");
+    fflush(stdout);
   }
 
   reg_accumulator       = NIL;
@@ -728,15 +717,11 @@ int load_core_library()
 
   core_library_loaded = true;
 
-  if(!headless_mode)
-  {
-#ifdef GUI
-  print_to_transcript(" done\n");
-#else
-  //hack to prevent message being overwritten
-  fprintf(stdout, "Loading core library... done\n");
-#endif
-  }
+  if(!console_mode && !single_expression_mode)
+    print_to_transcript(" done\n");
+  else if(console_mode)
+    //hack to prevent message being overwritten
+    fprintf(stdout, "Loading core library... done\n");
 
   return 0;  
 }
