@@ -3852,11 +3852,20 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	  
 	  if(fn_object == NIL)
 	  {
-	    char buf[SYMBOL_STRING_SIZE];
-	    memset(buf, SYMBOL_STRING_SIZE, '\0');
-	    print_qualified_symbol(CADR(exp), buf);
-	    sprintf(err_buf, "Call to undefined closure (%s)", buf);
-	    return -1;
+	    char buf1[SYMBOL_STRING_SIZE];
+	    memset(buf1, SYMBOL_STRING_SIZE, '\0');
+
+	    print_qualified_symbol(CADR(exp), buf1);
+	    printf("Warning: call to undefined closure (%s)\n", buf1);
+	    fflush(stdout);
+
+	    len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp));
+	    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	    if(temp == -1)
+	      return -1;
+	    len += temp;
+
+	    return len;
 	  }
 
 	  assert(IS_CLOSURE_OBJECT(fn_object));
