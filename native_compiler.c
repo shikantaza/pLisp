@@ -3207,7 +3207,7 @@ unsigned int apply_compiled()
       {
 	hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
 	cmpfn fn;
-	  
+
 	if(e)
 	{
 	  fn = (cmpfn)e->value;
@@ -3843,68 +3843,68 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	}
 	else //it's a user-defined closure object
         {
-	  /* //TODO: does calling refer() to get at the closure object */
-	  /* //work for all cases? */
+	  //TODO: does calling refer() to get at the closure object
+	  //work for all cases?
 
-	  /* OBJECT_PTR fn_object; */
+	  OBJECT_PTR fn_object;
 
-	  /* fn_object =  refer1(CADR(exp), get_env_list(closure)); */
+	  fn_object =  refer1(CADR(exp), get_env_list(closure));
 	  
-	  /* if(fn_object == NIL) */
-	  /* { */
-	  /*   char buf[SYMBOL_STRING_SIZE]; */
-	  /*   memset(buf, SYMBOL_STRING_SIZE, '\0'); */
-	  /*   print_qualified_symbol(CADR(exp), buf); */
-	  /*   sprintf(err_buf, "Call to undefined closure (%s)", buf); */
-	  /*   return -1; */
-	  /* } */
-
-	  /* assert(IS_CLOSURE_OBJECT(fn_object)); */
-
-	  /* BOOLEAN closure_already_exists = false; */
-	  /* int i; */
-	  /* for(i=0; i< *nof_called_closures; i++) */
-	  /* { */
-	  /*   if((*called_closures)[i] == fn_object) */
-	  /*   { */
-	  /*     closure_already_exists = true; */
-	  /*     break; */
-	  /*   } */
-	  /* } */
-
-	  /* if(!closure_already_exists && IS_CLOSURE_OBJECT(fn_object)) */
-	  /* { */
-	  /*   if(*called_closures == NULL) */
-	  /*   { */
-	  /*     *called_closures = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR)); */
-	  /*     assert(*called_closures != NULL); */
-	  /*     *nof_called_closures = 1; */
-	  /*     (*called_closures)[0] = fn_object; */
-	  /*   } */
-	  /*   else */
-	  /*   { */
-	  /*     (*nof_called_closures)++; */
-	  /*     *called_closures = (OBJECT_PTR *)realloc(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR)); */
-	  /*     assert(*called_closures != NULL); */
-	  /*     (*called_closures)[*nof_called_closures-1] = fn_object;	       */
-	  /*   } */
-	  /* } */
-
-	  /* if(IS_CLOSURE_OBJECT(fn_object)) */
-	  /* { */
-	  /*   len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object); */
-
-	  /*   len += sprintf(buf+filled_len+len, "if(f_%d())\n  return 1;\n", fn_object); */
-	  /*   temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
-	  /*   if(temp == -1) */
-	  /*     return -1; */
-	  /*   len += temp; */
-	  /* } */
-	  len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp));
-	  temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
-	  if(temp == -1)
+	  if(fn_object == NIL)
+	  {
+	    char buf[SYMBOL_STRING_SIZE];
+	    memset(buf, SYMBOL_STRING_SIZE, '\0');
+	    print_qualified_symbol(CADR(exp), buf);
+	    sprintf(err_buf, "Call to undefined closure (%s)", buf);
 	    return -1;
-	  len += temp;
+	  }
+
+	  assert(IS_CLOSURE_OBJECT(fn_object));
+
+	  BOOLEAN closure_already_exists = false;
+	  int i;
+	  for(i=0; i< *nof_called_closures; i++)
+	  {
+	    if((*called_closures)[i] == fn_object)
+	    {
+	      closure_already_exists = true;
+	      break;
+	    }
+	  }
+
+	  if(!closure_already_exists && IS_CLOSURE_OBJECT(fn_object))
+	  {
+	    if(*called_closures == NULL)
+	    {
+	      *called_closures = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
+	      assert(*called_closures != NULL);
+	      *nof_called_closures = 1;
+	      (*called_closures)[0] = fn_object;
+	    }
+	    else
+	    {
+	      (*nof_called_closures)++;
+	      *called_closures = (OBJECT_PTR *)realloc(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR));
+	      assert(*called_closures != NULL);
+	      (*called_closures)[*nof_called_closures-1] = fn_object;
+	    }
+	  }
+
+	  if(IS_CLOSURE_OBJECT(fn_object))
+	  {
+	    len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object);
+
+	    len += sprintf(buf+filled_len+len, "if(f_%d())\n  return 1;\n", fn_object);
+	    temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	    if(temp == -1)
+	      return -1;
+	    len += temp;
+	  }
+	  /* len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp)); */
+	  /* temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
+	  /* if(temp == -1) */
+	  /*   return -1; */
+	  /* len += temp; */
 	}
       }
     } //end of if(car(car(CADDR(exp))) == APPLY)
