@@ -556,6 +556,8 @@
 		    (list 'test (simplify (first (second exp))) (simplify (first (third exp)))))
 		   ((eq operator 'assign)
 		    (list 'assign (second exp) (simplify (first (third exp)))))
+		   ((eq operator 'define)
+		    (list 'define (second exp) (simplify (first (third exp)))))
 		   ((eq operator 'conti)
 		    (list 'conti (simplify (first (second exp)))))
 		   ((eq operator 'frame)

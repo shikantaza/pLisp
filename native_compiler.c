@@ -309,10 +309,26 @@ OBJECT_PTR get_reg_accumulator()
 
 unsigned int macro(OBJECT_PTR exp)
 {
-  reg_accumulator = create_macro_object(reg_current_env, 
-				        second(exp), 
-					third(exp), 
-					fourth(exp));
+  OBJECT_PTR macro_obj = create_macro_object(reg_current_env, 
+					     second(exp), 
+					     third(exp), 
+					     fourth(exp));
+
+  char err_buf1[500];
+  memset(err_buf1, 500, '\0');
+
+  cmpfn fn = compile_closure(macro_obj, err_buf1);
+
+  if(!fn)
+  {
+    memset(err_buf, 500, '\0');
+    sprintf(err_buf, "Error in compiling closure: %s", err_buf1);
+    throw_exception("EXCEPTION", err_buf);
+    return 1;
+  }
+
+  reg_accumulator = macro_obj;
+
   return 0;
 }
 
@@ -3203,8 +3219,8 @@ unsigned int apply_compiled()
     {
       bind_formal_parameters(reg_accumulator);
 
-      if(IS_CLOSURE_OBJECT(reg_accumulator))
-      {
+      /* if(IS_CLOSURE_OBJECT(reg_accumulator) */
+      /* { */
 	hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
 	cmpfn fn;
 
@@ -3232,9 +3248,9 @@ unsigned int apply_compiled()
 	}
 
 	fn();
-      }
-      else
-	reg_next_expression = get_body_object(reg_accumulator); 
+      /* } */
+      /* else */
+      /* 	reg_next_expression = get_body_object(reg_accumulator);  */
     }
     else if(IS_CONTINUATION_OBJECT(reg_accumulator))
     {
@@ -3850,7 +3866,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 
 	  fn_object =  refer1(CADR(exp), get_env_list(closure));
 	  
-	  if(fn_object == NIL)
+	  if(fn_object == NIL || !(IS_CLOSURE_OBJECT(fn_object) || IS_MACRO_OBJECT(fn_object)))
 	  {
 	    char buf1[SYMBOL_STRING_SIZE];
 	    memset(buf1, SYMBOL_STRING_SIZE, '\0');
@@ -3868,7 +3884,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    return len;
 	  }
 
-	  assert(IS_CLOSURE_OBJECT(fn_object));
+	  assert(IS_CLOSURE_OBJECT(fn_object) || IS_MACRO_OBJECT(fn_object));
 
 	  BOOLEAN closure_already_exists = false;
 	  int i;
@@ -3881,7 +3897,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    }
 	  }
 
-	  if(!closure_already_exists && IS_CLOSURE_OBJECT(fn_object))
+	  if(!closure_already_exists && (IS_CLOSURE_OBJECT(fn_object) || IS_MACRO_OBJECT(fn_object)))
 	  {
 	    if(*called_closures == NULL)
 	    {
@@ -3899,7 +3915,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    }
 	  }
 
-	  if(IS_CLOSURE_OBJECT(fn_object))
+	  if(IS_CLOSURE_OBJECT(fn_object) || IS_MACRO_OBJECT(fn_object))
 	  {
 	    len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object);
 
