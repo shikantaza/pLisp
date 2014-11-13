@@ -183,10 +183,6 @@ extern char *foreign_library_names[];
 
 extern BOOLEAN console_mode, single_expression_mode;
 
-TCCState *tcc_state = NULL;
-/* TCCState **tcc_states = NULL; */
-/* unsigned int nof_tcc_states = 0; */
-
 hashtable_t *native_functions;
 
 unsigned int compile_to_c(OBJECT_PTR, OBJECT_PTR, char *, unsigned int, char *, OBJECT_PTR **, unsigned int *);
@@ -4206,19 +4202,6 @@ TCCState *create_tcc_state()
   tcc_add_symbol(tcc_state, "save_registers",                 save_registers);
   tcc_add_symbol(tcc_state, "restore_registers",              restore_registers);
 
-  /* if(!tcc_states) */
-  /* { */
-  /*   tcc_states = (TCCState **)malloc(sizeof(TCCState *)); */
-  /*   nof_tcc_states = 1; */
-  /*   tcc_states[0] = tcc_state; */
-  /* } */
-  /* else */
-  /* { */
-  /*   nof_tcc_states++; */
-  /*   tcc_states = (TCCState **)realloc(tcc_states, nof_tcc_states * sizeof(TCCState *)); */
-  /*   tcc_states[nof_tcc_states-1] = tcc_state; */
-  /* } */
-
   return tcc_state;
 }
 
@@ -4349,19 +4332,10 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
 
 void initialize_tcc()
 {
-  /* tcc_states = NULL; */
-  /* nof_tcc_states = 0; */
-  tcc_state = create_tcc_state();
-
   native_functions = hashtable_create(1001);
 }
 
 void cleanup_tcc()
 {
-  /* int i; */
-  /* for(i=0; i<nof_tcc_states; i++) */
-  /*   tcc_delete(tcc_states[i]); */
-  tcc_delete(tcc_state);
-
   hashtable_delete(native_functions);
 }
