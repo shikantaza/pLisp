@@ -407,7 +407,7 @@ int main(int argc, char **argv)
 	expression = strdup(optarg);
 	break;
       default:
-	fprintf(stderr, "Usage: %s [-i imagefile] [-c [exp]]\n", argv[0]);
+	fprintf(stderr, "Usage: %s [-i imagefile] [-c | -e exp]\n", argv[0]);
 	exit(EXIT_FAILURE);
     }
   }
