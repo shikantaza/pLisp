@@ -369,6 +369,17 @@ unsigned int frame(OBJECT_PTR exp)
 					     cdr(reg_next_expression)),
 			   reg_current_stack);
 
+  /* char buf[500]; */
+  /* memset(buf, 500, '\0'); */
+
+  /* cmpfn fn = compile_closure(create_closure_object(reg_current_env, NIL, CADR(exp), NIL), buf); */
+
+  /* assert(fn); */
+
+  /* hashtable_put(native_functions,  */
+  /* 		(void *)reg_current_stack, */
+  /* 		(void *)fn); */
+
   reg_current_value_rib = NIL;
   return 0;
 }
@@ -387,6 +398,13 @@ unsigned int return_op()
   if(reg_current_stack == NIL)
     assert(false);
 
+  /* hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_current_stack); */
+  /* cmpfn fn; */
+
+  /* assert(e); */
+  /* fn = (cmpfn)e->value; */
+  /* assert(fn); */
+
   frame = car(reg_current_stack);
   reg_current_stack = cdr(reg_current_stack);
 
@@ -394,6 +412,8 @@ unsigned int return_op()
   reg_next_expression   = get_heap(ptr,1);
   reg_current_env       = get_heap(ptr,2);
   reg_current_value_rib = get_heap(ptr,3);
+
+  /* fn(); */
 
   return 0;
 }
@@ -3264,7 +3284,9 @@ unsigned int apply_compiled()
 
       reg_accumulator = car(reg_current_value_rib);
       reg_current_value_rib = NIL;
+
       reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+      //return_op();
     }
     else
     {
@@ -3868,12 +3890,12 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	  
 	  if(fn_object == NIL || !(IS_CLOSURE_OBJECT(fn_object) || IS_MACRO_OBJECT(fn_object)))
 	  {
-	    char buf1[SYMBOL_STRING_SIZE];
-	    memset(buf1, SYMBOL_STRING_SIZE, '\0');
+	    /* char buf1[SYMBOL_STRING_SIZE]; */
+	    /* memset(buf1, SYMBOL_STRING_SIZE, '\0'); */
 
-	    print_qualified_symbol(CADR(exp), buf1);
-	    printf("Warning: call to undefined closure (%s)\n", buf1);
-	    fflush(stdout);
+	    /* print_qualified_symbol(CADR(exp), buf1); */
+	    /* printf("Warning: call to undefined closure (%s)\n", buf1); */
+	    /* fflush(stdout); */
 
 	    len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp));
 	    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
