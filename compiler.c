@@ -592,41 +592,56 @@ int repl(int mode)
 
     in_error = false;
 
+    //the expression entered at the REPL is
+    //converted into a compiled closure
+    //and the native code corresponding to
+    //the closure is executed. since FRAME
+    //instructions are only partly converted
+    //to native code, eval() needs to be called
+    //to complete the evaluation after
+    //the native function call returns
+
+    /* while(car(reg_next_expression) != NIL) */
+    /* { */
+    /*   eval(mode == 1); */
+    /*   if(in_error) */
+    /*     return 1; */
+    /* } */
+
+    char buf[500];
+    memset(buf, 500, '\0');
+
+    cmpfn fn = compile_closure(create_closure_object(NIL, NIL, reg_next_expression, exp), buf);
+
+    if(!fn)
+    {
+      raise_error("Unable to compile expression to native code");
+      return 1;
+    }
+    
+    if(fn())
+    {
+      char str[100];
+      char buf1[500];
+
+      memset(str, 100, '\0');
+      memset(buf1, 500, '\0');
+
+      print_object_to_string(cdr(car(reg_current_value_rib)), str, 0);
+      sprintf(buf, "%s: %s", get_symbol_name(car(car(reg_current_value_rib))), substring(str,1, strlen(str)-2));
+
+      raise_error(buf);
+
+      return 1;
+    }
+
+    //this is to complete the evaluation left over (popped frame's code)
     while(car(reg_next_expression) != NIL)
     {
       eval(mode == 1);
       if(in_error)
         return 1;
     }
-
-    //TODO: uncomment this to compile any expression that is fed to the REPL
-    //(needs to be debugged)
-    /* char buf[500]; */
-    /* memset(buf, 500, '\0'); */
-
-    /* cmpfn fn = compile_closure(create_closure_object(NIL, NIL, reg_next_expression, exp), buf); */
-
-    /* if(!fn) */
-    /* { */
-    /*   raise_error("Unable to compile expression to native code"); */
-    /*   return 1; */
-    /* } */
-    
-    /* if(fn()) */
-    /* { */
-    /*   char str[100]; */
-    /*   char buf1[500]; */
-
-    /*   memset(str, 100, '\0'); */
-    /*   memset(buf1, 500, '\0'); */
-
-    /*   print_object_to_string(cdr(car(reg_current_value_rib)), str, 0); */
-    /*   sprintf(buf, "%s: %s", get_symbol_name(car(car(reg_current_value_rib))), substring(str,1, strlen(str)-2)); */
-
-    /*   raise_error(buf); */
-
-    /*   return 1; */
-    /* } */
 
     if((console_mode || single_expression_mode) && core_library_loaded)
     {

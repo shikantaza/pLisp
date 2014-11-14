@@ -3235,38 +3235,33 @@ unsigned int apply_compiled()
     {
       bind_formal_parameters(reg_accumulator);
 
-      /* if(IS_CLOSURE_OBJECT(reg_accumulator) */
-      /* { */
-	hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
-	cmpfn fn;
+      hashtable_entry_t *e = hashtable_get(native_functions, (void *)reg_accumulator);
+      cmpfn fn;
 
-	if(e)
+      if(e)
+      {
+	fn = (cmpfn)e->value;
+	if(!fn)
 	{
-	  fn = (cmpfn)e->value;
-	  if(!fn)
-	  {
-	    throw_generic_exception("Unable to fetch compiled closure");
-	    return 1;
-	  }
+	  throw_generic_exception("Unable to fetch compiled closure");
+	  return 1;
 	}
-	else
+      }
+      else
+      {
+	char err_buf1[500];
+	memset(err_buf1, '\0', 500);
+
+	fn = compile_closure(reg_accumulator, err_buf1);
+
+	if(!fn)
 	{
-	  char err_buf1[500];
-	  memset(err_buf1, '\0', 500);
-
-	  fn = compile_closure(reg_accumulator, err_buf1);
-
-	  if(!fn)
-	  {
-	    throw_generic_exception(err_buf1);
-	    return 1;
-	  }
+	  throw_generic_exception(err_buf1);
+	  return 1;
 	}
+      }
 
-	fn();
-      /* } */
-      /* else */
-      /* 	reg_next_expression = get_body_object(reg_accumulator);  */
+      fn();
     }
     else if(IS_CONTINUATION_OBJECT(reg_accumulator))
     {
