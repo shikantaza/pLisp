@@ -357,6 +357,18 @@ unsigned int conti()
   return 0;
 }
 
+unsigned int frame1(OBJECT_PTR exp)
+{
+  reg_current_stack = cons(create_call_frame(CADR(car(exp)),
+					     reg_current_env,
+					     reg_current_value_rib,
+					     cdr(exp)),
+			   reg_current_stack);
+
+  reg_current_value_rib = NIL;
+  return 0;
+}
+
 unsigned int frame(OBJECT_PTR exp)
 {
   reg_current_stack = cons(create_call_frame(CADR(exp),
@@ -3291,7 +3303,7 @@ unsigned int apply_compiled()
 }
 
 unsigned int compile_to_c(OBJECT_PTR closure,
-			  OBJECT_PTR exp, 
+			  OBJECT_PTR exp1, 
 			  char *buf, 
 			  unsigned int filled_len, 
 			  char *err_buf, 
@@ -3302,6 +3314,8 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   unsigned int len = 0;
 
   unsigned int temp;
+
+  OBJECT_PTR exp = car(exp1);
 
   if(exp == NIL)
     return len;
@@ -3317,7 +3331,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
         if(CADR(exp) == ADD)
         {
 	  len += sprintf(buf+filled_len+len, "if(add())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3325,7 +3339,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SUB)
         {
 	  len += sprintf(buf+filled_len+len, "if(sub())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3333,7 +3347,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == EQ)
         {
 	  len += sprintf(buf+filled_len+len, "if(eq())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3341,18 +3355,18 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == BREAK)
         {
 	  //not handling BREAK statements in compiled code for now
-	  /* len += sprintf(buf+filled_len+len, "if(break1())\n  return 1;\n"); */
-	  /* temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
-	  /* if(temp == -1) */
-	  /*   return -1; */
-	  /* len += temp; */
-	  sprintf(err_buf, "Function contains BREAK expressions. Please remove them");
-	  return -1;
+	  len += sprintf(buf+filled_len+len, "if(break1())\n  return 1;\n");
+	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  if(temp == -1)
+	    return -1;
+	  len += temp;
+	  /* sprintf(err_buf, "Function contains BREAK expressions. Please remove them"); */
+	  /* return -1; */
 	}
 	else if(CADR(exp) == CONS)
         {
 	  len += sprintf(buf+filled_len+len, "if(cons_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3361,7 +3375,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == NEQ)
         {
 	  len += sprintf(buf+filled_len+len, "if(neq())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3369,7 +3383,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == NOT)
         {
 	  len += sprintf(buf+filled_len+len, "if(not())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3377,7 +3391,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ATOM)
         {
 	  len += sprintf(buf+filled_len+len, "if(atom())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3385,7 +3399,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CAR)
         {
 	  len += sprintf(buf+filled_len+len, "if(car_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3393,7 +3407,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CDR)
         {
 	  len += sprintf(buf+filled_len+len, "if(cdr_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3401,7 +3415,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == MULT)
         {
 	  len += sprintf(buf+filled_len+len, "if(mult())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3409,7 +3423,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == DIV)
         {
 	  len += sprintf(buf+filled_len+len, "if(div_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3417,7 +3431,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ERROR)
         {
 	  len += sprintf(buf+filled_len+len, "if(error())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3425,7 +3439,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == PRINT)
         {
 	  len += sprintf(buf+filled_len+len, "if(print())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3433,7 +3447,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == NEWLINE)
         {
 	  len += sprintf(buf+filled_len+len, "if(newline())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3441,7 +3455,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LST)
         {
 	  len += sprintf(buf+filled_len+len, "if(lst())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3449,7 +3463,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == BACKQUOTE)
         {
 	  len += sprintf(buf+filled_len+len, "if(backquote())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3457,7 +3471,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LISTP)
         {
 	  len += sprintf(buf+filled_len+len, "if(listp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3465,7 +3479,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SYMBOL_VALUE)
         {
 	  len += sprintf(buf+filled_len+len, "if(symbol_value())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3473,7 +3487,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == GT)
         {
 	  len += sprintf(buf+filled_len+len, "if(gt())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3481,7 +3495,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LT)
         {
 	  len += sprintf(buf+filled_len+len, "if(lt())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3489,7 +3503,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LEQ)
         {
 	  len += sprintf(buf+filled_len+len, "if(leq())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3497,7 +3511,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == GEQ)
         {
 	  len += sprintf(buf+filled_len+len, "if(geq())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3505,7 +3519,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == GENSYM)
         {
 	  len += sprintf(buf+filled_len+len, "if(gensym_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3513,7 +3527,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SETCAR)
         {
 	  len += sprintf(buf+filled_len+len, "if(setcar())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3521,7 +3535,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SETCDR)
         {
 	  len += sprintf(buf+filled_len+len, "if(setcdr())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3529,7 +3543,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CREATE_PACKAGE)
         {
 	  len += sprintf(buf+filled_len+len, "if(create_package_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3537,7 +3551,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == IN_PACKAGE)
         {
 	  len += sprintf(buf+filled_len+len, "if(in_package())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3545,7 +3559,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == EXPAND_MACRO)
         {
 	  len += sprintf(buf+filled_len+len, "if(expand_macro())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3553,7 +3567,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == APPLY)
         {
 	  len += sprintf(buf+filled_len+len, "if(apply())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3561,7 +3575,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == STRING)
         {
 	  len += sprintf(buf+filled_len+len, "if(string())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3569,7 +3583,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == MAKE_ARRAY)
         {
 	  len += sprintf(buf+filled_len+len, "if(make_array())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3577,7 +3591,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ARRAY_SET)
         {
 	  len += sprintf(buf+filled_len+len, "if(array_set())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3585,7 +3599,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ARRAY_GET)
         {
 	  len += sprintf(buf+filled_len+len, "if(array_get())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3593,7 +3607,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SUB_ARRAY)
         {
 	  len += sprintf(buf+filled_len+len, "if(sub_array())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3601,7 +3615,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ARRAY_LENGTH)
         {
 	  len += sprintf(buf+filled_len+len, "if(array_length())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3609,7 +3623,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == PRINT_STRING)
         {
 	  len += sprintf(buf+filled_len+len, "if(print_string_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3617,7 +3631,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CREATE_IMAGE)
         {
 	  len += sprintf(buf+filled_len+len, "if(create_image_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3625,7 +3639,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LOAD_FOREIGN_LIBRARY)
         {
 	  len += sprintf(buf+filled_len+len, "if(load_foreign_library_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3633,7 +3647,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CALL_FOREIGN_FUNCTION)
         {
 	  len += sprintf(buf+filled_len+len, "if(call_foreign_function_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3649,7 +3663,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == EVAL)
         {
 	  len += sprintf(buf+filled_len+len, "if(eval_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3657,7 +3671,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == TIME)
         {
 	  len += sprintf(buf+filled_len+len, "if(time_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3665,7 +3679,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == PROFILE)
         {
 	  len += sprintf(buf+filled_len+len, "if(profile())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3673,7 +3687,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == RESUME)
         {
 	  len += sprintf(buf+filled_len+len, "if(resume_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3681,7 +3695,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == BACKTRACE)
         {
 	  len += sprintf(buf+filled_len+len, "if(backtrace())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3689,7 +3703,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LOAD_FILE)
         {
 	  len += sprintf(buf+filled_len+len, "if(load_file())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3697,7 +3711,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CONSP)
         {
 	  len += sprintf(buf+filled_len+len, "if(consp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3705,7 +3719,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == INTEGERP)
         {
 	  len += sprintf(buf+filled_len+len, "if(integerp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3713,7 +3727,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == FLOATP)
         {
 	  len += sprintf(buf+filled_len+len, "if(floatp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3721,7 +3735,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CHARACTERP)
         {
 	  len += sprintf(buf+filled_len+len, "if(characterp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3729,7 +3743,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SYMBOLP)
         {
 	  len += sprintf(buf+filled_len+len, "if(symbolp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3737,7 +3751,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == STRINGP)
         {
 	  len += sprintf(buf+filled_len+len, "if(stringp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3745,7 +3759,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ARRAYP)
         {
 	  len += sprintf(buf+filled_len+len, "if(arrayp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3753,7 +3767,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CLOSUREP)
         {
 	  len += sprintf(buf+filled_len+len, "if(closurep())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3761,7 +3775,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == MACROP)
         {
 	  len += sprintf(buf+filled_len+len, "if(macrop())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3769,7 +3783,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CONTINUATIONP)
         {
 	  len += sprintf(buf+filled_len+len, "if(continuationp())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3777,7 +3791,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LAMBDA_EXPRESSION)
         {
 	  len += sprintf(buf+filled_len+len, "if(lambda_expression())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3785,7 +3799,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == FORMAT)
         {
 	  len += sprintf(buf+filled_len+len, "if(format_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3793,7 +3807,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == CLONE)
         {
 	  len += sprintf(buf+filled_len+len, "if(clone())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3801,7 +3815,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == RETURN_FROM)
         {
 	  len += sprintf(buf+filled_len+len, "if(return_from())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3809,7 +3823,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == COMPILE)
         {
 	  len += sprintf(buf+filled_len+len, "if(compile_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3817,7 +3831,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SYMBL)
         {
 	  len += sprintf(buf+filled_len+len, "if(symbl())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3825,7 +3839,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SYMBOL_NAME)
         {
 	  len += sprintf(buf+filled_len+len, "if(symbol_name())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3833,7 +3847,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == UNBIND)
         {
 	  len += sprintf(buf+filled_len+len, "if(unbind())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3841,7 +3855,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == ABORT)
         {
 	  len += sprintf(buf+filled_len+len, "if(abort_compiled())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3849,7 +3863,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == SAVE_OBJECT)
         {
 	  len += sprintf(buf+filled_len+len, "if(save_object())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3857,7 +3871,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == LOAD_OBJECT)
         {
 	  len += sprintf(buf+filled_len+len, "if(load_object())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3865,7 +3879,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	else if(CADR(exp) == COMPILEFN)
         {
 	  len += sprintf(buf+filled_len+len, "if(compilefn())\n  return 1;\n");
-	  temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	  if(temp == -1)
 	    return -1;
 	  len += temp;
@@ -3889,7 +3903,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    /* fflush(stdout); */
 
 	    len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp));
-	    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	    temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	    if(temp == -1)
 	      return -1;
 	    len += temp;
@@ -3933,13 +3947,13 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    len += sprintf(buf+filled_len+len, "bind_formal_parameters(%d);\n", fn_object);
 
 	    len += sprintf(buf+filled_len+len, "if(f_%d())\n  return 1;\n", fn_object);
-	    temp = compile_to_c(closure, car(CADDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+	    temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
 	    if(temp == -1)
 	      return -1;
 	    len += temp;
 	  }
 	  /* len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp)); */
-	  /* temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
+	  /* temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
 	  /* if(temp == -1) */
 	  /*   return -1; */
 	  /* len += temp; */
@@ -3949,7 +3963,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
     else
     {
       len += sprintf(buf+filled_len+len, "if(refer(%d))\n  return 1;\n", CADR(exp));
-      temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+      temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
       if(temp == -1)
 	return -1;
       len += temp;
@@ -3958,7 +3972,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == APPLY)
   {
     len += sprintf(buf+filled_len+len, "if(apply_compiled())\n return 1;\n");
-    temp = compile_to_c(closure, car(CADR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;    
@@ -3966,7 +3980,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == CONSTANT)
   {
     len += sprintf(buf+filled_len+len, "if(constant(%d))\n  return 1;\n", CADR(exp));
-    temp = compile_to_c(closure, car(car(CDDR(exp))), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, car(CDDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -3974,7 +3988,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == CLOSE)
   {
     len += sprintf(buf+filled_len+len, "if(closure(%d))\n  return 1;\n", exp);
-    temp = compile_to_c(closure, car(fifth(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, fifth(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -3982,7 +3996,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == MACRO)
   {
     len += sprintf(buf+filled_len+len, "if(macro(%d))\n  return 1;\n", exp);
-    temp = compile_to_c(closure, car(fifth(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, fifth(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -3990,13 +4004,13 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == TEST)
   {
     len += sprintf(buf+filled_len+len, "if(get_reg_accumulator() != %d) {\n", NIL);
-    temp = compile_to_c(closure, car(CADR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
     len += sprintf(buf+filled_len+len, "}\n");
     len += sprintf(buf+filled_len+len, "else {\n");
-    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -4005,7 +4019,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == ASSIGN)
   {
     len += sprintf(buf+filled_len+len, "if(assign(%d))\n  return 1;\n",CADR(exp));
-    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -4013,15 +4027,15 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == CONTI)
   {
     len += sprintf(buf+filled_len+len, "if(conti())\n  return 1;\n");
-    temp = compile_to_c(closure, car(CADR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
   }
   else if (car_exp == FRAME)
   {
-    len += sprintf(buf+filled_len+len, "if(frame(%d))\n  return 1;\n", exp);
-    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    len += sprintf(buf+filled_len+len, "if(frame1(%d))\n  return 1;\n", exp1);
+    temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -4031,14 +4045,14 @@ unsigned int compile_to_c(OBJECT_PTR closure,
     /* len += sprintf(buf+filled_len+len, "{  unsigned int env, rib;\n"); */
     /* len += sprintf(buf+filled_len+len, "save_registers(&env, &rib);\n"); */
 
-    /* temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
+    /* temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
     /* if(temp == -1) */
     /*   return -1; */
     /* len += temp; */
 
     /* len += sprintf(buf+filled_len+len, "restore_registers(env, rib);\n"); */
 
-    /* temp = compile_to_c(closure, car(CADR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
+    /* temp = compile_to_c(closure, CADR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures); */
     /* if(temp == -1) */
     /*   return -1; */
     /* len += temp; */
@@ -4048,7 +4062,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == ARGUMENT)
   {
     len += sprintf(buf+filled_len+len, "if(argument())\n  return 1;\n");
-    temp = compile_to_c(closure, car(CADR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -4064,7 +4078,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
   else if(car_exp == DEFINE)
   {
     len += sprintf(buf+filled_len+len, "if(define(%d))\n return 1;\n", CADR(exp));
-    temp = compile_to_c(closure, car(CADDR(exp)), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
+    temp = compile_to_c(closure, CADDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
     if(temp == -1)
       return -1;
     len += temp;
@@ -4113,7 +4127,7 @@ TCCState *create_tcc_state()
   tcc_add_symbol(tcc_state, "macro",                         macro);
   tcc_add_symbol(tcc_state, "get_reg_accumulator",           get_reg_accumulator);
   tcc_add_symbol(tcc_state, "conti",                         conti);
-  tcc_add_symbol(tcc_state, "frame",                         frame);
+  tcc_add_symbol(tcc_state, "frame1",                        frame1);
   tcc_add_symbol(tcc_state, "argument",                      argument);
   tcc_add_symbol(tcc_state, "return_op",                     return_op);
   tcc_add_symbol(tcc_state, "halt_op",                       halt_op);
@@ -4229,7 +4243,7 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
 
   len += sprintf(buf, "unsigned int %s() {\n", fname);
 
-  temp = compile_to_c(fn, car(get_body_object(fn)), buf, len, err_buf, &called_closures, &nof_called_closures);
+  temp = compile_to_c(fn, get_body_object(fn), buf, len, err_buf, &called_closures, &nof_called_closures);
   if(temp == -1)
   {
     if(called_closures)
