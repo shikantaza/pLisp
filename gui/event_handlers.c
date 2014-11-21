@@ -87,6 +87,8 @@ extern OBJECT_PTR DEFMACRO;
 
 char *form_for_eval;
 
+extern int call_repl(char *);
+
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -168,19 +170,6 @@ void resume()
 {
   close_application_window((GtkWidget **)&debugger_window);
   call_repl("(RESUME)");
-}
-
-int call_repl(char *expression)
-{
-  yy_scan_string(expression);
-
-  while(yyparse() == 0)
-  {
-    if(repl(1))
-      return -1;
-  }
-
-  return 0;
 }
 
 void update_transcript_title()

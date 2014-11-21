@@ -218,6 +218,8 @@ int yyerror(char *s)
   else
     fprintf(stdout, "Syntax error in expression\n");
 
+  parens = 0;
+
   return 1;
   //prompt();
   //assert(false);
@@ -232,3 +234,4 @@ int yyerror(char *s)
 
 /*   return 1; */
 /* } */
+

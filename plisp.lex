@@ -31,6 +31,23 @@ int include_stack_ptr = 0;
 
 extern BOOLEAN console_mode;
 
+int call_repl(char *expression)
+{
+  YY_BUFFER_STATE buf = yy_scan_string(expression);
+
+  while(yyparse() == 0)
+  {
+    if(repl(1))
+    {
+      yy_delete_buffer(buf);
+      return -1;
+    }
+  }
+
+  yy_delete_buffer(buf);
+  return 0;
+}
+
 //for handling (load-file ...)
 int set_up_new_yyin(FILE *fp)
 {
@@ -75,16 +92,25 @@ void pop_yyin()
   }
 }
 
+int open_parens = 0;
+
 %}
 
+%x string
+
 %%
+
+\"                      BEGIN(string);
+
+<string>(\\.|[^\\"])*\"       { yylval.atom_value = substring(yytext, 0, strlen(yytext)-1); BEGIN(INITIAL); return T_STRING_LITERAL; }
+
 [>]|[<]|(<=)|(>=)|[+]|[\-]|[\*]|[\/]|\:[a-zA-Z&][a-zA-Z0-9\-]*|[a-zA-Z&][a-zA-Z0-9\-]*|[a-zA-Z&][a-zA-Z0-9\-]*:[a-zA-Z][a-zA-Z0-9\-]* { yylval.atom_value = strdup(yytext); return T_SYMBOL; }
 [-+]?[0-9]+             { yylval.integer_value = atoi(yytext); return T_INTEGER; }
 [-+]?[0-9]*\.?[0-9]*    { yylval.float_value = atof(yytext); return T_FLOAT; }
-\"(\\.|[^\\"])*\"       { yylval.atom_value = substring(yytext, 1, strlen(yytext)-2); return T_STRING_LITERAL; }
+
 #\\[a-zA-Z0-9!$"'(),_\-./:;?+<=>#%&*@\[\\\]{|}`\^~] { yylval.atom_value = yytext; return T_CHAR; }
-\(                      return T_LEFT_PAREN;
-\)                      return T_RIGHT_PAREN;
+\(                      { open_parens++; return T_LEFT_PAREN; }
+\)                      { open_parens--; return T_RIGHT_PAREN; }
 \'                      return T_QUOTE;
 \`                      return T_BACKQUOTE;
 \,                      return T_COMMA;
@@ -100,6 +126,24 @@ void pop_yyin()
 "\033[C"                /* ignore right arrow */
 "\033[D"                /* ignore left arrow */
 
-<<EOF>>                 return END_OF_FILE;
+<string><<EOF>>         { 
+                          YY_FLUSH_BUFFER; 
+                          BEGIN(INITIAL);
+                          yyterminate();
+                        }
+
+<<EOF>>                 {
+                          if(open_parens) {
+                            YY_FLUSH_BUFFER;
+                            BEGIN(INITIAL);
+                            open_parens = 0;
+                            yyterminate();
+                          }
+                          else
+                          {
+                            open_parens = 0;
+                            return END_OF_FILE;
+                          }
+                        }
 
 %%
