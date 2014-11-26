@@ -1,0 +1,2278 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="LibreOffice 3.5  (Linux)">
+	<META NAME="CREATED" CONTENT="20141121;14504900">
+	<META NAME="CHANGED" CONTENT="20141126;16100300">
+	<STYLE TYPE="text/css">
+	<!--
+		@page { margin: 0.79in }
+		P { margin-bottom: 0.08in }
+		A:link { so-language: zxx }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><FONT SIZE=4 STYLE="font-size: 16pt"><B>pLisp
+Language Reference</B></FONT></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><A HREF="#A">A</A> | <A HREF="#B">B</A>
+| <A HREF="#C">C</A> | <A HREF="#D">D</A> | <A HREF="#E">E</A> | <A HREF="#F">F</A>
+| <A HREF="#G">G</A> | <A HREF="#I">I</A> | <A HREF="#L">L</A> | <A HREF="#M">M</A>
+| <A HREF="#N">N</A> | <A HREF="#O">O</A> | <A HREF="#P">P</A> | <A HREF="#R">R</A>
+| <A HREF="#S">S</A> | <A HREF="#T">T</A> | <A HREF="#U">U</A> | <A HREF="#V">V</A>
+| <A HREF="#W">W</A> | <A HREF="#Non-Alphabetic">Non-Alphabetic</A></B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="A"></A><B>A</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Abort"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">abort</SPAN></SPAN></SPAN></A></P>
+	<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Alias"><SPAN STYLE="font-weight: normal">alias</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Alloc_Ext_Mem_Char">alloc-ext-mem-char</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Alloc_Ext_Mem_Float"><SPAN STYLE="font-weight: normal">alloc-ext-mem-float</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Alloc_Ext_Mem_Int"><SPAN STYLE="font-weight: normal">alloc-ext-mem-int</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#And"><SPAN STYLE="font-weight: normal">and</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Append"><SPAN STYLE="font-weight: normal">append</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Apply"><SPAN STYLE="font-weight: normal">apply</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Eq"><SPAN STYLE="font-weight: normal">array-eq</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Get"><SPAN STYLE="font-weight: normal">array-get</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Length"><SPAN STYLE="font-weight: normal">array-length</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Set"><SPAN STYLE="font-weight: normal">array-set</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Arrayp"><SPAN STYLE="font-weight: normal">arrayp</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Assert"><SPAN STYLE="font-weight: normal">assert</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Assoc"><SPAN STYLE="font-weight: normal">assoc</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Atom"><SPAN STYLE="font-weight: normal">atom</SPAN></A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="B"></A><B>B</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Break"><SPAN STYLE="font-weight: normal">break</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#butlast"><SPAN STYLE="font-weight: normal">butlast</SPAN></A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="C"></A><B>C</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#caar"><SPAN STYLE="font-weight: normal">caar</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cadar"><SPAN STYLE="font-weight: normal">cadar</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cadddr"><SPAN STYLE="font-weight: normal">cadddr</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#caddr"><SPAN STYLE="font-weight: normal">caddr</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cadr"><SPAN STYLE="font-weight: normal">cadr</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#call_cc"><SPAN STYLE="font-weight: normal">call-cc</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#call_foreign_function"><SPAN STYLE="font-weight: normal">call-foreign-function</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#call_method"><SPAN STYLE="font-weight: normal">call-method</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#car"><SPAN STYLE="font-weight: normal">car</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cdar"><SPAN STYLE="font-weight: normal">cdar</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cddr"><SPAN STYLE="font-weight: normal">cddr</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cdr"><SPAN STYLE="font-weight: normal">cdr</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#characterp"><SPAN STYLE="font-weight: normal">characterp</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#clone"><SPAN STYLE="font-weight: normal">clone</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#closurep"><SPAN STYLE="font-weight: normal">closurep</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#compile"><SPAN STYLE="font-weight: normal">compile</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#compile_fn"><SPAN STYLE="font-weight: normal">compile-fn</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#concat"><SPAN STYLE="font-weight: normal">concat</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#concat_strings"><SPAN STYLE="font-weight: normal">concat-strings</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cond"><SPAN STYLE="font-weight: normal">cond</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cons"><SPAN STYLE="font-weight: normal">cons</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#cons_pair"><SPAN STYLE="font-weight: normal">cons-pair</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#consp"><SPAN STYLE="font-weight: normal">consp</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#continuationp"><SPAN STYLE="font-weight: normal">continuationp</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#create_image"><SPAN STYLE="font-weight: normal">create-image</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#create_package"><SPAN STYLE="font-weight: normal">create-package</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#curry"><SPAN STYLE="font-weight: normal">curry</SPAN></A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="D"></A><B>D</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#define_class"><SPAN STYLE="font-weight: normal">define-class</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#defmacro"><SPAN STYLE="font-weight: normal">defmacro</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#defun"><SPAN STYLE="font-weight: normal">defun</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#dolist"><SPAN STYLE="font-weight: normal">dolist</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#dotimes"><SPAN STYLE="font-weight: normal">dotimes</SPAN></A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="E"></A><B>E</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#eq"><SPAN STYLE="font-weight: normal">eq</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#error"><SPAN STYLE="font-weight: normal">error</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#eval"><SPAN STYLE="font-weight: normal">eval</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#exception"><SPAN STYLE="font-weight: normal">exception</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#expand_macro"><SPAN STYLE="font-weight: normal">expand-macro</SPAN></A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="F"></A><B>F</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#fifth"><SPAN STYLE="font-weight: normal">fifth</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#find"><SPAN STYLE="font-weight: normal">find</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#find_if"><SPAN STYLE="font-weight: normal">find-if</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#first"><SPAN STYLE="font-weight: normal">first</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#flatten"><SPAN STYLE="font-weight: normal">flatten</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#floatp"><SPAN STYLE="font-weight: normal">floatp</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#for"><SPAN STYLE="font-weight: normal">for</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#format">format</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#fourth">fourth</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#free_ext_mem">free-ext-mem</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#funcall">funcall</A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="G"></A><B>G</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#gensym">gensym</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#get_ext_mem_cell">get-ext-mem-cell</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#get_method">get-method</A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="I"></A><B>I</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="# in_package">in-package</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#incf">incf</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#inspect_ext_mem">inspect-ext-mem</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#integerp">integerp</A></P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="L"></A><B>L</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#labels">labels</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#lambda">lambda</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#last">last</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#last_n">last-n</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#length">length</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#let">let</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#let_1">let1</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#list">list</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A HREF="#listp">listp</A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">load-file</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">load-foreign-library</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">load-object</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="M"></A><B>M</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">macrop</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">make-array</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">make-instance</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">make-string</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">map</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">mapcan</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">mapcar</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">max</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">min</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">multiple-value-bind</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="N"></A><B>N</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">nconc</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">neq</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">newline</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">nil</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">not</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">nth</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">null</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">numperp</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="O"></A><B>O</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">or</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="P"></A><B>P</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">pair</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">print</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">print-string</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">println</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">profile</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="R"></A><B>R</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">range</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">read</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">read-character</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">read-float</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">read-integer</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">read-string</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">rec</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">remove</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">remove-duplicates</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">remove-if</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">remove-if-not</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">remove-last</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">rest</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">resume</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">return-from</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">reverse</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="S"></A><B>S</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">save-object</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">second</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">select</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">set-ext-mem</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">set-ext-mem-cell</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">setcar</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">setcdr</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">setq</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">string</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">string-get</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">string-set</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">stringp</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">sub-array</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">sublist</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">substring</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">symbol</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">symbol-name</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">symbol-value</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">symbolp</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="T"></A><B>T</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">t</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">third</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">throw</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">time</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">try</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; text-decoration: none"><A NAME="U"></A>
+<B>U</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">unbind</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">unwind-protect</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="V"></A><B>V</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">values</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="W"></A><B>W</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">while</P>
+</UL>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="Non-Alphabetic"></A>
+<B>Non-Alphabetic</B></P>
+<UL>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">+</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">-</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">*</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">/</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">`</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">&gt;</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">&lt;</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">&lt;=</P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">&gt;=</P>
+</UL>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="Abort"></A><I><SPAN STYLE="font-weight: normal">Special
+operator</SPAN></I> <B>abort</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (abort) =&gt; NIL</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-weight: normal">Calling
+</SPAN><B>abort</B> <SPAN STYLE="font-weight: normal">in debug mode
+aborts the evaluation of an expression.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Calling </SPAN><B>abort</B>
+<SPAN STYLE="font-weight: normal">when not in debug mode throws an
+exception of type EXCEPTION.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">break</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="Alias"></A><A NAME="Abort1"></A>
+<I><SPAN STYLE="font-weight: normal">Macro</SPAN></I> <B>alias</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (alias </B><I><SPAN STYLE="font-weight: normal">var1</SPAN></I>
+<I><SPAN STYLE="font-weight: normal">var2</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">var1</SPAN></I><SPAN STYLE="font-weight: normal">,
+</SPAN><I><SPAN STYLE="font-weight: normal">var2</SPAN></I><SPAN STYLE="font-weight: normal">:
+symbols</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: alias</B>
+<SPAN STYLE="font-weight: normal">creates a new binding between </SPAN><I><SPAN STYLE="font-weight: normal">var2</SPAN></I>
+<SPAN STYLE="font-weight: normal">and the object bound to </SPAN><I><SPAN STYLE="font-weight: normal">var1</SPAN></I><SPAN STYLE="font-weight: normal">.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+SYMBOL-NOT-BOUND if </SPAN><I><SPAN STYLE="font-weight: normal">var2</SPAN></I>
+<SPAN STYLE="font-weight: normal">is not bound to a value.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+x 100)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(alias
+y x)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">y=&gt;100</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">define</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Alloc_Ext_Mem_Char"></A>
+<I>Function</I> <B>alloc-ext-mem-char</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax:
+(alloc-ext-mem-char </B><I><SPAN STYLE="font-weight: normal">n</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">(ptr, len, type)</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">ptr</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">len</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">type</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+alloc-ext-mem-char</B> <SPAN STYLE="font-weight: normal">allocates
+raw memory corresponding to </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I>
+<SPAN STYLE="font-weight: normal">characters. Equivalent to
+malloc(</SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">*sizeof(char)).
+Returns the pointer to the allocated memory via a list that also
+contains the number of characters allocated (i.e. </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">)
+and the type of the memory block (integer 3 signifying a character
+array).</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal"><A HREF="#Alloc_Ext_Mem_Float">alloc-ext-mem-float</A>,
+<A HREF="#Alloc_Ext_Mem_Int">alloc-ext-mem-int</A>, free-ext-mem,
+get-ext-mem-cell, inspect-ext-mem, set-ext-mem, set-ext-mem-cell</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Alloc_Ext_Mem_Float"></A><A NAME="Alloc_Ext_Mem_Char1"></A>
+<I>Function</I> <B>alloc-ext-mem-float</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax:
+(alloc-ext-mem-float </B><I><SPAN STYLE="font-weight: normal">n</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">(ptr, len, type)</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">ptr</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">len</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">type</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+alloc-ext-mem-float</B> <SPAN STYLE="font-weight: normal">allocates
+raw memory corresponding to </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I>
+<SPAN STYLE="font-weight: normal">floats. Equivalent to
+malloc(</SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">*sizeof(float)).
+Returns the pointer to the allocated memory via a list that also
+contains the number of floats allocated (i.e. </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">)
+and the type of the memory block (integer 2 signifying a float
+array).</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal"><A HREF="#Alloc_Ext_Mem_Char">alloc-ext-mem-char</A>,
+<A HREF="#Alloc_Ext_Mem_Int">alloc-ext-mem-int</A>, free-ext-mem,
+get-ext-mem-cell, inspect-ext-mem, set-ext-mem, set-ext-mem-cell</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Alloc_Ext_Mem_Int"></A><A NAME="Alloc_Ext_Mem_Float1"></A><A NAME="Alloc_Ext_Mem_Char11"></A>
+<I>Function</I> <B>alloc-ext-mem-int</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax:
+(alloc-ext-mem-int </B><I><SPAN STYLE="font-weight: normal">n</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">(ptr, len, type)</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">ptr</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">len</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer, </SPAN><I><SPAN STYLE="font-weight: normal">type</SPAN></I><SPAN STYLE="font-weight: normal">:
+integer</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+alloc-ext-mem-int</B> <SPAN STYLE="font-weight: normal">allocates raw
+memory corresponding to </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I>
+<SPAN STYLE="font-weight: normal">integers. Equivalent to
+malloc(</SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">*sizeof(int)).
+Returns the pointer to the allocated memory via a list that also
+contains the number of integers allocated (i.e. </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-weight: normal">)
+and the type of the memory block (integer 1 signifying an integer
+array).</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal"><A HREF="#Alloc_Ext_Mem_Char">alloc-ext-mem-char</A>,
+<A HREF="#Alloc_Ext_Mem_Float">alloc-ext-mem-float</A>, free-ext-mem,
+get-ext-mem-cell, inspect-ext-mem, set-ext-mem, set-ext-mem-cell </SPAN>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="And"></A><A NAME="Alloc_Ext_Mem_Int1"></A><A NAME="Alloc_Ext_Mem_Float11"></A><A NAME="Alloc_Ext_Mem_Char111"></A>
+<I>Function</I> <B>and</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (and </B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">*</SPAN><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: and</B>
+<SPAN STYLE="font-weight: normal">performs a logical conjunction of
+its operands. Returns T if all the operands evaluate to non-NIL and
+NIL otherwise. Returns T if no arguments are passed.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(and
+(eq 1 1) (eq 2 2)) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(and ()
+3) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>or</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Append"></A><A NAME="And1"></A><A NAME="Alloc_Ext_Mem_Int11"></A><A NAME="Alloc_Ext_Mem_Float111"></A><A NAME="Alloc_Ext_Mem_Char1111"></A>
+<I>Function</I> <B>append</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (append </B><I><SPAN STYLE="font-weight: normal">lis</SPAN></I><SPAN STYLE="font-weight: normal">t</SPAN><I><SPAN STYLE="font-weight: normal">1
+list2</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">list1, list2</SPAN></I><SPAN STYLE="font-weight: normal">:
+forms that evaluate to lists; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: append</B>
+<SPAN STYLE="font-weight: normal">creates a new list by appending the
+two lists passed as arguments.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if either of the arguments is not a list.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(append
+'(a b) '(c d)) =&gt; (a b c d)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(append
+() '(1 2)) =&gt; (1 2)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>concat, nconc</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Apply"></A><A NAME="Append1"></A><A NAME="And11"></A><A NAME="Alloc_Ext_Mem_Int111"></A><A NAME="Alloc_Ext_Mem_Float1111"></A><A NAME="Alloc_Ext_Mem_Char11111"></A>
+<I>Special operator</I> <B>apply</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (apply </B><I><SPAN STYLE="font-weight: normal">function
+args</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">function</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a closure, a special operator or a
+continuation, </SPAN><I><SPAN STYLE="font-weight: normal">args</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: apply</B>
+<SPAN STYLE="font-weight: normal">applies the closure, special
+operator or continuation passed as its first parameter to the
+arguments passed as its second parameter.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+INVALID-ARGUMENT if the first argument is not a closure, a special
+operator or a continuation or if the second argument is not a list.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(apply
++ '(1 2)) =&gt; 3</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>funcall</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Array_Eq"></A><A NAME="Apply1"></A><A NAME="Append11"></A><A NAME="And111"></A><A NAME="Alloc_Ext_Mem_Int1111"></A><A NAME="Alloc_Ext_Mem_Float11111"></A><A NAME="Alloc_Ext_Mem_Char111111"></A>
+<I>Function</I> <B>array-eq</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (array-eq </B><I><SPAN STYLE="font-weight: normal">arr1
+arr1</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">arr1, arr2</SPAN></I><SPAN STYLE="font-weight: normal">:
+forms that evaluate to array objects; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: array-eq</B>
+<SPAN STYLE="font-weight: normal">returns T if arr1 and arr2 are
+structurally equivalent, i.e. they have the same contents, and NIL
+otherwise.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+INVALID-ARGUMENT if either of the arguments is not an array.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a1 =&gt;
+[1, 2]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a2 =&gt;
+[1, 2]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a3 =&gt;
+['a 'b]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(array-eq
+a1 a2) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(array-eq
+a1 a3) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>eq</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Array_Get"></A><A NAME="Array_Eq1"></A><A NAME="Apply11"></A><A NAME="Append111"></A><A NAME="And1111"></A><A NAME="Alloc_Ext_Mem_Int11111"></A><A NAME="Alloc_Ext_Mem_Float111111"></A><A NAME="Alloc_Ext_Mem_Char1111111"></A>
+<I>Special operator</I> <B>array-get</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (array-get </B><I><SPAN STYLE="font-weight: normal">arr
+index</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">arr</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to an array object; </SPAN><I><SPAN STYLE="font-weight: normal">index</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to an integer; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: array-get</B>
+<SPAN STYLE="font-weight: normal">returns the object at the position
+</SPAN><I><SPAN STYLE="font-weight: normal">index</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">of
+array </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">arr</SPAN></I><SPAN STYLE="font-weight: normal">.
+Note that array indices start from zero.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+INVALID-ARGUMENT if the first argument is not an array, and an
+exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero
+or greater than (len-1), where len is the length of the array.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a1 =&gt;
+[1, 2]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(array-get
+a1 0) =&gt; 1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>array-set</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Array_Length"></A><A NAME="Array_Get1"></A><A NAME="Array_Eq11"></A><A NAME="Apply111"></A><A NAME="Append1111"></A><A NAME="And11111"></A><A NAME="Alloc_Ext_Mem_Int111111"></A><A NAME="Alloc_Ext_Mem_Float1111111"></A><A NAME="Alloc_Ext_Mem_Char11111111"></A>
+<I>Special operator</I> <B>array-length</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (array-length
+</B><I><SPAN STYLE="font-weight: normal">arr</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">arr</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to an array object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+an integer</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: array-length</B>
+<SPAN STYLE="font-weight: normal">returns the length of </SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">array
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">arr</SPAN></I><SPAN STYLE="font-weight: normal">.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+INVALID-ARGUMENT if the first argument is not an array.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a1 =&gt;
+[40, 50]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(array-length
+a1) =&gt; 2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:</B></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Array_Set"></A><A NAME="Array_Length1"></A><A NAME="Array_Get11"></A><A NAME="Array_Eq111"></A><A NAME="Apply1111"></A><A NAME="Append11111"></A><A NAME="And111111"></A><A NAME="Alloc_Ext_Mem_Int1111111"></A><A NAME="Alloc_Ext_Mem_Float11111111"></A><A NAME="Alloc_Ext_Mem_Char111111111"></A>
+<I>Special operator</I> <B>array-set</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (array-set </B><I><SPAN STYLE="font-weight: normal">arr
+index form</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">form</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">arr</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to an array object; </SPAN><I><SPAN STYLE="font-weight: normal">index</SPAN></I><SPAN STYLE="font-weight: normal">:
+an integer; </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: array-set</B>
+<SPAN STYLE="font-weight: normal">binds the position </SPAN><I><SPAN STYLE="font-weight: normal">index
+of </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">array
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">arr </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">to
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">form.</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+INVALID-ARGUMENT if the first argument is not an array, and an
+exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero
+or greater than (len-1), where len is the length of the array.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a1 =&gt;
+[40, 50]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(array-set
+a1 0 30) =&gt; 30</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a1 =&gt;
+[30, 50]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>array-get</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Arrayp"></A><A NAME="Array_Set1"></A><A NAME="Array_Length11"></A><A NAME="Array_Get111"></A><A NAME="Array_Eq1111"></A><A NAME="Apply11111"></A><A NAME="Append111111"></A><A NAME="And1111111"></A><A NAME="Alloc_Ext_Mem_Int11111111"></A><A NAME="Alloc_Ext_Mem_Float111111111"></A><A NAME="Alloc_Ext_Mem_Char1111111111"></A>
+<I>Special Operator</I> <B>arrayp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (arrayp</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: arrayp</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates to <SPAN STYLE="font-weight: normal">an array and NIL
+otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a1 =&gt;
+[40, 50]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(arrayp
+a1) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(arrayp
+10) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Assert"></A><A NAME="Arrayp1"></A><A NAME="Array_Set11"></A><A NAME="Array_Length111"></A><A NAME="Array_Get1111"></A><A NAME="Array_Eq11111"></A><A NAME="Apply111111"></A><A NAME="Append1111111"></A><A NAME="And11111111"></A><A NAME="Alloc_Ext_Mem_Int111111111"></A><A NAME="Alloc_Ext_Mem_Float1111111111"></A><A NAME="Alloc_Ext_Mem_Char11111111111"></A>
+<I>Function </I><B>assert</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (assert</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: assert</B>
+<SPAN STYLE="font-weight: normal">throws an exception of type
+EXCEPTION if </SPAN><I><SPAN STYLE="font-weight: normal">form
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">evaluates
+to NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Assoc"></A><A NAME="Arrayp2"></A><A NAME="Array_Set12"></A><A NAME="Array_Length112"></A><A NAME="Array_Get1112"></A><A NAME="Array_Eq11112"></A><A NAME="Apply111112"></A><A NAME="Append1111112"></A><A NAME="And11111112"></A><A NAME="Alloc_Ext_Mem_Int111111112"></A><A NAME="Alloc_Ext_Mem_Float1111111112"></A><A NAME="Alloc_Ext_Mem_Char11111111112"></A>
+<I>Function </I><B>assoc</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (assoc</B> <I><SPAN STYLE="font-weight: normal">key
+pairs</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">key</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">pairs</SPAN></I><SPAN STYLE="font-weight: normal">:a
+list of CONS objects; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: assoc</B>
+<SPAN STYLE="font-weight: normal">returns the CDR of the pair in
+</SPAN><I><SPAN STYLE="font-weight: normal">pairs</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">whose
+CAR equals </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">key</SPAN></I>
+<SPAN STYLE="font-weight: normal">and NIL otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if pairs is not a list of CONS objects.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a =&gt;
+((1 x) (2 y))</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(assoc
+1 a) =&gt; x</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(assoc
+3 a) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Atom"></A><A NAME="Arrayp3"></A><A NAME="Array_Set13"></A><A NAME="Array_Length113"></A><A NAME="Array_Get1113"></A><A NAME="Array_Eq11113"></A><A NAME="Apply111113"></A><A NAME="Append1111113"></A><A NAME="And11111113"></A><A NAME="Alloc_Ext_Mem_Int111111113"></A><A NAME="Alloc_Ext_Mem_Float1111111113"></A><A NAME="Alloc_Ext_Mem_Char11111111113"></A>
+<I>Special Operator</I> <B>atom</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (atom</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: atom</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+<SPAN STYLE="font-weight: normal">is an atom and NIL otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(atom
+1) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(atom
+'(1 2)) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Break"></A>
+<I>Special Operator</I> <B>break</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (break) =&gt; </B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: break</B>
+<SPAN STYLE="font-weight: normal">stops the evaluation of the
+expression and passes control to the Debugger</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">resume</SPAN>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="butlast"></A>
+<I>Function</I> <B>butlast</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (butlast</B> <I>lst</I>
+<I><SPAN STYLE="font-weight: normal">len</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">len</SPAN></I><SPAN STYLE="font-weight: normal">:
+an integer; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: butlast
+</B><SPAN STYLE="font-weight: normal">returns a list that comprises
+the elements of </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I>
+<SPAN STYLE="font-weight: normal">excluding the last </SPAN><I><SPAN STYLE="font-weight: normal">len</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">elements</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I>
+<SPAN STYLE="font-weight: normal">is not a list or </SPAN><I><SPAN STYLE="font-weight: normal">len</SPAN></I>
+<SPAN STYLE="font-weight: normal">is not a positive integer smaller
+than the length of </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(butlast
+'(1 2 3) 1) =&gt; (2 3)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:</B></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="caar"></A><A NAME="butlast1"></A>
+<I>Function</I> <B>caar</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (caar</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: caar </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (car (car lst)</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if either of the applications of car</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">above
+is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(caar
+'((1 2) (3, 4)) =&gt; 1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">cadar,
+cadddr, caddr, cadr, car, cdar, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cadar"></A><A NAME="caar1"></A><A NAME="butlast11"></A>
+<I>Function</I> <B>cadar</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cadar</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cadar </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (car (cdr (car lst))</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if any of the applications of car</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">or
+cdr above is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cadar
+'((1 2) (3, 4)) =&gt; 2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadddr, caddr, cadr, car, cdar, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cadddr"></A><A NAME="cadar1"></A><A NAME="caar11"></A><A NAME="butlast111"></A>
+<I>Function</I> <B>cadddr</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cadddr</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cadddr </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (car (cdr (cdr (cdr lst)))), i.e., the
+fourth element of a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if any of the applications of car</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">or
+cdr above is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(car
+(cdr (cdr (cdr '(1 2 3 4))))) =&gt; 4</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, caddr, cadr, car, cdar, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="caddr"></A><A NAME="cadddr1"></A><A NAME="cadar11"></A><A NAME="caar111"></A><A NAME="butlast1111"></A>
+<I>Function</I> <B>caddr</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (caddr</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: caddr </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (car (cdr (cdr lst))), i.e., the third
+element of a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if any of the applications of car</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">or
+cdr above is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(car
+(cdr (cdr '(1 2 3 4)))) =&gt; 3</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, cadddr, cadr, car, cdar, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cadr"></A><A NAME="caddr1"></A><A NAME="cadddr11"></A><A NAME="cadar111"></A><A NAME="caar1111"></A><A NAME="butlast11111"></A>
+<I>Function</I> <B>cadr</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cadr</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cadr </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (car (cdr lst)), i.e., the second element
+of a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if either of the applications of car</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">or
+cdr above is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(car
+(cdr '(1 2 3 4))) =&gt; 2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, cadddr, caddr, car, cdar, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="call_foreign_function"></A><A NAME="cadr1"></A><A NAME="caddr11"></A><A NAME="cadddr111"></A><A NAME="cadar1111"></A><A NAME="caar11111"></A><A NAME="butlast111111"></A>
+<I>Special operator</I> <B>call-foreign-function</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax:
+(call-foreign-function</B> <I>name return-type params</I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">name</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a string; </SPAN><I><SPAN STYLE="font-weight: normal">return-type</SPAN></I><SPAN STYLE="font-weight: normal">:
+a symbol; </SPAN><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list of CONS objects; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+call-foreign-function </B><SPAN STYLE="font-weight: normal">invokes a
+native function called </SPAN><I><SPAN STYLE="font-weight: normal">name
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">defined
+in</SPAN></SPAN></SPAN> <SPAN STYLE="font-weight: normal">a shared
+library that was loaded earlier. r</SPAN><I><SPAN STYLE="font-weight: normal">eturn-type
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">denotes
+the return type of the native function ('void, 'integer, 'float,
+'character, or 'character-pointer). </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">params
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">contains
+information about the parameters to the native function (parameter
+type and object).</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+call-foreign-function</B> <SPAN STYLE="font-weight: normal">throws an
+exception of type EXCEPTION if it is not supplied with three
+parameters. It throws an exception of type ARG-MISMATCH if the
+parameters are not of the types as described above. ARG-MISMATCH is
+also thrown if there are any inconsistencies in the </SPAN><I><SPAN STYLE="font-weight: normal">params
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">argument
+(e.g. the parameter type is integer and the object is not an
+integer).</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(call-foreign-function
+“some_func” 'void '((ivar integer, fvar float)))</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal">load-foreign-library</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="call_cc"></A>
+<I>Special operator</I> <B>call-cc</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (call-cc</B>
+<I>lambda-exp</I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lambda-exp</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">;</SPAN></SPAN></SPAN>
+<I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: call-</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>cc
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">captures
+the current continuation object and invokes the closure object
+</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">lambda-exp
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">with
+this continuation object as the parameter.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(call-cc
+(lambda (cc) (set cont cc)))</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:</B></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="call_method"></A>
+<I>Function </I><B>call-method</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (call-method</B>
+<I>obj</I> <I>method-name &amp;rest params</I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">obj</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a pLisp Object System (POS) object; </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">method-name</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a symbol; </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: call-method</B>
+<SPAN STYLE="font-weight: normal">invokes the method indicated by
+</SPAN><I><SPAN STYLE="font-weight: normal">method-name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">on
+the object </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">obj</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+passing it the parameters </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">params.</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">Throws
+exception METHOD-DOES-NOT-EXIST if the method is not defined either
+for the object or for any of its superclasses. </SPAN></SPAN></SPAN>
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="car"></A>
+<I>Special operator</I> <B>car</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (car</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: car </B><SPAN STYLE="font-weight: normal">returns</SPAN>
+<SPAN STYLE="font-weight: normal">the first element of a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+NOT-A-CONS if the argument is not a list</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(car
+'(1 2 3 4)) =&gt; 1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(car
+nil) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, cadddr, caddr, cadr, cdar, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cdar"></A>
+<I>Function</I> <B>cdar</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cdar</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cdar </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (cdr (car lst))</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if either of the applications of car</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">or
+cdr above is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cdr
+(car '((1 2) 3 4))) =&gt; (2)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, cadddr, caddr, cadr, car, cddr, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cddr"></A><A NAME="cdar1"></A>
+<I>Function</I> <B>cddr</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cddr</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cddr </B><SPAN STYLE="font-weight: normal">is
+functionally equivalent to (cdr (cdr lst))</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if either of the applications of </SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">cdr
+above is not on a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cdr
+(cdr '(1 2 3 4))) =&gt; (3 4)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, cadddr, caddr, cadr, car, cdar, cdr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cdr"></A><A NAME="cddr1"></A><A NAME="cdar11"></A>
+<I>Function</I> <B>cdr</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cdr</B> <I>lst</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cdr </B><SPAN STYLE="font-weight: normal">retuns
+the list comprising the all the elements of </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">except
+the first one.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+EXCEPTION if </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">is
+not a list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cdr
+'(1 2 3 4)) =&gt; (2 3 4)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">caar,
+cadar, cadddr, caddr, cadr, car, cdar, cddr, first, fifth, fourth,
+second, third</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="characterp"></A>
+<I>Special Operator</I> <B>characterp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (characterp</B>
+<I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: characterp</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to a character and NIL
+otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(characterp
+#\a) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(characterp
+10) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="clone"></A><A NAME="characterp1"></A>
+<I>Special Operator</I> <B>clone</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (clone</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: clone</B>
+<SPAN STYLE="font-weight: normal">makes a deep copy of the object
+</SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I> <SPAN STYLE="font-weight: normal">evaluates
+to.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(clone
+'(1 2 3)) =&gt; (1 2 3)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="closurep"></A><A NAME="characterp2"></A>
+<I>Special Operator</I> <B>closurep</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (closurep</B>
+<I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: closurep</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to a closure object and
+NIL otherwise. Note that special operators are not closures.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(closurep
+(lambda (x) x)) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(defun
+double (n) (* n2)) =&gt; DOUBLE</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(closurep
+double) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(closurep
+3) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(closurep
++) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="compile"></A>
+<I>Function </I><B>compile</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (compile</B>
+<I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an atom or a CONS object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a CONS object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: compile</B>
+converts <SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">a
+pLisp source expression into the simplified Lisp that is processed by
+the pLisp virtual machine</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(compile
+'(set x 0) =&gt; (CONSTANT 0 (ASSIGN X NIL))</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="compile_fn"></A>
+<I>Special Operator</I> <B>compile-fn</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (compile-fn</B>
+<I><SPAN STYLE="font-weight: normal">fn</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">fn</SPAN></I><SPAN STYLE="font-weight: normal">:
+a closure or a macro object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: compile-fn</B>
+<SPAN STYLE="font-weight: normal">compiles the passed closure object
+or macro object into native code.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied or if the argument is not a
+closure or a macro object.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(defun
+double (n) (* n 2)) =&gt; DOUBLE</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(compile-fn
+double) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="concat"></A><A NAME="compile_fn1"></A>
+<I>Function </I><B>concat</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (concat</B> <SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">lst
+&amp;rest lists</SPAN></SPAN></SPAN><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list; </SPAN><I><SPAN STYLE="font-weight: normal">lists</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list of the rest of the arguments, which are themselves lists</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: concat
+</B><SPAN STYLE="font-weight: normal">combines the passed lists into
+a new list.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(concat
+'(1 2 3) '(4 5 6) '(7 8 9)) =&gt; '(1 2 3 4 5 6 7 8 9)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="concat_strings"></A><A NAME="concat2"></A><A NAME="compile_fn12"></A>
+<I>Function </I><B>concat-strings</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (concat-strings</B>
+<SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">str1
+str2</SPAN></SPAN></SPAN><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">str1, str2</SPAN></I><SPAN STYLE="font-weight: normal">:
+forms that evaluate to strings; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a string</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+concat-strings</B> <SPAN STYLE="font-weight: normal">combines the two
+strings passed as arguments into a new string.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(concat-strings
+“abc” “def”) =&gt; “abcdef”</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cond"></A><A NAME="concat1"></A><A NAME="compile_fn11"></A>
+<I>Macro </I><B>cond</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cond</B> (<SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">(cond1
+action1) (cond2 action2) ..)</SPAN></SPAN></SPAN><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">cond1, cond2, …: </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">forms;
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">action1,
+action2, …: </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">forms;
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cond</B>
+<SPAN STYLE="font-weight: normal">takes a list comprising
+condition/action pairs, and evaluates each condition sequentially,
+stopping at the first condition that evaluates to a non-NIL value. It
+then evaluates the action corresponding to this condition and returns
+the result of evaluating that action. If none of the conditions
+evaluates to a non-NIL value, </SPAN><B>cond </B><SPAN STYLE="font-weight: normal">returns
+NIL. If the last condition is T, the action corresponding to this
+serves as the default action.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cond
+((eq 1 1) 'true) (t 'false))) =&gt; TRUE</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">IF</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cons"></A><A NAME="compile_fn2"></A>
+<I>Special Operator</I> <B>cons</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cons</B> obj<I><SPAN STYLE="font-weight: normal">1
+obj2</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">obj1, obj2 </SPAN></I><SPAN STYLE="font-weight: normal">:
+objects; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:a
+CONS object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cons</B>
+<SPAN STYLE="font-weight: normal">creates a CONS object from the two
+objects passed to it as arguments</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cons 1
+2) =&gt; (1 . 2)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cons
+'a nil) =&gt; (A)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="cons_pair"></A><A NAME="concat3"></A><A NAME="compile_fn13"></A>
+<I>Function </I><B>cons-pair</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (cons-pair</B>
+<SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">list1
+list2</SPAN></SPAN></SPAN><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">list1, list2</SPAN></I><SPAN STYLE="font-weight: normal">:
+forms that evaluate to lists;</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: cons-pair</B>
+<SPAN STYLE="font-weight: normal">takes two lists and creates a new
+list, the elements of which are CONS objects obtained by applying
+</SPAN><B>cons</B> <SPAN STYLE="font-weight: normal">on the matched
+elements of the two lists. If the sizes of the two lists are not the
+same, the shorter of the two lists is padded with NIL values.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cons-pair
+'(a b) '(1 2)) =&gt; ((A . 1) (B . 2))</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(cons
+'(a b c) '(1 2)) =&gt; ((A . 1) (B . 2) (C))</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="consp"></A>
+<I>Special Operator</I> <B>consp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (consp</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: consp</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to a CONS object and NIL
+otherwise.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+a (cons 1 2)) =&gt; A</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(consp
+a) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(consp
+10) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="continuationp"></A><A NAME="consp1"></A>
+<I>Special Operator</I> <B>continuationp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (conitnuationp</B>
+<I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+continuationp</B> <SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to a continuation object
+and NIL otherwise.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+cont nil) =&gt; CONT</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(progn
+(call-cc (lambda (cc) (set cont cc))) (print 1)) =&gt; 1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(continuationp
+cont) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="create_image"></A><A NAME="continuationp1"></A><A NAME="consp11"></A>
+<I>Special Operator</I> <B>create-image</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (create-image</B>
+<I><SPAN STYLE="font-weight: normal">file-name</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">file-name</SPAN></I><SPAN STYLE="font-weight: normal">:
+a string object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: create-image</B>
+<SPAN STYLE="font-weight: normal">saves the current state of the
+pLisp system to a file called </SPAN><I><SPAN STYLE="font-weight: normal">file-name.</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied or if the argument is not a
+string object.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(create-image
+“plisp.image”) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="create_package"></A>
+<I>Special operator </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>create-package</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (create-package</B>
+<I><SPAN STYLE="font-weight: normal">package-name</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">package-name</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+string; result: string</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+create-package</B> <SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">creates
+a new package with the name </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">package-name.
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">It
+returns the name of the newly-created package.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied or if the argument is not a
+string object. An exception of type PACKAGE-ALREADY-EXISTS is thrown
+if the package with name </SPAN><I><SPAN STYLE="font-weight: normal">package-name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">already
+exists.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(create-package “pkg”)
+=&gt; “PKG”</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">IN-PACKAGE</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="curry"></A>
+<I>Function </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>curry</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (curry</B> fn
+<SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">&amp;rest
+args</SPAN></SPAN></SPAN><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">fn</SPAN></I><SPAN STYLE="font-weight: normal">:
+a closure;</SPAN><SPAN STYLE="font-variant: normal"> </SPAN><SPAN STYLE="font-variant: normal"><I>args</I></SPAN><SPAN STYLE="font-variant: normal">:
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">a
+list of the remaining arguments to </SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>curry</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">;
+</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a closure object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: curry </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">takes
+a closure object and a partial list of the arguments to the closure,
+and returns a closure object which takes as arguments the remaining
+list of the given closure object's arguments. The returned closure
+object invokes the given closure object with the parameters
+comprising the partial list and the supplied parameters list.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+curry </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">throws
+an exception of type ARG-MISMATCH if no arguments are supplied or if
+the first argument is not a closure object (TODO).</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(defun
+f (a b c) (+ a b c)) =&gt; F</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+g (curry f 10 20)) =&gt; G</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(f 10
+20 30) =&gt; 60</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(g 30)
+=&gt; 60</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="define_class"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>define-class</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (define-class</B>
+<I>class-name superclass-name class-var-list instance-var-list
+class-init-form instance-init-form class-methods instance-methods</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">class</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">-name:
+symbol; </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">superclass</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">-name:
+symbol; </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">class-var</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">-list:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">instance-var-list</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">class-init-form</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">instance-init-form</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">class-methods</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">instance-methods</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: define-class
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">creates
+a pLisp Object System (POS) class named </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">class-name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">that
+is derived from a superclass </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">superclass-name</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.
+c</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">lass-var-list</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">specifies
+the class variables, getters and setters for the class, while
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">instance-var-list</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">specifies
+the same entities for an instance of the class. c</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">lass-init-form</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">is
+the form evaluated as the class initializing code, while
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">instance-init-form</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">serves
+the purpose of constructor. </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">Class-methods</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">instance-methods</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">specify
+the methods at the class level and the instance level respectively.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define-class
+'square 'shape nil '((a get-a set-a)) nil (lambda (var) (set a var))
+nil ((area (lambda () (* a a)))) =&gt; &lt;closure denoting the
+class&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="defmacro"></A><A NAME="define_class1"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>defmacro</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (defmacro</B>
+<I><SPAN STYLE="font-weight: normal">name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">name</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+symbol; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">params</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a macro object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: def</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>macro</B></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">creates
+a macro named </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">with
+parameters </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+body </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">body.</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(defmacro
+first (lst) `(car ,lst)) =&gt; FIRST</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="defun"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>defun</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (defun</B> <I><SPAN STYLE="font-weight: normal">name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">name</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+symbol; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">params</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a closure object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: def</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>un</B></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">creates
+a closure named </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">name</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">with
+parameters </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+body </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">body.</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(defun
+double (n) (* n 2)) =&gt; DOUBLE</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="dolist"></A><A NAME="defun1"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>dolist</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (dolist</B> <I><SPAN STYLE="font-weight: normal">spec</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">spec</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: d</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>olist
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">evaluates
+the code in </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">for
+each element in the list specified in the CDR of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">spec</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+with the value of the element bound to the symbol specified in the
+CAR of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">spec.
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">It
+returns the result of the last evaluation of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body.</SPAN></I></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(dolist
+(x '(1 2 3)) (print x)) =&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">3</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="dotimes"></A><A NAME="dolist1"></A><A NAME="defun11"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>dotimes</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (dotimes</B> <I><SPAN STYLE="font-weight: normal">spec</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">spec</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: dotimes</B><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">initializes
+the variable specified in the CAR of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">spec</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">to
+zero, and evaluates </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">with
+the variable bound to this value. It then successively increments the
+variable and evaluates </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">till
+the value of the variable exceeds the value specified in the CDR of
+</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">spec.
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">It
+returns the value of the last evaluation of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body.</SPAN></I></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(dotimes
+(x 3) (print x)) =&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">0</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="eq"></A>
+<I>Special operator </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>eq</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (eq</B> form1
+form2<B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form1, form2</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+forms; result: T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>eq
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">returns
+T if form1 and form2 are structurally equivalent and NIL otherwise.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(eq 1 1) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(eq '(1 2) '(1 2) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(define x “abc”) =&gt; X</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(eq x “abc”) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(eq 1 'a) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="error"></A><A NAME="eq1"></A>
+<I>Special operator </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>error</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (error</B> str<B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">str</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+form that evaluates to a string; result:NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>error
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">creates
+and throws an exception of type EXCEPTION using </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">str</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(error “Divide by zero”)
+=&gt; -</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="eval"></A><A NAME="error1"></A><A NAME="eq11"></A>
+<I>Special operator </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>eval</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (eval </B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form; result:an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: eval
+</B><SPAN STYLE="font-weight: normal">evaluates the form </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(eval '(+ 1 1)) =&gt; 2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="exception"></A><I><SPAN STYLE="font-weight: normal">Function
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>exception</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (exception </B><I><SPAN STYLE="font-weight: normal">sym
+str</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">sym</SPAN></I><SPAN STYLE="font-weight: normal">:
+a symbol;</SPAN><SPAN STYLE="font-variant: normal"> </SPAN><SPAN STYLE="font-variant: normal"><I>str</I></SPAN><SPAN STYLE="font-variant: normal">:
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">a
+string; </SPAN></SPAN><SPAN STYLE="font-variant: normal"><I>result:
+</I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">an
+exception object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: exception
+</B><SPAN STYLE="font-weight: normal">creates an exception object
+from the passed symbol and string and returns it.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(exception
+'exception “An exception”) =&gt; (EXCEPTION . “An exception”)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="expand_macro"></A><A NAME="eval1"></A><A NAME="error11"></A><A NAME="eq111"></A>
+<I>Special operator </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>expand-macro</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (expand-macro
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form; result: a form</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: e</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>xpand-macro</B></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">expands
+the macro application represented by </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">form</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+returns the result of this expansion.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(defmacro first (lst) `(car
+,lst)) =&gt; FIRST</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in">(expand-macro '(first
+some-list)) =&gt; (CAR SOME-LIST)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="exception1"></A><A NAME="fifth"></A>
+<I><SPAN STYLE="font-weight: normal">Function </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>fifth</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (fifth </B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-weight: normal">lst</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:</SPAN></SPAN></SPAN>
+<SPAN STYLE="font-weight: normal">a list;</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><I>result: </I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">an
+object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: fifth</B>
+<SPAN STYLE="font-weight: normal">returns the fifth element of </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(fifth
+'(1 2 3 4 5 6)) =&gt; 5</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="find"></A><A NAME="exception11"></A><A NAME="fifth1"></A>
+<I><SPAN STYLE="font-weight: normal">Function </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>find</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (find </B><I><SPAN STYLE="font-weight: normal">e
+lst predicate</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">e</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:</SPAN></SPAN></SPAN>
+<I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">predicate</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a closure or a special operator; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I>result:
+</I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">an
+object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: find</B>
+<SPAN STYLE="font-weight: normal">returns the first element of </SPAN><I><SPAN STYLE="font-weight: normal">lst
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">for
+which </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">predicate
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">returns
+true when applied to that element and </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">e</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+NIL if no such element is found.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(find 3
+'(1 2 3) &lt;) =&gt; 1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="find_if"></A><I><SPAN STYLE="font-weight: normal">Function
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>find-if</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (find-if
+</B><I><SPAN STYLE="font-weight: normal">predicate lst</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">predicate</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a closure or a special operator; </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I>result:
+</I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">an
+object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: find-if</B>
+<SPAN STYLE="font-weight: normal">returns the first element of </SPAN><I><SPAN STYLE="font-weight: normal">lst
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">for
+which </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">predicate
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">returns
+true and NIL if no such element is found.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(find-if
+stringp '(1 “abc” 'X)) =&gt; “abc”</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(find-if
+numberp '(#\a “abc” 'X)) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="first"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>first</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (first</B> <I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">lst</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>first</B></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">returns
+the first element of a list</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(first
+'(1 2 3)) =&gt; 1</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(first
+()) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><I><B>See Also: </B></I>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="flatten"></A><I><SPAN STYLE="font-weight: normal">Function
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>flatten</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (flatten </B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I>result:
+</I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">a
+list</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: flatten</B>
+<SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">converts
+the sublists of </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">into
+individual elements</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(flatten
+'((1 2 3) (4 5 6) (7 8 9)) =&gt; (1 2 3 4 5 6 7 8 9)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="floatp"></A>
+<I>Special Operator</I> <B>floatp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (floatp</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: floatp</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to a float and NIL
+otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(floatp
+3.14) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(floatp
+#\a) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="for"></A><A NAME="first1"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>for</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (for</B> (<I><SPAN STYLE="font-weight: normal">var
+init-form cond step-form ret-form) &amp;rest body </SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">var</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+symbol;</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">init-form,
+cond, step-form, ret-form</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+forms; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+rest of the arguments; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>for</B></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">loops
+through the execution of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+binding </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">var</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">to
+the value of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">init-form</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+updating its value by evaluating </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">step-form.</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">After
+every execution of </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">cond</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">is
+checked, and execution stops if </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">cond</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">evaluates
+to NIL. Finally </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">ret-form</SPAN></I></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">is
+evaluated and returned.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(for (i
+0 (&lt; i 3) (incf i) nil) (print i)) =&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">0 
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">1 
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">2 
+</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">See
+Also:</SPAN></SPAN> </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="format"></A>
+<I>Special Operator</I> <B>format</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (format</B> <I><SPAN STYLE="font-weight: normal">fd
+str &amp;rest args</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values: </B><I><SPAN STYLE="font-weight: normal">fd</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an integer; </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">str</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a string; </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">args</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+rest of the arguments in list form</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: format </B><SPAN STYLE="font-weight: normal">sends
+the formatted output specified by the format string </SPAN><I><SPAN STYLE="font-weight: normal">str</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+and the arguments to the file specified by the file descriptor </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">fd</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+or to standard output if </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">fd</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+is NIL. The format string is modeled identically to the C format
+string used in printf and fprintf statements.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if two arguments are not supplied. Throws an exception
+of type INVALID-ARGUMENT if a) the first argument is neither an
+integer nor NIL, b) if the second argument is not a string or c) </SPAN><I><SPAN STYLE="font-weight: normal">args</SPAN></I><SPAN STYLE="font-weight: normal">
+</SPAN><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">contains
+any objects other than integers, floats, characters or strings.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+x 100)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(format
+nil “%d” x) =&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">100NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="fourth"></A><I><SPAN STYLE="font-weight: normal">Function
+</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>fourth</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (fourth </B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-weight: normal">lst</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:</SPAN></SPAN></SPAN>
+<SPAN STYLE="font-weight: normal">a list;</SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><I>result: </I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">an
+object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: fourth</B>
+<SPAN STYLE="font-weight: normal">returns the fourth element of </SPAN><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(fourth
+'(1 2 3 4 5 6)) =&gt; 4</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="free_ext_mem"></A>
+<I>Function</I> <B>free</B><B>-ext-mem</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (free-ext-mem
+</B><I><SPAN STYLE="font-weight: normal">blk</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">blk</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: free-ext-mem</B>
+frees the native memory block specified by <I>blk</I><SPAN STYLE="font-style: normal">
+that was allocated by one of the alloc-ext-mem-* functions</SPAN><SPAN STYLE="font-weight: normal">.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal">alloc-ext-mem-char,
+<A HREF="#Alloc_Ext_Mem_Float">alloc-ext-mem-float</A>,
+<A HREF="#Alloc_Ext_Mem_Int">alloc-ext-mem-int</A>, get-ext-mem-cell,
+inspect-ext-mem, set-ext-mem, set-ext-mem-cell</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="funcall"></A>
+<I>Function</I> <B>funcall</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (funcall </B><I><SPAN STYLE="font-weight: normal">function
+&amp;rest args</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">function</SPAN></I><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a closure, a special operator or a
+continuation, </SPAN><I><SPAN STYLE="font-weight: normal">args</SPAN></I><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: funcall</B>
+<SPAN STYLE="font-weight: normal">applies the closure, special
+operator or continuation </SPAN><I><SPAN STYLE="font-weight: normal">fn
+</SPAN></I><SPAN STYLE="font-weight: normal">to </SPAN><I><SPAN STYLE="font-weight: normal">args</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(funcall
++ 1 2) =&gt; 3</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><B>See
+Also: </B>apply</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="gensym"></A><A NAME="format1"></A>
+<I>Special Operator</I> <B>gensym</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (gensym) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a symbol</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: gensym
+</B><SPAN STYLE="font-weight: normal">creates a new symbol that is
+guaranteed to be unique</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(gensym)
+=&gt; #:G0001</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="get_ext_mem_cell"></A><A NAME="free_ext_mem1"></A>
+<I>Function</I> <B>get</B><B>-ext-mem-cell</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (</B><B>get</B><B>-ext-mem-cell
+</B><I><SPAN STYLE="font-weight: normal">blk pos</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">blk</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list; </SPAN><I><SPAN STYLE="font-weight: normal">pos</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an integer; </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+</B><B>get</B><B>-ext-mem-cell</B> <SPAN STYLE="font-weight: normal">returns
+the integer, float or character stored in position </SPAN><I><SPAN STYLE="font-weight: normal">pos</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+of a native memory block </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">blk
+</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">that
+was allocated by one of the alloc-ext-mem-* functions.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+INVALID-INDEX if </SPAN><I><SPAN STYLE="font-weight: normal">pos</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+not greater than or equal to zero or less than the size of </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">blk</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">
+</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">Throws
+an exception of type EXCEPTION if the block has an invalid type (i.
+e. not 1, 2 or 3 signifying integer, float or character
+respectively).</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal">alloc-ext-mem-char,
+<A HREF="#Alloc_Ext_Mem_Float">alloc-ext-mem-float</A>,
+<A HREF="#Alloc_Ext_Mem_Int">alloc-ext-mem-int</A>, free-ext-mem,
+inspect-ext-mem, set-ext-mem, set-ext-mem-cell</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="get_method"></A><A NAME="get_ext_mem_cell1"></A><A NAME="free_ext_mem11"></A>
+<I>Function</I> <B>get</B><B>-method</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (</B><B>get</B><B>-method
+</B><I><SPAN STYLE="font-weight: normal">obj</SPAN></I><I><SPAN STYLE="font-weight: normal">
+method-name</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">obj</SPAN></I><SPAN STYLE="font-weight: normal">:
+a pLisp Object System (POS) object; </SPAN><I><SPAN STYLE="font-weight: normal">method-name</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a symbol; </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a closure</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-style: normal"><B>get-method</B></SPAN><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+returns the closure object named </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">method-name</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+defined in the pLisp Object System (POS) object </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">obj.
+</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">If
+</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">method-name</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+is not defined in </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">obj</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+it is searched for in the superclass of the class of </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">obj</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+the superclass of this superclass, and so on. It retuns NIL if a
+method with the given name does not exist.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(get-method
+obj 'some-method) =&gt; &lt;closure&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME=" in_package"></A><A NAME="gensym1"></A><A NAME="format11"></A>
+<I>Special Operator</I> <B>in-package</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (in-package
+</B><SPAN STYLE="font-weight: normal">package-name</SPAN><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">package-name</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form that evaluates to a string</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><B>in-package</B><SPAN STYLE="font-weight: normal">
+sets the current package to </SPAN><I><SPAN STYLE="font-weight: normal">package-name</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">Throws
+an exception of type ACCESS-VIOLATION if </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">package-name</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+is “CORE”. Throws an exception of type EXCEPTION if </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">package-name</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+does not exist.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(in-package
+“some-package”) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="incf"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>incf</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (incf</B> <I>var</I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">var</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+symbol; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an integer or float</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: </B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>incf
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">increments</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">var</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+by one.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception if </SPAN><I><SPAN STYLE="font-weight: normal">var</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+is not bound to an integer or a float.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(define
+x 0) =&gt; X</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(incf
+x) =&gt; 1</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">X
+=&gt; 1</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">See
+Also:</SPAN></SPAN> </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="inspect_ext_mem"></A><A NAME="get_ext_mem_cell2"></A><A NAME="free_ext_mem12"></A>
+<I>Function</I> <B>inspect</B><B>-ext-mem</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (</B><B>inspect</B><B>-ext-mem
+</B><I><SPAN STYLE="font-weight: normal">blk </SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">NIL</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">blk</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description:
+</B><B>inspect</B><B>-ext-mem</B> <SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">prints
+the contents of a native memory block </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">blk
+</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">that
+was allocated by one of the alloc-ext-mem-* functions.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">Throws
+an exception of type EXCEPTION if the block has an invalid type (i.
+e. not 1, 2 or 3 signifying integer, float or character
+respectively).</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:
+</B><SPAN STYLE="font-weight: normal">alloc-ext-mem-char,
+<A HREF="#Alloc_Ext_Mem_Float">alloc-ext-mem-float</A>,
+<A HREF="#Alloc_Ext_Mem_Int">alloc-ext-mem-int</A>, free-ext-mem,
+get-ext-mem-cell, set-ext-mem, set-ext-mem-cell</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="integerp"></A>
+<I>Special Operator</I> <B>integerp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (integerp</B>
+<I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: integerp</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to an integer and NIL
+otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(integerp
+3) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(integerp
+#\a) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="labels"></A><A NAME="incf1"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>labels</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (labels </B><I><SPAN STYLE="font-weight: normal">decls
+&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decls</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+rest of the arguments converted into a list;</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: labels</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">executes
+</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+after binding the recursive closure definitions in </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decl.</SPAN></I></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">labels
+((fact (n) (if (eq n 0) 1 (* n (fact (- n 1))))))</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: normal">
+<SPAN STYLE="font-variant: normal">  (fact 10))</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-style: normal; font-weight: normal">
+<SPAN STYLE="font-variant: normal">=&gt; 3628800</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">See
+Also:</SPAN></SPAN> </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="lambda"></A><A NAME="integerp1"></A>
+<I>Special Operator</I> <B>lambda</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (lambda</B>
+<I>params &amp;rest body</I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">params</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list; </SPAN><I><SPAN STYLE="font-weight: normal">body</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+the rest of the arguments converted into a list;</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">
+result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+a closure object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: lambda
+</B><SPAN STYLE="font-weight: normal">creates a closure object with
+</SPAN><I><SPAN STYLE="font-weight: normal">params </SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">body</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(lambda
+double (n) (* n 2)) =&gt; &lt;closure&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="last"></A><A NAME="inspect_ext_mem1"></A><A NAME="get_ext_mem_cell21"></A><A NAME="free_ext_mem121"></A>
+<I>Function</I> <B>last</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (</B><B>last</B><B>
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: last</B>
+returns the last element of <I>lst</I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-style: normal">Examples:</SPAN></B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">(last
+'(1 2 3)) =&gt; 3</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">(last
+'()) =&gt; NIL</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">last-n</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="last_n"></A><A NAME="last1"></A><A NAME="inspect_ext_mem11"></A><A NAME="get_ext_mem_cell211"></A><A NAME="free_ext_mem1211"></A>
+<I>Function</I> <B>last-n</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (</B><B>last-n</B><B>
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><I><SPAN STYLE="font-weight: normal">
+n</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list; </SPAN><I><SPAN STYLE="font-weight: normal">n</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an integer; </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: last-n</B>
+returns the last <I>n</I><SPAN STYLE="font-style: normal"> elements</SPAN>
+of <I>lst</I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-style: normal">Examples:</SPAN></B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">(last
+'(1 2 3) 2) =&gt; (2 3)</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><SPAN STYLE="font-weight: normal">last</SPAN></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="length"></A><A NAME="last2"></A><A NAME="inspect_ext_mem12"></A><A NAME="get_ext_mem_cell212"></A><A NAME="free_ext_mem1212"></A>
+<I>Function</I> <B>length</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (</B><B>length</B><B>
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">lst</SPAN></I><SPAN STYLE="font-weight: normal">:
+a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an integer</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: length</B>
+returns the number of elements in <I>lst</I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-style: normal">Examples:</SPAN></B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">(length
+'(1 2 3 4 5)) =&gt; 5</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">(length
+'()) =&gt; 0</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:</B></P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="let"></A><A NAME="labels1"></A><A NAME="incf11"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>let</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (let </B><I><SPAN STYLE="font-weight: normal">decls
+&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decls</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+rest of the arguments converted into a list;</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: let</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">executes
+</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+after binding the definitions in </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decl.</SPAN></I></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">let
+((x 10) (y 20)) (+ x y)) =&gt; 30</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">See
+Also:</SPAN></SPAN> </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="let_1"></A><A NAME="let1"></A><A NAME="labels11"></A><A NAME="incf111"></A>
+<I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>let1</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (let1 </B><I><SPAN STYLE="font-weight: normal">decls
+&amp;rest body</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>)</B></SPAN></SPAN>
+<B>=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decls</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+rest of the arguments converted into a list;</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">result</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: let1</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">executes
+</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">body</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+after binding the definitions in </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decl.
+</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>let1
+</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">is
+similar to </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>let</B></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">,
+but variables in </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><I><SPAN STYLE="font-weight: normal">decl</SPAN></I></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+can refer to variables declared earlier</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">let1
+((x 10) (y (+ x 10))) (+ x y)) =&gt; 30</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">See
+Also:</SPAN></SPAN> </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="list"></A><A NAME="lambda1"></A><A NAME="integerp11"></A>
+<I>Special Operator</I> <B>list</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (list</B> <I>&amp;rest
+elems</I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">elems</SPAN></I><SPAN STYLE="font-weight: normal">:
+arguments converted into a list; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:</SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+a list</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: list </B><SPAN STYLE="font-weight: normal">creates
+a </SPAN><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">list
+of the elements in </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">elems</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(list
+'a 'b 'c) =&gt; (A B C)</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="listp"></A><A NAME="integerp2"></A>
+<I>Special Operator</I> <B>listp</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (listp</B> <I><SPAN STYLE="font-weight: normal">form</SPAN></I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+T or NIL</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: listp</B>
+<SPAN STYLE="font-weight: normal">returns T if </SPAN><I><SPAN STYLE="font-weight: normal">form</SPAN></I>
+evaluates <SPAN STYLE="font-weight: normal">to a list and NIL
+otherwise</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+ARG-MISMATCH if no arguments are supplied.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(listp
+'(1 2 3)) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(listp
+'()) =&gt; T</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(listp
+'a) =&gt; NIL</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><BR>
+</P>
+</BODY>
+</HTML>

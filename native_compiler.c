@@ -2915,15 +2915,15 @@ unsigned int compilefn()
 {
   if(length(reg_current_value_rib) != 1)
   {
-    throw_exception("ARG-MISMATCH", "COMPILE-FN requires exactly one arguments a closure object");
+    throw_exception("ARG-MISMATCH", "COMPILE-FN requires exactly one argument, a closure or a macro object");
     return 1;
   }
 
   OBJECT_PTR obj = car(reg_current_value_rib);
 
-  if(!(IS_CLOSURE_OBJECT(obj)))
+  if(!IS_CLOSURE_OBJECT(obj) && !IS_MACRO_OBJECT(obj))
   {
-    throw_exception("INVALID-ARGUMENT", "Argument to COMPILE-FN should be a closure object");
+    throw_exception("INVALID-ARGUMENT", "Argument to COMPILE-FN should be a closure or a macro object");
     return 1;
   }
 

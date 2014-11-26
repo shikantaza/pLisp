@@ -21,6 +21,10 @@
 (define defmacro (macro (name vars &rest body)
                         `(define ,name (macro ,vars ,@body))))
 
+(defmacro assert (condition text)
+  `(if (not ,condition)
+       (error ,text)))
+
 (defun cadr (lst)
   (car (cdr lst)))
 
@@ -39,8 +43,8 @@
 (defun cadar (lst)
   (car (cdr (car lst))))
 
-(defmacro cadddr (lst)
-  `(car (cdr (cdr (cdr ,lst)))))
+(defun cadddr (lst)
+  (car (cdr (cdr (cdr lst)))))
 
 (defun null (x)
   (eq x '()))
@@ -60,6 +64,7 @@
       (apply or (cdr lst)))))
 
 (defun append (x y)
+  (assert (and (listp x) (listp y)) "Arguments to APPEND should be lists")
   (if (null x)
       y
       (cons (car x) (append (cdr x) y))))
@@ -94,11 +99,14 @@
   `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
 
 (defun assoc (x y)
+  (assert (listp y) "Second argument to ASSOC should be a list of CONS objects")
   (if (null y)
       nil
-    (if (eq (caar y) x)
-        (cadar y)
-      (assoc x (cdr y)))))
+    (progn 
+      (assert (consp (car y)) "Second argument to ASSOC should be a list of CONS objects")
+      (if (eq (caar y) x)
+	  (cadar y)
+	(assoc x (cdr y))))))
 
 (defun length (lst)
   (if (null lst)
@@ -183,8 +191,8 @@
     curr-min))
 
 (defun curry (function &rest args)
-    (lambda (&rest more-args)
-      (apply function (append args more-args))))
+  (lambda (&rest more-args)
+    (apply function (append args more-args))))
 
 ;(defmacro nconc (lst1 lst2)
 ; `(set ,lst1 (append ,lst1 ,lst2)))
@@ -284,10 +292,6 @@
 (defun numberp (x)
   (or (integerp x) (floatp x)))
 
-(defmacro assert (condition text)
-  `(if (not ,condition)
-       (error ,text)))
-
 (defun select (pred lst)
   (if (null lst)
       nil
@@ -315,6 +319,8 @@
   (sublist lst (- (length lst) n) n))
 
 (defun butlast (lst n)
+  (assert (and (listp lst) (integerp n)) "Arguments to BUTLAST should be a list and an integer")
+  (assert (and (>= n 1) (<= n (length lst))) "Second argument to BUTLAST should be a positive integer less than or equal to the length of the list")
   (sublist lst 0 (- (length lst) n)))
 
 (defun mapcar (f &rest lists)  
