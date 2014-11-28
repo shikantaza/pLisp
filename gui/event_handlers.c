@@ -659,6 +659,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
     close_application_window((GtkWidget **)&workspace_window);
+  else if(widget == (GtkWidget *)profiler_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
+    close_application_window((GtkWidget **)&profiler_window);
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_k)
     create_new_package();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_n)

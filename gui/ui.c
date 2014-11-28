@@ -1113,6 +1113,11 @@ void create_profiler_window(int posx, int posy, int width, int height)
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
 
+ g_signal_connect(win, 
+		  "key_press_event", 
+		  G_CALLBACK (handle_key_press_events), 
+		  NULL);
+
   gtk_container_set_border_width (GTK_CONTAINER (win), 10);
 
   scrolled_win1 = gtk_scrolled_window_new(NULL, NULL);
