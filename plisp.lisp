@@ -264,8 +264,8 @@
 (defmacro setq (var value)
   `(set ,var ,value))
 
-(defmacro substring (str &rest rest)
-  `(sub-array ,str ,@rest))
+(defmacro substring (str start len)
+  `(sub-array ,str ,start ,len))
 
 (defmacro cond (&rest lst)
   (if (null lst)
@@ -310,18 +310,18 @@
   (let ((x (gensym)))
     `(remove-if (lambda (,x) (not (,pred ,x))) ,lst))) 
 
-(defun sublist (lst start len)
+(defun sub-list (lst start len)
   (let ((res))
     (for (i start (< i (+ start len)) (incf i) res)
          (set res (append res (list (nth i lst)))))))
 
 (defun last-n (lst n)
-  (sublist lst (- (length lst) n) n))
+  (sub-list lst (- (length lst) n) n))
 
 (defun butlast (lst n)
   (assert (and (listp lst) (integerp n)) "Arguments to BUTLAST should be a list and an integer")
   (assert (and (>= n 1) (<= n (length lst))) "Second argument to BUTLAST should be a positive integer less than or equal to the length of the list")
-  (sublist lst 0 (- (length lst) n)))
+  (sub-list lst 0 (- (length lst) n)))
 
 (defun mapcar (f &rest lists)  
   (let ((min-length (min (map length lists)))
