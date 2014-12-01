@@ -943,7 +943,8 @@ void create_debug_window(int posx, int posy, int width, int height)
   gtk_box_pack_start(GTK_BOX (hbox2), scrolled_win2, TRUE, TRUE, 0);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
+  if(in_break)
+    gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox2, TRUE, TRUE, 0);
 

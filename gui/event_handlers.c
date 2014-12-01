@@ -205,7 +205,7 @@ gboolean delete_event( GtkWidget *widget,
   else if(widget == (GtkWidget *)debugger_window)
   {
     close_application_window((GtkWidget **)&debugger_window);
-    if(!in_error)
+    //if(!in_error)
       call_repl("(ABORT)");
   }
   else if(widget == (GtkWidget *)profiler_window)
