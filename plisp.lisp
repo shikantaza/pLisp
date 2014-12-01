@@ -191,8 +191,9 @@
     curr-min))
 
 (defun curry (function &rest args)
-  (lambda (&rest more-args)
-    (apply function (append args more-args))))
+  (if (not (closurep function)) (throw (exception 'arg-mismatch "First parameter to CURRY should be a closure"))
+    (lambda (&rest more-args)
+      (apply function (append args more-args)))))
 
 ;(defmacro nconc (lst1 lst2)
 ; `(set ,lst1 (append ,lst1 ,lst2)))
@@ -311,9 +312,14 @@
     `(remove-if (lambda (,x) (not (,pred ,x))) ,lst))) 
 
 (defun sub-list (lst start len)
-  (let ((res))
-    (for (i start (< i (+ start len)) (incf i) res)
-         (set res (append res (list (nth i lst)))))))
+  (cond ((not (listp lst)) (throw (exception 'invalid-argument "First argument to SUB-LIST should be a list")))
+	((not (integerp start)) (throw (exception 'invalid-argument "Second argument to SUB-LIST should be an integer")))
+	((not (integerp len)) (throw (exception 'invalid-argument "Third argument to SUB-LIST should be an integer")))
+	((or (< start 0)
+	     (< (length lst) (+ start len))) (throw (exception 'INDEX-OUT-OF-BOUNDS "SUB-LIST specifies a range outside the list size")))
+	(t   (let ((res))
+	       (for (i start (< i (+ start len)) (incf i) res)
+		    (set res (append res (list (nth i lst)))))))))
 
 (defun last-n (lst n)
   (sub-list lst (- (length lst) n) n))

@@ -52,5 +52,5 @@ You can email me at rajesh dot jayaprakash @ gmail dot com
 
 Where is the documentation?
 
-A user manual is available, and a language reference document is in the works. I have some blog posts (http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html) that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
+A user manual and a language reference document are available. I have some blog posts (http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html) that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
 
