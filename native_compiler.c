@@ -1056,15 +1056,16 @@ unsigned int symbol_value()
     return 1;
   }
 
-  res = get_symbol_value(sym, reg_current_env);
+  /* res = get_symbol_value(sym, reg_current_env); */
 
-  if(car(res) == NIL)
-  {
-    throw_exception("SYMBOL-NOT-BOUND", "Symbol not bound");
-    return 1;
-  }
+  /* if(car(res) == NIL) */
+  /* { */
+  /*   throw_exception("SYMBOL-NOT-BOUND", "Symbol not bound"); */
+  /*   return 1; */
+  /* } */
 
-  reg_accumulator = cdr(res);
+  /* reg_accumulator = cdr(res); */
+  refer(sym);
 
   reg_current_value_rib = NIL;
   reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
