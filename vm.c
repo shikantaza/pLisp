@@ -765,7 +765,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
   *((unsigned int *)ptr) = sz;
 
   for(i=0; i<sz; i++)
-    set_heap(ptr, i + 1, default_value);
+    set_heap(ptr, i + 1, clone_object(default_value));
 
   return ptr + ARRAY_TAG;
 }

@@ -587,6 +587,26 @@
 (defmacro compile (exp)
   `(simplify (compile1 ,exp nil)))
 
+(defmacro array (dims default-value)
+  (if (eq (length dims) 1)
+      `(make-array ,(car dims) ,default-value)
+    `(make-array ,(car dims) (array ,(cdr dims) ,default-value))))
+
+(defmacro build-ref (a indexes)
+  (let ((rev-indexes (reverse indexes)))
+    (if (eq (length rev-indexes) 1) 
+	`(array-get ,a ,(car rev-indexes))
+      `(array-get (build-ref ,a ,(cdr rev-indexes)) ,(car rev-indexes)))))
+
+(defmacro aset (ref val)
+  (let ((a (second ref))
+	(last-index (last ref))
+	(indexes (butlast (cddr ref) 1)))
+    `(array-set (build-ref ,a ,indexes) ,last-index ,val)))
+
+(defmacro aref (a &rest indexes)
+  `(build-ref ,a ,indexes))
+
 (load-file "pos.lisp")
 
 (load-file "utils.lisp")

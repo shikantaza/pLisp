@@ -94,6 +94,8 @@ void pop_yyin()
 
 int open_parens = 0;
 
+int open_square_brackets = 0;
+
 %}
 
 %x string
@@ -111,6 +113,8 @@ int open_parens = 0;
 #\\[a-zA-Z0-9!$"'(),_\-./:;?+<=>#%&*@\[\\\]{|}`\^~] { yylval.atom_value = yytext; return T_CHAR; }
 \(                      { open_parens++; return T_LEFT_PAREN; }
 \)                      { open_parens--; return T_RIGHT_PAREN; }
+\[                      { open_square_brackets++; return T_LEFT_SQUARE_BRACKET; }
+\]                      { open_square_brackets--; return T_RIGHT_SQUARE_BRACKET; }
 \'                      return T_QUOTE;
 \`                      return T_BACKQUOTE;
 \,                      return T_COMMA;
@@ -137,11 +141,20 @@ int open_parens = 0;
                             YY_FLUSH_BUFFER;
                             BEGIN(INITIAL);
                             open_parens = 0;
+                            open_square_brackets = 0;
+                            yyterminate();
+                          }
+                          else if(open_square_brackets) {
+                            YY_FLUSH_BUFFER;
+                            BEGIN(INITIAL);
+                            open_parens = 0;
+                            open_square_brackets = 0;
                             yyterminate();
                           }
                           else
                           {
                             open_parens = 0;
+                            open_square_brackets = 0;
                             return END_OF_FILE;
                           }
                         }

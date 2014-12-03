@@ -30,6 +30,8 @@ extern expression_t *g_expr;
 
 int parens = 0;
 
+int square_brackets = 0;
+
 extern void prompt();
 
 extern FILE *yyin;
@@ -53,6 +55,8 @@ extern BOOLEAN console_mode, single_expression_mode;
 %token  <float_value>            T_FLOAT
 %token                           T_LEFT_PAREN 
 %token                           T_RIGHT_PAREN
+%token                           T_LEFT_SQUARE_BRACKET 
+%token                           T_RIGHT_SQUARE_BRACKET
 %token                           T_QUOTE
 %token  <atom_value>             T_STRING_LITERAL
 %token  <atom_value>             T_CHAR
@@ -69,6 +73,7 @@ extern BOOLEAN console_mode, single_expression_mode;
 %type   <expr_value>             backquoted_expression
 %type   <expr_value>             comma_expression
 %type   <expr_value>             comma_at_expression
+%type   <expr_value>             array_reference
 %type	<expr_value>             expression
 %type   <expr_value>             expressions
 
@@ -77,7 +82,7 @@ extern BOOLEAN console_mode, single_expression_mode;
 expression:
     atom 
     {
-      if(parens == 0)
+      if(parens == 0 && square_brackets == 0)
       {
 	g_expr = $$;
 	YYACCEPT;
@@ -85,7 +90,7 @@ expression:
     }
     | list
     {
-      if(parens == 0)
+      if(parens == 0 && square_brackets == 0)
       {
 	g_expr = $$;
 	YYACCEPT;
@@ -125,7 +130,8 @@ list:
     | quoted_expression
     | backquoted_expression
     | comma_expression
-    | comma_at_expression;
+    | comma_at_expression
+    | array_reference;
 
 expressions_in_parens:
     T_LEFT_PAREN {parens++;} expressions T_RIGHT_PAREN {parens--;}
@@ -193,6 +199,33 @@ comma_at_expression:
    
     };
 
+array_reference:
+    T_SYMBOL T_LEFT_SQUARE_BRACKET {square_brackets++;} expression expressions T_RIGHT_SQUARE_BRACKET {square_brackets--;}
+    {
+      expression_t *exps = $5;
+
+      expression_t *e = create_expression(LIST, NULL, 0, 0, exps->nof_elements + 3);
+
+      expression_t *aref = create_expression(SYMBOL, "AREF", 0, 0, 0);
+      e->elements[0] = aref;
+
+      e->elements[1] = create_expression(SYMBOL, convert_to_upper_case($1), 0, 0, 0);
+      e->elements[2] = $4;
+
+      int i;
+
+      for(i=0; i<exps->nof_elements; i++)
+	e->elements[i+3] = exps->elements[i];
+
+      //we shouldn't call delete_expression(exps) because
+      //this will delete the expression_t objects
+      //referred to by e too.
+      free(exps);
+
+      $$ = e;
+      
+    };
+
 expressions:
     /* empty */
     {
@@ -219,6 +252,8 @@ int yyerror(char *s)
     fprintf(stdout, "Syntax error in expression\n");
 
   parens = 0;
+
+  square_brackets = 0;
 
   return 1;
   //prompt();

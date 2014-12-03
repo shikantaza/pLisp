@@ -5,7 +5,7 @@
 	<TITLE></TITLE>
 	<META NAME="GENERATOR" CONTENT="LibreOffice 3.5  (Linux)">
 	<META NAME="CREATED" CONTENT="20141121;14504900">
-	<META NAME="CHANGED" CONTENT="20141201;14195600">
+	<META NAME="CHANGED" CONTENT="20141203;16302200">
 	<STYLE TYPE="text/css">
 	<!--
 		@page { margin: 0.79in }
@@ -37,11 +37,13 @@ Language Reference</B></FONT></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#And"><SPAN STYLE="font-weight: normal">and</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Append"><SPAN STYLE="font-weight: normal">append</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Apply"><SPAN STYLE="font-weight: normal">apply</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#array"><SPAN STYLE="font-weight: normal">array</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Eq"><SPAN STYLE="font-weight: normal">array-eq</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Get"><SPAN STYLE="font-weight: normal">array-get</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Length"><SPAN STYLE="font-weight: normal">array-length</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Array_Set"><SPAN STYLE="font-weight: normal">array-set</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Arrayp"><SPAN STYLE="font-weight: normal">arrayp</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#aset"><SPAN STYLE="font-weight: normal">aset</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Assert"><SPAN STYLE="font-weight: normal">assert</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Assoc"><SPAN STYLE="font-weight: normal">assoc</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#Atom"><SPAN STYLE="font-weight: normal">atom</SPAN></A></P>
@@ -477,6 +479,31 @@ operator or a continuation or if the second argument is not a list.</SPAN></P>
 + '(1 2)) =&gt; 3</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B><A HREF="#funcall"><SPAN STYLE="font-weight: normal">funcall</SPAN></A></P>
 <HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="array"></A><I><SPAN STYLE="font-weight: normal">Macro</SPAN></I>
+<B>array</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (array </B><I><SPAN STYLE="font-weight: normal">dims</SPAN></I>
+<I><SPAN STYLE="font-weight: normal">default-value</SPAN></I><B>) =&gt;
+</B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">dims</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list;</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">
+default-value</SPAN></I><SPAN STYLE="font-weight: normal">: an
+object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an array object</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: array
+</B><SPAN STYLE="font-weight: normal">creates a array with the
+dimensions specified by the list </SPAN><I><SPAN STYLE="font-weight: normal">dims</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+and populates the elements of the newly-constructed array with
+</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">default-value</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">None</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+a (array (2 2) 1)) =&gt; A</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a =&gt;
+[[1 1] [1 1]]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:</B></P>
+<HR>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Array_Eq"></A><A NAME="Apply1"></A><A NAME="Append11"></A><A NAME="And111"></A><A NAME="Alloc_Ext_Mem_Int1111"></A><A NAME="Alloc_Ext_Mem_Float11111"></A><A NAME="Alloc_Ext_Mem_Char111111"></A>
 <I>Function</I> <B>array-eq</B></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (array-eq </B><I><SPAN STYLE="font-weight: normal">arr1
@@ -606,6 +633,34 @@ a1) =&gt; T</P>
 10) =&gt; NIL</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
 </P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><A NAME="aset"></A><I><SPAN STYLE="font-weight: normal">Macro</SPAN></I>
+<B>aset</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (aset </B><I><SPAN STYLE="font-weight: normal">ref</SPAN></I>
+<I><SPAN STYLE="font-weight: normal">val</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">val</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">ref:
+an array reference,</SPAN></SPAN><SPAN STYLE="font-weight: normal">
+</SPAN><I><SPAN STYLE="font-weight: normal">val</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: aset</B>
+<SPAN STYLE="font-weight: normal">binds </SPAN><I><SPAN STYLE="font-weight: normal">val</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
+to the array location referred to by </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">ref</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-weight: normal">Throws an exception of type
+SYMBOL-NOT-BOUND if the array reference is not bound to an array
+object, and an exception INDEX-OUT-OF-BOUNDS if the index(es) in the
+reference fall outside the array bounds.</SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(define
+x (array (2) 0) =&gt; X</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a =&gt;
+[[0 0] [0 0]]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(aset
+a[0 0] 100) =&gt; 100</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">a =&gt;
+[[100 0] [0 0]]</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also:</B></P>
 <HR>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="Assert"></A><A NAME="Arrayp1"></A><A NAME="Array_Set11"></A><A NAME="Array_Length111"></A><A NAME="Array_Get1111"></A><A NAME="Array_Eq11111"></A><A NAME="Apply111111"></A><A NAME="Append1111111"></A><A NAME="And11111111"></A><A NAME="Alloc_Ext_Mem_Int111111111"></A><A NAME="Alloc_Ext_Mem_Float1111111111"></A><A NAME="Alloc_Ext_Mem_Char11111111111"></A>
 <I>Function </I><B>assert</B></P>
@@ -1768,8 +1823,8 @@ the first element of a list</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(first
 ()) =&gt; NIL</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>See
-Also: </B></SPAN></SPAN><A HREF="#caar"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">caar,</SPAN></SPAN></SPAN></A><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">
-</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal"><A HREF="#cadar">cadar</A>,
+Also: </B></SPAN></SPAN><A HREF="#caar"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">caar,</SPAN></SPAN></SPAN></A><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal"><A HREF="#cadar">cadar</A>,
 <A HREF="#cadddr">cadddr</A>, <A HREF="#caddr">caddr</A>, <A HREF="#cadr">cadr</A>,
 <A HREF="#car">car</A>, <A HREF="#cdar">cdar</A>, <A HREF="#cddr">cddr</A>,
 <A HREF="#cdr">cdr</A>, <A HREF="#second">second</A>, <A HREF="#third">third</A>,
@@ -2300,7 +2355,7 @@ binding the definitions in </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: norma
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">let
 ((x 10) (y 20)) (+ x y)) =&gt; 30</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>See
-Also:</B></SPAN></SPAN><B> </B><A HREF="#let1"><SPAN STYLE="font-weight: normal">let1</SPAN></A></P>
+Also:</B></SPAN></SPAN> <A HREF="#let1"><SPAN STYLE="font-weight: normal">let1</SPAN></A></P>
 <HR>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="let_1"></A><A NAME="let1"></A><A NAME="labels11"></A><A NAME="incf111"></A>
 <I>Macro </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>let1</B></SPAN></SPAN></P>
@@ -2330,7 +2385,7 @@ refer to variables declared earlier.</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">(</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">let1
 ((x 10) (y (+ x 10))) (+ x y)) =&gt; 30</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>See
-Also:</B></SPAN></SPAN><B> </B><A HREF="#let"><SPAN STYLE="font-weight: normal">let</SPAN></A></P>
+Also:</B></SPAN></SPAN> <A HREF="#let"><SPAN STYLE="font-weight: normal">let</SPAN></A></P>
 <HR>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="list"></A><A NAME="lambda1"></A><A NAME="integerp11"></A>
 <I>Special Operator</I> <B>list</B></P>
@@ -2735,7 +2790,7 @@ x =&gt; (1 2 3)</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal; font-weight: normal">
 x =&gt; (1 2 3 4 5 6 7 8 9)</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>See
-Also:</B></SPAN></SPAN><B> </B><SPAN STYLE="font-weight: normal"><A HREF="#Append">append</A>,
+Also:</B></SPAN></SPAN> <SPAN STYLE="font-weight: normal"><A HREF="#Append">append</A>,
 <A HREF="#concat">concat</A></SPAN></P>
 <HR>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
@@ -3390,8 +3445,8 @@ the second element of a list</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(second
 ()) =&gt; NIL</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>See
-Also: </B></SPAN></SPAN><A HREF="#caar"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">caar,</SPAN></SPAN></SPAN></A><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">
-</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal"><A HREF="#cadar">cadar</A>,
+Also: </B></SPAN></SPAN><A HREF="#caar"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">caar,</SPAN></SPAN></SPAN></A><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal"><A HREF="#cadar">cadar</A>,
 <A HREF="#cadddr">cadddr</A>, <A HREF="#caddr">caddr</A>, <A HREF="#cadr">cadr</A>,
 <A HREF="#car">car</A>, <A HREF="#cdar">cdar</A>, <A HREF="#cddr">cddr</A>,
 <A HREF="#cdr">cdr</A>, <A HREF="#first">first</A>, <A HREF="#third">third</A>,
@@ -3940,8 +3995,8 @@ the third element of a list</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">(third
 ()) =&gt; NIL</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>See
-Also: </B></SPAN></SPAN><A HREF="#caar"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">caar,</SPAN></SPAN></SPAN></A><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal">
-</SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal"><A HREF="#cadar">cadar</A>,
+Also: </B></SPAN></SPAN><A HREF="#caar"><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">caar,</SPAN></SPAN></SPAN></A><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal"><A HREF="#cadar">cadar</A>,
 <A HREF="#cadddr">cadddr</A>, <A HREF="#caddr">caddr</A>, <A HREF="#cadr">cadr</A>,
 <A HREF="#car">car</A>, <A HREF="#cdar">cdar</A>, <A HREF="#cddr">cddr</A>,
 <A HREF="#cdr">cdr</A>, <A HREF="#first">first</A>, <A HREF="#second">second</A>,
