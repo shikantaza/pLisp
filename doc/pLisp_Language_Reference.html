@@ -5,7 +5,7 @@
 	<TITLE></TITLE>
 	<META NAME="GENERATOR" CONTENT="LibreOffice 3.5  (Linux)">
 	<META NAME="CREATED" CONTENT="20141121;14504900">
-	<META NAME="CHANGED" CONTENT="20141203;16302200">
+	<META NAME="CHANGED" CONTENT="20141204;15333000">
 	<STYLE TYPE="text/css">
 	<!--
 		@page { margin: 0.79in }
@@ -201,6 +201,7 @@ Language Reference</B></FONT></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#print_string"><SPAN STYLE="font-weight: normal">print-string</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#println"><SPAN STYLE="font-weight: normal">println</SPAN></A></P>
 	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#profile"><SPAN STYLE="font-weight: normal">profile</SPAN></A></P>
+	<LI><P ALIGN=LEFT STYLE="margin-bottom: 0in"><A HREF="#progn"><SPAN STYLE="font-weight: normal">progn</SPAN></A></P>
 </UL>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><BR>
 </P>
@@ -485,16 +486,16 @@ operator or a continuation or if the second argument is not a list.</SPAN></P>
 <I><SPAN STYLE="font-weight: normal">default-value</SPAN></I><B>) =&gt;
 </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
-</B><I><SPAN STYLE="font-weight: normal">dims</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
-a list;</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">
-default-value</SPAN></I><SPAN STYLE="font-weight: normal">: an
-object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
-an array object</SPAN></SPAN></P>
+</B><I><SPAN STYLE="font-weight: normal">dims</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a list;</SPAN></SPAN></SPAN> <I><SPAN STYLE="font-weight: normal">default-value</SPAN></I><SPAN STYLE="font-weight: normal">:
+an object; </SPAN><I><SPAN STYLE="font-weight: normal">result</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+an array object</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: array
 </B><SPAN STYLE="font-weight: normal">creates a array with the
-dimensions specified by the list </SPAN><I><SPAN STYLE="font-weight: normal">dims</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
-and populates the elements of the newly-constructed array with
-</SPAN></SPAN><I><SPAN STYLE="font-weight: normal">default-value</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></P>
+dimensions specified by the list </SPAN><I><SPAN STYLE="font-weight: normal">dims</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+populates the elements of the newly-constructed array with
+</SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">default-value</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">.</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
 </B><SPAN STYLE="font-weight: normal">None</SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Examples:</B></P>
@@ -639,13 +640,13 @@ a1) =&gt; T</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (aset </B><I><SPAN STYLE="font-weight: normal">ref</SPAN></I>
 <I><SPAN STYLE="font-weight: normal">val</SPAN></I><B>) =&gt; </B><I><SPAN STYLE="font-weight: normal">val</SPAN></I></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
-</B><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">ref:
-an array reference,</SPAN></SPAN><SPAN STYLE="font-weight: normal">
-</SPAN><I><SPAN STYLE="font-weight: normal">val</SPAN></I><SPAN STYLE="font-weight: normal">:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">ref:
+an array reference,</SPAN></SPAN></SPAN> <I><SPAN STYLE="font-weight: normal">val</SPAN></I><SPAN STYLE="font-weight: normal">:
 an object</SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: aset</B>
-<SPAN STYLE="font-weight: normal">binds </SPAN><I><SPAN STYLE="font-weight: normal">val</SPAN></I><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">
-to the array location referred to by </SPAN></SPAN><I><SPAN STYLE="font-weight: normal">ref</SPAN></I></P>
+<SPAN STYLE="font-weight: normal">binds </SPAN><I><SPAN STYLE="font-weight: normal">val</SPAN></I><SPAN STYLE="font-variant: normal">
+</SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">to
+the array location referred to by </SPAN></SPAN></SPAN><I><SPAN STYLE="font-weight: normal">ref</SPAN></I></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
 </B><SPAN STYLE="font-weight: normal">Throws an exception of type
 SYMBOL-NOT-BOUND if the array reference is not bound to an array
@@ -3078,12 +3079,37 @@ window otherwise.</SPAN></SPAN></SPAN></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal">
 <B>Examples:</B></P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal; font-weight: normal">
-(profile '(+ 1 1) =&gt;</P>
+(profile '(+ 1 1)) =&gt;</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal; font-weight: normal">
 Expression took 0.000115 seconds (elapsed), 0.000000 seconds (CPU),
 21 words allocated 
 </P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal">2</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
+</P>
+<HR>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-weight: normal"><A NAME="progn"></A>
+<I>Special operator </I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><B>progn</B></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Syntax: (progn</B> <I>form*</I><B>)
+=&gt; </B><I><SPAN STYLE="font-weight: normal">result</SPAN></I></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Arguments and Values:
+</B><I><SPAN STYLE="font-weight: normal">form</SPAN></I><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">:
+a form; </SPAN></SPAN></SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">result:
+an object</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Description: progn
+</B><SPAN STYLE="font-weight: normal">evaluates each of the forms
+supplied to it as arguments </SPAN><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">and
+returns the result of the evaluation of the last form.</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>Exceptional Situations:
+</B><SPAN STYLE="font-variant: normal"><SPAN STYLE="font-style: normal"><SPAN STYLE="font-weight: normal">None</SPAN></SPAN></SPAN></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal">
+<B>Examples:</B></P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal; font-weight: normal">
+(progn (print “hello”) (+ 1 1)) =&gt;</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal; font-weight: normal">
+“hello”</P>
+<P ALIGN=LEFT STYLE="margin-bottom: 0in; font-variant: normal; font-style: normal; font-weight: normal">
+2</P>
 <P ALIGN=LEFT STYLE="margin-bottom: 0in"><B>See Also: </B>
 </P>
 <HR>
