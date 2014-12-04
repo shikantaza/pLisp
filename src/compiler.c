@@ -696,7 +696,7 @@ int load_core_library()
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-                        cons((OBJECT_PTR)get_string_object("plisp.lisp"),
+                        cons((OBJECT_PTR)get_string_object("lib/plisp.lisp"),
                              NIL));
 
   OBJECT_PTR temp = compile(src, cons(CONS_HALT_NIL, src));

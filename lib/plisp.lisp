@@ -607,19 +607,19 @@
 (defmacro aref (a &rest indexes)
   `(build-ref ,a ,indexes))
 
-(load-file "pos.lisp")
+(load-file "lib/pos.lisp")
 
-(load-file "utils.lisp")
+(load-file "lib/utils.lisp")
 
-(load-file "math.lisp")
+(load-file "lib/math.lisp")
 
-(load-file "matrix.lisp")
+(load-file "lib/matrix.lisp")
 
-(load-file "statistics.lisp")
+(load-file "lib/statistics.lisp")
 
 ;(load-file "graph.lisp")
 
-(load-file "io.lisp")
+(load-file "lib/io.lisp")
 
 (create-package "user")
 

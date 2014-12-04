@@ -17,8 +17,6 @@
 
 OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o
 
-#TEST_MEMORY_OBJS	= test_memory.o memory.o red_black_tree.o stack.o misc.o
-
 CC	= gcc
 CFLAGS	= -g `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` -I/usr/local/include -L/usr/local/lib
 
@@ -27,120 +25,114 @@ all:	plisp libplisp.so libtest.so
 libplisp.so:	plisp_utils_ffi.o
 		$(CC) $(CFLAGS) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
 
-plisp_utils_ffi.o:	plisp_utils_ffi.c
-		$(CC) $(CFLAGS) -c plisp_utils_ffi.c -o plisp_utils_ffi.o
+plisp_utils_ffi.o:	src/plisp_utils_ffi.c
+		$(CC) $(CFLAGS) -c src/plisp_utils_ffi.c -o plisp_utils_ffi.o
 
 libtest.so:	test_so.o
 		$(CC) -shared -Wl,-soname,libtest.so -o libtest.so test_so.o
 
-#test_memory:	$(TEST_MEMORY_OBJS)
-#		$(CC) $(CFLAGS) $(TEST_MEMORY_OBJS) -o test_memory
-
 plisp:	$(OBJS)
 		$(CC) $(CFLAGS) $(OBJS) -ltcc -ldl -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
 
-lex.o:	lex.yy.c
-		$(CC) $(CFLAGS) -c lex.yy.c -o lex.o
+lex.o:	src/lex.yy.c
+		$(CC) $(CFLAGS) -c src/lex.yy.c -o lex.o
 
-lex.yy.c:	plisp.lex 
-		flex plisp.lex
+src/lex.yy.c:	src/plisp.lex 
+		flex -o src/lex.yy.c src/plisp.lex
 
-bison.o:	plisp.tab.c
-		$(CC) $(CFLAGS) -c plisp.tab.c -o bison.o
+bison.o:	src/plisp.tab.c
+		$(CC) $(CFLAGS) -c src/plisp.tab.c -o bison.o
 
-plisp.tab.c:	plisp.y
-		bison -d -v plisp.y
+src/plisp.tab.c:	src/plisp.y
+		bison -d -v src/plisp.y -o src/plisp.tab.c
 
-json_parser.o:	json_parser.tab.c
-		$(CC) $(CFLAGS) -c json_parser.tab.c -o json_parser.o
+json_parser.o:	src/json_parser.tab.c
+		$(CC) $(CFLAGS) -c src/json_parser.tab.c -o json_parser.o
 
-json_parser.tab.c:	json_parser.y
-		bison -d -v --name-prefix=json json_parser.y
+src/json_parser.tab.c:	src/json_parser.y
+		bison -d -v --name-prefix=json src/json_parser.y -o src/json_parser.tab.c
 
-json_lex.o:	json.lex.yy.c
-		$(CC) $(CFLAGS) -c json.lex.yy.c -o json_lex.o
+json_lex.o:	src/json.lex.yy.c
+		$(CC) $(CFLAGS) -c src/json.lex.yy.c -o json_lex.o
 
-json.lex.yy.c:	json.lex 
-		flex -P json -o json.lex.yy.c json.lex
+src/json.lex.yy.c:	src/json.lex 
+		flex -P json -o src/json.lex.yy.c src/json.lex
 
-main.o:		main.c
-		$(CC) $(CFLAGS) -c main.c -o main.o
+main.o:		src/main.c
+		$(CC) $(CFLAGS) -c src/main.c -o main.o
 
-compiler.o:	compiler.c
-		$(CC) $(CFLAGS) -c compiler.c -o compiler.o
+compiler.o:	src/compiler.c
+		$(CC) $(CFLAGS) -c src/compiler.c -o compiler.o
 
-vm.o:		vm.c
-		$(CC) $(CFLAGS) -c vm.c -o vm.o
+vm.o:		src/vm.c
+		$(CC) $(CFLAGS) -c src/vm.c -o vm.o
 
-util.o:		util.c
-		$(CC) $(CFLAGS) -c util.c -o util.o
+util.o:		src/util.c
+		$(CC) $(CFLAGS) -c src/util.c -o util.o
 
-memory.o:	memory.c
-		$(CC) $(CFLAGS) -c memory.c -o memory.o
+memory.o:	src/memory.c
+		$(CC) $(CFLAGS) -c src/memory.c -o memory.o
 
-images.o:	images.c
-		$(CC) $(CFLAGS) -c images.c -o images.o
+images.o:	src/images.c
+		$(CC) $(CFLAGS) -c src/images.c -o images.o
 
-red_black_tree.o:	./rb/red_black_tree.c
-		$(CC) $(CFLAGS) -c ./rb/red_black_tree.c -o red_black_tree.o
+red_black_tree.o:	src/rb/red_black_tree.c
+		$(CC) $(CFLAGS) -c src/rb/red_black_tree.c -o red_black_tree.o
 
-stack.o:	./rb/stack.c
-		$(CC) $(CFLAGS) -c ./rb/stack.c -o stack.o
+stack.o:	src/rb/stack.c
+		$(CC) $(CFLAGS) -c src/rb/stack.c -o stack.o
 
-misc.o:		./rb/misc.c
-		$(CC) $(CFLAGS) -c ./rb/misc.c -o misc.o
+misc.o:		src/rb/misc.c
+		$(CC) $(CFLAGS) -c src/rb/misc.c -o misc.o
 
-ffi.o:		ffi.c
-		$(CC) $(CFLAGS) -c ffi.c -o ffi.o
+ffi.o:		src/ffi.c
+		$(CC) $(CFLAGS) -c src/ffi.c -o ffi.o
 
-ui.o:		./gui/ui.c
-		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -c ./gui/ui.c -o ui.o
+ui.o:		src/gui/ui.c
+		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -c src/gui/ui.c -o ui.o
 
-event_handlers.o:	./gui/event_handlers.c
-		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -c ./gui/event_handlers.c -o event_handlers.o
+event_handlers.o:	src/gui/event_handlers.c
+		$(CC) $(CFLAGS) `pkg-config --cflags gtk+-3.0` -c src/gui/event_handlers.c -o event_handlers.o
 
-hash.o:		hash.c
-		$(CC) $(CFLAGS) -c hash.c -o hash.o
+hash.o:		src/hash.c
+		$(CC) $(CFLAGS) -c src/hash.c -o hash.o
 
-json.o:		json.c
-		$(CC) $(CFLAGS) -c json.c -o json.o
+json.o:		src/json.c
+		$(CC) $(CFLAGS) -c src/json.c -o json.o
 
-queue.o:	queue.c
-		$(CC) $(CFLAGS) -c queue.c -o queue.o
+queue.o:	src/queue.c
+		$(CC) $(CFLAGS) -c src/queue.c -o queue.o
 
-hashtable.o:	hashtable.c
-		$(CC) $(CFLAGS) -c hashtable.c -o hashtable.o
+hashtable.o:	src/hashtable.c
+		$(CC) $(CFLAGS) -c src/hashtable.c -o hashtable.o
 
-native_compiler.o:	native_compiler.c
-		$(CC) $(CFLAGS) -c native_compiler.c -o native_compiler.o
+native_compiler.o:	src/native_compiler.c
+		$(CC) $(CFLAGS) -c src/native_compiler.c -o native_compiler.o
 
-test_so.o:	test_so.c
-		$(CC) -c test_so.c -o test_so.o
+test_so.o:	src/test_so.c
+		$(CC) -c src/test_so.c -o test_so.o
 
-#test_memory.o:	test_memory.c
-#		$(CC) -c test_memory.c -o test_memory.o
+bison.o		: src/plisp.tab.c src/plisp.h src/util.h
+lex.o		: src/plisp.tab.h src/plisp.h
+main.o		: src/plisp.h src/memory.h
+compiler.o	: src/plisp.h
+vm.o		: src/plisp.h src/memory.h
+util.o		: src/util.h
+images.o	: src/plisp.h src/memory.h src/queue.h src/json.h src/hashtable.h
+ffi.o		: src/plisp.h
+memory.o	: src/plisp.h src/memory.h
 
-bison.o		: plisp.tab.c plisp.h util.h
-lex.o		: plisp.tab.h plisp.h
-main.o		: plisp.h memory.h
-compiler.o	: plisp.h
-vm.o		: plisp.h memory.h
-util.o		: util.h
-images.o	: plisp.h memory.h queue.h json.h hashtable.h
-ffi.o		: plisp.h
-memory.o	: plisp.h memory.h
+ui.o		: src/plisp.h
 
-ui.o		: plisp.h
-
-event_handlers.o	: plisp.h
+event_handlers.o	: src/plisp.h
 
 #json_lex.o	: json_parser.tab.h json.h
-json_parser.o	: json_parser.tab.c json.h
-json.o		: json.h
+json_parser.o	: src/json_parser.tab.c src/json.h
+json.o		: src/json.h
 
-hashtable.o	: hashtable.h
+hashtable.o	: src/hashtable.h
 
-native_compiler.o	: plisp.h
+native_compiler.o	: src/plisp.h
 clean:
-	rm -f *.o *~ lex.yy.c plisp.tab.c plisp.tab.h json.lex.yy.c json_parser.tab.h json_parser.tab.c plisp.output json_parser.output plisp.exe libplisp.so libtest.so *.stackdump
+	rm -f *.o *~ src/lex.yy.c src/plisp.tab.c src/plisp.tab.h src/json.lex.yy.c src/json_parser.tab.h src/json_parser.tab.c src/plisp.output src/json_parser.output plisp libplisp.so libtest.so *.stackdump
 
