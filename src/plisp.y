@@ -66,8 +66,6 @@ extern BOOLEAN console_mode, single_expression_mode;
 
 %token                           END_OF_FILE
 
-%token                           ENTER
-
 %type   <expr_value>             atom
 %type   <expr_value>             list
 %type   <expr_value>             expressions_in_parens
@@ -101,15 +99,6 @@ expression:
 
 atom:
     END_OF_FILE { return -1; }
-    |
-    ENTER
-    {
-      if(parens == 0 && square_brackets == 0)
-      {
-	g_expr = $$;
-	YYACCEPT;
-      }
-    };
     |
     T_INTEGER
     {

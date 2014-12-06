@@ -121,7 +121,7 @@ int open_square_brackets = 0;
 \,@                     return T_COMMA_AT;
 
 [ \t]+                  /* ignore whitespace */
-\n                      { if(yyin == stdin) return ENTER; }
+\n                      /* ignore newlines */
 "#|"(.|\n)*"|#"         /* ignore multiline comments */
 ^;(.)*                  /* ignore single line comments */
 
