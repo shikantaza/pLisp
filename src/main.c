@@ -572,7 +572,7 @@ void print_copyright_notice()
 
 void welcome()
 {
-  fprintf(stdout, "Welcome to pLisp's top level. Type 'quit' to exit.");
+  fprintf(stdout, "Welcome to pLisp's top level. Type '(quit)' to exit.");
 }
 
 int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)

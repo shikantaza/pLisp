@@ -256,6 +256,7 @@ void quit_application()
     cleanup();
 
     gtk_main_quit();
+    exit(0);
   }
   else
     gtk_widget_destroy((GtkWidget *)dialog);

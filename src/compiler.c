@@ -504,15 +504,16 @@ int repl(int mode)
   if(!g_expr)
     return 0;
 
-  if(g_expr->type == SYMBOL && ( !strcmp(g_expr->atom_value,"QUIT") ||
-				 !strcmp(g_expr->atom_value,"EXIT") ||
-				 !strcmp(g_expr->atom_value,"Q") ))
+  if(g_expr->type == LIST && !strcmp(g_expr->elements[0]->atom_value,"QUIT"))
   {
     if(console_mode)
+    {
       fprintf(stdout, "Bye.\n");
-
-    cleanup();
-    exit(0);
+      cleanup();
+      exit(0);
+    }
+    else
+      quit_application();
   }
   else if(debug_mode)
   {
