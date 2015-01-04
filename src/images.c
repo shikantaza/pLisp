@@ -822,7 +822,7 @@ int load_from_image(char *file_name)
         if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
         {
           gtk_list_store_append(store2, &iter2);
-          gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
+          gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);
           gtk_list_store_set(store2, &iter2, 1, sym, -1);
         }
 
@@ -835,7 +835,7 @@ int load_from_image(char *file_name)
       GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list));
       gboolean is_not_empty;
       GtkTreeIter iter;
-      is_not_empty = gtk_tree_model_get_iter_first(model, &iter); 
+      is_not_empty = gtk_tree_model_get_iter_first(model, &iter);
 
       int i=0;
       char s1[4];
@@ -868,7 +868,7 @@ int load_from_image(char *file_name)
       if(IS_CLOSURE_OBJECT(obj))
       {
         memset(buf, '\0', MAX_STRING_LENGTH);
-        OBJECT_PTR temp = cons(DEFUN, 
+        OBJECT_PTR temp = cons(DEFUN,
                                cons(obj1,
                                     cons(get_params_object(obj),
                                          get_source_object(obj))));
@@ -882,7 +882,7 @@ int load_from_image(char *file_name)
       else if(IS_MACRO_OBJECT(obj))
       {
         memset(buf, '\0', MAX_STRING_LENGTH);
-        OBJECT_PTR temp = cons(DEFMACRO, 
+        OBJECT_PTR temp = cons(DEFMACRO,
                                cons(obj1,
                                     cons(get_params_object(obj),
                                          get_source_object(obj))));

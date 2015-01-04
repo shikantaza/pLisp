@@ -3253,28 +3253,29 @@ unsigned int apply_compiled()
 
       if(e)
       {
-	fn = (cmpfn)e->value;
-	if(!fn)
-	{
-	  throw_generic_exception("Unable to fetch compiled closure");
-	  return 1;
-	}
+      	fn = (cmpfn)e->value;
+      	if(!fn)
+      	{
+      	  throw_generic_exception("Unable to fetch compiled closure");
+      	  return 1;
+      	}
       }
       else
       {
-	char err_buf1[500];
-	memset(err_buf1, '\0', 500);
+      	char err_buf1[500];
+      	memset(err_buf1, '\0', 500);
 
-	fn = compile_closure(reg_accumulator, err_buf1);
+      	fn = compile_closure(reg_accumulator, err_buf1);
 
-	if(!fn)
-	{
-	  throw_generic_exception(err_buf1);
-	  return 1;
-	}
+      	if(!fn)
+      	{
+      	  throw_generic_exception(err_buf1);
+      	  return 1;
+      	}
       }
 
       fn();
+      //reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
     }
     else if(IS_CONTINUATION_OBJECT(reg_accumulator))
     {

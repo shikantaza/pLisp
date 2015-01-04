@@ -684,6 +684,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     load_image();
   else if(widget == (GtkWidget *)transcript_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s)
     save_image();
+  else if(event->keyval == GDK_KEY_F2)
+    gtk_window_present(transcript_window);
   else if(/*widget == (GtkWidget *)transcript_window && */event->keyval == GDK_KEY_F7)
     show_workspace_window();
   else if(/*widget == (GtkWidget *)transcript_window && */event->keyval == GDK_KEY_F9)
