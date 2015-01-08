@@ -3281,7 +3281,8 @@ unsigned int apply_compiled()
 	fn();
       }
       else
-	reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	//reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+	reg_next_expression = get_body_object(reg_accumulator);
     }
     else if(IS_CONTINUATION_OBJECT(reg_accumulator))
     {
