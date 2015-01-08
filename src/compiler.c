@@ -110,6 +110,7 @@ char *loaded_image_file_name = NULL;
 BOOLEAN console_mode = false;
 BOOLEAN image_mode = false;
 BOOLEAN single_expression_mode = false;
+BOOLEAN interpreter_mode = false;
 
 extern unsigned int current_package;
 
@@ -117,6 +118,8 @@ extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR CONS_NIL_NIL;
 extern OBJECT_PTR CONS_RETURN_NIL;
+
+char *core_library_file_name = NULL;
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -391,7 +394,7 @@ int main(int argc, char **argv)
   int opt, i;
   char *expression;
 
-  while((opt = getopt(argc, argv, "i:ce:")) != -1)
+  while((opt = getopt(argc, argv, "i:cnl:e:")) != -1)
   {
     switch(opt)
     {
@@ -406,8 +409,14 @@ int main(int argc, char **argv)
 	single_expression_mode = true;
 	expression = strdup(optarg);
 	break;
+      case 'n':
+        interpreter_mode = true;
+        break;
+      case 'l':
+        core_library_file_name = strdup(optarg);
+        break;
       default:
-	fprintf(stderr, "Usage: %s [-i imagefile] [-c | -e exp]\n", argv[0]);
+	fprintf(stderr, "Usage: %s [-i imagefile] [-l libfile] -n [-c | -e exp]\n", argv[0]);
 	exit(EXIT_FAILURE);
     }
   }
@@ -697,7 +706,7 @@ int load_core_library()
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-                        cons((OBJECT_PTR)get_string_object("lib/plisp.lisp"),
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "lib/plisp.lisp"),
                              NIL));
 
   OBJECT_PTR temp = compile(src, cons(CONS_HALT_NIL, src));
