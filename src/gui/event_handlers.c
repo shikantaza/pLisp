@@ -1308,4 +1308,14 @@ void abort_debugger(GtkWidget *widget,
   call_repl("(ABORT)");
 }
 
+void clear_transcript(GtkWidget *widget,
+		      gpointer data)
+{
+  gtk_text_buffer_set_text(transcript_buffer, "", -1);
+}
 
+void clear_workspace(GtkWidget *widget,
+		     gpointer data)
+{
+  gtk_text_buffer_set_text(workspace_buffer, "", -1);
+}
