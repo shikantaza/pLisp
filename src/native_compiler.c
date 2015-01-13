@@ -113,6 +113,8 @@ extern OBJECT_PTR SAVE_OBJECT;
 extern OBJECT_PTR LOAD_OBJECT;
 extern OBJECT_PTR COMPILEFN;
 
+extern OBJECT_PTR EXPORT_PACKAGE;
+
 extern OBJECT_PTR top_level_env;
 
 extern OBJECT_PTR reg_accumulator;
@@ -190,6 +192,9 @@ hashtable_t *native_functions;
 unsigned int compile_to_c(OBJECT_PTR, OBJECT_PTR, char *, unsigned int, char *, OBJECT_PTR **, unsigned int *);
 
 cmpfn compile_closure(OBJECT_PTR, char *);
+
+extern OBJECT_PTR DEFUN;
+extern OBJECT_PTR DEFMACRO;
 
 int dummy()
 {
@@ -2950,6 +2955,116 @@ unsigned int compilefn()
   return 0;
 }
 
+unsigned int export_package()
+{
+  OBJECT_PTR package, file;
+  char *package_name, *file_name;
+
+  if(length(reg_current_value_rib) != 2)
+  {
+    throw_exception("ARG-MISMATCH", "EXPORT-PACKAGE requires exactly two arguments");
+    return 1;
+  }
+
+  package = car(reg_current_value_rib);
+
+  if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
+  {
+    throw_exception("INVALID-ARGUMENT", "EXPORT-PACKAGE requires a string object or string literal as its first argument");
+    return 1;
+  }
+
+  package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
+
+  file = CADR(reg_current_value_rib);
+
+  if(!IS_STRING_LITERAL_OBJECT(file) && !is_string_object(file))
+  {
+    throw_exception("INVALID-ARGUMENT", "EXPORT-PACKAGE requires a string object or string literal as its second argument");
+    return 1;
+  }
+
+  file_name = (char *)(strings[(int)file >> OBJECT_SHIFT]);
+
+  if(find_package(package_name) == NOT_FOUND)
+  {
+    throw_exception("PACKAGE-DOES-NOT-EXIST", "Package does not exist");
+    return 1;
+  }
+
+  int index = find_package(package_name);
+
+  FILE *fp = fopen(file_name, "w");
+
+  if(!fp)
+  {
+    throw_exception("FILE-ERROR", "Unable to open file");
+    return 1;
+  }
+
+  fprintf(fp, "(create-package \"%s\")\n\n", convert_to_lower_case(package_name));
+
+  fprintf(fp, "(in-package \"%s\")\n\n", convert_to_lower_case(package_name));
+
+  OBJECT_PTR rest = top_level_env;
+
+  char buf[MAX_STRING_LENGTH];
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR sym = CAAR(rest);
+
+    if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == index)
+    {
+      OBJECT_PTR obj = cdr(get_symbol_value_from_env(sym, top_level_env));
+
+      if(IS_CLOSURE_OBJECT(obj))
+      {
+	memset(buf, '\0', MAX_STRING_LENGTH);
+	OBJECT_PTR temp = cons(DEFUN, 
+			       cons(sym,
+				    cons(get_params_object(obj),
+					 get_source_object(obj))));
+
+	print_object_to_string(temp, buf, 0);
+      }
+      else if(IS_MACRO_OBJECT(obj))
+      {
+	memset(buf, '\0', MAX_STRING_LENGTH);
+	OBJECT_PTR temp = cons(DEFMACRO, 
+			       cons(sym,
+				    cons(get_params_object(obj),
+					 get_source_object(obj))));
+
+	print_object_to_string(temp, buf, 0);
+      }
+      else if(IS_CONTINUATION_OBJECT(obj))
+      {
+	//not doing anything for continuation objects
+      }
+      else
+      {
+	memset(buf, '\0', MAX_STRING_LENGTH);
+	print_object_to_string(cons(DEFINE,
+				    cons(sym, cons(obj, NIL))), buf, 0);
+      }
+
+      fprintf(fp, "%s\n\n", convert_to_lower_case(buf));
+    }
+
+    rest = cdr(rest);
+
+  } //end of while(rest != NIL)
+
+  fclose(fp);
+
+  reg_accumulator = NIL;
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
 unsigned int apply_compiled()
 {
   OBJECT_PTR operator = reg_accumulator;
@@ -3234,6 +3349,10 @@ unsigned int apply_compiled()
     else if(operator == COMPILEFN)
     {
       compilefn();
+    }
+    else if(operator == EXPORT_PACKAGE)
+    {
+      export_package();
     }
     else
     {
@@ -4357,3 +4476,4 @@ void cleanup_tcc()
 {
   hashtable_delete(native_functions);
 }
+

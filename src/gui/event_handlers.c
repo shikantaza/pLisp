@@ -1319,3 +1319,51 @@ void clear_workspace(GtkWidget *widget,
 {
   gtk_text_buffer_set_text(workspace_buffer, "", -1);
 }
+
+void exp_pkg(GtkWidget *widget,
+	     gpointer data)
+{
+  export_package_gui();
+}
+
+void export_package_gui()
+{
+  gchar *package_name;
+
+  GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
+  GtkTreeModel *model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+  GtkTreeIter  iter1;
+
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list)), &model1, &iter1))
+  {
+    gtk_tree_model_get(model1, &iter1,
+		       0, &package_name,
+		       -1);
+
+    GtkWidget *dialog;
+
+    dialog = gtk_file_chooser_dialog_new ("Export package",
+					  (GtkWindow *)system_browser_window,
+					  GTK_FILE_CHOOSER_ACTION_SAVE,
+					  "Cancel", GTK_RESPONSE_CANCEL,
+					  "Open", GTK_RESPONSE_ACCEPT,
+					  NULL);
+
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+      char *file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+
+      char buf[MAX_STRING_LENGTH];
+      memset(buf, '\0', MAX_STRING_LENGTH);
+
+      sprintf(buf, "(export-package \"%s\" \"%s\")", package_name, file_name);
+
+      if(!call_repl(buf))
+      {
+	gtk_statusbar_push(system_browser_statusbar, 0, "Package exported successfully");
+      }
+    }
+
+    gtk_widget_destroy (dialog);
+  }
+}

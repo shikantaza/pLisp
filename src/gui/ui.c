@@ -85,6 +85,8 @@ extern abort_debugger(GtkWidget *, gpointer);
 extern clear_transcript(GtkWidget *, gpointer);
 extern clear_workspace(GtkWidget *, gpointer);
 
+extern exp_pkg(GtkWidget *, gpointer);
+
 /* event handler function definitions end */
 
 extern BOOLEAN in_break;
@@ -379,6 +381,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkWidget *accept_icon = gtk_image_new_from_file ("icons/accept.png");
   GtkWidget *delete_icon = gtk_image_new_from_file ("icons/delete.png");
   GtkWidget *refresh_icon = gtk_image_new_from_file ("icons/refresh.png");
+  GtkWidget *export_pkg_icon = gtk_image_new_from_file ("icons/export_package.png");
   GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
   toolbar = gtk_toolbar_new ();
@@ -447,6 +450,11 @@ GtkToolbar *create_system_browser_toolbar()
   g_signal_connect (refresh_button, "clicked", G_CALLBACK (refresh_sys_browser), system_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, refresh_button, 4);
 
+  GtkToolItem *export_pkg_button = gtk_tool_button_new(export_pkg_icon, NULL);
+  gtk_tool_item_set_tooltip_text(export_pkg_button, "Export Package");
+  g_signal_connect (export_pkg_button, "clicked", G_CALLBACK (exp_pkg), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, export_pkg_button, 5);
+
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
   /*                          NULL,                                   /\* button label *\/ */
   /*                          "Close (Ctrl-W)",                       /\* button's tooltip *\/ */
@@ -457,7 +465,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkToolItem *close_button = gtk_tool_button_new(exit_icon, NULL);
   gtk_tool_item_set_tooltip_text(close_button, "Close (Ctrl-W)");
   g_signal_connect (close_button, "clicked", G_CALLBACK (close_window), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 5);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 6);
 
   return (GtkToolbar *)toolbar;
 }
