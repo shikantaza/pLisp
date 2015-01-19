@@ -651,11 +651,80 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   //else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
   {
-    action_triggering_window = workspace_window;
-    evaluate();
-    GtkTextIter start_sel, end_sel;
-    if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel))
-      gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1);
+    if(event->state & GDK_CONTROL_MASK)
+    {
+      build_form_for_eval(workspace_buffer);
+      action_triggering_window = workspace_window;
+      evaluate();
+      /* GtkTextIter start_sel, end_sel; */
+      /* if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel)) */
+      /* 	gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1); */
+      return FALSE;
+    }
+  }
+  else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
+	  !(event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
+  {
+    GtkTextIter start_iter, end_iter;
+
+    GtkTextBuffer *buffer = widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer;
+
+    gtk_text_buffer_get_start_iter(buffer, &start_iter);
+    gtk_text_buffer_get_end_iter(buffer, &end_iter);
+
+    GtkTextIter iter, line_start;
+    gtk_text_buffer_get_iter_at_mark(buffer, &iter, gtk_text_buffer_get_insert(buffer));
+    gint line_number = gtk_text_iter_get_line(&iter);
+
+    gtk_text_buffer_get_iter_at_line(buffer, &line_start, line_number);
+
+    gchar *text = gtk_text_buffer_get_text(buffer, &line_start, &iter, FALSE);
+
+    char ret[30];
+    memset(ret, '\0', 31);
+
+    char trimmed_text[100];
+    memset(trimmed_text, '\0', 100);
+
+    trim_whitespace(trimmed_text, 100, text);
+
+    if(strlen(trimmed_text) == 0)
+    {
+      gtk_text_buffer_insert_at_cursor(buffer, "\n", -1);
+      return TRUE;
+    }
+
+    get_form(text, ret);
+
+    int carried_over_indents = get_carried_over_indents(text);
+
+    gtk_text_buffer_insert_at_cursor(buffer, "\n", -1);
+
+    int i;
+    for(i=0; i<carried_over_indents; i++)
+      gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
+
+    if(ret)
+    {
+      GtkTextIter it;
+      gtk_text_buffer_get_iter_at_line(buffer, &it, line_number);
+
+      int indents = get_indents_for_form(ret);
+
+      if(indents > 0)
+      {
+	int i;
+	for(i=0; i<indents; i++)
+	  gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
+      }
+      else
+      {
+	int default_indents = get_position_of_first_arg(ret);
+	int i;
+	for(i=0; i<default_indents; i++)
+	  gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
+      }
+    }
     return TRUE;
   }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
@@ -1080,7 +1149,7 @@ void get_prev_iter(GtkTextBuffer *buffer, GtkTextIter *curr_iter, GtkTextIter *p
   }
 }
 
-void display_matching_parens(GtkTextBuffer *buffer)
+void build_form_for_eval(GtkTextBuffer *buffer)
 {
   GtkTextIter curr_iter;
   GtkTextIter start_match, end_match;
@@ -1104,17 +1173,17 @@ void display_matching_parens(GtkTextBuffer *buffer)
 
       if(no_unmatched_parens(str))
       {
-        gtk_text_buffer_apply_tag_by_name(buffer, 
-                                          "cyan_bg", 
-                                          &start_match, 
-                                          &end_match);
+        /* gtk_text_buffer_apply_tag_by_name(buffer,  */
+        /*                                   "cyan_bg",  */
+        /*                                   &start_match,  */
+        /*                                   &end_match); */
 
-        GtkTextIter temp_iter = saved_iter;
-        gtk_text_iter_backward_char(&saved_iter);
-        gtk_text_buffer_apply_tag_by_name(buffer, 
-                                          "cyan_bg", 
-                                          &saved_iter, 
-                                          &temp_iter);
+        /* GtkTextIter temp_iter = saved_iter; */
+        /* gtk_text_iter_backward_char(&saved_iter); */
+        /* gtk_text_buffer_apply_tag_by_name(buffer,  */
+        /*                                   "cyan_bg",  */
+        /*                                   &saved_iter,  */
+        /*                                   &temp_iter); */
 
         form_for_eval = str;
         
@@ -1134,165 +1203,6 @@ void display_matching_parens(GtkTextBuffer *buffer)
       break;
     }
   }      
-}
-
-void display_matching_parens_forward(GtkTextBuffer *buffer)
-{
-  GtkTextIter curr_iter;
-  GtkTextIter start_match, end_match;
-
-  //get the current iter
-  gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter, gtk_text_buffer_get_insert(buffer));
-
-  GtkTextIter saved_iter = curr_iter;
-
-  while(1)
-  {
-    if(gtk_text_iter_forward_search(&curr_iter, 
-                                    ")", 
-                                    GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, 
-                                    &start_match,
-                                    &end_match, 
-                                    NULL))
-    {
-
-      gchar *str = gtk_text_buffer_get_text(buffer, &saved_iter, &end_match, FALSE);
-
-      if(no_unmatched_parens(str))
-      {
-        gtk_text_buffer_apply_tag_by_name(buffer, 
-                                          "cyan_bg", 
-                                          &start_match, 
-                                          &end_match);
-
-        GtkTextIter temp_iter = saved_iter;
-        gtk_text_iter_forward_char(&saved_iter);
-        gtk_text_buffer_apply_tag_by_name(buffer,
-                                          "cyan_bg",
-                                          &temp_iter,
-                                          &saved_iter);
-        
-        break;
-      }
-      else
-      {
-        int offset = gtk_text_iter_get_offset(&end_match);
-        gtk_text_buffer_get_iter_at_offset(buffer,
-                                           &curr_iter, 
-                                           offset);
-      }
-    }
-    else
-      break;
-  }      
-}
-
-gboolean handle_code_edit_key_press(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
-{
-  GtkTextIter start_iter, end_iter;
-
-  GtkTextBuffer *buffer = gtk_text_view_get_buffer((GtkTextView *)widget);
-
-  gtk_text_buffer_get_start_iter(buffer, &start_iter);
-  gtk_text_buffer_get_end_iter(buffer, &end_iter);
-
-  //remove current highlighting if any
-  gtk_text_buffer_remove_all_tags(buffer,
-                                  &start_iter,
-                                  &end_iter);
-  
-  if(event->keyval ==  GDK_KEY_parenright)
-  {
-    if (gtk_text_view_im_context_filter_keypress (GTK_TEXT_VIEW (widget), event))
-    {
-      display_matching_parens(buffer);
-      return TRUE;
-    }
-  }
-
-  if(event->keyval ==  GDK_KEY_Return)
-  {
-    GtkTextIter iter, line_start;
-    gtk_text_buffer_get_iter_at_mark(buffer, &iter, gtk_text_buffer_get_insert(buffer));
-    gint line_number = gtk_text_iter_get_line(&iter);
-
-    gtk_text_buffer_get_iter_at_line(buffer, &line_start, line_number);
-
-    gchar *text = gtk_text_buffer_get_text(buffer, &line_start, &iter, FALSE);
-
-    char trimmed_text[100];
-    memset(trimmed_text, '\0', 100);
-
-    trim_whitespace(trimmed_text, 100, text);
-
-    if(strlen(trimmed_text) == 0)
-    {
-      gtk_text_buffer_insert_at_cursor(buffer, "\n", -1);
-      return TRUE;
-    }
-
-    char ret[10];
-    memset(ret, '\0', 11);
-
-    get_form(text, ret);
-
-    int carried_over_indents = get_carried_over_indents(text);
-
-    gtk_text_buffer_insert_at_cursor(buffer, "\n", -1);
-
-    int i;
-    for(i=0; i<carried_over_indents; i++)
-      gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
-
-    if(ret)
-    {
-      GtkTextIter it;
-      gtk_text_buffer_get_iter_at_line(buffer, &it, line_number);
-
-      int indents = get_indents_for_form(ret);
-
-      if(indents > 0)
-      {
-        int i;
-        for(i=0; i<indents; i++)
-          gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
-      }
-      else
-      {
-        int default_indents = get_position_of_first_arg(ret);
-        int i;
-        for(i=0; i<default_indents; i++)
-          gtk_text_buffer_insert_at_cursor(buffer, " ", -1);
-      }
-    }
-    return TRUE;
-  }
-
-  return handle_key_press_events(widget, event, user_data);
-}
-
-void handle_code_edit_cursor_move(GtkTextBuffer *buffer,
-                                  GtkTextIter   *location,
-                                  GtkTextMark   *mark,
-                                  gpointer       user_data) 
-{
-  GtkTextIter start_iter, end_iter;
-
-  gtk_text_buffer_get_start_iter(buffer, &start_iter);
-  gtk_text_buffer_get_end_iter(buffer, &end_iter);
-
-  //remove current highlighting if any
-  gtk_text_buffer_remove_all_tags(buffer,
-                                  &start_iter,
-                                  &end_iter);
-
-  GtkTextIter prev;
-  get_prev_iter(buffer, location, &prev);
-
-  if(!strcmp(gtk_text_buffer_get_text(buffer, &prev, location, FALSE), ")"))
-    display_matching_parens(buffer);
-  else if(gtk_text_iter_get_char(location) == '(')
-    display_matching_parens_forward(buffer);
 }
 
 void resume_from_debugger(GtkWidget *widget,
@@ -1318,12 +1228,6 @@ void clear_workspace(GtkWidget *widget,
 		     gpointer data)
 {
   gtk_text_buffer_set_text(workspace_buffer, "", -1);
-}
-
-void exp_pkg(GtkWidget *widget,
-	     gpointer data)
-{
-  export_package_gui();
 }
 
 void export_package_gui()
@@ -1367,3 +1271,10 @@ void export_package_gui()
     gtk_widget_destroy (dialog);
   }
 }
+
+void exp_pkg(GtkWidget *widget,
+	     gpointer data)
+{
+  export_package_gui();
+}
+

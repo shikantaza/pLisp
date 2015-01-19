@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language id="plisp" _name="pLisp" version="2.0" _section="Sources">
+  <metadata>
+    <property name="mimetypes">text/x-plisp</property>
+    <property name="globs">*.scm</property>
+    <property name="line-comment-start">;</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="string" _name="String" map-to="def:string"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+    <style id="function" _name="Function" map-to="def:function"/>
+  </styles>
+
+  <definitions>
+    <context id="line-comment" style-ref="comment" end-at-line-end="true" class="comment" class-disabled="no-spell-check">
+      <start>;</start>
+      <include>
+        <context ref="def:in-comment"/>
+      </include>
+    </context>
+
+    <context id="string" style-ref="string" class="string" class-disabled="no-spell-check">
+      <start>"</start>
+      <end>"</end>
+      <include>
+        <context ref="def:escape"/>
+      </include>
+    </context>
+
+    <context id="keyword" style-ref="keyword">
+      <prefix>(?&lt;![\w\d_-])</prefix>
+      <suffix>(?![\w\d_-])</suffix>
+      <keyword>t</keyword>
+      <keyword>nil</keyword>
+      <keyword>quote</keyword>
+      <keyword>atom</keyword>
+      <keyword>eq</keyword>
+      <keyword>car</keyword>
+      <keyword>cdr</keyword>
+      <keyword>cons</keyword>
+      <keyword>lambda</keyword>
+      <keyword>set</keyword>
+      <keyword>\+</keyword>
+      <keyword>-</keyword>
+      <keyword>\*</keyword>
+      <keyword>/</keyword>
+      <keyword>progn</keyword>
+      <keyword>print</keyword>
+      <keyword>list</keyword>
+      <keyword>listp</keyword>
+      <keyword>symbol-value</keyword>
+      <keyword>backquote</keyword>
+      <keyword>&gt;</keyword>
+      <keyword>gensym</keyword>
+      <keyword>setcar</keyword>
+      <keyword>setcdr</keyword>
+      <keyword>error</keyword>
+      <keyword>create-package</keyword>
+      <keyword>in-package</keyword>
+      <keyword>comma</keyword>
+      <keyword>comma-at</keyword>
+      <keyword>expand-macro</keyword>
+      <keyword>apply</keyword>
+      <keyword>string</keyword>
+      <keyword>make-array</keyword>
+      <keyword>array-get</keyword>
+      <keyword>array-set</keyword>
+      <keyword>sub-array</keyword>
+      <keyword>array-length</keyword>
+      <keyword>print-string</keyword>
+      <keyword>labels</keyword>
+      <keyword>create-image</keyword>
+      <keyword>break</keyword>
+      <keyword>load-foreign-library</keyword>
+      <keyword>call-foreign-function</keyword>
+      <keyword>env</keyword>
+      <keyword>if</keyword>
+      <keyword>eval </keyword>
+      <keyword>call-cc </keyword>
+      <keyword>define </keyword>
+      <keyword>resume </keyword>
+      <keyword>backtrace </keyword>
+      <keyword>load-file </keyword>
+      <keyword>consp</keyword>
+      <keyword>integerp</keyword>
+      <keyword>floatp</keyword>
+      <keyword>characterp</keyword>
+      <keyword>symbolp</keyword>
+      <keyword>stringp</keyword>
+      <keyword>arrayp</keyword>
+      <keyword>closurep</keyword>
+      <keyword>macrop</keyword>
+      <keyword>continuationp</keyword>
+      <keyword>lambda-expression</keyword>
+      <keyword>format</keyword>
+      <keyword>clone</keyword>
+      <keyword>return</keyword>
+      <keyword>return-from</keyword>
+      <keyword>symbol</keyword>
+      <keyword>symbol-name</keyword>
+      <keyword>unbind</keyword>
+      <keyword>newline</keyword>
+      <keyword>abort</keyword>
+      <keyword>time</keyword>
+      <keyword>profile</keyword>
+      <keyword>not</keyword>
+      <keyword>&lt;</keyword>
+      <keyword>&lt;=</keyword>
+      <keyword>&gt;=</keyword>
+      <keyword>neq</keyword>
+      <keyword>save-object</keyword>
+      <keyword>load-object</keyword>
+      <keyword>compile-fn</keyword>
+      <keyword>export-package</keyword>
+    </context>
+
+    <context id="function" style-ref="function">
+      <prefix>(?&lt;![\w\d_-])</prefix>
+      <suffix>(?![\w\d_-])</suffix>
+      <keyword>defun</keyword>
+      <keyword>defmacro</keyword>
+      <keyword>cadr</keyword>
+      <keyword>cddr</keyword>
+      <keyword>caddr</keyword>
+      <keyword>cdar</keyword>
+      <keyword>caar</keyword>
+      <keyword>cadar</keyword>
+      <keyword>cadddr</keyword>
+      <keyword>null</keyword>
+      <keyword>and</keyword>
+      <keyword>or</keyword>
+      <keyword>append</keyword>
+      <keyword>pair</keyword>
+      <keyword>cons-pair</keyword>
+      <keyword>map</keyword>
+      <keyword>assoc</keyword>
+      <keyword>length</keyword>
+      <keyword>last</keyword>
+      <keyword>remove-last</keyword>
+      <keyword>reverse</keyword>
+      <keyword>range</keyword>
+      <keyword>nth</keyword>
+      <keyword>max</keyword>
+      <keyword>min</keyword>
+      <keyword>curry</keyword>
+      <keyword>concat</keyword>
+      <keyword>remove</keyword>
+      <keyword>find-if</keyword>
+      <keyword>find</keyword>
+      <keyword>remove-duplicates</keyword>
+      <keyword>funcall</keyword>
+      <keyword>numberp</keyword>
+      <keyword>select</keyword>
+      <keyword>remove-if</keyword>
+      <keyword>sub-list</keyword>
+      <keyword>last-n</keyword>
+      <keyword>butlast</keyword>
+      <keyword>mapcar</keyword>
+      <keyword>flatten</keyword>
+      <keyword>exception</keyword>
+      <keyword>concat-strings</keyword>
+      <keyword>throw</keyword>
+      <keyword>array-eq</keyword>
+      <keyword>read</keyword>
+      <keyword>read-integer</keyword>
+      <keyword>read-float</keyword>
+      <keyword>read-string</keyword>
+      <keyword>read-character</keyword>
+      <keyword>alloc-ext-mem-int</keyword>
+      <keyword>alloc-ext-mem-float</keyword>
+      <keyword>alloc-ext-mem-char</keyword>
+      <keyword>set-ext-mem</keyword>
+      <keyword>set-ext-mem-cell</keyword>
+      <keyword>get-ext-mem-cell</keyword>
+      <keyword>inspect-ext-mem</keyword>
+      <keyword>free-ext-mem</keyword>
+      <keyword>simplify</keyword>
+      <keyword>assert</keyword>
+      <keyword>while</keyword>
+      <keyword>rec</keyword>
+      <keyword>let</keyword>
+      <keyword>dolist</keyword>
+      <keyword>make-string</keyword>
+      <keyword>string-set</keyword>
+      <keyword>string-get</keyword>
+      <keyword>incf</keyword>
+      <keyword>for</keyword>
+      <keyword>nconc</keyword>
+      <keyword>labels</keyword>
+      <keyword>first</keyword>
+      <keyword>second</keyword>
+      <keyword>third</keyword>
+      <keyword>fourth</keyword>
+      <keyword>fifth</keyword>
+      <keyword>rest</keyword>
+      <keyword>setq</keyword>
+      <keyword>substring</keyword>
+      <keyword>cond</keyword>
+      <keyword>dotimes</keyword>
+      <keyword>values</keyword>
+      <keyword>multiple-value-bind</keyword>
+      <keyword>remove-if-not</keyword>
+      <keyword>mapcan</keyword>
+      <keyword>println</keyword>
+      <keyword>alias</keyword>
+      <keyword>try</keyword>
+      <keyword>unwind-protect</keyword>
+      <keyword>let1</keyword>
+      <keyword>compile</keyword>
+      <keyword>array</keyword>
+      <keyword>build-ref</keyword>
+      <keyword>aset</keyword>
+      <keyword>aref</keyword>
+    </context>
+
+    <context id="plisp" class="no-spell-check">
+      <include>
+        <context ref="line-comment"/>
+        <context ref="string"/>
+        <context ref="keyword"/>
+        <context ref="function"/>
+      </include>
+    </context>
+
+  </definitions>
+</language>

@@ -22,6 +22,8 @@
 #include <dlfcn.h>
 #include <gtk/gtk.h>
 
+#include <gtksourceview/gtksource.h>
+
 #include "plisp.h"
 #include "memory.h"
 
@@ -83,6 +85,9 @@ extern OBJECT_PTR DEFUN, DEFMACRO;
 
 extern BOOLEAN console_mode;
 extern BOOLEAN single_expression_mode;
+
+extern GtkSourceLanguage *source_language;
+extern GtkSourceLanguageManager *lm;
 
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
@@ -740,6 +745,10 @@ int load_from_image(char *file_name)
     JSON_delete_object(root);
     return 0;
   }
+
+  lm = gtk_source_language_manager_get_default();
+  setup_language_manager_path(lm);
+  source_language = gtk_source_language_manager_get_language(lm, "plisp");
 
   struct JSONObject *profiler = JSON_get_object_item(root, "profiler");
 

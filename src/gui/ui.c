@@ -1,6 +1,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#include <gtksourceview/gtksource.h>
+
 #include "../plisp.h"
 #include "../memory.h"
 #include "../hashtable.h"
@@ -70,15 +72,6 @@ extern void fetch_symbol_value(GtkWidget *, gpointer);
 extern void eval_expression(GtkWidget *, gpointer);
 extern void fetch_variables(GtkWidget *, gpointer);
 
-extern gboolean handle_code_edit_key_press(GtkWidget *, 
-                                           GdkEventKey *,
-                                           gpointer);
-
-extern void handle_code_edit_cursor_move(GtkTextBuffer *,
-                                         GtkTextIter   *,
-                                         GtkTextMark   *,
-                                         gpointer); 
-
 extern resume_from_debugger(GtkWidget *, gpointer);
 extern abort_debugger(GtkWidget *, gpointer);
 
@@ -92,6 +85,28 @@ extern exp_pkg(GtkWidget *, gpointer);
 extern BOOLEAN in_break;
 
 extern BOOLEAN console_mode;
+extern BOOLEAN image_mode;
+
+GtkSourceLanguage *source_language;
+GtkSourceLanguageManager *lm;
+
+GtkSourceView *workspace_source_view;
+GtkSourceBuffer *workspace_source_buffer;
+
+GtkSourceView *system_browser_source_view;
+GtkSourceBuffer *system_browser_source_buffer;
+
+void set_up_system_browser_source_buffer()
+{
+  system_browser_source_buffer = gtk_source_buffer_new_with_language(source_language);
+  system_browser_source_view = gtk_source_view_new_with_buffer(system_browser_source_buffer);
+}
+
+void set_up_workspace_source_buffer()
+{
+  workspace_source_buffer = gtk_source_buffer_new_with_language(source_language);
+  workspace_source_view = gtk_source_view_new_with_buffer(workspace_source_buffer);
+}
 
 typedef struct
 {
@@ -230,11 +245,15 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   //Widgets *w = g_slice_new (Widgets);
   GtkWidget *scrolled_win, *vbox;
 
-  GtkWidget *textview = gtk_text_view_new ();
+  set_up_workspace_source_buffer();
+
+  //GtkWidget *textview = gtk_text_view_new ();
+  GtkWidget *textview = workspace_source_view;
 
   gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 
-  workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
+  //workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
+  workspace_buffer = workspace_source_buffer;
 
   /* print_to_workspace("; This is the workspace; type pLisp expressions here.\n"); */
   /* print_to_workspace("; To evaluate an expression, enter the expression\n"); */
@@ -261,22 +280,6 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   prompt();
 
   gtk_widget_grab_focus(textview);
-
-  gtk_text_buffer_create_tag(workspace_buffer, "cyan_bg", 
-                             "background", "cyan", NULL); 
-
-  gtk_text_buffer_create_tag(workspace_buffer, "white_bg", 
-                             "background", "white", NULL); 
-
-
-  g_signal_connect ((GtkWidget *)workspace_buffer, "mark-set",
-                    G_CALLBACK (handle_code_edit_cursor_move), NULL);
-
-
-
-  g_signal_connect((GtkWidget *)textview, "key_press_event",
-                   G_CALLBACK(handle_code_edit_key_press), NULL);
-
 }
 
 void show_error_dialog_for_window(char *msg, GtkWindow *win)
@@ -531,14 +534,18 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   GtkWidget *scrolled_win;
 
-  GtkWidget *textview = gtk_text_view_new ();
+  set_up_system_browser_source_buffer();
+
+  //GtkWidget *textview = gtk_text_view_new ();
+  GtkWidget *textview = system_browser_source_view;
 
   system_browser_textview = (GtkTextView *)textview;
 
   gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
   //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
 
-  system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
+  //system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
+  system_browser_buffer = system_browser_source_buffer;
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
@@ -562,20 +569,6 @@ void create_system_browser_window(int posx, int posy, int width, int height)
   //gtk_widget_grab_focus((GtkWidget *)packages_list);
 
   new_symbol_being_created = false;
-
-  gtk_text_buffer_create_tag(system_browser_buffer, "cyan_bg", 
-                             "background", "cyan", NULL); 
-
-  gtk_text_buffer_create_tag(system_browser_buffer, "white_bg", 
-                             "background", "white", NULL); 
-
-  g_signal_connect ((GtkWidget *)system_browser_buffer, "mark-set",
-                    G_CALLBACK (handle_code_edit_cursor_move), NULL);
-
-  g_signal_connect((GtkWidget *)system_browser_textview, "key_press_event",
-                   G_CALLBACK(handle_code_edit_key_press), NULL);
-
-
 }
 
 void refresh_system_browser()
@@ -670,6 +663,29 @@ GtkToolbar *create_transcript_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
+//https://gist.github.com/Gazer/130858
+void setup_language_manager_path(GtkSourceLanguageManager *lm)
+{
+  gchar **lang_files;
+  int i, lang_files_count;
+  char **new_langs;
+ 
+  lang_files = g_strdupv (gtk_source_language_manager_get_search_path (lm));
+ 
+  lang_files_count = g_strv_length (lang_files);
+  new_langs = g_new (char*, lang_files_count + 2);
+ 
+  for (i = 0; lang_files[i]; i++)
+    new_langs[i] = lang_files[i];
+ 
+  new_langs[lang_files_count] = g_strdup ("./");
+  new_langs[lang_files_count+1] = NULL;
+ 
+  g_free (lang_files);
+ 
+  gtk_source_language_manager_set_search_path (lm, new_langs);
+} 
+
 void create_transcript_window(int posx, int posy, int width, int height, char *text)
 {
   GtkWidget *scrolled_win, *vbox;
@@ -724,6 +740,13 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
 
   //print_ui_copyright_notice();
   print_to_transcript(text);
+
+  if(!image_mode)
+  {
+    lm = gtk_source_language_manager_get_default();
+    setup_language_manager_path(lm);
+    source_language = gtk_source_language_manager_get_language(lm, "plisp");
+  }
 }
 
 void show_error_dialog(char *msg)
@@ -1172,3 +1195,4 @@ void create_profiler_window(int posx, int posy, int width, int height)
 
   gtk_widget_grab_focus((GtkWidget *)operators_list);
 }
+
