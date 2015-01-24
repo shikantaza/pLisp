@@ -1,3 +1,22 @@
+/**
+  Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+
+  This file is part of pLisp.
+
+  pLisp is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  pLisp is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
+**/
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
@@ -663,6 +682,13 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     }
   }
   else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
+	  event->keyval == GDK_KEY_Tab)
+  {
+    indent(widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer);
+    return TRUE;
+  }
+  /*
+  else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
 	  !(event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
   {
     GtkTextIter start_iter, end_iter;
@@ -727,6 +753,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     }
     return TRUE;
   }
+  */
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
     close_application_window((GtkWidget **)&workspace_window);
   else if(widget == (GtkWidget *)profiler_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
@@ -1103,6 +1130,28 @@ void set_focus_to_last_row(GtkTreeView *list)
 
   gtk_tree_view_set_cursor(list, path, NULL, false);
 
+}
+
+BOOLEAN no_unmatched_left_parens(char *str)
+{
+  int imbalance = 0;
+
+  int len = strlen(str);
+
+  int i;
+
+  for(i=0; i<len; i++)
+  {
+    if(str[i] == '(')
+      imbalance ++;
+    else if(str[i] == ')')
+      imbalance--;
+  }
+
+  if(imbalance > 0)
+    return false;
+  else
+    return true;
 }
 
 BOOLEAN no_unmatched_parens(char *str)
