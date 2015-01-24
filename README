@@ -41,8 +41,7 @@ pLisp is installed by running 'make' on the provided make file.
 
 What do I need to install pLisp?
 
-You will need a) the GTK+3.0 development package (libgtk-3-dev) b) the Tiny C Compiler development files (libtcc.h and libtcc.a) from http://bellard.org/tcc/ and c)
-libffi (https://sourceware.org/libffi/)
+You will need a) the GTK+3.0 development package (libgtk-3-dev) b) the GtkSourceView (https://wiki.gnome.org/Projects/GtkSourceView) development package c) the Tiny C Compiler development files (libtcc.h and libtcc.a) from http://bellard.org/tcc/ and d) libffi (https://sourceware.org/libffi/)
 
 pLisp also uses Emin Martinian's Red Black Tree code (http://web.mit.edu/~emin/www.old/source_code/red_black_tree/index.html) in its GC implementation (this code is shipped along with pLisp, so you don't have to go out and grab it).
 
