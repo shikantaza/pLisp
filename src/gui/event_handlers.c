@@ -1220,7 +1220,7 @@ void build_form_for_eval(GtkTextBuffer *buffer)
 
       gchar *str = gtk_text_buffer_get_text(buffer, &start_match, &saved_iter, FALSE);
 
-      if(no_unmatched_parens(str))
+      if(no_unmatched_parens(str) || in_a_string_literal(buffer, &start_match))
       {
         /* gtk_text_buffer_apply_tag_by_name(buffer,  */
         /*                                   "cyan_bg",  */
@@ -1327,3 +1327,61 @@ void exp_pkg(GtkWidget *widget,
   export_package_gui();
 }
 
+BOOLEAN in_a_string_literal(GtkTextBuffer *buffer, GtkTextIter *iter)
+{
+  GtkTextIter start;
+
+  //get the start iterator for the entire buffer
+  gtk_text_buffer_get_start_iter(buffer, &start);
+
+  //get the entire text of the buffer
+  gchar *text = gtk_text_buffer_get_text(buffer, &start, iter, FALSE);
+
+  unsigned int i=0;
+  unsigned int len = strlen(text);
+
+  BOOLEAN in_string_literal = false;
+  BOOLEAN in_single_line_comment = false;
+  BOOLEAN in_multi_line_comment = false;
+
+  while(i < len)
+  {
+    if(text[i] == '"')
+    {
+      if(in_string_literal)
+        in_string_literal = false;
+      else if(!in_single_line_comment && !in_multi_line_comment)
+        in_string_literal = true;
+    }
+    else if(text[i] == '\n')
+    {
+      if(!in_string_literal & !in_multi_line_comment)
+        in_single_line_comment = false;
+    }
+    else if(text[i] == ';')
+    {
+      if(!in_string_literal && !in_multi_line_comment)
+        in_single_line_comment = true;
+    }
+    else if(text[i] == '#')
+    {
+      if((i <= len-2)            && 
+         text[i+1] == '|'        &&
+         !in_string_literal      &&
+         !in_single_line_comment &&
+         !in_multi_line_comment)
+        in_multi_line_comment = true;
+      else if(i > 0                   &&
+              text[i-1] == '|'        &&
+              !in_string_literal      &&
+              !in_single_line_comment &&
+              in_multi_line_comment)
+        in_multi_line_comment = false;
+    }
+
+    i++;
+
+  } //end of while(i < len)
+
+  return in_string_literal;
+}
