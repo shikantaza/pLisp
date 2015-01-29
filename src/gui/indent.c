@@ -24,11 +24,13 @@
 
 #include "../plisp.h"
 
-#define FORM  0
-#define LET   1
-#define DEFUN 2
-#define IF    3
-#define WHILE 4
+#define FORM     0
+#define LET      1
+#define DEFUN    2
+#define IF       3
+#define WHILE    4
+#define DEFMACRO 5
+#define PROGN    6
 
 /* determinant form = the characters from the leftmost open paren
    to the current cursor position */
@@ -44,12 +46,10 @@ typedef struct form_position
   unsigned int pos;
 } form_position_t;
 
-extern in_a_string_literal(GtkTextBuffer *, GtkTextIter *);
+extern in_code(GtkTextBuffer *, GtkTextIter *);
 
 form_position_t *convert_to_form_position(char *str, unsigned int *count)
 {
-  printf("%s\n", str);
-
   form_position_t *fp = NULL, *temp;
 
   BOOLEAN in_string_literal = false;
@@ -146,7 +146,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
           //capture form and pos
           form_type = FORM;
 
-          if(i != corrected_i)
+          //if(i != corrected_i)
+          if(corrected_i == 0)
             pos = fp[(*count)-1].pos;
           else
             pos = corrected_i;
@@ -205,6 +206,10 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
             form_type = IF;
           else if(!strncmp(tempstr, "WHILE", (i-pos)))
             form_type = WHILE;
+          else if(!strncmp(tempstr, "DEFMACRO", (i-pos)))
+            form_type = DEFMACRO;
+          else if(!strncmp(tempstr, "PROGN", (i-pos)))
+            form_type = PROGN;
           else
             form_type = FORM;
 
@@ -242,9 +247,9 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
 
   } //end of while(i < len)
 
-  for(i=0; i< *count; i++)
-    printf("%d %d\n", fp[i].form_type, fp[i].pos);
-  printf("---\n");
+  /* for(i=0; i< *count; i++) */
+  /*   printf("%d %d\n", fp[i].form_type, fp[i].pos); */
+  /* printf("---\n"); */
 
   return fp;
 }
@@ -394,7 +399,7 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
     else
       return fp[1].pos;
   }
-  else if(fp[0].form_type == DEFUN)
+  else if(fp[0].form_type == DEFUN || fp[0].form_type == DEFMACRO)
     return 2;
   else if(fp[0].form_type == IF)
   {
@@ -408,9 +413,16 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
   else if(fp[0].form_type == WHILE)
   {
     if(count == 1)
-      return 5;
+      return 4;
     else
       return 2;
+  }
+  else if(fp[0].form_type == PROGN)
+  {
+    if(count == 1)
+      return 2;
+    else
+      return fp[1].pos;
   }
   else //other forms
   {
@@ -502,7 +514,7 @@ void indent(GtkTextBuffer *buffer)
 
       str = gtk_text_buffer_get_text(buffer, &start_match, &saved_iter, FALSE);
 
-      if(no_unmatched_left_parens(str) || in_a_string_literal(buffer, &start_match))
+      if(no_unmatched_left_parens(str) || !in_code(buffer, &start_match))
       {
         //continue searching
         int offset = gtk_text_iter_get_offset(&start_match);

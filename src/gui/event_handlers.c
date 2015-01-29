@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#include <assert.h>
 
 #include "../plisp.h"
 
@@ -1140,11 +1141,51 @@ BOOLEAN no_unmatched_left_parens(char *str)
 
   int i;
 
+  char c;
+
+  BOOLEAN in_string_literal = false;
+  BOOLEAN in_single_line_comment = false;
+  BOOLEAN in_multi_line_comment = false;
+
   for(i=0; i<len; i++)
   {
-    if(str[i] == '(')
+    c = str[i];
+
+    if(c == '"')
+    {
+      if(in_string_literal)
+        in_string_literal = false;
+      else if(!in_single_line_comment && !in_multi_line_comment)
+        in_string_literal = true;
+    }
+    else if(c == '\n')
+    {
+      if(!in_string_literal & !in_multi_line_comment)
+        in_single_line_comment = false;
+    }
+    else if(c == ';')
+    {
+      if(!in_string_literal && !in_multi_line_comment)
+        in_single_line_comment = true;
+    }
+    else if(c == '#')
+    {
+      if((i <= len-2)            && 
+         str[i+1] == '|'         &&
+         !in_string_literal      &&
+         !in_single_line_comment &&
+         !in_multi_line_comment)
+        in_multi_line_comment = true;
+      else if(i > 0                   &&
+              str[i-1] == '|'         &&
+              !in_string_literal      &&
+              !in_single_line_comment &&
+              in_multi_line_comment)
+        in_multi_line_comment = false;
+    }
+    else if(c == '(' && !in_string_literal && !in_single_line_comment && !in_multi_line_comment)
       imbalance ++;
-    else if(str[i] == ')')
+    else if(c == ')' && !in_string_literal && !in_single_line_comment && !in_multi_line_comment)
       imbalance--;
   }
 
@@ -1162,11 +1203,51 @@ BOOLEAN no_unmatched_parens(char *str)
 
   int i;
 
+  char c;
+
+  BOOLEAN in_string_literal = false;
+  BOOLEAN in_single_line_comment = false;
+  BOOLEAN in_multi_line_comment = false;
+
   for(i=0; i<len; i++)
   {
-    if(str[i] == '(')
+    c = str[i];
+
+    if(c == '"')
+    {
+      if(in_string_literal)
+        in_string_literal = false;
+      else if(!in_single_line_comment && !in_multi_line_comment)
+        in_string_literal = true;
+    }
+    else if(c == '\n')
+    {
+      if(!in_string_literal & !in_multi_line_comment)
+        in_single_line_comment = false;
+    }
+    else if(c == ';')
+    {
+      if(!in_string_literal && !in_multi_line_comment)
+        in_single_line_comment = true;
+    }
+    else if(c == '#')
+    {
+      if((i <= len-2)            && 
+         str[i+1] == '|'         &&
+         !in_string_literal      &&
+         !in_single_line_comment &&
+         !in_multi_line_comment)
+        in_multi_line_comment = true;
+      else if(i > 0                   &&
+              str[i-1] == '|'         &&
+              !in_string_literal      &&
+              !in_single_line_comment &&
+              in_multi_line_comment)
+        in_multi_line_comment = false;
+    }
+    else if(c == '(' && !in_string_literal && !in_single_line_comment && !in_multi_line_comment)
       imbalance ++;
-    else if(str[i] == ')')
+    else if(c == ')' && !in_string_literal && !in_single_line_comment && !in_multi_line_comment)
       imbalance--;
   }
 
@@ -1220,7 +1301,7 @@ void build_form_for_eval(GtkTextBuffer *buffer)
 
       gchar *str = gtk_text_buffer_get_text(buffer, &start_match, &saved_iter, FALSE);
 
-      if(no_unmatched_parens(str) || in_a_string_literal(buffer, &start_match))
+      if(no_unmatched_parens(str) && in_code(buffer, &start_match))
       {
         /* gtk_text_buffer_apply_tag_by_name(buffer,  */
         /*                                   "cyan_bg",  */
@@ -1327,8 +1408,33 @@ void exp_pkg(GtkWidget *widget,
   export_package_gui();
 }
 
-BOOLEAN in_a_string_literal(GtkTextBuffer *buffer, GtkTextIter *iter)
+BOOLEAN in_string_literal(GtkTextBuffer *buffer, GtkTextIter *iter)
 {
+  return in_code_or_string_literal_or_comment(buffer, iter, IN_STRING_LITERAL);
+}
+
+BOOLEAN in_single_line_comment(GtkTextBuffer *buffer, GtkTextIter *iter)
+{
+  return in_code_or_string_literal_or_comment(buffer, iter, IN_SINGLE_LINE_COMMENT);
+}
+
+BOOLEAN in_multi_line_comment(GtkTextBuffer *buffer, GtkTextIter *iter)
+{
+  return in_code_or_string_literal_or_comment(buffer, iter, IN_MULTI_LINE_COMMENT);
+}
+
+BOOLEAN in_code(GtkTextBuffer *buffer, GtkTextIter *iter)
+{
+  return in_code_or_string_literal_or_comment(buffer, iter, IN_CODE);
+}
+
+BOOLEAN in_code_or_string_literal_or_comment(GtkTextBuffer *buffer, GtkTextIter *iter, cursor_pos_t pos_type)
+{
+  assert(pos_type == IN_CODE                ||
+         pos_type == IN_STRING_LITERAL      ||
+         pos_type == IN_SINGLE_LINE_COMMENT ||
+         pos_type == IN_MULTI_LINE_COMMENT);
+
   GtkTextIter start;
 
   //get the start iterator for the entire buffer
@@ -1383,5 +1489,12 @@ BOOLEAN in_a_string_literal(GtkTextBuffer *buffer, GtkTextIter *iter)
 
   } //end of while(i < len)
 
-  return in_string_literal;
+  if(pos_type == IN_STRING_LITERAL)
+    return in_string_literal;
+  else if(pos_type == IN_SINGLE_LINE_COMMENT)
+    return in_single_line_comment;
+  else if(pos_type == IN_MULTI_LINE_COMMENT)
+    return in_multi_line_comment;
+  else
+    return (!in_string_literal && !in_single_line_comment && !in_multi_line_comment);
 }
