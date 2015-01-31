@@ -31,6 +31,11 @@
 #define WHILE    4
 #define DEFMACRO 5
 #define PROGN    6
+#define LAMBDA   7
+#define MACRO    8
+#define LET1     9
+#define DOLIST   10
+#define DOTIMES  11
 
 /* determinant form = the characters from the leftmost open paren
    to the current cursor position */
@@ -210,6 +215,16 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
             form_type = DEFMACRO;
           else if(!strncmp(tempstr, "PROGN", (i-pos)))
             form_type = PROGN;
+          else if(!strncmp(tempstr, "LAMBDA", (i-pos)))
+            form_type = LAMBDA;
+          else if(!strncmp(tempstr, "MACRO", (i-pos)))
+            form_type = MACRO;
+          else if(!strncmp(tempstr, "LET1", (i-pos)))
+            form_type = LET1;
+          else if(!strncmp(tempstr, "DOLIST", (i-pos)))
+            form_type = DOLIST;
+          else if(!strncmp(tempstr, "DOTIMES", (i-pos)))
+            form_type = DOTIMES;
           else
             form_type = FORM;
 
@@ -390,7 +405,7 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
   if(count == 0)
     return 1;
 
-  if(fp[0].form_type == LET)
+  if(fp[0].form_type == LET || fp[0].form_type == LET1)
   {
     if(count == 1)
       return 5;
@@ -399,7 +414,10 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
     else
       return fp[1].pos;
   }
-  else if(fp[0].form_type == DEFUN || fp[0].form_type == DEFMACRO)
+  else if(fp[0].form_type == DEFUN    || 
+          fp[0].form_type == DEFMACRO ||
+          fp[0].form_type == LAMBDA   ||
+          fp[0].form_type == MACRO)
     return 2;
   else if(fp[0].form_type == IF)
   {
@@ -410,7 +428,9 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
     else
       return 2;
   }
-  else if(fp[0].form_type == WHILE)
+  else if(fp[0].form_type == WHILE  || 
+          fp[0].form_type == DOLIST ||
+          fp[0].form_type == DOTIMES)
   {
     if(count == 1)
       return 4;
