@@ -228,6 +228,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
           else
             form_type = FORM;
 
+          free(tempstr);
+
           new_form_encountered = true;
         }
       }
