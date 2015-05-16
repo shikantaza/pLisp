@@ -512,12 +512,18 @@ void prompt()
       set_workspace_window_title(buf);
     }
     else if(console_mode)
+    {
       fprintf(stdout, "\n%s> ", packages[current_package].name);
+      fflush(stdout);
+    }
   }
   else
   {
     if(console_mode)
+    {
       fprintf(stdout, "\nDEBUG> ");
+      fflush(stdout);
+    }
   }
 }
 
@@ -569,11 +575,14 @@ void print_copyright_notice()
 
   fprintf(stdout, "You should have received a copy of the GNU General Public License\n");
   fprintf(stdout, "along with pLisp.  If not, see <http://www.gnu.org/licenses/>.\n\n");
+
+  fflush(stdout);
 }
 
 void welcome()
 {
   fprintf(stdout, "Welcome to pLisp's top level. Type '(quit)' to exit.");
+  fflush(stdout);
 }
 
 int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)

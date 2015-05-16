@@ -661,6 +661,7 @@ int repl(int mode)
       print_object_to_string(reg_accumulator, buf, 0);
 
       fprintf(stdout, "%s\n", buf);
+      fflush(stdout);
     }
     else
     {
@@ -745,9 +746,12 @@ int load_core_library()
   if(!console_mode && !single_expression_mode)
     print_to_transcript(" done\n");
   else if(console_mode)
+  {
     //hack to prevent message being overwritten
     //fprintf(stdout, "Loading core library... done\n");
     fprintf(stdout, " done\n");
+    fflush(stdout);
+  }
 
   return 0;  
 }
