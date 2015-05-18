@@ -186,7 +186,7 @@ OBJECT_PTR CONS_RETURN_NIL;
 
 extern FILE *yyin;
 
-extern BOOLEAN console_mode, single_expression_mode;
+extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     83
 #define NOF_NON_SPECIAL_SYMBOLS 26
@@ -504,7 +504,7 @@ void prompt()
 {
   if(!debug_mode)
   {
-    if(!console_mode && !single_expression_mode)
+    if(!console_mode && !single_expression_mode && !pipe_mode)
     {
       char buf[500];
       memset(buf, '\0',500);
@@ -635,7 +635,7 @@ void print_object(OBJECT_PTR obj_ptr)
 {
   log_function_entry("print_object");
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     char buf[500];
     memset(buf, '\0', 500);
@@ -1143,7 +1143,7 @@ void print_cons_object(OBJECT_PTR obj)
 
   assert(IS_CONS_OBJECT(obj));
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
     {
@@ -1488,7 +1488,7 @@ int print_closure_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len
 
 void print_closure_object(OBJECT_PTR obj)
 {
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     char buf[500];
     memset(buf, '\0', 500);
@@ -1713,7 +1713,7 @@ int print_macro_object_to_string(OBJECT_PTR macro_obj, char *buf, int filled_buf
 
 void print_macro_object(OBJECT_PTR macro_obj)
 {
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     char buf[500];
     memset(buf, '\0', 500);
@@ -2232,7 +2232,7 @@ void print_array_object(OBJECT_PTR array)
 
   ptr = array & POINTER_MASK;
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     print_to_transcript("[");
 
@@ -2307,7 +2307,7 @@ void print_string(OBJECT_PTR string_object)
 
   assert(is_string_object(string_object));
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     memset(buf, '\0', 500);
 

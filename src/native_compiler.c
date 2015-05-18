@@ -183,7 +183,7 @@ extern BOOLEAN system_changed;
 
 extern char *foreign_library_names[];
 
-extern BOOLEAN console_mode, single_expression_mode;
+extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 extern BOOLEAN interpreter_mode;
 
@@ -654,7 +654,7 @@ unsigned int break1()
 
   debug_execution_stack = reg_current_stack;
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
     create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
 			DEFAULT_DEBUG_WINDOW_POSY,
 			DEFAULT_DEBUG_WINDOW_WIDTH,
@@ -942,7 +942,7 @@ unsigned int error()
 unsigned int print()
 {
   print_object(car(reg_current_value_rib));
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
     print_to_transcript("\n");
   else
     fprintf(stdout, "\n");
@@ -973,7 +973,7 @@ unsigned int newline()
   }
   else
   {
-    if(!console_mode && !single_expression_mode)
+    if(!console_mode && !single_expression_mode && !pipe_mode)
       print_to_transcript("\n");
     else
       fprintf(stdout, "\n");
@@ -2144,7 +2144,7 @@ unsigned int time_compiled()
   diff = clock() - start;
   msec = diff * 1000 / CLOCKS_PER_SEC;
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     memset(buf, '\0', 100);
     sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
@@ -2270,7 +2270,7 @@ unsigned int profile()
   final_cpu_time = clock();
   final_mem_alloc = memory_allocated();
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     create_profiler_window(DEFAULT_PROFILER_WINDOW_POSX,
 			   DEFAULT_PROFILER_WINDOW_POSY,
@@ -2603,7 +2603,7 @@ unsigned int format_compiled()
   }
   else
   {
-    if(!console_mode && !single_expression_mode)
+    if(!console_mode && !single_expression_mode && !pipe_mode)
     {
       if(format_for_gui(reg_current_value_rib) == -1)
 	return 1;

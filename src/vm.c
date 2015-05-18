@@ -221,7 +221,7 @@ extern unsigned int apply_compiled();
 
 extern BOOLEAN core_library_loaded;
 
-extern BOOLEAN console_mode, single_expression_mode;
+extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 //variables related to profiling
 double wall_time_var;
@@ -506,7 +506,7 @@ OBJECT_PTR create_current_continuation()
 
 void raise_error(char *err_str)
 {
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     show_error_dialog(err_str);
 

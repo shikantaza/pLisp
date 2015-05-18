@@ -103,7 +103,7 @@ extern exp_pkg(GtkWidget *, gpointer);
 
 extern BOOLEAN in_break;
 
-extern BOOLEAN console_mode;
+extern BOOLEAN console_mode, pipe_mode;
 extern BOOLEAN image_mode;
 
 GtkSourceLanguage *source_language;
@@ -146,7 +146,7 @@ void transcript_backspace()
 
 void print_to_transcript(char * str)
 {
-  if(console_mode)
+  if(console_mode || pipe_mode)
     fprintf(stdout, "%s", str);
   else
   {

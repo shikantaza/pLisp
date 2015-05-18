@@ -111,6 +111,7 @@ BOOLEAN console_mode = false;
 BOOLEAN image_mode = false;
 BOOLEAN single_expression_mode = false;
 BOOLEAN interpreter_mode = false;
+BOOLEAN pipe_mode = false;
 
 extern unsigned int current_package;
 
@@ -394,7 +395,7 @@ int main(int argc, char **argv)
   int opt, i;
   char *expression;
 
-  while((opt = getopt(argc, argv, "i:cnl:e:")) != -1)
+  while((opt = getopt(argc, argv, "i:cnl:e:p")) != -1)
   {
     switch(opt)
     {
@@ -412,27 +413,32 @@ int main(int argc, char **argv)
       case 'n':
         interpreter_mode = true;
         break;
+      case 'p':
+        pipe_mode = true;
+        break;
       case 'l':
         core_library_file_name = strdup(optarg);
         break;
       default:
-	fprintf(stderr, "Usage: %s [-i imagefile] [-l libfile] -n [-c | -e exp]\n", argv[0]);
+	fprintf(stderr, "Usage: %s [-i imagefile] [-l libfile] -n [-c | -e exp | -p]\n", argv[0]);
 	exit(EXIT_FAILURE);
     }
   }
 
-  if(console_mode && single_expression_mode)
+  if(console_mode && single_expression_mode ||
+    console_mode && pipe_mode               ||
+    single_expression_mode && pipe_mode)
   {
-    fprintf(stderr, "-c and -e options cannot be invoked together\n");
+    fprintf(stderr, "-c, -p or -e options cannot be combined with each other\n");
     exit(EXIT_FAILURE);
   }
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
     gtk_init(&argc, &argv);
 
   if(image_mode)
   {
-    if(!single_expression_mode)
+    if(!single_expression_mode && !pipe_mode)
     {
       fprintf(stdout, "Loading image...");
       fflush(stdout);
@@ -456,14 +462,14 @@ int main(int argc, char **argv)
     CONS_HALT_NIL = cons(HALT, NIL);
     CONS_RETURN_NIL = cons(RETURN, NIL);
 
-    if(!single_expression_mode)
+    if(!single_expression_mode && !pipe_mode)
       fprintf(stdout, "done\n");    
   }
   else
   {
     initialize();
 
-    if(!console_mode && !single_expression_mode)
+    if(!console_mode && !single_expression_mode && !pipe_mode)
       create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
 			       DEFAULT_TRANSCRIPT_POSY,
 			       DEFAULT_TRANSCRIPT_WIDTH,
@@ -477,6 +483,34 @@ int main(int argc, char **argv)
     }
 
     core_library_loaded = true;
+  }
+
+  if(pipe_mode)
+  {
+    char *cmd = NULL;
+    int nbytes = 1000;
+
+    while(1)
+    {
+      if(cmd)
+	free(cmd);
+
+      cmd = (char *)malloc((nbytes + 1) * sizeof(char));
+      getline(&cmd, &nbytes, stdin);
+
+      if(!strcmp(cmd, "(quit)\n"))
+	 break;
+
+      yy_scan_string(cmd);
+      yyparse();
+      repl(1);
+    }
+
+    if(cmd)
+      free(cmd);
+
+    cleanup();
+    exit(0);    
   }
 
   if(single_expression_mode)
@@ -653,7 +687,7 @@ int repl(int mode)
     /*     return 1; */
     /* } */
 
-    if((console_mode || single_expression_mode) && core_library_loaded)
+    if((console_mode || single_expression_mode || pipe_mode) && core_library_loaded)
     {
       char buf[500];
       memset(buf, 500, '\0');
@@ -665,7 +699,7 @@ int repl(int mode)
     }
     else
     {
-      if(!console_mode && !single_expression_mode)
+      if(!console_mode && !single_expression_mode && !pipe_mode)
       {
 	if(!in_error && core_library_loaded && !debug_mode)
 	{
@@ -696,7 +730,7 @@ int repl(int mode)
 
 int load_core_library()
 {
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
     print_to_transcript("Loading core library...");
   else if(console_mode)
   {
@@ -743,7 +777,7 @@ int load_core_library()
 
   core_library_loaded = true;
 
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
     print_to_transcript(" done\n");
   else if(console_mode)
   {

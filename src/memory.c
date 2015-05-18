@@ -62,7 +62,7 @@ extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
 
 extern hashtable_t *ht;
 
-extern BOOLEAN console_mode, single_expression_mode;
+extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 //forward declarations
 
@@ -529,7 +529,7 @@ uintptr_t object_alloc(int size, int tag)
 
   if(err)
   {
-    if(!console_mode && !single_expression_mode)
+    if(!console_mode && !single_expression_mode && !pipe_mode)
     {
       char buf[MAX_STRING_LENGTH];
       memset(buf, '\0', MAX_STRING_LENGTH);

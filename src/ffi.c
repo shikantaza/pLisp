@@ -47,7 +47,7 @@ extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
 
-extern BOOLEAN console_mode, single_expression_mode;
+extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);

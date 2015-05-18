@@ -38,7 +38,7 @@ extern FILE *yyin;
 
 extern void print_to_workspace();
 
-extern BOOLEAN console_mode, single_expression_mode;
+extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 %}
 
@@ -246,7 +246,7 @@ expressions:
 
 int yyerror(char *s)
 {
-  if(!console_mode && !single_expression_mode)
+  if(!console_mode && !single_expression_mode && !pipe_mode)
     print_to_workspace("Syntax error in expression");
   else
     fprintf(stdout, "Syntax error in expression\n");

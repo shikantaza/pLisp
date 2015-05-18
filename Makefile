@@ -17,7 +17,7 @@
 
 OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o indent.o
 
-CC	= gcc
+CC	= gcc -fPIC
 CFLAGS	= -g `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` `pkg-config --cflags gtksourceview-3.0`-I/usr/local/include -L/usr/local/lib
 
 all:	plisp libplisp.so libtest.so
