@@ -547,7 +547,7 @@ int repl(int mode)
   if(!g_expr)
     return 0;
 
-  if(g_expr->type == LIST && !strcmp(g_expr->elements[0]->atom_value,"QUIT"))
+  if(g_expr->type == LIST && g_expr->elements[0]->type == SYMBOL && !strcmp(g_expr->elements[0]->atom_value,"QUIT"))
   {
     if(console_mode)
     {

@@ -90,6 +90,13 @@
   `(let ((,var '()))
      (set ,var ,exp)))
 
+(defun y-operator (f)
+  ((lambda (x) (f (x x)))
+   (lambda (x) (f (x x)))))
+
+(defmacro rec1 (i e)
+  `(y-operator (lambda (,i) ,e)))
+
 (defun map (f lst)
   (if (null lst)
       nil
@@ -97,6 +104,19 @@
 
 (defmacro let (specs &rest body)
   `((lambda ,(map car specs) ,@body) ,@(map cadr specs)))
+
+(defun letrec-helper (sym lst)
+  (let ((bind-vars (map car lst))
+        (bind-exps (map cadr lst)))
+    (let ((f (lambda (x)
+              (list 'lambda bind-vars x))))
+    (cons sym (map f bind-exps)))))
+
+(defmacro letrec (specs &rest body)
+  (let ((ict (gensym))
+        (isel (gensym)))
+    `((rec ,ict (lambda (,isel) (,isel ,(letrec-helper ict specs))))
+      (lambda ,(map car specs) ,@body))))
 
 (defun assoc (x y)
   (assert (listp y) "Second argument to ASSOC should be a list of CONS objects")
