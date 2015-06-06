@@ -1079,7 +1079,44 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
   if(car_obj == BACKQUOTE || car_obj == COMMA || car_obj == COMMA_AT || car_obj == QUOTE)
     macro_form = true;
- 
+
+  //to handle applications (a b c)
+  if(IS_SYMBOL_OBJECT(car_obj) && !macro_form)
+  {
+    int i;
+
+    char *s = get_symbol_name(car_obj);
+
+    length += sprintf(buf+filled_buf_len+length, "(%s", s);
+
+    if(cdr(obj) != NIL)
+    {
+      length += sprintf(buf+filled_buf_len+length, " ");
+
+      length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+
+      OBJECT_PTR rest = CDDR(obj);
+
+      while(rest != NIL)
+      {
+        length += sprintf(buf+filled_buf_len+length, "\n");
+
+        for(i=0; i<indents+1; i++)
+          length += sprintf(buf+filled_buf_len+length, " ");
+
+        for(i=0; i<strlen(s); i++)
+          length += sprintf(buf+filled_buf_len+length, " ");
+
+        length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+
+        rest = cdr(rest);
+      }
+    }
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
   if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
   {
     if(macro_form)
