@@ -366,6 +366,8 @@ unsigned int conti()
 
 unsigned int frame1(OBJECT_PTR exp)
 {
+  assert(length(reg_current_stack) <= MAX_STACK_DEPTH);
+
   reg_current_stack = cons(create_call_frame(CADR(car(exp)),
 					     reg_current_env,
 					     reg_current_value_rib,
@@ -378,6 +380,8 @@ unsigned int frame1(OBJECT_PTR exp)
 
 unsigned int frame(OBJECT_PTR exp)
 {
+  assert(length(reg_current_stack) <= MAX_STACK_DEPTH);
+
   reg_current_stack = cons(create_call_frame(CADR(exp),
 					     reg_current_env,
 					     reg_current_value_rib,
