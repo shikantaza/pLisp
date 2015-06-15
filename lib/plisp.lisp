@@ -366,11 +366,18 @@
     (cons (apply f (map car lists))
           (apply mapcar (concat (list f) (map cdr lists))))))
 
-(defun flatten (lst)
+(defun flatten-old (lst)
   (let ((flattened-list))
     (dolist (x lst)
       (set flattened-list (append flattened-list x)))
     flattened-list))
+
+(defun flatten (lst)
+  (apply concat (map (lambda (x)
+                       (if (listp x)
+                           x
+                         (list x)))
+                     lst)))
 
 (defmacro mapcan (f &rest lists)  
   `(flatten (mapcar ,f ,@lists))) 

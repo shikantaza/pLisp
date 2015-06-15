@@ -262,7 +262,10 @@
               1)))
 
 (defun free-ids-il (exp)
-  (cond ((symbolp exp) exp)
+  (cond ((null exp) nil)
+        ((symbolp exp) (if (primop exp)
+                           nil
+                         (list exp)))
         ((atom exp) nil)
         ((eq (car exp)
              'if) (union (free-ids-il (second exp))
@@ -282,8 +285,8 @@
              'error) (free-ids-il (second exp)))
         ((eq (car exp)
              'call-cc) (free-ids-il (second exp)))
-        (t (cons (free-ids-il (car exp))
-                 (free-ids-il (cdr exp))))))
+        (t (flatten (cons (free-ids-il (car exp))
+                          (free-ids-il (cdr exp)))))))
 
 (defun simplify-il-empty-let (exp)
   (cond ((atom exp) exp)
@@ -474,4 +477,74 @@
                       (list ians)
                       (list 'error
                             ians))))))
+
+(defun closure-conv-transform (exp)
+  (cond ((null exp) nil)
+        ((atom exp) exp)
+        ((eq (car exp)
+             'lambda) (closure-conv-transform-abs exp))
+        ((eq (car exp)
+             'let) (if (consp (second (first (second exp))))
+                       (closure-conv-transform-let exp)
+                     (cons (closure-conv-transform (car exp))
+                           (closure-conv-transform (cdr exp)))))
+        ((primop (car exp)) (concat (list (car exp))
+                                    (map closure-conv-transform
+                                         (cdr exp))))
+        (t (closure-conv-transform-app exp))))
+
+(defun closure-conv-transform-abs (exp)
+  (let ((free-ids (free-ids-il exp))
+        (iclo (gensym)))
+    (if (null free-ids)
+        (concat (list 'list)
+                (list (list 'lambda
+                            (concat (list iclo)
+                                    (second exp))
+                            (closure-conv-transform (third exp)))))
+      (concat (list 'list)
+              (list (list 'lambda
+                          (concat (list iclo)
+                                  (second exp))
+                          (list 'let1
+                                (map (lambda (n)
+                                       (list (nth n
+                                                  free-ids)
+                                             (list 'nth
+                                                   (+ n
+                                                      1)
+                                                   iclo)))
+                                     (range 0
+                                            (- (length free-ids)
+                                               1)
+                                            1))
+                                (closure-conv-transform (third exp)))))
+              free-ids))))
+
+(defun closure-conv-transform-let (exp)
+  (let ((exp1 (closure-conv-transform (second (first (second exp)))))
+        (icode (gensym)))
+    (list 'let1
+          (list (list icode
+                      (second exp1))
+                (list (first (first (second exp)))
+                      (concat (list 'list
+                                    icode)
+                              (cddr exp1))))
+          (closure-conv-transform (third exp)))))
+
+(defun closure-conv-transform-app (exp)
+  (let ((iclo (gensym))
+        (icode (gensym)))
+    (list 'let1
+          (list (list iclo
+                      (closure-conv-transform (first exp)))
+                (list icode
+                      (list 'nth
+                            0
+                            iclo)))
+          (concat (list icode
+                        iclo)
+                  (map closure-conv-transform
+                       (cdr exp))))))
 
