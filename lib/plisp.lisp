@@ -349,14 +349,22 @@
   (assert (and (>= n 1) (<= n (length lst))) "Second argument to BUTLAST should be a positive integer less than or equal to the length of the list")
   (sub-list lst 0 (- (length lst) n)))
 
-(defun mapcar (f &rest lists)  
+(defun mapcar-old (f &rest lists)  
   (let ((min-length (min (map length lists)))
 	(result nil)
 	(i 0))
     (while (< i min-length)
+      (print result)
+      (break)
       (set result (append result (list (apply f (map (curry nth i) lists)))))
       (incf i))
     result))
+
+(defun mapcar (f &rest lists)
+  (if (eq (car lists) nil)
+      nil
+    (cons (apply f (map car lists))
+          (apply mapcar (concat (list f) (map cdr lists))))))
 
 (defun flatten (lst)
   (let ((flattened-list))

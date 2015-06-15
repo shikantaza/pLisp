@@ -80,7 +80,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     return NIL;
   }
 
-  int nof_args = length(args);
+  int nof_args = cons_length(args);
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
   if(!arg_types)
@@ -358,7 +358,7 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
 //but this is simpler and cleaner
 int format(OBJECT_PTR args)
 {
-  int nof_args = length(args);
+  int nof_args = cons_length(args);
   int i;
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
@@ -487,7 +487,7 @@ void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args
 
 int format_for_gui(OBJECT_PTR args)
 {
-  int nof_args = length(args);
+  int nof_args = cons_length(args);
   int i;
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));

@@ -366,7 +366,7 @@ unsigned int conti()
 
 unsigned int frame1(OBJECT_PTR exp)
 {
-  assert(length(reg_current_stack) <= MAX_STACK_DEPTH);
+  assert(cons_length(reg_current_stack) <= MAX_STACK_DEPTH);
 
   reg_current_stack = cons(create_call_frame(CADR(car(exp)),
 					     reg_current_env,
@@ -380,7 +380,7 @@ unsigned int frame1(OBJECT_PTR exp)
 
 unsigned int frame(OBJECT_PTR exp)
 {
-  assert(length(reg_current_stack) <= MAX_STACK_DEPTH);
+  assert(cons_length(reg_current_stack) <= MAX_STACK_DEPTH);
 
   reg_current_stack = cons(create_call_frame(CADR(exp),
 					     reg_current_env,
@@ -473,7 +473,7 @@ unsigned int add()
   OBJECT_PTR rest = reg_current_value_rib;
   BOOLEAN is_float = false;
 
-  if(length(reg_current_value_rib) < 2)
+  if(cons_length(reg_current_value_rib) < 2)
   {
     throw_exception("ARG-MISMATCH", "Operator '+' requires at least two arguments");
     return 1;
@@ -519,7 +519,7 @@ unsigned int sub()
 
   float sum = 0;
 
-  if(length(reg_current_value_rib) < 2)
+  if(cons_length(reg_current_value_rib) < 2)
   {
     throw_exception("ARG-MISMATCH", "Operator '-' requires at least two arguments");
     return 1;
@@ -577,7 +577,7 @@ unsigned int eq()
 {
   OBJECT_PTR v1, v2;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "EQ expects two arguments");
     return 1;
@@ -669,7 +669,7 @@ unsigned int break1()
 
 unsigned int cons_compiled()
 {
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "CONS expects two arguments");
     return 1;
@@ -687,7 +687,7 @@ unsigned int neq()
 {
   OBJECT_PTR v1, v2;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
     {
       throw_exception("ARG-MISMATCH", "NEQ expects two arguments");
       return 1;
@@ -707,7 +707,7 @@ unsigned int not()
 {
   OBJECT_PTR v;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "NOT expects one argument");
     return 1;
@@ -726,7 +726,7 @@ unsigned int atom()
 {
   OBJECT_PTR v;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_generic_exception("ATOM expects one argument");
     return 1;
@@ -745,7 +745,7 @@ unsigned int car_compiled()
 {
   OBJECT_PTR car_obj;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("NOT-A-CONS", "CAR expects one argument, a CONS object");
     return 1;
@@ -775,7 +775,7 @@ unsigned int cdr_compiled()
 {
   OBJECT_PTR car_obj;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("NOT-A-CONS", "CDR expects one argument, a CONS object");
     return 1;
@@ -808,7 +808,7 @@ unsigned int mult()
   OBJECT_PTR rest = reg_current_value_rib;
   BOOLEAN is_float = false;
 
-  if(length(reg_current_value_rib) < 2)
+  if(cons_length(reg_current_value_rib) < 2)
   {
     throw_exception("ARG-MISMATCH", "Operator '*' requires at least two arguments");
     return 1;
@@ -855,7 +855,7 @@ unsigned int div_compiled()
 
   float sum = 1;
 
-  if(length(reg_current_value_rib) < 2)
+  if(cons_length(reg_current_value_rib) < 2)
   {
     throw_exception("ARG-MISMATCH", "Operator '/' requires at least two arguments");
     return 1;
@@ -959,7 +959,7 @@ unsigned int print()
 
 unsigned int newline()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
     return;
@@ -1030,7 +1030,7 @@ unsigned int listp()
 {
   OBJECT_PTR arg;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "LISTP requires exactly one argument");
     return 1;
@@ -1053,7 +1053,7 @@ unsigned int symbol_value()
 {
   OBJECT_PTR sym, res;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "SYMBOL-VALUE requires exactly one argument");
     return 1;
@@ -1089,7 +1089,7 @@ unsigned int gt()
   OBJECT_PTR v1, v2;
   float val1, val2;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "> requires exactly two arguments");
     return 1;
@@ -1128,7 +1128,7 @@ unsigned int lt()
   OBJECT_PTR v1, v2;
   float val1, val2;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "< requires exactly two arguments");
     return 1;
@@ -1167,7 +1167,7 @@ unsigned int leq()
   OBJECT_PTR v1, v2;
   float val1, val2;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "<= requires exactly two arguments");
     return 1;
@@ -1206,7 +1206,7 @@ unsigned int geq()
   OBJECT_PTR v1, v2;
   float val1, val2;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", ">= requires exactly two arguments");
     return 1;
@@ -1259,7 +1259,7 @@ unsigned int setcar()
 {
   OBJECT_PTR car_obj;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "SETCAR requires two arguments");
     return 1;
@@ -1287,7 +1287,7 @@ unsigned int setcdr()
 {
   OBJECT_PTR car_obj;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "SETCDR requires two arguments");
     return 1;
@@ -1316,7 +1316,7 @@ unsigned int create_package_compiled()
   OBJECT_PTR package;
   char *package_name;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CREATE-PACKAGE requires exactly one argument");
     return 1;
@@ -1359,7 +1359,7 @@ unsigned int in_package()
   OBJECT_PTR package;
   char *package_name;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "IN-PACKAGE requires exactly one argument");
     return 1;
@@ -1405,7 +1405,7 @@ unsigned int expand_macro()
 {
   OBJECT_PTR macro_body, res;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "EXPAND-MACRO requires exactly one argument");
     return 1;
@@ -1480,7 +1480,7 @@ unsigned int apply()
 {
   OBJECT_PTR obj, args;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "APPLY requires exactly two arguments");
     return 1;
@@ -1516,7 +1516,7 @@ unsigned int string()
 {
   OBJECT_PTR string_literal;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "STRING requires exactly one argument, a literal string");
     return 1;
@@ -1540,7 +1540,7 @@ unsigned int string()
 
 unsigned int make_array()
 {
-  int len = length(reg_current_value_rib);
+  int len = cons_length(reg_current_value_rib);
   OBJECT_PTR size;
 
   if((len != 1) && (len != 2))
@@ -1571,7 +1571,7 @@ unsigned int array_set()
   uintptr_t ptr;
   int array_len, index;
 
-  if(length(reg_current_value_rib) != 3)
+  if(cons_length(reg_current_value_rib) != 3)
   {
     throw_exception("ARG-MISMATCH", "ARRAY-SET requires exactly three arguments");
     return 1;
@@ -1622,7 +1622,7 @@ unsigned int array_get()
   uintptr_t ptr;
   int index;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "ARRAY-GET requires exactly two arguments");
     return 1;
@@ -1687,7 +1687,7 @@ unsigned int sub_array()
 
   int len;
 
-  if(length(reg_current_value_rib) != 3)
+  if(cons_length(reg_current_value_rib) != 3)
   {
     throw_exception("ARG-MISMATCH", "SUB-ARRAY requires exactly three arguments");
     return 1;
@@ -1749,7 +1749,7 @@ unsigned int array_length()
 {
   OBJECT_PTR array;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "ARRAY-LENGTH requires exactly one argument, an array object");
     return 1;
@@ -1789,7 +1789,7 @@ unsigned int print_string_compiled()
 {
   OBJECT_PTR str;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "PRINT-STRING requires exactly one argument, a string object");
     return 1;
@@ -1818,7 +1818,7 @@ unsigned int create_image_compiled()
 {
   OBJECT_PTR file_name;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CREATE-IMAGE requires exactly one argument, a string object denoting the file name of the image");
     return 1;
@@ -1854,7 +1854,7 @@ unsigned int load_foreign_library_compiled()
   char *fname;
   void *ret;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "LOAD-FOREIGN-LIBRARY requires exactly one argument, a string object denoting the library name");
     return 1;
@@ -1916,7 +1916,7 @@ unsigned int call_foreign_function_compiled()
 {
   OBJECT_PTR fn_name, ret_type, args, rest_args;
 
-  if(length(reg_current_value_rib) != 3)
+  if(cons_length(reg_current_value_rib) != 3)
   {
     throw_exception("ARG-MISMATCH", "CALL-FOREIGN-FUNCTION requires exactly three arguments");
     return 1;
@@ -1966,7 +1966,7 @@ unsigned int call_foreign_function_compiled()
       return 1;
     }
 
-    if(length(car_rest_args) != 2)
+    if(cons_length(car_rest_args) != 2)
     {
       throw_exception("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 3");
       return 1;
@@ -2340,7 +2340,7 @@ unsigned int load_file()
 
   int ret;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "LOAD-FILE requires exactly one argument");
     return 1;
@@ -2384,7 +2384,7 @@ unsigned int load_file()
 
 unsigned int consp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CONSP requires exactly one argument");
     return 1;
@@ -2399,7 +2399,7 @@ unsigned int consp()
 
 unsigned int integerp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "INTEGERP requires exactly one argument");
     return 1;
@@ -2414,7 +2414,7 @@ unsigned int integerp()
 
 unsigned int floatp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "FLOATP requires exactly one argument");
     return 1;
@@ -2429,7 +2429,7 @@ unsigned int floatp()
 
 unsigned int characterp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CHARACTERP requires exactly one argument");
     return 1;
@@ -2444,7 +2444,7 @@ unsigned int characterp()
 
 unsigned int symbolp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
    {
      throw_exception("ARG-MISMATCH", "SYMBOLP requires exactly one argument");
      return 1;
@@ -2459,7 +2459,7 @@ unsigned int symbolp()
 
 unsigned int stringp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "STRINGP requires exactly one argument");
     return 1;
@@ -2476,7 +2476,7 @@ unsigned int arrayp()
 {
   OBJECT_PTR obj;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "ARRAYP requires exactly one argument");
     return 1;
@@ -2492,7 +2492,7 @@ unsigned int arrayp()
 
 unsigned int closurep()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CLOSUREP requires exactly one argument");
     return 1;
@@ -2507,7 +2507,7 @@ unsigned int closurep()
 
 unsigned int macrop()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "MACROP requires exactly one argument");
     return 1;
@@ -2522,7 +2522,7 @@ unsigned int macrop()
 
 unsigned int continuationp()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CONTINUATIONP requires exactly one argument");
     return 1;
@@ -2539,7 +2539,7 @@ unsigned int lambda_expression()
 {
   OBJECT_PTR obj;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "LAMBDA-EXPRESSION requires exactly one argument, a closure or macro object");
     return 1;
@@ -2563,7 +2563,7 @@ unsigned int lambda_expression()
 unsigned int format_compiled()
 {
   OBJECT_PTR rest;
-  if(length(reg_current_value_rib) < 2)
+  if(cons_length(reg_current_value_rib) < 2)
   {
     throw_exception("ARG-MISMATCH", "FORMAT requires at least two arguments, a file descriptor and a format specification string");
     return 1;
@@ -2628,7 +2628,7 @@ unsigned int format_compiled()
 
 unsigned int clone()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "CLONE takes exactly one parameter, the object to be cloned");
     return 1;
@@ -2645,7 +2645,7 @@ unsigned int return_from()
 {
   OBJECT_PTR cont;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "RETURN-FROM requires two parameters: the closure/macro from which to return, and the value to be returned");
     return 1;
@@ -2672,7 +2672,7 @@ unsigned int compile_compiled()
 {
   OBJECT_PTR temp;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "COMPILE needs two arguments, an expression to be compiled and a 'next' expression");
     return 1;
@@ -2697,7 +2697,7 @@ unsigned int symbl()
 {
   OBJECT_PTR str;
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "SYMBOL needs one argument, a string object/literal");
     return 1;
@@ -2744,7 +2744,7 @@ unsigned int symbol_name()
   OBJECT_PTR sym;
   char buf[SYMBOL_STRING_SIZE];
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "SYMBOL-NAME requires exactly one argument, a symbol object");
     return 1;
@@ -2783,7 +2783,7 @@ unsigned int unbind()
   /*   return; */
   /* } */
 
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "UNBIND requires exactly one argument, a symbol object");
     return 1;
@@ -2858,7 +2858,7 @@ unsigned int abort_compiled()
 
 unsigned int save_object()
 {
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "SAVE-OBJECT requires exactly two arguments, an object and a file name");
     return 1;
@@ -2889,7 +2889,7 @@ unsigned int save_object()
 
 unsigned int load_object()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "LOAD-OBJECT requires exactly one argument, a file name");
     return 1;
@@ -2925,7 +2925,7 @@ unsigned int load_object()
 
 unsigned int compilefn()
 {
-  if(length(reg_current_value_rib) != 1)
+  if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "COMPILE-FN requires exactly one argument, a closure or a macro object");
     return 1;
@@ -2964,7 +2964,7 @@ unsigned int export_package()
   OBJECT_PTR package, file;
   char *package_name, *file_name;
 
-  if(length(reg_current_value_rib) != 2)
+  if(cons_length(reg_current_value_rib) != 2)
   {
     throw_exception("ARG-MISMATCH", "EXPORT-PACKAGE requires exactly two arguments");
     return 1;
@@ -3409,7 +3409,7 @@ unsigned int apply_compiled()
     }
     else if(IS_CONTINUATION_OBJECT(reg_accumulator))
     {
-      if(length(reg_current_value_rib) != 1)
+      if(cons_length(reg_current_value_rib) != 1)
       {
 	throw_generic_exception("Continuations take exactly one argument");
 	return 1;
