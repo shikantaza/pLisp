@@ -200,7 +200,7 @@
   (if (null (second exp))
       (third exp)
     (list 'let
-          (list (car (second exp)))
+          (list (first (second exp)))
           (desugar-il (list 'let1
                             (cdr (second exp))
                             (third exp))))))
@@ -506,45 +506,66 @@
               (list (list 'lambda
                           (concat (list iclo)
                                   (second exp))
-                          (list 'let1
-                                (map (lambda (n)
-                                       (list (nth n
-                                                  free-ids)
-                                             (list 'nth
-                                                   (+ n
-                                                      1)
-                                                   iclo)))
-                                     (range 0
-                                            (- (length free-ids)
-                                               1)
-                                            1))
-                                (closure-conv-transform (third exp)))))
+                          (desugar-il (list 'let1
+                                            (map (lambda (n)
+                                                   (list (nth n
+                                                              free-ids)
+                                                         (list 'nth
+                                                               (+ n
+                                                                  1)
+                                                               iclo)))
+                                                 (range 0
+                                                        (- (length free-ids)
+                                                           1)
+                                                        1))
+                                            (closure-conv-transform (third exp))))))
               free-ids))))
 
 (defun closure-conv-transform-let (exp)
   (let ((exp1 (closure-conv-transform (second (first (second exp)))))
         (icode (gensym)))
-    (list 'let1
-          (list (list icode
-                      (second exp1))
-                (list (first (first (second exp)))
-                      (concat (list 'list
-                                    icode)
-                              (cddr exp1))))
-          (closure-conv-transform (third exp)))))
+    (desugar-il (list 'let1
+                      (list (list icode
+                                  (second exp1))
+                            (list (first (first (second exp)))
+                                  (concat (list 'list
+                                                icode)
+                                          (cddr exp1))))
+                      (closure-conv-transform (third exp))))))
 
 (defun closure-conv-transform-app (exp)
   (let ((iclo (gensym))
         (icode (gensym)))
-    (list 'let1
-          (list (list iclo
-                      (closure-conv-transform (first exp)))
-                (list icode
-                      (list 'nth
-                            0
-                            iclo)))
-          (concat (list icode
-                        iclo)
-                  (map closure-conv-transform
-                       (cdr exp))))))
+    (desugar-il (list 'let1
+                      (list (list iclo
+                                  (closure-conv-transform (first exp)))
+                            (list icode
+                                  (list 'nth
+                                        0
+                                        iclo)))
+                      (concat (list icode
+                                    iclo)
+                              (map closure-conv-transform
+                                   (cdr exp)))))))
+
+(defun lift-transform (exp bindings)
+  (cond ((atom exp) (cons exp
+                          bindings))
+        ((eq (first exp)
+             'lambda) (let ((sym (gensym))
+                            (res (lift-transform (third exp)
+                                                 bindings)))
+                        (cons sym
+                              (concat (list (cons sym
+                                                  (list 'lambda
+                                                        (second exp)
+                                                        (car res))))
+                                      (cdr res)))))
+        (t (let ((car-res (lift-transform (car exp)
+                                          bindings)))
+             (let ((cdr-res (lift-transform (cdr exp)
+                                            (cdr car-res))))
+               (cons (cons (car car-res)
+                           (car cdr-res))
+                     (cdr cdr-res)))))))
 
