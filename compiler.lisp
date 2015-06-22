@@ -506,47 +506,47 @@
               (list (list 'lambda
                           (concat (list iclo)
                                   (second exp))
-                          (desugar-il (list 'let1
-                                            (map (lambda (n)
-                                                   (list (nth n
-                                                              free-ids)
-                                                         (list 'nth
-                                                               (+ n
-                                                                  1)
-                                                               iclo)))
-                                                 (range 0
-                                                        (- (length free-ids)
-                                                           1)
-                                                        1))
-                                            (closure-conv-transform (third exp))))))
+                          (list 'let1
+                                (map (lambda (n)
+                                       (list (nth n
+                                                  free-ids)
+                                             (list 'nth
+                                                   (+ n
+                                                      1)
+                                                   iclo)))
+                                     (range 0
+                                            (- (length free-ids)
+                                               1)
+                                            1))
+                                (closure-conv-transform (third exp)))))
               free-ids))))
 
 (defun closure-conv-transform-let (exp)
   (let ((exp1 (closure-conv-transform (second (first (second exp)))))
         (icode (gensym)))
-    (desugar-il (list 'let1
-                      (list (list icode
-                                  (second exp1))
-                            (list (first (first (second exp)))
-                                  (concat (list 'list
-                                                icode)
-                                          (cddr exp1))))
-                      (closure-conv-transform (third exp))))))
+    (list 'let1
+          (list (list icode
+                      (second exp1))
+                (list (first (first (second exp)))
+                      (concat (list 'list
+                                    icode)
+                              (cddr exp1))))
+          (closure-conv-transform (third exp)))))
 
 (defun closure-conv-transform-app (exp)
   (let ((iclo (gensym))
         (icode (gensym)))
-    (desugar-il (list 'let1
-                      (list (list iclo
-                                  (closure-conv-transform (first exp)))
-                            (list icode
-                                  (list 'nth
-                                        0
-                                        iclo)))
-                      (concat (list icode
-                                    iclo)
-                              (map closure-conv-transform
-                                   (cdr exp)))))))
+    (list 'let1
+          (list (list iclo
+                      (closure-conv-transform (first exp)))
+                (list icode
+                      (list 'nth
+                            0
+                            iclo)))
+          (concat (list icode
+                        iclo)
+                  (map closure-conv-transform
+                       (cdr exp))))))
 
 (defun lift-transform (exp bindings)
   (cond ((atom exp) (cons exp
@@ -568,4 +568,124 @@
                (cons (cons (car car-res)
                            (car cdr-res))
                      (cdr cdr-res)))))))
+
+(defun id (x)
+  x)
+
+(define exp0
+        (+ a
+           3))
+
+(define exp1
+        (+ a
+           3))
+
+(define exp2
+        (+ a
+           3))
+
+(define exp3
+        (+ a
+           3))
+
+(define exp4
+        (lambda (#:g0192)
+          ((lambda (#:g0197)
+             (#:g0197 a)) (lambda (#:g0193)
+                            ((lambda (#:g0196)
+                               (#:g0196 3)) (lambda (#:g0194)
+                                              (let ((#:g0195 (+ #:g0193
+                                                                #:g0194)))
+                                                (#:g0192 #:g0195))))))))
+
+(define exp5
+        (list (lambda (#:g0198 #:g0192)
+                (let ((a (nth 1
+                              #:g0198)))
+                  (let ((#:g0200 (list (lambda (#:g0211 #:g0197)
+                                         (let ((a (nth 1
+                                                       #:g0211)))
+                                           (let ((#:g0213 #:g0197))
+                                             (let ((#:g0212 (nth 0
+                                                                 #:g0213)))
+                                               (#:g0212 #:g0213
+                                                        a)))))
+                                       a)))
+                    (let ((#:g0199 (nth 0
+                                        #:g0200)))
+                      (#:g0199 #:g0200
+                               (list (lambda (#:g0201 #:g0193)
+                                       (let ((#:g0192 (nth 1
+                                                           #:g0201)))
+                                         (let ((#:g0203 (list (lambda (#:g0208 #:g0196)
+                                                                (let ((#:g0210 #:g0196))
+                                                                  (let ((#:g0209 (nth 0
+                                                                                      #:g0210)))
+                                                                    (#:g0209 #:g0210
+                                                                             3)))))))
+                                           (let ((#:g0202 (nth 0
+                                                               #:g0203)))
+                                             (#:g0202 #:g0203
+                                                      (list (lambda (#:g0204 #:g0194)
+                                                              (let ((#:g0192 (nth 1
+                                                                                  #:g0204)))
+                                                                (let ((#:g0205 #:g0193))
+                                                                  (let ((#:g0195 (list #:g0205
+                                                                                       #:g0194)))
+                                                                    (let ((#:g0207 #:g0192))
+                                                                      (let ((#:g0206 (nth 0
+                                                                                          #:g0207)))
+                                                                        (#:g0206 #:g0207
+                                                                                 #:g0195)))))))
+                                                            #:g0192))))))
+                                     #:g0192))))))
+              a))
+
+(define exp6
+        ((list #:g0218
+               a) (#:g0218 lambda
+                           (#:g0198 #:g0192)
+                           (let ((a (nth 1
+                                         #:g0198)))
+                             (let ((#:g0200 (list #:g0214
+                                                  a)))
+                               (let ((#:g0199 (nth 0
+                                                   #:g0200)))
+                                 (#:g0199 #:g0200
+                                          (list #:g0217
+                                                #:g0192)))))) (#:g0217 lambda
+                                                                       (#:g0201 #:g0193)
+                                                                       (let ((#:g0192 (nth 1
+                                                                                           #:g0201)))
+                                                                         (let ((#:g0203 (list #:g0215)))
+                                                                           (let ((#:g0202 (nth 0
+                                                                                               #:g0203)))
+                                                                             (#:g0202 #:g0203
+                                                                                      (list #:g0216
+                                                                                            #:g0192)))))) (#:g0216 lambda
+                                                                                                                   (#:g0204 #:g0194)
+                                                                                                                   (let ((#:g0192 (nth 1
+                                                                                                                                       #:g0204)))
+                                                                                                                     (let ((#:g0205 #:g0193))
+                                                                                                                       (let ((#:g0195 (list #:g0205
+                                                                                                                                            #:g0194)))
+                                                                                                                         (let ((#:g0207 #:g0192))
+                                                                                                                           (let ((#:g0206 (nth 0
+                                                                                                                                               #:g0207)))
+                                                                                                                             (#:g0206 #:g0207
+                                                                                                                                      #:g0195))))))) (#:g0215 lambda
+                                                                                                                                                              (#:g0208 #:g0196)
+                                                                                                                                                              (let ((#:g0210 #:g0196))
+                                                                                                                                                                (let ((#:g0209 (nth 0
+                                                                                                                                                                                    #:g0210)))
+                                                                                                                                                                  (#:g0209 #:g0210
+                                                                                                                                                                           3)))) (#:g0214 lambda
+                                                                                                                                                                                          (#:g0211 #:g0197)
+                                                                                                                                                                                          (let ((a (nth 1
+                                                                                                                                                                                                        #:g0211)))
+                                                                                                                                                                                            (let ((#:g0213 #:g0197))
+                                                                                                                                                                                              (let ((#:g0212 (nth 0
+                                                                                                                                                                                                                  #:g0213)))
+                                                                                                                                                                                                (#:g0212 #:g0213
+                                                                                                                                                                                                         a)))))))
 
