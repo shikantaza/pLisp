@@ -278,9 +278,12 @@
              'define) (difference (free-ids-il (third exp))
                                   (list (second exp))))
         ((eq (car exp)
-             'let) (difference (free-ids-il (third exp))
-                               (map car
-                                    (second exp))))
+             'let) (union (flatten (map free-ids-il
+                                        (map cadr
+                                             (second exp))))
+                          (difference (free-ids-il (third exp))
+                                      (map car
+                                           (second exp)))))
         ((eq (car exp)
              'error) (free-ids-il (second exp)))
         ((eq (car exp)
@@ -372,7 +375,8 @@
                                     (third exp)
                                     (fourth exp)))
         ((eq (car exp)
-             'error) (cps-transform-error (second exp)))))
+             'error) (cps-transform-error (second exp)))
+        (t (cps-transform-application exp))))
 
 (defun cps-transform-application (exp)
   (let ((ik (gensym)))
@@ -484,13 +488,16 @@
         ((eq (car exp)
              'lambda) (closure-conv-transform-abs exp))
         ((eq (car exp)
-             'let) (if (consp (second (first (second exp))))
-                       (closure-conv-transform-let exp)
-                     (cons (closure-conv-transform (car exp))
-                           (closure-conv-transform (cdr exp)))))
-        ((primop (car exp)) (concat (list (car exp))
-                                    (map closure-conv-transform
-                                         (cdr exp))))
+             'let) (let ((rval (second (first (second exp)))))
+                     (if (consp rval)
+                         (if (eq (first rval) 'lambda)
+                             (closure-conv-transform-let exp)
+                           (list (first exp)
+                                 (second exp)
+                                 (closure-conv-transform (third exp))))
+                       (list (first exp)
+                             (second exp)
+                             (closure-conv-transform (third exp))))))
         (t (closure-conv-transform-app exp))))
 
 (defun closure-conv-transform-abs (exp)
@@ -556,7 +563,7 @@
                             (res (lift-transform (third exp)
                                                  bindings)))
                         (cons sym
-                              (concat (list (cons sym
+                              (concat (list (list sym
                                                   (list 'lambda
                                                         (second exp)
                                                         (car res))))
@@ -569,123 +576,50 @@
                            (car cdr-res))
                      (cdr cdr-res)))))))
 
-(defun id (x)
-  x)
+(defun compile-exp (exp)
+  (let ((res exp))
+    (set res
+         (assignment-conversion res))
+    (set res
+         (translate-to-il res))
+    (set res
+         (ren-transform res
+                        (lambda (x)
+                          x)))
+    (set res
+         (simplify-il res))
+    (set res
+         (cps-transform res))
+    (set res
+         (closure-conv-transform res))
+    (set res
+         (lift-transform res))
+    res))
 
-(define exp0
-        (+ a
-           3))
+(defun build-evaluatable-exp (exp)
+  (let ((clos (gensym)))
+    (list 'let1
+          (concat (reverse (cdr exp))
+                  (list (list clos
+                              (first exp))))
+          (list (list 'car
+                      clos)
+                clos
+                (list 'list
+                      (list 'lambda
+                            (list 'y
+                                  'x)
+                            'x))))))
 
-(define exp1
-        (+ a
-           3))
-
-(define exp2
-        (+ a
-           3))
-
-(define exp3
-        (+ a
-           3))
-
-(define exp4
-        (lambda (#:g0192)
-          ((lambda (#:g0197)
-             (#:g0197 a)) (lambda (#:g0193)
-                            ((lambda (#:g0196)
-                               (#:g0196 3)) (lambda (#:g0194)
-                                              (let ((#:g0195 (+ #:g0193
-                                                                #:g0194)))
-                                                (#:g0192 #:g0195))))))))
-
-(define exp5
-        (list (lambda (#:g0198 #:g0192)
-                (let ((a (nth 1
-                              #:g0198)))
-                  (let ((#:g0200 (list (lambda (#:g0211 #:g0197)
-                                         (let ((a (nth 1
-                                                       #:g0211)))
-                                           (let ((#:g0213 #:g0197))
-                                             (let ((#:g0212 (nth 0
-                                                                 #:g0213)))
-                                               (#:g0212 #:g0213
-                                                        a)))))
-                                       a)))
-                    (let ((#:g0199 (nth 0
-                                        #:g0200)))
-                      (#:g0199 #:g0200
-                               (list (lambda (#:g0201 #:g0193)
-                                       (let ((#:g0192 (nth 1
-                                                           #:g0201)))
-                                         (let ((#:g0203 (list (lambda (#:g0208 #:g0196)
-                                                                (let ((#:g0210 #:g0196))
-                                                                  (let ((#:g0209 (nth 0
-                                                                                      #:g0210)))
-                                                                    (#:g0209 #:g0210
-                                                                             3)))))))
-                                           (let ((#:g0202 (nth 0
-                                                               #:g0203)))
-                                             (#:g0202 #:g0203
-                                                      (list (lambda (#:g0204 #:g0194)
-                                                              (let ((#:g0192 (nth 1
-                                                                                  #:g0204)))
-                                                                (let ((#:g0205 #:g0193))
-                                                                  (let ((#:g0195 (list #:g0205
-                                                                                       #:g0194)))
-                                                                    (let ((#:g0207 #:g0192))
-                                                                      (let ((#:g0206 (nth 0
-                                                                                          #:g0207)))
-                                                                        (#:g0206 #:g0207
-                                                                                 #:g0195)))))))
-                                                            #:g0192))))))
-                                     #:g0192))))))
-              a))
-
-(define exp6
-        ((list #:g0218
-               a) (#:g0218 lambda
-                           (#:g0198 #:g0192)
-                           (let ((a (nth 1
-                                         #:g0198)))
-                             (let ((#:g0200 (list #:g0214
-                                                  a)))
-                               (let ((#:g0199 (nth 0
-                                                   #:g0200)))
-                                 (#:g0199 #:g0200
-                                          (list #:g0217
-                                                #:g0192)))))) (#:g0217 lambda
-                                                                       (#:g0201 #:g0193)
-                                                                       (let ((#:g0192 (nth 1
-                                                                                           #:g0201)))
-                                                                         (let ((#:g0203 (list #:g0215)))
-                                                                           (let ((#:g0202 (nth 0
-                                                                                               #:g0203)))
-                                                                             (#:g0202 #:g0203
-                                                                                      (list #:g0216
-                                                                                            #:g0192)))))) (#:g0216 lambda
-                                                                                                                   (#:g0204 #:g0194)
-                                                                                                                   (let ((#:g0192 (nth 1
-                                                                                                                                       #:g0204)))
-                                                                                                                     (let ((#:g0205 #:g0193))
-                                                                                                                       (let ((#:g0195 (list #:g0205
-                                                                                                                                            #:g0194)))
-                                                                                                                         (let ((#:g0207 #:g0192))
-                                                                                                                           (let ((#:g0206 (nth 0
-                                                                                                                                               #:g0207)))
-                                                                                                                             (#:g0206 #:g0207
-                                                                                                                                      #:g0195))))))) (#:g0215 lambda
-                                                                                                                                                              (#:g0208 #:g0196)
-                                                                                                                                                              (let ((#:g0210 #:g0196))
-                                                                                                                                                                (let ((#:g0209 (nth 0
-                                                                                                                                                                                    #:g0210)))
-                                                                                                                                                                  (#:g0209 #:g0210
-                                                                                                                                                                           3)))) (#:g0214 lambda
-                                                                                                                                                                                          (#:g0211 #:g0197)
-                                                                                                                                                                                          (let ((a (nth 1
-                                                                                                                                                                                                        #:g0211)))
-                                                                                                                                                                                            (let ((#:g0213 #:g0197))
-                                                                                                                                                                                              (let ((#:g0212 (nth 0
-                                                                                                                                                                                                                  #:g0213)))
-                                                                                                                                                                                                (#:g0212 #:g0213
-                                                                                                                                                                                                         a)))))))
+(defun simplify-il (exp)
+  (let ((res exp))
+    (set res
+         (simplify-il-empty-let res))
+    (set res
+         (simplify-il-implicit-let res))
+    (set res
+         (simplify-il-eta res))
+    (set res
+         (simplify-il-copy-prop res))
+    res))
 

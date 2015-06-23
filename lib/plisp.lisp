@@ -49,19 +49,32 @@
 (defun null (x)
   (eq x '()))
 
-(defun and (&rest lst)
+(defun andold (&rest lst)
   (if (null lst)
       't
     (if (car lst)
-        (apply and (cdr lst))
-      nil)))
+        (apply andold (cdr lst)))))
 
-(defun or (&rest lst)
+(defmacro and (&rest lst)
+  (if (null lst)
+       t
+    `(if (not ,(car lst))
+        nil
+      (and ,@(cdr lst)))))
+
+(defun orold (&rest lst)
   (if (null lst)
       nil
     (if (car lst)
         't
-      (apply or (cdr lst)))))
+      (apply orold (cdr lst)))))
+
+(defmacro or (&rest lst)
+  (if (null lst)
+      nil
+    `(if ,(car lst)
+        t
+      (or ,@(cdr lst)))))
 
 (defun append (x y)
   (assert (and (listp x) (listp y)) "Arguments to APPEND should be lists")
