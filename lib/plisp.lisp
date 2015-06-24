@@ -259,6 +259,12 @@
 (defun find (e lst predicate)
   (find-if (lambda (x) (predicate x e)) lst))
 
+(defmacro in (sym lst)
+  (if (null lst)
+      nil
+    `(or (eq ,sym ,(car lst))
+         (in ,sym ,(cdr lst)))))
+
 (defun remove-duplicates (lst equality-test)
   (let ((result nil))
     (dolist (x lst)

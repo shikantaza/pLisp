@@ -447,14 +447,13 @@
                                              first-sym))))))
 
 (defun primop (sym)
-  (or (eq sym
-          '+)
-      (eq sym
-          '-)
-      (eq sym
-          '*)
-      (eq sym
-          '/)))
+  (or (arithop sym)
+      (core-op sym)
+      (string-array-op sym)
+      (predicate-op sym)
+      (ffi-op sym)
+      (package-op sym)
+      (serialization-op sym)))
 
 (defun cps-transform-if (test then else)
   (let ((ik (gensym))
@@ -622,4 +621,98 @@
     (set res
          (simplify-il-copy-prop res))
     res))
+
+(defun arithop (sym)
+  (in sym
+      (+ -
+         *
+         /
+         >
+         <
+         <=
+         >=)))
+
+(defun core-op (sym)
+  (in sym
+      (atom eq
+            cons
+            car
+            cdr
+            print
+            symbol-value
+            backquote
+            gensym
+            setcar
+            setcdr
+            comma
+            comma-at
+            apply
+            symbol
+            symbol-name
+            format
+            clone
+            return
+            return-from
+            unbind
+            newline
+            not
+            progn)))
+
+(defun string-array-op (sym)
+  (in sym
+      (string make-array
+              array-get
+              array-set
+              sub-array
+              array-length
+              print-string)))
+
+(defun predicate-op (sym)
+  (in sym
+      (consp listp
+             integerp
+             floatp
+             characterp
+             symbolp
+             stringp
+             arrayp
+             closurep
+             macrop
+             continuationp)))
+
+(defun ffi-op (sym)
+  (in sym
+      (load-foreign-library call-foreign-function)))
+
+(defun package-op (sym)
+  (in sym
+      (create-package in-package
+                      export-package)))
+
+(defun serialization-op (sym)
+  (in sym
+      (create-image save-object
+                    load-object
+                    load-file)))
+
+(defun perf-op (sym)
+  (in sym
+      (profile time)))
+
+(defun debug-op (sym)
+  (in sym
+      (break resume
+             env
+             expand-macro)))
+
+(defun interpreter-specific-op (sym)
+  (in sym
+      (eval)))
+
+(defun expand-macro-full (exp)
+  (cond ((atom exp) exp)
+        ((and (symbolp (car exp))
+              (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
+        (t (cons (expand-macro-full (car exp))
+                 (expand-macro-full (cdr exp))))))
 
