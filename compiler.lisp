@@ -323,7 +323,7 @@
                        (eq (first (second (third exp)))
                            'lambda)))
               (null (intersection (free-ids-il (second (third exp)))
-                                  (second exp)))) (second third))
+                                  (second exp)))) (second (third exp)))
         (t (cons (simplify-il-eta (car exp))
                  (simplify-il-eta (cdr exp))))))
 
@@ -635,6 +635,7 @@
 (defun core-op (sym)
   (in sym
       (atom eq
+            list
             cons
             car
             cdr
@@ -715,4 +716,7 @@
               (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
         (t (cons (expand-macro-full (car exp))
                  (expand-macro-full (cdr exp))))))
+
+(defun interpret-compiled-to-il (exp)
+  (eval (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
 
