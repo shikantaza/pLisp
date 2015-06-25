@@ -1405,6 +1405,10 @@ unsigned int expand_macro()
 {
   OBJECT_PTR macro_body, res;
 
+  OBJECT_PTR saved_reg_next_expression = reg_next_expression;
+  OBJECT_PTR saved_reg_current_env = reg_current_env;
+  OBJECT_PTR saved_reg_current_stack = reg_current_stack;
+
   if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "EXPAND-MACRO requires exactly one argument");
@@ -1470,8 +1474,11 @@ unsigned int expand_macro()
     }
   }        
 
+  reg_current_env = saved_reg_current_env;
+  reg_current_stack = saved_reg_current_stack;
+
   reg_current_value_rib = NIL;
-  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(saved_reg_next_expression));
 
   return 0;
 }
@@ -2078,6 +2085,10 @@ unsigned int env()
 
 unsigned int eval_compiled()
 {
+  OBJECT_PTR saved_reg_next_expression = reg_next_expression;
+  OBJECT_PTR saved_reg_current_env = reg_current_env;
+  OBJECT_PTR saved_reg_current_stack = reg_current_stack;
+
   OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
 
   if(temp == ERROR)
@@ -2103,8 +2114,11 @@ unsigned int eval_compiled()
      }
   }
 
+  reg_current_env = saved_reg_current_env;
+  reg_current_stack = saved_reg_current_stack;
+
   reg_current_value_rib = NIL;
-  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(saved_reg_next_expression));
 
   return 0;
 }
