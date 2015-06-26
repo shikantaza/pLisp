@@ -3,31 +3,30 @@
 (in-package "compiler")
 
 (defun mutating-ids (exp)
-  (if (listp exp)
-      (let ((first-exp (first exp)))
-        (cond ((eq first-exp
-                   'set) (union (list (second exp))
-                                (mutating-ids (third exp))))
-              ((eq first-exp
-                   'lambda) (difference (mutating-ids (third exp))
-                                        (second exp)))
-              ((or (eq first-exp
-                       'let)
-                   (eq first-exp
-                       'letrec)) (difference (union (mutating-ids (third exp))
-                                                    (apply union
-                                                           (map mutating-ids
-                                                                (map cadr
-                                                                     (second exp)))))
-                                             (apply union
-                                                    (mutating-ids (map (lambda (x)
-                                                                         (list (car x))))
-                                                                  (second exp)))))
-              ((eq first-exp
-                   'error) nil)
-              (t (apply union
-                        (map mutating-ids
-                             exp)))))))
+  (cond ((or (atom exp)
+             (eq (car exp)
+                 'error)) nil)
+        ((eq (car exp)
+             'set) (union (list (second exp))
+                          (mutating-ids (third exp))))
+        ((eq (car exp)
+             'lambda) (difference (mutating-ids (third exp))
+                                  (second exp)))
+        ((or (eq (car exp)
+                 'let)
+             (eq (car exp)
+                 'letrec)) (difference (union (mutating-ids (third exp))
+                                              (apply union
+                                                     (map mutating-ids
+                                                          (map cadr
+                                                               (second exp)))))
+                                       (apply union
+                                              (mutating-ids (map (lambda (x)
+                                                                   (list (car x))))
+                                                            (second exp)))))
+        (t (apply union
+                  (map mutating-ids
+                       (subexps exp))))))
 
 (defun union (&rest lst)
   (remove-duplicates (apply concat
@@ -110,10 +109,10 @@
                                        (second exp))
                                   (assignment-conversion (third exp)
                                                          ids1))))))
-        (t (cons (assignment-conversion (car exp)
-                                        ids)
-                 (assignment-conversion (cdr exp)
-                                        ids)))))
+        (t (mapsub exp
+                   (lambda (e)
+                     (assignment-conversion e
+                                            ids))))))
 
 (defun partition (ids exps)
   (let ((mids (apply union
@@ -322,8 +321,8 @@
                   (and (consp (second (third exp)))
                        (eq (first (second (third exp)))
                            'lambda)))
-              (null (intersection (free-ids-il (second (third exp)))
-                                  (second exp)))) (second (third exp)))
+              (null (intersection (free-ids-il (first (third exp)))
+                                  (second exp)))) (first (third exp)))
         (t (cons (simplify-il-eta (car exp))
                  (simplify-il-eta (cdr exp))))))
 
@@ -333,10 +332,10 @@
                   'let)
               (eq (length (second exp))
                   2)
-              (symbolp (first (second exp)))
-              (symbolp (second (second exp)))) (subst (second (second exp))
-                                                      (first (second exp))
-                                                      (third exp)))
+              (symbolp (first (first (second exp))))
+              (symbolp (second (first (second exp))))) (subst (second (second (first exp)))
+                                                              (first (second (first exp)))
+                                                              (third exp)))
         (t (cons (simplify-il-copy-prop (car exp))
                  (simplify-il-copy-prop (cdr exp))))))
 
@@ -578,7 +577,9 @@
 (defun compile-exp (exp)
   (let ((res exp))
     (set res
-         (assignment-conversion res))
+         (assignment-conversion res
+                                (map car
+                                     (car (env)))))
     (set res
          (translate-to-il res))
     (set res
@@ -713,10 +714,65 @@
 (defun expand-macro-full (exp)
   (cond ((atom exp) exp)
         ((and (symbolp (car exp))
+              (not (eq (car exp)
+                       'let))
               (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
         (t (cons (expand-macro-full (car exp))
                  (expand-macro-full (cdr exp))))))
 
 (defun interpret-compiled-to-il (exp)
   (eval (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
+
+(defun mapsub (exp tf)
+  (cond ((atom exp) exp)
+        ((eq (car exp)
+             'error) exp)
+        ((eq (car exp)
+             'if) (list 'if
+                        (tf (second exp))
+                        (tf (third exp))
+                        (tf (fourth exp))))
+        ((eq (car exp)
+             'set) (list 'set
+                         (second exp)
+                         (tf (third exp))))
+        ((eq (car exp)
+             'lambda) (list 'lambda
+                            (second exp)
+                            (tf (third exp))))
+        ((primop (car exp)) (cons (first exp)
+                                  (map tf
+                                       (rest exp))))
+        ((or (eq (car exp)
+                 'let)
+             (eq (car exp)
+                 'letrec)) (list (car exp)
+                                 (map (lambda (x)
+                                        (list (first x)
+                                              (tf (second x))))
+                                      (second exp))
+                                 (tf (third exp))))
+        (t (map tf
+                exp))))
+
+(defun subexps (exp)
+  (cond ((or (atom exp)
+             (eq (car exp)
+                 error)) nil)
+        ((eq (car exp)
+             'if) (list (second exp)
+                        (third exp)
+                        (fourth exp)))
+        ((or (eq (car exp)
+                 'set)
+             (eq (car exp)
+                 'lambda)) (list (third exp)))
+        ((primop (car exp)) (cdr exp))
+        ((or (eq (car exp)
+                 'let)
+             (eq (car exp)
+                 'letrec)) (concat (map cadr
+                                        (second exp))
+                                   (list (third exp))))
+        (t exp)))
 
