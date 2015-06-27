@@ -487,15 +487,17 @@
              'lambda) (closure-conv-transform-abs exp))
         ((eq (car exp)
              'let) (let ((rval (second (first (second exp)))))
-                     (if (consp rval)
-                         (if (eq (first rval) 'lambda)
-                             (closure-conv-transform-let exp)
-                           (list (first exp)
-                                 (second exp)
-                                 (closure-conv-transform (third exp))))
-                       (list (first exp)
-                             (second exp)
-                             (closure-conv-transform (third exp))))))
+                     (if (and (consp rval) (eq (first rval)
+                                               'lambda))
+                         (closure-conv-transform-let exp)
+                       (mapsub exp
+                               closure-conv-transform))))
+        ((or (primop (car exp))
+             (eq (car exp)
+                 'if)
+             (eq (car exp)
+                 'error)) (mapsub exp
+                                  closure-conv-transform))
         (t (closure-conv-transform-app exp))))
 
 (defun closure-conv-transform-abs (exp)
@@ -597,7 +599,9 @@
     res))
 
 (defun build-evaluatable-exp (exp)
-  (let ((clos (gensym)))
+  (let ((clos (gensym))
+        (x (gensym))
+        (y (gensym)))
     (list 'let1
           (concat (reverse (cdr exp))
                   (list (list clos
@@ -607,9 +611,9 @@
                 clos
                 (list 'list
                       (list 'lambda
-                            (list 'y
-                                  'x)
-                            'x))))))
+                            (list y
+                                  x)
+                            x))))))
 
 (defun simplify-il (exp)
   (let ((res exp))
@@ -636,6 +640,7 @@
 (defun core-op (sym)
   (in sym
       (atom eq
+            error
             list
             cons
             car
@@ -716,6 +721,8 @@
         ((and (symbolp (car exp))
               (not (eq (car exp)
                        'let))
+              (not (eq (car exp)
+                       'letrec))
               (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
         (t (cons (expand-macro-full (car exp))
                  (expand-macro-full (cdr exp))))))
@@ -775,4 +782,3 @@
                                         (second exp))
                                    (list (third exp))))
         (t exp)))
-
