@@ -317,9 +317,10 @@
   (cond ((atom exp) exp)
         ((and (eq (car exp)
                   'lambda)
-              (or (symbolp (second (third exp)))
-                  (and (consp (second (third exp)))
-                       (eq (first (second (third exp)))
+              (not (primop (first (third exp))))
+              (or (symbolp (first (third exp)))
+                  (and (consp (first (third exp)))
+                       (eq (first (first (third exp)))
                            'lambda)))
               (null (intersection (free-ids-il (first (third exp)))
                                   (second exp)))) (first (third exp)))
@@ -782,3 +783,4 @@
                                         (second exp))
                                    (list (third exp))))
         (t exp)))
+

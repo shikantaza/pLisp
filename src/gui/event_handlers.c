@@ -679,7 +679,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       /* GtkTextIter start_sel, end_sel; */
       /* if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel)) */
       /* 	gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1); */
-      return FALSE;
+      //return FALSE;
+      return TRUE;
     }
   }
   else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 

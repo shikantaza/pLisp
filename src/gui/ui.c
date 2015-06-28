@@ -766,6 +766,8 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
     setup_language_manager_path(lm);
     source_language = gtk_source_language_manager_get_language(lm, "plisp");
   }
+
+  gtk_window_set_keep_above(transcript_window, TRUE);
 }
 
 void show_error_dialog(char *msg)
