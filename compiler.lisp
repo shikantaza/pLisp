@@ -299,19 +299,14 @@
                  (simplify-il-empty-let (cdr exp))))))
 
 (defun simplify-il-implicit-let (exp)
-  (if (atom exp)
-      exp
-    (if (consp (car exp))
-        (if (eq (caar exp) 'lambda)
-            (list 'let
-                  (mapcar list
-                          (second (first exp))
-                          (rest exp))
-                  (third (first exp)))
-          (cons (simplify-il-implicit-let (car exp))
-                (simplify-il-implicit-let (cdr exp))))
-      (cons (simplify-il-implicit-let (car exp))
-            (simplify-il-implicit-let (cdr exp))))))
+  (if (and (consp exp) (consp (car exp)) (eq (caar exp)
+                                             'lambda))
+      (list 'let
+            (mapcar list
+                    (second (first exp))
+                    (rest exp))
+            (third (first exp)))
+    exp))
 
 (defun simplify-il-eta (exp)
   (cond ((atom exp) exp)
