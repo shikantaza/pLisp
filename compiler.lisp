@@ -312,6 +312,7 @@
   (cond ((atom exp) exp)
         ((and (eq (car exp)
                   'lambda)
+              (consp (third exp))
               (not (primop (first (third exp))))
               (or (symbolp (first (third exp)))
                   (and (consp (first (third exp)))
@@ -778,4 +779,29 @@
                                         (second exp))
                                    (list (third exp))))
         (t exp)))
+
+(define env0-il
+        nil)
+
+(defun get-env-il (env sym)
+  (cond ((null env) nil)
+        ((eq (first (first env))
+             sym) (second (first env)))
+        (t (get-env-il (cdr env)
+                       sym))))
+
+(defun put-env-il (sym val)
+  (set env0-il
+       (concat (list (list sym
+                           val))
+               env0-il)))
+
+(defun set-for-il (sym exp)
+  (put-env-il sym
+              (build-evaluatable-exp (compile-exp exp))))
+
+(defun build-il-with-globals (exp)
+  (list 'let
+        env0-il
+        (build-evaluatable-exp (compile-exp exp))))
 
