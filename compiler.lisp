@@ -713,17 +713,6 @@
   (in sym
       (eval)))
 
-(defun expand-macro-full (exp)
-  (cond ((atom exp) exp)
-        ((and (symbolp (car exp))
-              (not (eq (car exp)
-                       'let))
-              (not (eq (car exp)
-                       'letrec))
-              (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
-        (t (cons (expand-macro-full (car exp))
-                 (expand-macro-full (cdr exp))))))
-
 (defun interpret-compiled-to-il (exp)
   (eval (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
 
