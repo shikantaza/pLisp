@@ -314,10 +314,14 @@
                   'lambda)
               (consp (third exp))
               (not (primop (first (third exp))))
+              (not (eq (first (third exp))
+                       'let))
               (or (symbolp (first (third exp)))
                   (and (consp (first (third exp)))
                        (eq (first (first (third exp)))
                            'lambda)))
+              (eq (second exp)
+                  (cddr (third exp)))
               (null (intersection (free-ids-il (first (third exp)))
                                   (second exp)))) (first (third exp)))
         (t (cons (simplify-il-eta (car exp))
@@ -576,6 +580,8 @@
 (defun compile-exp (exp)
   (let ((res exp))
     (set res
+         (expand-macro-full res))
+    (set res
          (assignment-conversion res
                                 (map car
                                      (car (env)))))
@@ -793,4 +799,3 @@
   (list 'let
         env0-il
         (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
-
