@@ -1435,15 +1435,15 @@ unsigned int expand_macro()
     OBJECT_PTR obj = cdr(res);
     OBJECT_PTR args = cdr(macro_body);
 
-    /* reg_next_expression = cons(cons(FRAME, */
-    /*                                 (cons(cons(cons(HALT, NIL), car(macro_body)), */
-    /*                                       cons(cons(cons(APPLY, NIL), car(macro_body)), */
-    /*                                            NIL)))), */
-    /*                            car(macro_body)); */
+    reg_next_expression = cons(cons(FRAME,
+                                    cons(cons(CONS_HALT_NIL, car(macro_body)),
+                                         cons(cons(CONS_APPLY_NIL, car(macro_body)),
+                                              NIL))),
+                               car(macro_body));
 
-    /* eval(false); */
-    /* if(in_error) */
-    /*   return 1; */
+    eval(false);
+    if(in_error)
+      return 1;
 
     reg_current_value_rib = NIL;
 
@@ -1463,14 +1463,18 @@ unsigned int expand_macro()
 
     //place the macro object in the accumulator (to invoke APPLY)
     reg_accumulator = obj;
-    reg_next_expression = cons(CONS_APPLY_NIL, car(macro_body));
+
+    //reg_next_expression = cons(CONS_APPLY_NIL, car(macro_body));
           
     //evaluate the macro invocation
     while(car(reg_next_expression) != NIL)
     {
       eval(false);
       if(in_error)
-	return;
+      {
+        throw_generic_exception("Error invoking macro");
+        return 1;
+      }
     }
   }        
 

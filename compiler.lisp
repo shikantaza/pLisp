@@ -781,7 +781,7 @@
         (t exp)))
 
 (define env0-il
-        nil)
+  nil)
 
 (defun get-env-il (env sym)
   (cond ((null env) nil)
@@ -798,10 +798,10 @@
 
 (defun set-for-il (sym exp)
   (put-env-il sym
-              (build-evaluatable-exp (compile-exp exp))))
+              (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
 
 (defun build-il-with-globals (exp)
   (list 'let
         env0-il
-        (build-evaluatable-exp (compile-exp exp))))
+        (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
 

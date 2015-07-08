@@ -718,7 +718,8 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
   /* gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER); */
   gtk_window_set_default_size(transcript_window, width, height);
 
-  gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
+  //gtk_window_set_position(GTK_WINDOW(transcript_window), GTK_WIN_POS_CENTER);
+  gtk_window_move(transcript_window, posx, posy); 
       
   g_signal_connect (transcript_window, "delete-event",
                     G_CALLBACK (delete_event), NULL);

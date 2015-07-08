@@ -455,6 +455,19 @@
       `(let ,specs ,@body)
     `(let (,(car specs)) (let1 ,(cdr specs) ,@body))))
 
+(defmacro beginold (&rest body)
+  (if (null body)
+      nil
+    `((lambda (,(gensym)) ,(cadr body)) ,(car body))))
+
+(defmacro begin (&rest body)
+  (if (null body)
+      nil
+    (if (eq (length body) 1)
+        (car body)
+      `(let ((,(gensym) ,(car body)))
+         (begin ,@(cdr body))))))
+
 (defun array-eq (a1 a2)
   (if (or (not (arrayp a1)) (not (arrayp a2)))
       (throw (exception 'invalid-argument "Both arguments to ARRAY-EQ should be arrays"))
@@ -660,6 +673,17 @@
 
 (defmacro aref (a &rest indexes)
   `(build-ref ,a ,indexes))
+
+(defun expand-macro-full (exp)
+  (cond ((atom exp) exp)
+        ((and (symbolp (car exp))
+              (not (eq (car exp)
+                       'let))
+              (not (eq (car exp)
+                       'letrec))
+              (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
+        (t (cons (expand-macro-full (car exp))
+                 (expand-macro-full (cdr exp))))))
 
 (load-file "lib/pos.lisp")
 
