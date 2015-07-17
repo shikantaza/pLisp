@@ -24,7 +24,7 @@
 
 #define MAX_STRING_LENGTH 16192
 
-#define MAX_STACK_DEPTH 1000
+#define MAX_STACK_DEPTH 10000
 
 #define YY_NO_INPUT
 

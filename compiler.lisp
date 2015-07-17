@@ -48,7 +48,9 @@
              set1))
 
 (defun assignment-conversion (exp ids)
-  (cond ((symbolp exp) (if (exists exp ids)
+  (cond ((symbolp exp) (if (and (exists exp
+                                        ids) (not (in exp
+                                                      '(global-cont-var my-cont-var))))
                            (list 'car
                                  exp)
                          exp))
@@ -271,7 +273,8 @@
                          (free-ids-il (third exp))
                          (free-ids-il (fourth exp))))
         ((eq (car exp)
-             'lambda) (difference (free-ids-il (third exp))
+             'lambda) (difference (union (free-ids-il (third exp))
+                                         (free-ids-il (fourth exp)))
                                   (second exp)))
         ((eq (car exp)
              'define) (difference (free-ids-il (third exp))
@@ -637,92 +640,94 @@
 
 (defun arithop (sym)
   (in sym
-      (+ -
-         *
-         /
-         >
-         <
-         <=
-         >=)))
+      '(+ -
+          *
+          /
+          >
+          <
+          <=
+          >=)))
 
 (defun core-op (sym)
   (in sym
-      (atom eq
-            error
-            list
-            cons
-            car
-            cdr
-            print
-            symbol-value
-            backquote
-            gensym
-            setcar
-            setcdr
-            comma
-            comma-at
-            apply
-            symbol
-            symbol-name
-            format
-            clone
-            return
-            return-from
-            unbind
-            newline
-            not
-            progn)))
+      '(atom eq
+             call-cc1
+             set
+             error
+             list
+             cons
+             car
+             cdr
+             print
+             symbol-value
+             backquote
+             gensym
+             setcar
+             setcdr
+             comma
+             comma-at
+             apply
+             symbol
+             symbol-name
+             format
+             clone
+             return
+             return-from
+             unbind
+             newline
+             not
+             progn)))
 
 (defun string-array-op (sym)
   (in sym
-      (string make-array
-              array-get
-              array-set
-              sub-array
-              array-length
-              print-string)))
+      '(string make-array
+               array-get
+               array-set
+               sub-array
+               array-length
+               print-string)))
 
 (defun predicate-op (sym)
   (in sym
-      (consp listp
-             integerp
-             floatp
-             characterp
-             symbolp
-             stringp
-             arrayp
-             closurep
-             macrop
-             continuationp)))
+      '(consp listp
+              integerp
+              floatp
+              characterp
+              symbolp
+              stringp
+              arrayp
+              closurep
+              macrop
+              continuationp)))
 
 (defun ffi-op (sym)
   (in sym
-      (load-foreign-library call-foreign-function)))
+      '(load-foreign-library call-foreign-function)))
 
 (defun package-op (sym)
   (in sym
-      (create-package in-package
-                      export-package)))
+      '(create-package in-package
+                       export-package)))
 
 (defun serialization-op (sym)
   (in sym
-      (create-image save-object
-                    load-object
-                    load-file)))
+      '(create-image save-object
+                     load-object
+                     load-file)))
 
 (defun perf-op (sym)
   (in sym
-      (profile time)))
+      '(profile time)))
 
 (defun debug-op (sym)
   (in sym
-      (break resume
-             env
-             expand-macro)))
+      '(break resume
+              env
+              expand-macro)))
 
 (defun interpreter-specific-op (sym)
   (in sym
-      (eval)))
+      '(eval)))
 
 (defun interpret-compiled-to-il (exp)
   (eval (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
@@ -862,4 +867,7 @@
                                             1))
                                 (closure-conv-transform (third exp)))))
               free-ids))))
+
+(define global-cont-var
+        nil)
 
