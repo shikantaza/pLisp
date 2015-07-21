@@ -48,9 +48,7 @@
              set1))
 
 (defun assignment-conversion (exp ids)
-  (cond ((symbolp exp) (if (and (exists exp
-                                        ids) (not (in exp
-                                                      '(global-cont-var my-cont-var))))
+  (cond ((symbolp exp) (if (exists exp ids)
                            (list 'car
                                  exp)
                          exp))
@@ -347,8 +345,7 @@
   (let ((ik (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (list ik
                 exp))))
@@ -359,16 +356,14 @@
         (ikcall (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (list 'let
                 (list (list iabs
                             (list 'lambda
                                   (concat (second exp)
                                           (list ikcall))
-                                  (list 'set
-                                        'global-cont-var
+                                  (list 'save-continuation
                                         ikcall)
                                   (list (cps-transform (third exp))
                                         ikcall))))
@@ -394,8 +389,7 @@
   (let ((ik (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (cps-trans-app-internal exp
                                   nil
@@ -418,8 +412,7 @@
   (let ((ik (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (cps-trans-let-internal (third exp)
                                   (second exp)
@@ -440,8 +433,7 @@
   (let ((ik (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (cps-trans-primop-internal (car exp)
                                      (cdr exp)
@@ -481,8 +473,7 @@
         (itest (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (list (cps-transform test)
                 (list 'lambda
@@ -499,8 +490,7 @@
         (ians (gensym)))
     (list 'lambda
           (list ik)
-          (list 'set
-                'global-cont-var
+          (list 'save-continuation
                 ik)
           (list (cps-transform exp)
                 (list 'lambda
@@ -591,8 +581,7 @@
          (expand-macro-full res))
     (set res
          (assignment-conversion res
-                                (map car
-                                     (car (env)))))
+                                '(call-cc1 my-cont-var)))
     (set res
          (translate-to-il res))
     (set res
@@ -868,6 +857,17 @@
                                 (closure-conv-transform (third exp)))))
               free-ids))))
 
-(define global-cont-var
-        nil)
+(define my-cont-var
+        (cons nil nil)
 
+(defun call-cc1 (clo)
+  ((car clo) clo (cadr saved-continuations) (list (lambda (y x)
+                                                    x))))
+
+(defun save-continuation (cont)
+  (set saved-continuations
+       (cons cont
+             saved-continuations)))
+
+(define saved-continuations
+        nil)

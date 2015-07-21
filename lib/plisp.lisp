@@ -685,9 +685,9 @@
         (t (cons (expand-macro-full (car exp))
                  (expand-macro-full (cdr exp))))))
 
-(load-file "compiler.lisp")
-
 (load-file "lib/pos.lisp")
+
+(load-file "compiler.lisp")
 
 (load-file "lib/utils.lisp")
 
