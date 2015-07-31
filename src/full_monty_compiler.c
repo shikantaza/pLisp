@@ -104,30 +104,32 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
 OBJECT_PTR union1(unsigned int count, ...)
 {
   va_list ap;
-  OBJECT_PTR lst, ret, rest;
+  OBJECT_PTR ret, rest;
   int i;
 
   if(!count)
     return NIL;
 
+  ret = NIL;
+
   va_start(ap, count);
 
-  lst = (OBJECT_PTR)va_arg(ap, int);
-
-  ret = clone_object(lst);
-
-  for(i=1; i<count; i++)
+  for(i=0; i<count; i++)
   {
-    lst = (OBJECT_PTR)va_arg(ap, int);
-    rest = lst;
+    rest = (OBJECT_PTR)va_arg(ap, int);
 
     while(rest != NIL)
     {
       OBJECT_PTR obj = car(rest);
       if(!exists(obj, ret))
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-        set_heap(ptr, 1, cons(clone_object(obj), NIL));
+        if(ret == NIL)
+          ret = cons(clone_object(obj), NIL);
+        else
+        {
+          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          set_heap(ptr, 1, cons(clone_object(obj), NIL));
+        }
       }
 
       rest = cdr(rest);
@@ -254,11 +256,14 @@ OBJECT_PTR subexps(OBJECT_PTR exp)
     return cdr(exp);
   else if(car_exp == LET || car_exp == LETREC)
   {
-    OBJECT_PTR t1 = map(CADR, second(exp));
-    set_heap(last_cell(t1) & POINTER_MASK, 1, cons(third(exp), NIL));        
+    //OBJECT_PTR t1 = map(CADR, second(exp));
+    //set_heap(last_cell(t1) & POINTER_MASK, 1, cons(third(exp), NIL));        
+    return concat(2,
+                  map(CADR, second(exp)),
+                  list(1, third(exp)));
   }
   else
-    assert(false);
+    return exp;
 }
 
 OBJECT_PTR temp1(OBJECT_PTR x)
@@ -273,22 +278,22 @@ OBJECT_PTR mutating_ids(OBJECT_PTR exp)
   if(is_atom(exp) || car_exp == ERROR)
     return NIL;
   else if(car_exp == SET)
-    return union1(list(1, second(exp)),
+    return union1(2,
+                  list(1, second(exp)),
                   mutating_ids(third(exp)));
   else if(car_exp == LAMBDA)
     return difference(mutating_ids(third(exp))
                       second(exp));
   else if(car_exp == LET || car_exp == LETREC)
   {
-    return difference(union1(mutating_ids(third(exp)),
-                             union1(map(mutating_ids,
-                                        map(CADR, second(exp))))),
-                      union1(mutating_ids(map(temp1, second(exp)))));
+    return difference(union1(2,
+                             mutating_ids(third(exp)),
+                             union1(1,map(mutating_ids,
+                                          map(CADR, second(exp))))),
+                      union1(1, mutating_ids(map(temp1, second(exp)))));
   }
   else
-  {
-    return union1(map(mutating_ids, subexps(exp)));
-  }
+    return union1(1, map(mutating_ids, subexps(exp)));
 }
 
 OBJECT_PTR intersection(OBJECT_PTR lst1, OBJECT_PTR lst2)
@@ -317,7 +322,7 @@ OBJECT_PTR intersection(OBJECT_PTR lst1, OBJECT_PTR lst2)
 
 OBJECT_PTR partition(OBJECT_PTR ids, OBJECT_PTR exps)
 {
-  OBJECT_PTR mids = union1(map(mutating_ids, exps));
+  OBJECT_PTR mids = union1(1, map(mutating_ids, exps));
   return cons(intersection(ids, mids),
               difference(ids, mids));
 }
@@ -386,7 +391,7 @@ OBJECT_PTR concat(unsigned int count, ...)
   return ret;
 }
 
-OBJECT_PTR temp4(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2, OBJECT_PTR lst)
+OBJECT_PTR temp4(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
 {
   return list(2,
               first(x),
@@ -399,7 +404,8 @@ OBJECT_PTR temp5(OBJECT_PTR x,
                  OBJECT_PTR (*f)(OBJECT_PTR),
                  OBJECT_PTR v)
 {
-  return list(first(x),
+  return list(2,
+              first(x),
               f(second(x)));
 }
 
@@ -432,7 +438,8 @@ OBJECT_PTR temp6(OBJECT_PTR x,
                  OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR),
                  OBJECT_PTR v)
 {
-  return list(first(x),
+  return list(2,
+              first(x),
               f(second(x), v));
 }
 
@@ -489,7 +496,7 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
     return list(3,
                 car_exp,
                 map2_fn1(temp6, tf, v, second(exp)),
-                tf(third(exp)));
+                tf(third(exp),v));
   else
     return map2(tf, v, NIL, exp);
 }
@@ -519,10 +526,10 @@ OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
     
     return list(3, 
                 LAMBDA, 
-                seconds(exp),
+                second(exp),
                 wrap_cells(mids,
                            assignment_conversion(third(exp),
-                                                 difference(union1(ids, mids),
+                                                 difference(union1(2, ids, mids),
                                                             uids))));
   }
   else if(first_exp == LET)
@@ -537,7 +544,7 @@ OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
                 LET, 
                 map2(temp3, mids, ids, second(exp)),
                 assignment_conversion(third(exp),
-                                      difference(union1(ids, mids),
+                                      difference(union1(2, ids, mids),
                                                  uids)));
   }
 
@@ -545,14 +552,15 @@ OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
   {
     OBJECT_PTR pids = partition(map(car,
                                     second(exp)),
-                                concat(map(cadr,
+                                concat(2,
+                                       map(CADR,
                                            second(exp)),
                                        list(1, third(exp))));
 
     OBJECT_PTR mids = car(pids);
     OBJECT_PTR uids = cdr(pids);
 
-    OBJECT_PTR ids1 = difference(union1(ids, mids),
+    OBJECT_PTR ids1 = difference(union1(2, ids, mids),
                                  uids);
 
     return list(3,
@@ -594,7 +602,7 @@ OBJECT_PTR msubst(OBJECT_PTR ids, OBJECT_PTR exp)
   while(rest != NIL)
   {
     res = subst(list(2, CAR, car(rest)),
-                ids,
+                id,
                 res);
 
     rest = cdr(rest);
@@ -618,7 +626,7 @@ OBJECT_PTR temp9(OBJECT_PTR x,
                    SETCAR, 
                    first(x),
                    msubst(map(car, second(exp)),
-                          translate_to_il(second(exp)))))
+                          translate_to_il(second(x)))))
 }
 
 OBJECT_PTR translate_to_il(OBJECT_PTR exp)
@@ -628,6 +636,7 @@ OBJECT_PTR translate_to_il(OBJECT_PTR exp)
   else if(car(exp) == LETREC)
   {
     return list(3,
+                LET,
                 map(temp8, second(exp)),
                 desugar_il(list(3,
                                 LET1,
@@ -654,18 +663,27 @@ OBJECT_PTR desugar_il(OBJECT_PTR exp)
                                 third(exp))));
 }
 
-OBJECT_PTR *generate_fresh_ids(unsigned int count)
+OBJECT_PTR temp13(OBJECT_PTR x)
 {
-  OBJECT_PTR *syms = (OBJECT_PTR *)malloc(count * sizeof(OBJECT_PTR));
+  return gensym();
+}
 
-  assert(syms);
+/* OBJECT_PTR *generate_fresh_ids(unsigned int count) */
+/* { */
+/*   OBJECT_PTR *syms = (OBJECT_PTR *)malloc(count * sizeof(OBJECT_PTR)); */
 
-  int i;
+/*   assert(syms); */
 
-  for(i=0; i<count; i++)
-    syms[i] = gensym();
+/*   int i; */
 
-  return syms;
+/*   for(i=0; i<count; i++) */
+/*     syms[i] = gensym(); */
+
+/*   return syms; */
+/* } */
+OBJECT_PTR generate_fresh_ids(unsigned int count)
+{
+  return map(temp13, range(1,count,1));
 }
 
 //restricted version of mapcar that works for two lists
@@ -694,14 +712,14 @@ OBJECT_PTR mapcar(OBJECT_PTR (*f)(OBJECT_PTR,OBJECT_PTR),
   return ret;    
 }
 
-OBJECT_PTR temp9(OBJECT_PTR x, binding_env_t env)
+OBJECT_PTR temp9(OBJECT_PTR x, binding_env_t env, OBJECT_PTR v)
 {
   return list(2,
               first(x),
               ren_transform(second(second(x)), env));
 }
 
-OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR, binding_env_t),
+OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t, OBJECT_PTR),
                                   binding_env_t env,
                                   OBJECT_PTR v2,
                                   OBJECT_PTR lst)
@@ -736,7 +754,7 @@ OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t env)
     return exp;
   else if(car(exp) == LAMBDA)
   {
-    OBJECT_PTR *fresh_ids = generate_fresh_ids(cons_length(second(exp)));
+    OBJECT_PTR fresh_ids = generate_fresh_ids(cons_length(second(exp)));
 
     OBJECT_PTR new_bindings = mapcar(cons, second(exp), fresh_ids);
 
@@ -755,7 +773,7 @@ OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t env)
   }
   else if(car(exp) == LET)
   {
-    OBJECT_PTR *fresh_ids = generate_fresh_ids(cons_length(second(exp)));
+    OBJECT_PTR fresh_ids = generate_fresh_ids(cons_length(second(exp)));
 
     OBJECT_PTR new_bindings = mapcar(cons,
                                      map(car, second(exp)),
@@ -796,6 +814,7 @@ OBJECT_PTR flatten(OBJECT_PTR lst)
 OBJECT_PTR free_ids_il(OBJECT_PTR exp)
 {
   OBJECT_PTR car_exp = car(exp);
+
   if(exp == NIL)
     return NIL;
   else if(IS_SYMBOL_OBJECT(exp))
@@ -818,8 +837,9 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
   else if(car_exp == DEFINE)
     return difference(free_ids_il(third(exp)), list(1, second(exp)));
   else if(car_exp == LET)
-    return union1(flatten(map(free_ids_il,
-                              map(cadr, second(exp)))),
+    return union1(2,
+                  flatten(map(free_ids_il,
+                              map(CADR, second(exp)))),
                   difference(free_ids_il(third(exp)),
                              map(car, second(exp))));
   else if(car_exp == ERROR || car_exp == CALL_CC)
@@ -1209,10 +1229,15 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
 
-  res = expand_macro_full(res);
+  //expand-macro would already have happened in repl2()
+
   res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO
   res = translate_to_il(res);
-  res = ren_transform(res, create_binding_env());
+
+  binding_env_t *env = create_binding_env();
+  res = ren_transform(res, env);
+  free(env);
+
   res = simplify_il(res);
   res = cps_transform(res);
   res = closure_conv_transform(res);
@@ -1281,12 +1306,13 @@ BOOLEAN string_array_op(OBJECT_PTR sym)
     sym == ARRAY_SET    ||
     sym == SUB_ARRAY    ||
     sym == ARRAY_LENGTH ||
-    sym = PRINT_STRING;
+    sym == PRINT_STRING;
 }
 
 BOOLEAN predicate_op(OBJECT_PTR sym)
 {
   return sym == CONSP ||
+    sym == LISTP      ||
     sym == INTEGERP   ||
     sym == FLOATP     ||
     sym == CHARACTERP ||
@@ -1321,8 +1347,7 @@ BOOLEAN serialization_op(OBJECT_PTR sym)
 
 BOOLEAN perf_op(OBJECT_PTR sym)
 {
-  return sym == PROFILE ||
-    sym == TIME;
+  return sym == PROFILE || sym == TIME;
 }
 
 BOOLEAN debug_op(OBJECT_PTR sym)
@@ -1362,13 +1387,34 @@ OBJECT_PTR range(int start, int end, int step)
   return ret;    
 }
 
+OBJECT_PTR primitive_add(unsigned int count, ...)
+{
+  va_list ap;
+  OBJECT_PTR arg;
+  int i, sum=0;
+
+  assert(count >= 2); //TODO: handle this via error()
+
+  va_start(ap, count);
+
+  for(i=0; i<count; i++)
+  {
+    arg = (OBJECT_PTR)va_arg(ap, int);
+    sum += get_int_value(arg);
+  }
+
+  va_end(ap);
+
+  return convert_int_to_object(sum);  
+}
+
 OBJECT_PTR temp12(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
 {
   return list(2,
               nth(n, v1),
               list(3,
                    NTH,
-                   get_int_value(x) + 1,
+                   primitive_add(2, x, convert_int_to_object(1)),
                    v2));
 }
 
@@ -1413,7 +1459,7 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
   if(free_ids == NIL)
     return concat(2,
                   list(1, LIST),
-                  list(1,list(4,
+                  list(1,list(3,
                               LAMBDA,
                               concat(2,
                                      list(1, iclo),
