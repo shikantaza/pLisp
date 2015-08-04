@@ -871,3 +871,32 @@
 
 (define saved-continuations
         nil)
+
+(defun backquote1 (exp)
+  (cond ((atom exp) exp)
+        ((or (eq (car exp)
+                 'comma)
+             (eq (car exp)
+                 'comma-at)) (eval (cadr exp)))
+        (t (let ((res))
+             (dolist (x exp)
+               (cond ((atom x) (if (null res)
+                                   (set res
+                                        (list x))
+                                 (set res
+                                      (concat res
+                                              (list x)))))
+                     ((eq (car x)
+                          'comma) (if (null res)
+                                      (set res
+                                           (list (eval (cadr x))))
+                                    (set res
+                                         (concat res
+                                                 (list (eval (cadr x)))))))
+                     ((eq (car x)
+                          'comma-at) (if (null res)
+                                         (set res
+                                              (eval (cadr x)))
+                                       (setcdr res
+                                               (eval (cadr x)))))))
+             res))))
