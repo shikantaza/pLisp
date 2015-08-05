@@ -18,10 +18,12 @@
 **/
 
 #include <stdarg.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 #include "plisp.h"
 
-typdef struct binding
+typedef struct binding
 {
   OBJECT_PTR key;
   OBJECT_PTR val;
@@ -38,52 +40,158 @@ extern  OBJECT_PTR second(OBJECT_PTR);
 extern  OBJECT_PTR third(OBJECT_PTR);
 extern  OBJECT_PTR fourth(OBJECT_PTR);
 
+extern OBJECT_PTR CADR(OBJECT_PTR);
+
 extern BOOLEAN is_atom(OBJECT_PTR);
 
-binding_env_t create_binding_env()
+extern OBJECT_PTR NIL;
+extern OBJECT_PTR ERROR;
+extern OBJECT_PTR IF;
+extern OBJECT_PTR SET;
+extern OBJECT_PTR LAMBDA;
+extern OBJECT_PTR LET;
+extern OBJECT_PTR LETREC;
+extern OBJECT_PTR CONS;
+
+extern OBJECT_PTR CAR;
+extern OBJECT_PTR SETCAR;
+extern OBJECT_PTR LET1;
+extern OBJECT_PTR DEFINE;
+extern OBJECT_PTR CALL_CC;
+extern OBJECT_PTR SAVE_CONTINUATION;
+extern OBJECT_PTR NTH;
+extern OBJECT_PTR CALL_CC1;
+extern OBJECT_PTR MY_CONT_VAR;
+extern OBJECT_PTR ADD;
+extern OBJECT_PTR SUB;
+extern OBJECT_PTR MULT;
+extern OBJECT_PTR DIV;
+extern OBJECT_PTR GT;
+extern OBJECT_PTR LT;
+extern OBJECT_PTR LEQ;
+extern OBJECT_PTR GEQ;
+extern OBJECT_PTR ATOM;
+extern OBJECT_PTR EQ;
+extern OBJECT_PTR CDR;
+extern OBJECT_PTR PRINT;
+extern OBJECT_PTR SYMBOL_VALUE;
+extern OBJECT_PTR BACKQUOTE;
+extern OBJECT_PTR GENSYM;
+extern OBJECT_PTR SETCDR;
+extern OBJECT_PTR COMMA;
+extern OBJECT_PTR COMMA_AT;
+extern OBJECT_PTR APPLY;
+extern OBJECT_PTR SYMBL;
+extern OBJECT_PTR SYMBOL_NAME;
+extern OBJECT_PTR FORMAT;
+extern OBJECT_PTR CLONE;
+extern OBJECT_PTR RETURN_FROM;
+extern OBJECT_PTR RETURN;
+extern OBJECT_PTR UNBIND;
+extern OBJECT_PTR NEWLINE;
+extern OBJECT_PTR NOT;
+extern OBJECT_PTR PROGN;
+extern OBJECT_PTR STRING;
+extern OBJECT_PTR MAKE_ARRAY;
+extern OBJECT_PTR ARRAY_GET;
+extern OBJECT_PTR ARRAY_SET;
+extern OBJECT_PTR SUB_ARRAY;
+extern OBJECT_PTR ARRAY_LENGTH;
+extern OBJECT_PTR PRINT_STRING;
+extern OBJECT_PTR CONSP;
+extern OBJECT_PTR LISTP;
+extern OBJECT_PTR INTEGERP;
+extern OBJECT_PTR FLOATP;
+extern OBJECT_PTR CHARACTERP;
+extern OBJECT_PTR SYMBOLP;
+extern OBJECT_PTR STRINGP;
+extern OBJECT_PTR ARRAYP;
+extern OBJECT_PTR CLOSUREP;
+extern OBJECT_PTR MACROP;
+extern OBJECT_PTR CONTINUATIONP;
+extern OBJECT_PTR LOAD_FOREIGN_LIBRARY;
+extern OBJECT_PTR CALL_FOREIGN_FUNCTION;
+extern OBJECT_PTR CREATE_PACKAGE;
+extern OBJECT_PTR IN_PACKAGE;
+extern OBJECT_PTR EXPORT_PACKAGE;
+extern OBJECT_PTR CREATE_IMAGE;
+extern OBJECT_PTR SAVE_OBJECT;
+extern OBJECT_PTR LOAD_OBJECT;
+extern OBJECT_PTR LOAD_FILE;
+extern OBJECT_PTR PROFILE;
+extern OBJECT_PTR TIME;
+extern OBJECT_PTR BREAK;
+extern OBJECT_PTR RESUME;
+extern OBJECT_PTR ENV;
+extern OBJECT_PTR EXPAND_MACRO;
+extern OBJECT_PTR EVAL;
+
+extern unsigned int POINTER_MASK;
+
+//forward declarations
+OBJECT_PTR assignment_conversion(OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR translate_to_il(OBJECT_PTR);
+OBJECT_PTR ren_transform(OBJECT_PTR, binding_env_t *);
+OBJECT_PTR cps_transform_var_literal(OBJECT_PTR);
+OBJECT_PTR cps_transform_abstraction(OBJECT_PTR);
+OBJECT_PTR cps_transform_application(OBJECT_PTR);
+OBJECT_PTR cps_transform_primop(OBJECT_PTR);
+OBJECT_PTR cps_transform_error(OBJECT_PTR);
+OBJECT_PTR cps_transform_let(OBJECT_PTR);
+OBJECT_PTR cps_transform_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR desugar_il(OBJECT_PTR);
+OBJECT_PTR closure_conv_transform(OBJECT_PTR);
+OBJECT_PTR range(int, int, int);
+OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR);
+OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR);
+//end of forward declarations
+
+binding_env_t *create_binding_env()
 {
   binding_env_t *env = (binding_env_t *)malloc(sizeof(binding_env_t));
   env->count = 0;
-  env->binding = NULL;
+  env->bindings = NULL;
+
+  return env;
 }
 
-OBJECT_PTR get_binding_val(binding_env_t env, OBJECT_PTR key)
+OBJECT_PTR get_binding_val(binding_env_t *env, OBJECT_PTR key)
 {
   int i;
-  for(i=0; i<count; i++)
-    if(env.bindings[i] == key)
-      return env.bindings[i].val;
+  for(i=0; i<env->count; i++)
+    if(env->bindings[i].key == key)
+      return env->bindings[i].val;
 
   return key;
 }
 
-void put_binding_val(binding_env_t env, OBJECT_PTR key, OBJECT_PTR val)
+void put_binding_val(binding_env_t *env, OBJECT_PTR key, OBJECT_PTR val)
 {
   int i;
 
   BOOLEAN found = false;
 
-  for(i=0;i<count;i++)
+  for(i=0;i<env->count;i++)
   {
-    if(env.bindings[i].key == key)
+    if(env->bindings[i].key == key)
     {
-      env.bindings[i].val = val;
+      env->bindings[i].val = val;
       found = true;
     }
   }
 
   if(!found)
   {
-    env.count++;
+    env->count++;
 
-    binding_env_t *temp = (binding_env_t *)realloc(env, env.count * sizeof(binding_env_t));
+    binding_env_t *temp = (binding_env_t *)realloc(env, env->count * sizeof(binding_env_t));
 
     assert(temp);
 
     env = temp;
 
-    env[count-1].key = key;
-    env[count-1].val = val;
+    env[env->count-1].bindings->key = key;
+    env[env->count-1].bindings->val = val;
   }
 }
 
@@ -171,7 +279,7 @@ OBJECT_PTR map(OBJECT_PTR (*f)(OBJECT_PTR), OBJECT_PTR lst)
 
   while(rest != NIL)
   {
-    OBJECT_PTR val = f(car(res));
+    OBJECT_PTR val = f(car(rest));
 
     if(ret == NIL)
       ret = cons(val, NIL);
@@ -193,13 +301,13 @@ OBJECT_PTR map(OBJECT_PTR (*f)(OBJECT_PTR), OBJECT_PTR lst)
 OBJECT_PTR map2(OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR), 
                 OBJECT_PTR v1, 
                 OBJECT_PTR v2, 
-                lst)
+                OBJECT_PTR lst)
 {
   OBJECT_PTR ret = NIL, rest = lst;
 
   while(rest != NIL)
   {
-    OBJECT_PTR val = f(car(res), v1, v2);
+    OBJECT_PTR val = f(car(rest), v1, v2);
 
     if(ret == NIL)
       ret = cons(val, NIL);
@@ -220,13 +328,13 @@ OBJECT_PTR map2_fn(OBJECT_PTR (*f)(OBJECT_PTR,
                                    OBJECT_PTR), 
                    OBJECT_PTR (*f1)(OBJECT_PTR), 
                    OBJECT_PTR v2, 
-                   lst)
+                   OBJECT_PTR lst)
 {
   OBJECT_PTR ret = NIL, rest = lst;
 
   while(rest != NIL)
   {
-    OBJECT_PTR val = f(car(res), f1, v2);
+    OBJECT_PTR val = f(car(rest), f1, v2);
 
     if(ret == NIL)
       ret = cons(val, NIL);
@@ -240,6 +348,40 @@ OBJECT_PTR map2_fn(OBJECT_PTR (*f)(OBJECT_PTR,
   }
 
   return ret;  
+}
+
+OBJECT_PTR concat(unsigned int count, ...)
+{
+  va_list ap;
+  OBJECT_PTR lst, ret, rest;
+  int i;
+
+  if(!count)
+    return NIL;
+
+  va_start(ap, count);
+
+  lst = (OBJECT_PTR)va_arg(ap, int);
+
+  ret = clone_object(lst);
+
+  for(i=1; i<count; i++)
+  {
+    lst = (OBJECT_PTR)va_arg(ap, int);
+    rest = lst;
+
+    while(rest != NIL)
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(clone_object(car(rest)), NIL));
+
+      rest = cdr(rest);
+    }
+  }
+
+  va_end(ap);
+
+  return ret;
 }
 
 OBJECT_PTR subexps(OBJECT_PTR exp)
@@ -282,7 +424,7 @@ OBJECT_PTR mutating_ids(OBJECT_PTR exp)
                   list(1, second(exp)),
                   mutating_ids(third(exp)));
   else if(car_exp == LAMBDA)
-    return difference(mutating_ids(third(exp))
+    return difference(mutating_ids(third(exp)),
                       second(exp));
   else if(car_exp == LET || car_exp == LETREC)
   {
@@ -329,7 +471,7 @@ OBJECT_PTR partition(OBJECT_PTR ids, OBJECT_PTR exps)
 
 OBJECT_PTR temp2(OBJECT_PTR x)
 {
-  return list(2, x, list(3, CONS, x, NIL))
+  return list(2, x, list(3, CONS, x, NIL));
 }
 
 OBJECT_PTR wrap_cells(OBJECT_PTR ids, OBJECT_PTR exp)
@@ -357,40 +499,6 @@ OBJECT_PTR temp3(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
                          assignment_conversion(second(x), v2)));
 }
 
-OBJECT_PTR concat(unsigned int count, ...)
-{
-  va_list ap;
-  OBJECT_PTR lst, ret, rest;
-  int i;
-
-  if(!count)
-    return NIL;
-
-  va_start(ap, count);
-
-  lst = (OBJECT_PTR)va_arg(ap, int);
-
-  ret = clone_object(lst);
-
-  for(i=1; i<count; i++)
-  {
-    lst = (OBJECT_PTR)va_arg(ap, int);
-    rest = lst;
-
-    while(rest != NIL)
-    {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-      set_heap(ptr, 1, cons(clone_object(car(rest)), NIL));
-
-      rest = cdr(rest);
-    }
-  }
-
-  va_end(ap);
-
-  return ret;
-}
-
 OBJECT_PTR temp4(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
 {
   return list(2,
@@ -400,66 +508,32 @@ OBJECT_PTR temp4(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
                          assignment_conversion(second(x), v2)));
 }
 
-OBJECT_PTR temp5(OBJECT_PTR x, 
-                 OBJECT_PTR (*f)(OBJECT_PTR),
-                 OBJECT_PTR v)
-{
-  return list(2,
-              first(x),
-              f(second(x)));
-}
-
-OBJECT_PTR mapsub(OBJECT_PTR exp, 
-                  OBJECT_PTR (*tf)(OBJECT_PTR))
-{
-  OBJECT_PTR car_exp = car(exp);
-
-  if(is_atom(exp) || car_exp == ERROR)
-    return exp;
-  else if(car_exp == IF)
-    return list(4, IF, tf(second(exp)), tf(third(exp)), tf(fourth(exp)));
-  else if(car_exp == SET)
-    return list(3, SET, second(exp), tf(third(exp)));
-  else if(car_exp == LAMBDA)
-    return list(3, LAMBDA, second(exp), tf(third(exp)));
-  else if(primop(car_exp))
-    return cons(first(exp),
-                map(tf, rest(exp)));
-  else if(car_exp == LET || car_exp == LETREC)
-    return list(3,
-                car_exp,
-                map2_fn(temp5, tf, NIL, second(exp)),
-                tf(third(exp)));
-  else
-    return map(tf, exp);
-}
-
 OBJECT_PTR temp6(OBJECT_PTR x, 
-                 OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR),
+                 OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR),
                  OBJECT_PTR v)
 {
   return list(2,
               first(x),
-              f(second(x), v));
+              f(second(x), v, NIL));
 }
 
-OBJECT_PTR temp7(OBJECT_PTR x, OBJECT_PTR v)
+OBJECT_PTR temp7(OBJECT_PTR x, OBJECT_PTR v, OBJECT_PTR dummy)
 {
   return assignment_conversion(x, v);
 }
 
 OBJECT_PTR map2_fn1(OBJECT_PTR (*f)(OBJECT_PTR, 
-                                    OBJECT_PTR (*)(OBJECT_PTR, OBJECT_PTR) 
+                                    OBJECT_PTR (*)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR), 
                                    OBJECT_PTR), 
-                    OBJECT_PTR (*f1)(OBJECT_PTR, OBJECT_PTR), 
+                    OBJECT_PTR (*f1)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR), 
                     OBJECT_PTR v2, 
-                    lst)
+                    OBJECT_PTR lst)
 {
   OBJECT_PTR ret = NIL, rest = lst;
 
   while(rest != NIL)
   {
-    OBJECT_PTR val = f(car(res), f1, v2);
+    OBJECT_PTR val = f(car(rest), f1, v2);
 
     if(ret == NIL)
       ret = cons(val, NIL);
@@ -476,7 +550,7 @@ OBJECT_PTR map2_fn1(OBJECT_PTR (*f)(OBJECT_PTR,
 }
 
 OBJECT_PTR mapsub1(OBJECT_PTR exp, 
-                   OBJECT_PTR (*tf)(OBJECT_PTR, OBJECT_PTR),
+                   OBJECT_PTR (*tf)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR),
                    OBJECT_PTR v)
 {
   OBJECT_PTR car_exp = car(exp);
@@ -484,11 +558,11 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
   if(is_atom(exp) || car_exp == ERROR)
     return exp;
   else if(car_exp == IF)
-    return list(4, IF, tf(second(exp),v), tf(third(exp),v), tf(fourth(exp),v));
+    return list(4, IF, tf(second(exp),v,NIL), tf(third(exp),v,NIL), tf(fourth(exp),v,NIL));
   else if(car_exp == SET)
-    return list(3, SET, second(exp), tf(third(exp),v));
+    return list(3, SET, second(exp), tf(third(exp),v,NIL));
   else if(car_exp == LAMBDA)
-    return list(3, LAMBDA, second(exp), tf(third(exp),v));
+    return list(3, LAMBDA, second(exp), tf(third(exp),v,NIL));
   else if(primop(car_exp))
     return cons(first(exp),
                 map2(tf, v, NIL, rest(exp)));
@@ -496,7 +570,7 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
     return list(3,
                 car_exp,
                 map2_fn1(temp6, tf, v, second(exp)),
-                tf(third(exp),v));
+                tf(third(exp),v,NIL));
   else
     return map2(tf, v, NIL, exp);
 }
@@ -573,6 +647,40 @@ OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
     return mapsub1(exp, temp7, ids);
 }
 
+OBJECT_PTR temp5(OBJECT_PTR x, 
+                 OBJECT_PTR (*f)(OBJECT_PTR),
+                 OBJECT_PTR v)
+{
+  return list(2,
+              first(x),
+              f(second(x)));
+}
+
+OBJECT_PTR mapsub(OBJECT_PTR exp, 
+                  OBJECT_PTR (*tf)(OBJECT_PTR))
+{
+  OBJECT_PTR car_exp = car(exp);
+
+  if(is_atom(exp) || car_exp == ERROR)
+    return exp;
+  else if(car_exp == IF)
+    return list(4, IF, tf(second(exp)), tf(third(exp)), tf(fourth(exp)));
+  else if(car_exp == SET)
+    return list(3, SET, second(exp), tf(third(exp)));
+  else if(car_exp == LAMBDA)
+    return list(3, LAMBDA, second(exp), tf(third(exp)));
+  else if(primop(car_exp))
+    return cons(first(exp),
+                map(tf, rest(exp)));
+  else if(car_exp == LET || car_exp == LETREC)
+    return list(3,
+                car_exp,
+                map2_fn(temp5, tf, NIL, second(exp)),
+                tf(third(exp)));
+  else
+    return map(tf, exp);
+}
+
 OBJECT_PTR subst(OBJECT_PTR exp1,
                  OBJECT_PTR exp2,
                  OBJECT_PTR exp)
@@ -602,7 +710,7 @@ OBJECT_PTR msubst(OBJECT_PTR ids, OBJECT_PTR exp)
   while(rest != NIL)
   {
     res = subst(list(2, CAR, car(rest)),
-                id,
+                ids,
                 res);
 
     rest = cdr(rest);
@@ -625,8 +733,8 @@ OBJECT_PTR temp9(OBJECT_PTR x,
               list(3, 
                    SETCAR, 
                    first(x),
-                   msubst(map(car, second(exp)),
-                          translate_to_il(second(x)))))
+                   msubst(map(car, second(v1)),
+                          translate_to_il(second(x)))));
 }
 
 OBJECT_PTR translate_to_il(OBJECT_PTR exp)
@@ -712,15 +820,15 @@ OBJECT_PTR mapcar(OBJECT_PTR (*f)(OBJECT_PTR,OBJECT_PTR),
   return ret;    
 }
 
-OBJECT_PTR temp9(OBJECT_PTR x, binding_env_t env, OBJECT_PTR v)
+OBJECT_PTR temp91(OBJECT_PTR x, binding_env_t *env, OBJECT_PTR v)
 {
   return list(2,
               first(x),
               ren_transform(second(second(x)), env));
 }
 
-OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t, OBJECT_PTR),
-                                  binding_env_t env,
+OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t *, OBJECT_PTR),
+                                  binding_env_t *env,
                                   OBJECT_PTR v2,
                                   OBJECT_PTR lst)
 {
@@ -728,7 +836,7 @@ OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t, OBJ
 
   while(rest != NIL)
   {
-    OBJECT_PTR val = f(car(res), env, v2);
+    OBJECT_PTR val = f(car(rest), env, v2);
 
     if(ret == NIL)
       ret = cons(val, NIL);
@@ -744,7 +852,7 @@ OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t, OBJ
   return ret;    
 }
 
-OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t env)
+OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t *env)
 {
   if(exp == NIL)
     return NIL;
@@ -789,8 +897,8 @@ OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t env)
 
     return list(3,
                 LET,
-                map2_for_ren_transform(temp9, env, NIL, pair(fresh_ids, second(exp))),
-                ren_transform(third_exp, env));
+                map2_for_ren_transform(temp91, env, NIL, pair(fresh_ids, second(exp))),
+                ren_transform(third(exp), env));
   }
   else
     return cons(ren_transform(car(exp), env),
@@ -807,7 +915,7 @@ OBJECT_PTR temp10(OBJECT_PTR x)
 OBJECT_PTR flatten(OBJECT_PTR lst)
 {
   return concat(cons_length(lst),
-                map(temp10, lst);
+                map(temp10, lst));
 }
 
 
@@ -832,7 +940,7 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
                   free_ids_il(third(exp)),
                   free_ids_il(fourth(exp)));
   else if(car_exp == LAMBDA)
-    return difference(union1(2, free_ids_il(third(exp)), free_ids_il(fourth(exp)))
+    return difference(union1(2, free_ids_il(third(exp)), free_ids_il(fourth(exp))),
                       second(exp));
   else if(car_exp == DEFINE)
     return difference(free_ids_il(third(exp)), list(1, second(exp)));
@@ -969,17 +1077,6 @@ OBJECT_PTR cps_transform_abstraction(OBJECT_PTR exp)
                    list(2, ik, iabs)));
 }
 
-OBJECT_PTR cps_transform_application(OBJECT_PTR exp)
-{
-  OBJECT_PTR ik = gensym();
-
-  return list(4,
-              LAMBDA,
-              list(1, ik),
-              list(2, SAVE_CONTINUATION, ik),
-              cps_trans_app_internal(exp, NIL, ik));
-}
-
 OBJECT_PTR cps_trans_app_internal(OBJECT_PTR exp,
                                   OBJECT_PTR syms,
                                   OBJECT_PTR first_sym)
@@ -999,6 +1096,17 @@ OBJECT_PTR cps_trans_app_internal(OBJECT_PTR exp,
                                             concat(2, syms, list(1,i)),
                                             first_sym)));
   }
+}
+
+OBJECT_PTR cps_transform_application(OBJECT_PTR exp)
+{
+  OBJECT_PTR ik = gensym();
+
+  return list(4,
+              LAMBDA,
+              list(1, ik),
+              list(2, SAVE_CONTINUATION, ik),
+              cps_trans_app_internal(exp, NIL, ik));
 }
 
 OBJECT_PTR cps_trans_let_internal(OBJECT_PTR body,
@@ -1029,20 +1137,6 @@ OBJECT_PTR cps_transform_let(OBJECT_PTR exp)
               cps_trans_let_internal(third(exp),
                                      second(exp),
                                      ik));
-}
-
-OBJECT_PTR cps_transform_primop(OBJECT_PTR exp)
-{
-  OBJECT_PTR ik = gensym();
-
-  return list(4,
-              lambda,
-              list(1, ik),
-              list(2, SAVE_CONTINUATION, ik),
-              cps_trans_primop_internal(car(exp),
-                                        cdr(exp),
-                                        NIL,
-                                        ik));
 }
 
 OBJECT_PTR cps_trans_primop_internal(OBJECT_PTR primop1,
@@ -1081,6 +1175,20 @@ OBJECT_PTR cps_trans_primop_internal(OBJECT_PTR primop1,
   }
 }
 
+OBJECT_PTR cps_transform_primop(OBJECT_PTR exp)
+{
+  OBJECT_PTR ik = gensym();
+
+  return list(4,
+              LAMBDA,
+              list(1, ik),
+              list(2, SAVE_CONTINUATION, ik),
+              cps_trans_primop_internal(car(exp),
+                                        cdr(exp),
+                                        NIL,
+                                        ik));
+}
+
 BOOLEAN primop(OBJECT_PTR sym)
 {
   return arithop(sym)    ||
@@ -1106,7 +1214,7 @@ OBJECT_PTR cps_transform_if(OBJECT_PTR test,
               list(2,
                    cps_transform(test),
                    list(3,
-                        lambda,
+                        LAMBDA,
                         list(1, itest),
                         list(4,
                              IF,
@@ -1132,39 +1240,6 @@ OBJECT_PTR cps_transform_error(OBJECT_PTR exp)
                         list(2, ERROR, ians))));
 }
 
-OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
-{
-  OBJECT_PTR car_exp = car(exp);
-
-  if(exp == NIL)
-    return NIL;
-  else if(is_atom(exp))
-    return exp;
-  else if(car_exp == lambda)
-  {
-    if(cons_length(exp) == 3)
-      return closure_conv_transform_abs_no_cont(exp);
-    else
-      return closure_conv_transform_abs_cont(exp);
-  }
-  else if(car_exp == LET)
-  {
-    OBJECT_PTR rval = second(first(second(exp)));
-
-    if(IS_CONS_OBJECT(rval) &&
-       first(rval) == lambda)
-      return closure_conv_transform_let(exp);
-    else
-      return mapsub(exp, closure_conv_transform);
-  }
-  else if(primop(car_exp) ||
-          car_exp == IF   ||
-          car_exp == ERROR)
-    return mapsub(exp, closure_conv_transform);
-  else
-    return closure_conv_transform_app(exp);
-}
-
 OBJECT_PTR closure_conv_transform_let(OBJECT_PTR exp)
 {
   OBJECT_PTR exp1 = closure_conv_transform(second(first(second(exp))));
@@ -1178,7 +1253,7 @@ OBJECT_PTR closure_conv_transform_let(OBJECT_PTR exp)
                         first(first(second(exp))),
                         concat(2,
                                list(2, LIST, icode),
-                               CDDR(exp1))))
+                               CDDR(exp1)))),
               closure_conv_transform(third(exp)));
 }
 
@@ -1197,6 +1272,39 @@ OBJECT_PTR closure_conv_transform_app(OBJECT_PTR exp)
                      map(closure_conv_transform, cdr(exp))));
 }
 
+OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
+{
+  OBJECT_PTR car_exp = car(exp);
+
+  if(exp == NIL)
+    return NIL;
+  else if(is_atom(exp))
+    return exp;
+  else if(car_exp == LAMBDA)
+  {
+    if(cons_length(exp) == 3)
+      return closure_conv_transform_abs_no_cont(exp);
+    else
+      return closure_conv_transform_abs_cont(exp);
+  }
+  else if(car_exp == LET)
+  {
+    OBJECT_PTR rval = second(first(second(exp)));
+
+    if(IS_CONS_OBJECT(rval) &&
+       first(rval) == LAMBDA)
+      return closure_conv_transform_let(exp);
+    else
+      return mapsub(exp, closure_conv_transform);
+  }
+  else if(primop(car_exp) ||
+          car_exp == IF   ||
+          car_exp == ERROR)
+    return mapsub(exp, closure_conv_transform);
+  else
+    return closure_conv_transform_app(exp);
+}
+
 OBJECT_PTR lift_transform(OBJECT_PTR exp, OBJECT_PTR bindings)
 {
   if(is_atom(exp))
@@ -1212,7 +1320,7 @@ OBJECT_PTR lift_transform(OBJECT_PTR exp, OBJECT_PTR bindings)
                        list(1,
                             list(2,
                                  sym,
-                                 cons_length(exp) == 3 ? list(3, LAMBDA, second(exp), car(res)) : list(4, LAMBDA, second(exp), third(exp), car(res)))).
+                                 cons_length(exp) == 3 ? list(3, LAMBDA, second(exp), car(res)) : list(4, LAMBDA, second(exp), third(exp), car(res)))),
                        cdr(res)));
   }
   else
@@ -1223,6 +1331,14 @@ OBJECT_PTR lift_transform(OBJECT_PTR exp, OBJECT_PTR bindings)
     return cons(cons(car(car_res), car(cdr_res)),
                 cdr(cdr_res));
   }
+}
+
+OBJECT_PTR simplify_il(OBJECT_PTR exp)
+{
+  return simplify_il_copy_prop(
+    simplify_il_eta(
+      simplify_il_implicit_let(
+        simplify_il_empty_let(exp))));
 }
 
 OBJECT_PTR compile_exp(OBJECT_PTR exp)
@@ -1241,17 +1357,9 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   res = simplify_il(res);
   res = cps_transform(res);
   res = closure_conv_transform(res);
-  res = lift_transform(res);
+  res = lift_transform(res, NIL);
 
   return res;
-}
-
-OBJECT_PTR simplify_il(OBJECT_PTR exp)
-{
-  return simplify_il_copy_prop(
-    simplify_il_eta(
-      simplify_il_implicit_let(
-        simplify_il_empty_let(exp))));
 }
 
 BOOLEAN arithop(OBJECT_PTR sym)
@@ -1263,14 +1371,14 @@ BOOLEAN arithop(OBJECT_PTR sym)
     sym == GT       ||
     sym == LT       ||
     sym == LEQ      ||
-    sym == GEQ);
+    sym == GEQ;
 }
 
 BOOLEAN core_op(OBJECT_PTR sym)
 {
   return sym == ATOM    ||
     sym == EQ           ||
-    sym == CALL-CC1     ||
+    sym == CALL_CC1     ||
     sym == SET          ||
     sym == ERROR        ||
     sym == LIST         ||
@@ -1278,20 +1386,20 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == CAR          ||
     sym == CDR          ||
     sym == PRINT        ||
-    sym == SYMBOL-VALUE ||
+    sym == SYMBOL_VALUE ||
     sym == BACKQUOTE    ||
     sym == GENSYM       ||
     sym == SETCAR       ||
     sym == SETCDR       ||
     sym == COMMA        ||
-    sym == COMMA-AT     ||
+    sym == COMMA_AT     ||
     sym == APPLY        ||
-    sym == SYMBOL       ||
-    sym == SYMBOL-NAME  ||
+    sym == SYMBL        ||
+    sym == SYMBOL_NAME  ||
     sym == FORMAT       ||
     sym == CLONE        ||
     sym == RETURN       ||
-    sym == RETURN-FROM  ||
+    sym == RETURN_FROM  ||
     sym == UNBIND       ||
     sym == NEWLINE      ||
     sym == NOT          ||
@@ -1334,7 +1442,7 @@ BOOLEAN package_op(OBJECT_PTR sym)
 {
   return sym == CREATE_PACKAGE ||
     sym == IN_PACKAGE          ||
-    sym == export_package;
+    sym == EXPORT_PACKAGE;
 }
 
 BOOLEAN serialization_op(OBJECT_PTR sym)
@@ -1411,7 +1519,7 @@ OBJECT_PTR primitive_add(unsigned int count, ...)
 OBJECT_PTR temp12(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
 {
   return list(2,
-              nth(n, v1),
+              nth(x, v1),
               list(3,
                    NTH,
                    primitive_add(2, x, convert_int_to_object(1)),
