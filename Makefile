@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o indent.o
+OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o indent.o full_monty_compiler.o
 
 CC	= gcc -fPIC
 CFLAGS	= -g `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` `pkg-config --cflags gtksourceview-3.0`-I/usr/local/include -L/usr/local/lib
@@ -112,6 +112,9 @@ native_compiler.o:	src/native_compiler.c
 indent.o:	src/gui/indent.c
 		$(CC) $(CFLAGS) -c src/gui/indent.c -o indent.o
 
+full_monty_compiler.o:	src/full_monty_compiler.c
+		$(CC) $(CFLAGS) -c src/full_monty_compiler.c -o full_monty_compiler.o
+
 test_so.o:	src/test_so.c
 		$(CC) -c src/test_so.c -o test_so.o
 
@@ -136,6 +139,8 @@ json.o		: src/json.h
 hashtable.o	: src/hashtable.h
 
 native_compiler.o	: src/plisp.h
+
+full_monty_compiler.o	: src/plisp.h
 clean:
 	rm -f *.o *~ src/lex.yy.c src/plisp.tab.c src/plisp.tab.h src/json.lex.yy.c src/json_parser.tab.h src/json_parser.tab.c src/plisp.output src/json_parser.output plisp libplisp.so libtest.so *.stackdump
 

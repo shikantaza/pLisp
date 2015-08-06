@@ -115,6 +115,8 @@ extern OBJECT_PTR COMPILEFN;
 
 extern OBJECT_PTR EXPORT_PACKAGE;
 
+extern OBJECT_PTR COMPILE_EXP;
+
 extern OBJECT_PTR top_level_env;
 
 extern OBJECT_PTR reg_accumulator;
@@ -3087,6 +3089,24 @@ unsigned int export_package()
   return 0;
 }
 
+unsigned int compile_expression()
+{
+  OBJECT_PTR car_obj;
+
+  if(cons_length(reg_current_value_rib) != 1)
+  {
+    throw_exception("EXCEPTION", "COMPILE-EXP expects a single argument");
+    return 1;
+  }
+
+  reg_accumulator = compile_exp(car_obj);
+  
+  reg_current_value_rib = NIL;
+  reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
+
+  return 0;
+}
+
 unsigned int apply_compiled()
 {
   OBJECT_PTR operator = reg_accumulator;
@@ -3375,6 +3395,10 @@ unsigned int apply_compiled()
     else if(operator == EXPORT_PACKAGE)
     {
       export_package();
+    }
+    else if(operator == COMPILE_EXP)
+    {
+      compile_expression();
     }
     else
     {

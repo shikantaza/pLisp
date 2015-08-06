@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "plisp.h"
 
@@ -565,7 +566,7 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
     return list(3, LAMBDA, second(exp), tf(third(exp),v,NIL));
   else if(primop(car_exp))
     return cons(first(exp),
-                map2(tf, v, NIL, rest(exp)));
+                map2(tf, v, NIL, cdr(exp)));
   else if(car_exp == LET || car_exp == LETREC)
     return list(3,
                 car_exp,
@@ -671,7 +672,7 @@ OBJECT_PTR mapsub(OBJECT_PTR exp,
     return list(3, LAMBDA, second(exp), tf(third(exp)));
   else if(primop(car_exp))
     return cons(first(exp),
-                map(tf, rest(exp)));
+                map(tf, cdr(exp)));
   else if(car_exp == LET || car_exp == LETREC)
     return list(3,
                 car_exp,
@@ -852,6 +853,30 @@ OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t *, O
   return ret;    
 }
 
+OBJECT_PTR pair( OBJECT_PTR list1,
+                 OBJECT_PTR list2)
+{
+  OBJECT_PTR ret = NIL, rest1 = list1, rest2 = list2;
+
+  while(rest1 != NIL || rest2 != NIL)
+  {
+    OBJECT_PTR val = list(2, car(rest1), car(rest2));
+
+    if(ret == NIL)
+      ret = cons(val, NIL);
+    else
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(val, NIL));        
+    }
+
+    rest1 = cdr(rest1);
+    rest2 = cdr(rest2);
+  }
+
+  return ret;    
+}
+
 OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t *env)
 {
   if(exp == NIL)
@@ -980,7 +1005,7 @@ OBJECT_PTR simplify_il_implicit_let(OBJECT_PTR exp)
      CAAR(exp) == LAMBDA)
     return list(3,
                 LET,
-                mapcar(temp11, second(first(exp)), rest(exp)),
+                mapcar(temp11, second(first(exp)), cdr(exp)),
                 third(first(exp)));
   else
     return exp;
@@ -1514,6 +1539,21 @@ OBJECT_PTR primitive_add(unsigned int count, ...)
   va_end(ap);
 
   return convert_int_to_object(sum);  
+}
+
+OBJECT_PTR nth(OBJECT_PTR n, OBJECT_PTR lst)
+{
+  int i_val = get_int_value(n);
+
+  if(i_val < 0 || i_val >= cons_length(lst))
+    return NIL;
+  else
+  {
+    if(i_val == 0)
+      return car(lst);
+    else
+      return nth(convert_int_to_object(i_val-1), cdr(lst));
+  }
 }
 
 OBJECT_PTR temp12(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
