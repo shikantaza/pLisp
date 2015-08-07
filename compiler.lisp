@@ -858,7 +858,7 @@
               free-ids))))
 
 (define my-cont-var
-        (cons nil nil)
+        (nil))
 
 (defun call-cc1 (clo)
   ((car clo) clo (cadr saved-continuations) (list (lambda (y x)
@@ -900,3 +900,46 @@
                                        (setcdr res
                                                (eval (cadr x)))))))
              res))))
+
+(defun backquote2 (exp)
+  (cond ((atom exp) exp)
+        ((or (eq (car exp)
+                 'comma)
+             (eq (car exp)
+                 'comma-at)) (cadr exp))
+        (t (let ((bindings)
+                 (res))
+             (dolist (x exp)
+               (cond ((atom x) (if (null res)
+                                   (set res
+                                        (list x))
+                                 (set res
+                                      (concat res
+                                              (list x)))))
+                     ((eq (car x)
+                          'comma) (let ((sym (gensym)))
+                                    (progn (set bindings
+                                                (cons (list sym
+                                                            (cadr x))
+                                                      bindings))
+                                           (if (null res)
+                                               (set res
+                                                    (list sym))
+                                             (set res
+                                                  (concat res
+                                                          (list sym)))))))
+                     ((eq (car x)
+                          'comma-at) (let ((sym (gensym)))
+                                       (progn (set bindings
+                                                   (cons (list sym
+                                                               (cadr x))
+                                                         bindings))
+                                              (if (null res)
+                                                  (set res
+                                                       sym)
+                                                (setcdr res
+                                                        sym)))))))
+             (list 'let
+                   bindings
+                   res)))))
+
