@@ -1712,3 +1712,56 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
                   free_ids);
   }
 }
+
+OBJECT_PTR backquote2(OBJECT_PTR exp)
+{
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
+
+  if(is_atom(exp))
+    return exp;
+  else if(car_exp == COMMA || car_exp == COMMA_AT)
+    return CADR(exp);
+  else
+  {
+    OBJECT_PTR bindings = NIL, res = NIL, rest = exp;
+
+    while(rest != NIL)
+    {
+      OBJECT_PTR x = car(rest);
+
+      if(is_atom(x))
+      {
+        if(res == NIL)
+          res = list(1, x);
+        else
+          res = concat(2, res, list(1,x));
+      }
+      else if(car(x) == COMMA)
+      {
+        OBJECT_PTR sym = gensym();
+        bindings = cons(list(2, sym, CADR(x)),
+                        bindings);
+        if(res == NIL)
+          res = list(1, sym);
+        else
+          res = concat(2, res, list(1,sym));
+      }
+      else if(car(x) == COMMA_AT)
+      {
+        OBJECT_PTR sym = gensym();
+        bindings = cons(list(2, sym, CADR(x)),
+                        bindings);
+        if(res == NIL)
+          res = sym;
+        else
+          setcdr(res, sym);
+      }
+      rest = cdr(rest);
+    }
+
+    return list(3, LET, bindings, res);
+  }
+}
