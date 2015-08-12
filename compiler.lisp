@@ -858,7 +858,7 @@
               free-ids))))
 
 (define my-cont-var
-        (nil))
+        (cons nil nil))
 
 (defun call-cc1 (clo)
   ((car clo) clo (cadr saved-continuations) (list (lambda (y x)

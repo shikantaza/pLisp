@@ -3091,7 +3091,7 @@ unsigned int export_package()
 
 unsigned int compile_expression()
 {
-  OBJECT_PTR car_obj;
+  OBJECT_PTR car_obj = car(reg_current_value_rib);
 
   if(cons_length(reg_current_value_rib) != 1)
   {

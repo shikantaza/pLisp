@@ -127,6 +127,8 @@ extern OBJECT_PTR ENV;
 extern OBJECT_PTR EXPAND_MACRO;
 extern OBJECT_PTR EVAL;
 
+extern OBJECT_PTR LST;
+
 extern unsigned int POINTER_MASK;
 
 //forward declarations
@@ -178,6 +180,7 @@ void put_binding_val(binding_env_t *env, OBJECT_PTR key, OBJECT_PTR val)
     {
       env->bindings[i].val = val;
       found = true;
+      break;
     }
   }
 
@@ -185,14 +188,14 @@ void put_binding_val(binding_env_t *env, OBJECT_PTR key, OBJECT_PTR val)
   {
     env->count++;
 
-    binding_env_t *temp = (binding_env_t *)realloc(env, env->count * sizeof(binding_env_t));
+    binding_t *temp = (binding_t *)realloc(env->bindings, env->count * sizeof(binding_t));
 
     assert(temp);
 
-    env = temp;
+    env->bindings = temp;
 
-    env[env->count-1].bindings->key = key;
-    env[env->count-1].bindings->val = val;
+    env->bindings[env->count-1].key = key;
+    env->bindings[env->count-1].val = val;
   }
 }
 
@@ -355,7 +358,7 @@ OBJECT_PTR concat(unsigned int count, ...)
 {
   va_list ap;
   OBJECT_PTR lst, ret, rest;
-  int i;
+  int i, start = 1;
 
   if(!count)
     return NIL;
@@ -364,11 +367,30 @@ OBJECT_PTR concat(unsigned int count, ...)
 
   lst = (OBJECT_PTR)va_arg(ap, int);
 
+  if(!IS_CONS_OBJECT(lst) && lst != NIL)
+    assert(false);
+
+  while(lst == NIL)
+  {
+    start++;
+    lst = (OBJECT_PTR)va_arg(ap, int);
+
+    if(!IS_CONS_OBJECT(lst) && lst != NIL)
+      assert(false);
+  }
+
   ret = clone_object(lst);
 
-  for(i=1; i<count; i++)
+  for(i=start; i<count; i++)
   {
     lst = (OBJECT_PTR)va_arg(ap, int);
+
+    if(lst == NIL)
+      continue;
+
+    if(!IS_CONS_OBJECT(lst))
+      assert(false);
+
     rest = lst;
 
     while(rest != NIL)
@@ -387,7 +409,10 @@ OBJECT_PTR concat(unsigned int count, ...)
 
 OBJECT_PTR subexps(OBJECT_PTR exp)
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(is_atom(exp) || car_exp == ERROR)
     return NIL;
@@ -416,7 +441,10 @@ OBJECT_PTR temp1(OBJECT_PTR x)
 
 OBJECT_PTR mutating_ids(OBJECT_PTR exp)
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(is_atom(exp) || car_exp == ERROR)
     return NIL;
@@ -554,7 +582,10 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
                    OBJECT_PTR (*tf)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR),
                    OBJECT_PTR v)
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(is_atom(exp) || car_exp == ERROR)
     return exp;
@@ -578,7 +609,10 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
 
 OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
 {
-  OBJECT_PTR first_exp = first(exp);
+  OBJECT_PTR first_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    first_exp = first(exp);
 
   if(IS_SYMBOL_OBJECT(exp))
   {
@@ -660,7 +694,10 @@ OBJECT_PTR temp5(OBJECT_PTR x,
 OBJECT_PTR mapsub(OBJECT_PTR exp, 
                   OBJECT_PTR (*tf)(OBJECT_PTR))
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(is_atom(exp) || car_exp == ERROR)
     return exp;
@@ -939,14 +976,50 @@ OBJECT_PTR temp10(OBJECT_PTR x)
 
 OBJECT_PTR flatten(OBJECT_PTR lst)
 {
-  return concat(cons_length(lst),
-                map(temp10, lst));
-}
+  OBJECT_PTR ret = NIL, rest = lst;
 
+  while(rest != NIL)
+  {
+    if(IS_CONS_OBJECT(car(rest)) || car(rest) == NIL)
+    {
+      OBJECT_PTR rest1 = car(rest);
+
+      while(rest1 != NIL)
+      {
+        if(ret == NIL)
+          ret = cons(car(rest1), NIL);
+        else
+        {
+          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          set_heap(ptr, 1, cons(car(rest1), NIL));        
+        }
+
+        rest1 = cdr(rest1);
+      }
+    }
+    else
+    {
+      if(ret == NIL)
+        ret = cons(car(rest), NIL);
+      else
+      {
+        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        set_heap(ptr, 1, cons(car(rest), NIL));        
+      }
+    }
+
+    rest = cdr(rest);
+  }
+
+  return ret;  
+}
 
 OBJECT_PTR free_ids_il(OBJECT_PTR exp)
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(exp == NIL)
     return NIL;
@@ -1049,7 +1122,10 @@ OBJECT_PTR simplify_il_copy_prop(OBJECT_PTR exp)
 
 OBJECT_PTR cps_transform(OBJECT_PTR exp)
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(is_atom(exp))
     return cps_transform_var_literal(exp);
@@ -1277,7 +1353,7 @@ OBJECT_PTR closure_conv_transform_let(OBJECT_PTR exp)
                    list(2, 
                         first(first(second(exp))),
                         concat(2,
-                               list(2, LIST, icode),
+                               list(2, LST, icode),
                                CDDR(exp1)))),
               closure_conv_transform(third(exp)));
 }
@@ -1291,7 +1367,7 @@ OBJECT_PTR closure_conv_transform_app(OBJECT_PTR exp)
               LET1,
               list(2,
                    list(2, iclo, closure_conv_transform(first(exp))),
-                   list(2, icode, list(3, NTH, 0, iclo))),
+                   list(2, icode, list(3, NTH, convert_int_to_object(0), iclo))),
               concat(2,
                      list(2, icode, iclo),
                      map(closure_conv_transform, cdr(exp))));
@@ -1299,7 +1375,10 @@ OBJECT_PTR closure_conv_transform_app(OBJECT_PTR exp)
 
 OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
 {
-  OBJECT_PTR car_exp = car(exp);
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
 
   if(exp == NIL)
     return NIL;
@@ -1370,13 +1449,17 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
 
-  //expand-macro would already have happened in repl2()
+  //TODO: macro expansion via invoking native function pointer
+  //that implements macros (calling primitive/native version of backquote2 internally)
 
   res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO
   res = translate_to_il(res);
 
   binding_env_t *env = create_binding_env();
   res = ren_transform(res, env);
+
+  free(env->bindings);
+  env->bindings = NULL;
   free(env);
 
   res = simplify_il(res);
@@ -1573,7 +1656,7 @@ OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR exp)
 
   if(free_ids == NIL)
     return concat(2,
-                  list(1, LIST),
+                  list(1, LST),
                   list(1,list(4,
                               LAMBDA,
                               concat(2,
@@ -1584,7 +1667,7 @@ OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR exp)
   else
   {
     return concat(3,
-                  list(1, LIST),
+                  list(1, LST),
                   list(1,
                        list(4,
                             LAMBDA,
@@ -1606,7 +1689,7 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
 
   if(free_ids == NIL)
     return concat(2,
-                  list(1, LIST),
+                  list(1, LST),
                   list(1,list(3,
                               LAMBDA,
                               concat(2,
@@ -1616,7 +1699,7 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
   else
   {
     return concat(3,
-                  list(1, LIST),
+                  list(1, LST),
                   list(1,
                        list(3,
                             LAMBDA,
