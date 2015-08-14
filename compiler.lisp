@@ -939,7 +939,9 @@
                                                        sym)
                                                 (setcdr res
                                                         sym)))))))
-             (list 'let
-                   bindings
-                   res)))))
+             (if (null bindings)
+                 res
+               (list 'let
+                     bindings
+                     res))))))
 

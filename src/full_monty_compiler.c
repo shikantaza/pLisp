@@ -17,12 +17,15 @@
   along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 
 #include "plisp.h"
+#include "util.h"
 
 typedef struct binding
 {
@@ -35,6 +38,8 @@ typedef struct binding_env
   unsigned int count;
   binding_t *bindings;
 } binding_env_t;
+
+typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
 
 extern  OBJECT_PTR first(OBJECT_PTR);
 extern  OBJECT_PTR second(OBJECT_PTR);
@@ -129,6 +134,8 @@ extern OBJECT_PTR EVAL;
 
 extern OBJECT_PTR LST;
 
+extern OBJECT_PTR EXTRACT_NATIVE_FN;
+
 extern unsigned int POINTER_MASK;
 
 //forward declarations
@@ -147,6 +154,10 @@ OBJECT_PTR closure_conv_transform(OBJECT_PTR);
 OBJECT_PTR range(int, int, int);
 OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR);
 OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR);
+OBJECT_PTR backquote2(OBJECT_PTR);
+OBJECT_PTR process_backquote(OBJECT_PTR);
+unsigned int build_c_fragment(OBJECT_PTR, char *);
+void build_c_string(OBJECT_PTR, char *);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1367,7 +1378,8 @@ OBJECT_PTR closure_conv_transform_app(OBJECT_PTR exp)
               LET1,
               list(2,
                    list(2, iclo, closure_conv_transform(first(exp))),
-                   list(2, icode, list(3, NTH, convert_int_to_object(0), iclo))),
+                   //list(2, icode, list(3, NTH, convert_int_to_object(0), iclo))),
+                   list(2, icode, list(2, EXTRACT_NATIVE_FN, iclo))),
               concat(2,
                      list(2, icode, iclo),
                      map(closure_conv_transform, cdr(exp))));
@@ -1452,6 +1464,8 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   //TODO: macro expansion via invoking native function pointer
   //that implements macros (calling primitive/native version of backquote2 internally)
 
+  res = process_backquote(exp);
+
   res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO
   res = translate_to_il(res);
 
@@ -1466,6 +1480,13 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   res = cps_transform(res);
   res = closure_conv_transform(res);
   res = lift_transform(res, NIL);
+
+  char str[1024];
+  memset(str, 1024, '\0');
+
+  build_c_string(second(res), str);
+
+  printf("%s\n", str);
 
   return res;
 }
@@ -1713,6 +1734,17 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
   }
 }
 
+OBJECT_PTR process_backquote(OBJECT_PTR exp)
+{
+  if(is_atom(exp))
+    return exp;
+  else if(car(exp) == BACKQUOTE)
+    return backquote2(CADR(exp));
+  else
+    return cons(process_backquote(car(exp)),
+                process_backquote(cdr(exp)));
+}
+
 OBJECT_PTR backquote2(OBJECT_PTR exp)
 {
   OBJECT_PTR car_exp;
@@ -1757,11 +1789,180 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
         if(res == NIL)
           res = sym;
         else
-          setcdr(res, sym);
+        {
+          uintptr_t ptr = last_cell(res) & POINTER_MASK;
+          set_heap(ptr, 1, sym);        
+        }
       }
       rest = cdr(rest);
     }
 
-    return list(3, LET, bindings, res);
+    if(bindings == NIL)
+      return res;
+    else
+      return list(3, LET, bindings, res);
   }
+}
+
+char *replace_hyphens(char *s)
+{
+  int i, len = strlen(s);
+  
+  for(i=0; i<len; i++)
+    if(s[i] == '-')
+      s[i] = '_';
+
+  return s;
+}
+
+char *extract_variable_string(OBJECT_PTR var)
+{
+  //TODO: prefix underscore to the gensym variable names
+  //to avoid name clash with user-defined variables
+
+  //TODO: convert any hyphens to undescores
+
+  if(IS_SYMBOL_OBJECT(var))
+  {
+    char *raw_name = strdup(get_symbol_name(var));
+
+    if(raw_name[0] == '#')
+    {
+      char *name = substring(raw_name, 2, strlen(raw_name)-2);
+      free(raw_name);
+      return convert_to_lower_case(replace_hyphens(name));
+    }
+    else
+      return convert_to_lower_case(replace_hyphens(raw_name));
+  }
+  else
+  {
+    char *s = (char *)malloc(10*sizeof(char));
+    memset(s,10,'\0');
+    sprintf(s, "%d", var);
+    return s;
+  }
+}
+
+void build_c_string(OBJECT_PTR lambda_form, char *buf)
+{
+  char *fname = extract_variable_string(car(lambda_form));
+
+  unsigned int len = 0;
+
+  len += sprintf(buf+len, "OBJECT_PTR %s(", fname);
+
+  OBJECT_PTR params = second(second(lambda_form));
+
+  OBJECT_PTR rest = params;
+
+  BOOLEAN first_time = true;
+
+  while(rest != NIL)
+  {
+    char *pname = extract_variable_string(car(rest));
+
+    if(!first_time)
+      len += sprintf(buf+len, ", ");
+
+    len += sprintf(buf+len, "OBJECT_PTR %s", pname);
+
+    rest = cdr(rest);
+    first_time = false;
+
+    free(pname);
+  }
+
+  len += sprintf(buf+len, ")\n{\n");
+
+  OBJECT_PTR body = CDDR(second(lambda_form));
+
+  assert(cons_length(body) == 1 || cons_length(body) == 2);
+
+  if(cons_length(body) == 2)
+  {
+    len += build_c_fragment(car(body), buf+len);
+    //len += sprintf(buf+len, ";\n");
+    len += build_c_fragment(CADR(body), buf+len);
+  }
+  else
+  {
+    len += build_c_fragment(car(body), buf+len);
+  }
+
+  len += sprintf(buf+len, "\n}\n");
+
+  free(fname);
+}
+
+unsigned int build_c_fragment(OBJECT_PTR exp, char *buf)
+{
+  unsigned int len = 0;
+
+  if(is_atom(exp))
+  {
+    char *var = extract_variable_string(exp);
+    len += sprintf(buf+len, "%s;\n", var);
+    free(var);
+  }
+  else if(car(exp) == LET || car(exp) == LET1)
+  {
+    len += sprintf(buf+len, "{\n");
+
+    OBJECT_PTR rest = second(exp);
+
+    while(rest != NIL)
+    {
+      char *var = extract_variable_string(car(car(rest)));
+
+      if(IS_CONS_OBJECT(second(car(rest))) && first(second(car(rest))) == EXTRACT_NATIVE_FN)
+      {
+        len += sprintf(buf+len, "nativefn %s = ", var);
+        len += build_c_fragment(CADR(car(rest)), buf+len);
+      }
+      else
+      {
+        len += sprintf(buf+len, "OBJECT_PTR %s = ", var);
+        len += build_c_fragment(CADR(car(rest)), buf+len);
+      }
+
+      rest = cdr(rest);
+      free(var);
+    }
+
+    len += build_c_fragment(third(exp), buf+len);
+
+    len += sprintf(buf+len, "\n}");
+
+  }
+  else //primitive or user-defined function/macro application
+  {
+
+    char *var = extract_variable_string(car(exp));
+    len += sprintf(buf+len, "%s(", var);
+    free(var);
+
+    OBJECT_PTR rest = cdr(exp);
+
+    BOOLEAN first_time = true;
+
+    while(rest != NIL)
+    {
+      char *arg_name = extract_variable_string(car(rest));
+
+      if(!first_time)
+        len += sprintf(buf+len, ", ");
+
+      len += sprintf(buf+len, "%s", arg_name);
+
+      rest = cdr(rest);
+      first_time = false;
+
+      free(arg_name);
+    }
+
+    len += sprintf(buf+len, ");\n");
+  }
+
+  return len;
 }

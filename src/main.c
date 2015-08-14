@@ -186,6 +186,7 @@ OBJECT_PTR CALL_CC1          = (OBJECT_PTR)((111 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR MY_CONT_VAR       = (OBJECT_PTR)((112 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR SAVE_CONTINUATION = (OBJECT_PTR)((113 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR LETREC            = (OBJECT_PTR)((114 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR EXTRACT_NATIVE_FN = (OBJECT_PTR)((115 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -199,7 +200,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 30
+#define NOF_NON_SPECIAL_SYMBOLS 31
 
 char err_buf[500];
 
@@ -2037,6 +2038,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[112] = strdup("MY-CONT-VAR");
   packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("SAVE-CONTINUATION");
   packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("LETREC");
+  packages[CORE_PACKAGE_INDEX].symbols[115] = strdup("EXTRACT-NATIVE-FN");
 }
 
 int find_package(char* package_name)
