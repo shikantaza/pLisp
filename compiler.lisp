@@ -794,10 +794,14 @@
   (put-env-il sym
               (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
 
-(defun build-il-with-globals (exp)
-  (list 'let
-        env0-il
-        (build-evaluatable-exp (compile-exp (expand-macro-full exp)))))
+(defun build-il-with-globals (exp flag)
+  (if (eq flag 'full-monty)
+      (list 'let
+            env0-il
+            (build-evaluatable-exp (compile-exp (expand-macro-full exp))))
+    (list 'let
+          env0-il
+          (build-evaluatable-exp (compile-exp (expand-macro-full exp))))))
 
 (defun closure-conv-transform-abs-cont (exp)
   (let ((free-ids (free-ids-il exp))

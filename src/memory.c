@@ -257,7 +257,10 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
           IS_MACRO_OBJECT(obj)        ||
           IS_CONTINUATION_OBJECT(obj) ||
           IS_INTEGER_OBJECT(obj)      ||
-          IS_FLOAT_OBJECT(obj);
+          IS_FLOAT_OBJECT(obj)        ||
+          IS_NATIVE_FN_OBJECT(obj)    ||
+          IS_FUNCTION2_OBJECT(obj)    ||
+          IS_MACRO2_OBJECT(obj);
 }
 
 void pin_globals()

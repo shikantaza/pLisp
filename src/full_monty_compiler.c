@@ -26,6 +26,7 @@
 
 #include "plisp.h"
 #include "util.h"
+#include "libtcc.h"
 
 typedef struct binding
 {
@@ -41,6 +42,42 @@ typedef struct binding_env
 
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
 
+//mapping of top-level symbols
+//to their values
+typedef struct global_var_mapping
+{
+  OBJECT_PTR sym;
+  OBJECT_PTR val;
+  BOOLEAN delete_flag;
+} global_var_mapping_t;
+
+//see definition of global_var_ref_t
+typedef struct global_var_ref_detail
+{
+  OBJECT_PTR referrer; //referring closure object
+  unsigned int pos; //ordinal position of the referred top-level object
+} global_var_ref_detail_t;
+
+//for each top-level symbol,
+//maintain the list of closures
+//that close over that symbol/value
+typedef struct global_var_ref
+{
+  OBJECT_PTR global_var;
+  unsigned int ref_count;
+  global_var_ref_detail_t * references;
+} global_var_ref_t;
+
+//global variables
+unsigned int nof_global_vars = 0;
+global_var_mapping_t *top_level_symbols = NULL;
+
+OBJECT_PTR saved_continations;
+OBJECT_PTR idclo;
+
+//end of global variables
+
+//external variables
 extern  OBJECT_PTR first(OBJECT_PTR);
 extern  OBJECT_PTR second(OBJECT_PTR);
 extern  OBJECT_PTR third(OBJECT_PTR);
@@ -133,10 +170,18 @@ extern OBJECT_PTR EXPAND_MACRO;
 extern OBJECT_PTR EVAL;
 
 extern OBJECT_PTR LST;
-
 extern OBJECT_PTR EXTRACT_NATIVE_FN;
+extern OBJECT_PTR CREATE_FN_CLOSURE;
+extern OBJECT_PTR MACRO;
+extern OBJECT_PTR QUOTE;
 
 extern unsigned int POINTER_MASK;
+//end of external variables
+
+//external functions
+extern OBJECT_PTR quote(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_add(OBJECT_PTR, ...);
+//end of external functions
 
 //forward declarations
 OBJECT_PTR assignment_conversion(OBJECT_PTR, OBJECT_PTR);
@@ -156,8 +201,23 @@ OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR);
 OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR);
 OBJECT_PTR backquote2(OBJECT_PTR);
 OBJECT_PTR process_backquote(OBJECT_PTR);
-unsigned int build_c_fragment(OBJECT_PTR, char *);
-void build_c_string(OBJECT_PTR, char *);
+unsigned int build_c_fragment(OBJECT_PTR, char *, BOOLEAN);
+unsigned int build_c_string(OBJECT_PTR, char *);
+OBJECT_PTR convert_native_fn_to_object(nativefn);
+void add_top_level_sym(OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR get_top_level_sym_value(OBJECT_PTR);
+void save_continuation(OBJECT_PTR);
+OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR create_closure(unsigned int, BOOLEAN, OBJECT_PTR, ...);
+nativefn extract_native_fn(OBJECT_PTR);
+OBJECT_PTR nth(OBJECT_PTR, OBJECT_PTR);
+nativefn get_nativefn_value(OBJECT_PTR);
+OBJECT_PTR reverse(OBJECT_PTR);
+TCCState *create_tcc_state1();
+TCCState *compile_functions(OBJECT_PTR);
+char *extract_variable_string(OBJECT_PTR);
+OBJECT_PTR call_cc1(OBJECT_PTR);
+OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1265,7 +1325,7 @@ OBJECT_PTR cps_trans_primop_internal(OBJECT_PTR primop1,
                 list(1, list(2, 
                              ians, 
                              concat(2, 
-                                    list(1, primop1),
+                                    list(2, primop1, convert_int_to_object(cons_length(syms))),
                                     syms))),
                 list(2, first_sym, ians));
   }
@@ -1360,12 +1420,12 @@ OBJECT_PTR closure_conv_transform_let(OBJECT_PTR exp)
   return list(3,
               LET1,
               list(2,
-                   list(2, icode, second(exp1)),
+                   list(2, icode, third(exp1)),
                    list(2, 
                         first(first(second(exp))),
                         concat(2,
-                               list(2, LST, icode),
-                               CDDR(exp1)))),
+                               list(3, CREATE_FN_CLOSURE, convert_int_to_object(cons_length(CDDR(exp1))), icode),
+                               CDDDR(exp1)))),
               closure_conv_transform(third(exp)));
 }
 
@@ -1457,16 +1517,38 @@ OBJECT_PTR simplify_il(OBJECT_PTR exp)
         simplify_il_empty_let(exp))));
 }
 
+OBJECT_PTR replace_macros(OBJECT_PTR exp)
+{
+  if(exp == MACRO)
+    return LAMBDA;
+  else if(is_atom(exp))
+    return exp;
+  else
+    return cons(replace_macros(car(exp)),
+                replace_macros(cdr(exp)));
+}
+
 OBJECT_PTR compile_exp(OBJECT_PTR exp)
 {
+  BOOLEAN function = true;
+
+  if(IS_CONS_OBJECT(exp) && car(exp) == MACRO)
+      function = false;
+
   OBJECT_PTR res = clone_object(exp);
+
+  print_object(res); printf("\n");
+  res = replace_macros(res);
+  print_object(res);
 
   //TODO: macro expansion via invoking native function pointer
   //that implements macros (calling primitive/native version of backquote2 internally)
 
-  res = process_backquote(exp);
+  res = process_backquote(res);
 
-  res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO
+  print_object(res);getchar();
+
+  res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO: get global symbols from top_level_symbols
   res = translate_to_il(res);
 
   binding_env_t *env = create_binding_env();
@@ -1481,14 +1563,52 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   res = closure_conv_transform(res);
   res = lift_transform(res, NIL);
 
-  char str[1024];
-  memset(str, 1024, '\0');
-
-  build_c_string(second(res), str);
-
-  printf("%s\n", str);
-
   return res;
+
+  OBJECT_PTR lambdas = reverse(cdr(res));
+
+  //these will move to repl2()
+  saved_continations = NIL;
+  idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
+  //end of things to move to repl2()
+
+  TCCState *tcc_state1 = compile_functions(lambdas);
+
+  while(lambdas != NIL)
+  {
+    OBJECT_PTR lambda = car(lambdas);
+
+    char *fname = extract_variable_string(first(lambda));
+
+    add_top_level_sym(first(lambda),
+                      convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname)));
+
+    lambdas = cdr(lambdas);
+    free(fname);
+  }
+
+  OBJECT_PTR closure_components = CDDR(first(res));
+  OBJECT_PTR ret = cons(get_top_level_sym_value(car(closure_components)), NIL);
+  OBJECT_PTR rest = cdr(closure_components);
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR val = get_top_level_sym_value(car(rest));
+    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    set_heap(ptr, 1, cons(val, NIL));        
+    rest = cdr(rest);
+  }
+
+  ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + (function ? FUNCTION2_TAG : MACRO2_TAG);
+
+  assert(IS_FUNCTION2_OBJECT(ret) || IS_MACRO2_OBJECT(ret));
+
+  nativefn tt = extract_native_fn(ret);
+  printf("******\n");
+  print_object(tt(ret, idclo));
+  printf("******\n");
+
+  return ret;
 }
 
 BOOLEAN arithop(OBJECT_PTR sym)
@@ -1506,6 +1626,7 @@ BOOLEAN arithop(OBJECT_PTR sym)
 BOOLEAN core_op(OBJECT_PTR sym)
 {
   return sym == ATOM    ||
+    sym == QUOTE        ||
     sym == EQ           ||
     sym == CALL_CC1     ||
     sym == SET          ||
@@ -1624,39 +1745,24 @@ OBJECT_PTR range(int start, int end, int step)
   return ret;    
 }
 
-OBJECT_PTR primitive_add(unsigned int count, ...)
-{
-  va_list ap;
-  OBJECT_PTR arg;
-  int i, sum=0;
-
-  assert(count >= 2); //TODO: handle this via error()
-
-  va_start(ap, count);
-
-  for(i=0; i<count; i++)
-  {
-    arg = (OBJECT_PTR)va_arg(ap, int);
-    sum += get_int_value(arg);
-  }
-
-  va_end(ap);
-
-  return convert_int_to_object(sum);  
-}
-
 OBJECT_PTR nth(OBJECT_PTR n, OBJECT_PTR lst)
 {
+  assert(IS_CONS_OBJECT(lst) || IS_FUNCTION2_OBJECT(lst) || IS_MACRO2_OBJECT(lst));
+
+  assert(IS_INTEGER_OBJECT(n));
+
+  int lst1 = IS_CONS_OBJECT(lst) ? lst : ((lst >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+
   int i_val = get_int_value(n);
 
-  if(i_val < 0 || i_val >= cons_length(lst))
+  if(i_val < 0 || i_val >= cons_length(lst1))
     return NIL;
   else
   {
     if(i_val == 0)
-      return car(lst);
+      return car(lst1);
     else
-      return nth(convert_int_to_object(i_val-1), cdr(lst));
+      return nth(convert_int_to_object(i_val-1), cdr(lst1));
   }
 }
 
@@ -1666,18 +1772,20 @@ OBJECT_PTR temp12(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
               nth(x, v1),
               list(3,
                    NTH,
-                   primitive_add(2, x, convert_int_to_object(1)),
+                   primitive_add(convert_int_to_object(2), x, convert_int_to_object(1)),
                    v2));
 }
 
 OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR exp)
 {
+  //OBJECT_PTR free_ids = difference(free_ids_il(exp), list(1, SAVE_CONTINUATION));
   OBJECT_PTR free_ids = free_ids_il(exp);
   OBJECT_PTR iclo = gensym();
 
   if(free_ids == NIL)
-    return concat(2,
-                  list(1, LST),
+    return concat(3,
+                  list(1, CREATE_FN_CLOSURE),
+                  list(1, convert_int_to_object(0)),
                   list(1,list(4,
                               LAMBDA,
                               concat(2,
@@ -1687,8 +1795,9 @@ OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR exp)
                               closure_conv_transform(fourth(exp)))));
   else
   {
-    return concat(3,
-                  list(1, LST),
+    return concat(4,
+                  list(1, CREATE_FN_CLOSURE),
+                  list(1, convert_int_to_object(cons_length(free_ids))),
                   list(1,
                        list(4,
                             LAMBDA,
@@ -1709,8 +1818,9 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
   OBJECT_PTR iclo = gensym();
 
   if(free_ids == NIL)
-    return concat(2,
-                  list(1, LST),
+    return concat(3,
+                  list(1, CREATE_FN_CLOSURE),
+                  list(1, convert_int_to_object(0)),
                   list(1,list(3,
                               LAMBDA,
                               concat(2,
@@ -1719,8 +1829,9 @@ OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR exp)
                               closure_conv_transform(third(exp)))));
   else
   {
-    return concat(3,
-                  list(1, LST),
+    return concat(4,
+                  list(1, CREATE_FN_CLOSURE),
+                  list(1, convert_int_to_object(cons_length(free_ids))),
                   list(1,
                        list(3,
                             LAMBDA,
@@ -1820,8 +1931,6 @@ char *extract_variable_string(OBJECT_PTR var)
   //TODO: prefix underscore to the gensym variable names
   //to avoid name clash with user-defined variables
 
-  //TODO: convert any hyphens to undescores
-
   if(IS_SYMBOL_OBJECT(var))
   {
     char *raw_name = strdup(get_symbol_name(var));
@@ -1832,8 +1941,20 @@ char *extract_variable_string(OBJECT_PTR var)
       free(raw_name);
       return convert_to_lower_case(replace_hyphens(name));
     }
-    else
-      return convert_to_lower_case(replace_hyphens(raw_name));
+    else if(primop(var))
+    {
+      char *s = (char *)malloc(20*sizeof(char));
+      if(var == ADD)
+        sprintf(s,"primitive_add");
+      else if(var == CAR)
+        sprintf(s,"car");
+      else if(var == QUOTE)
+        sprintf(s,"quote");
+      else
+        assert(false);
+      return s;
+    }
+    return convert_to_lower_case(replace_hyphens(raw_name));
   }
   else
   {
@@ -1844,13 +1965,13 @@ char *extract_variable_string(OBJECT_PTR var)
   }
 }
 
-void build_c_string(OBJECT_PTR lambda_form, char *buf)
+unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
 {
   char *fname = extract_variable_string(car(lambda_form));
 
   unsigned int len = 0;
 
-  len += sprintf(buf+len, "OBJECT_PTR %s(", fname);
+  len += sprintf(buf+len, "unsigned int %s(", fname);
 
   OBJECT_PTR params = second(second(lambda_form));
 
@@ -1865,7 +1986,7 @@ void build_c_string(OBJECT_PTR lambda_form, char *buf)
     if(!first_time)
       len += sprintf(buf+len, ", ");
 
-    len += sprintf(buf+len, "OBJECT_PTR %s", pname);
+    len += sprintf(buf+len, "unsigned int %s", pname);
 
     rest = cdr(rest);
     first_time = false;
@@ -1875,27 +1996,31 @@ void build_c_string(OBJECT_PTR lambda_form, char *buf)
 
   len += sprintf(buf+len, ")\n{\n");
 
+  //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
+
   OBJECT_PTR body = CDDR(second(lambda_form));
 
   assert(cons_length(body) == 1 || cons_length(body) == 2);
 
   if(cons_length(body) == 2)
   {
-    len += build_c_fragment(car(body), buf+len);
+    len += build_c_fragment(car(body), buf+len, false);
     //len += sprintf(buf+len, ";\n");
-    len += build_c_fragment(CADR(body), buf+len);
+    len += build_c_fragment(CADR(body), buf+len, false);
   }
   else
   {
-    len += build_c_fragment(car(body), buf+len);
+    len += build_c_fragment(car(body), buf+len, false);
   }
 
   len += sprintf(buf+len, "\n}\n");
 
   free(fname);
+
+  return len;
 }
 
-unsigned int build_c_fragment(OBJECT_PTR exp, char *buf)
+unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 {
   unsigned int len = 0;
 
@@ -1917,20 +2042,24 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf)
 
       if(IS_CONS_OBJECT(second(car(rest))) && first(second(car(rest))) == EXTRACT_NATIVE_FN)
       {
-        len += sprintf(buf+len, "nativefn %s = ", var);
-        len += build_c_fragment(CADR(car(rest)), buf+len);
+        len += sprintf(buf+len, "typedef unsigned int (*nativefn)(unsigned int, ...);\n");
+        len += sprintf(buf+len, "nativefn %s = (nativefn)", var);
+        len += build_c_fragment(CADR(car(rest)), buf+len, false);
       }
       else
       {
-        len += sprintf(buf+len, "OBJECT_PTR %s = ", var);
-        len += build_c_fragment(CADR(car(rest)), buf+len);
+        len += sprintf(buf+len, "unsigned int %s = ", var);
+        len += build_c_fragment(CADR(car(rest)), buf+len, false);
       }
 
       rest = cdr(rest);
       free(var);
     }
 
-    len += build_c_fragment(third(exp), buf+len);
+    if(first(third(exp)) != LET && first(third(exp)) != LET1)
+      len += sprintf(buf+len, "return ");
+
+    len += build_c_fragment(third(exp), buf+len, false);
 
     len += sprintf(buf+len, "\n}");
 
@@ -1948,21 +2077,280 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf)
 
     while(rest != NIL)
     {
-      char *arg_name = extract_variable_string(car(rest));
-
       if(!first_time)
         len += sprintf(buf+len, ", ");
 
-      len += sprintf(buf+len, "%s", arg_name);
+      if(is_atom(car(rest)))
+      {
+        char *arg_name = extract_variable_string(car(rest));
+        len += sprintf(buf+len, "%s", arg_name);
+        free(arg_name);
+      }
+      else
+        len += build_c_fragment(car(rest), buf+len, true);
 
       rest = cdr(rest);
       first_time = false;
-
-      free(arg_name);
     }
 
-    len += sprintf(buf+len, ");\n");
+    len += sprintf(buf+len, ")");
+
+    if(!nested_call)
+      len += sprintf(buf+len, ";\n");
   }
 
   return len;
+}
+
+nativefn extract_native_fn(OBJECT_PTR closure)
+{
+  if(!IS_FUNCTION2_OBJECT(closure) && !IS_MACRO2_OBJECT(closure))
+    assert(false);
+
+  OBJECT_PTR nativefn_obj = get_heap(closure & POINTER_MASK, 0);
+
+  if(!IS_NATIVE_FN_OBJECT(nativefn_obj))
+    assert(false);
+
+  return get_nativefn_value(nativefn_obj);
+}
+
+void save_continuation(OBJECT_PTR cont)
+{
+  saved_continations = cons(cont, saved_continations);
+}
+
+TCCState *create_tcc_state1()
+{
+  TCCState *tcc_state = tcc_new();
+
+  if (!tcc_state)
+  {
+    fprintf(stderr, "Could not create tcc state\n");
+    return NULL;
+  }
+
+  tcc_set_output_type(tcc_state, TCC_OUTPUT_MEMORY);
+
+  tcc_add_symbol(tcc_state, "nth", nth);
+  tcc_add_symbol(tcc_state, "save_continuation", save_continuation);
+  tcc_add_symbol(tcc_state, "extract_native_fn", extract_native_fn);
+  tcc_add_symbol(tcc_state, "call_cc1",          call_cc1);
+  tcc_add_symbol(tcc_state, "create_fn_closure", create_fn_closure);
+  tcc_add_symbol(tcc_state, "primitive_add",     primitive_add);
+  tcc_add_symbol(tcc_state, "car",               car);
+  tcc_add_symbol(tcc_state, "quote",             quote);
+
+  return tcc_state;
+}
+
+OBJECT_PTR identity_function(OBJECT_PTR closure, OBJECT_PTR x)
+{
+  return x;
+}
+
+OBJECT_PTR convert_native_fn_to_object(nativefn fn)
+{
+  uintptr_t ptr = object_alloc(1, NATIVE_FN_TAG);
+
+  *((nativefn *)ptr) = fn;
+
+  return ptr + NATIVE_FN_TAG;  
+}
+
+nativefn get_nativefn_value(OBJECT_PTR obj)
+{
+  if(!IS_NATIVE_FN_OBJECT(obj))
+    assert(false);
+
+  return *((nativefn *)(obj & POINTER_MASK));
+  
+}
+
+OBJECT_PTR create_closure(unsigned int count, BOOLEAN function, OBJECT_PTR fnobj, ...)
+{
+  va_list ap;
+  int i;
+  OBJECT_PTR closed_object;
+  OBJECT_PTR ret;
+
+  //since count can be zero,
+  //disabling this
+  //if(!count)
+  //  return NIL;
+
+  ret = cons(fnobj, NIL);
+
+  va_start(ap, fnobj);
+
+  for(i=0; i<count; i++)
+  {
+    closed_object = (OBJECT_PTR)va_arg(ap, int);
+    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    set_heap(ptr, 1, cons(closed_object, NIL));
+  }
+
+  ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + (function ? FUNCTION2_TAG : MACRO2_TAG);
+
+  return ret;
+}
+
+//identical to create_closure(), except that this is
+//hardwired to produce only function closures.
+//not making a call to create_closure() internally
+//since this will involve mucking around with va_list
+//etc. to pass the variable arguments to create_closure().
+//also, the count parameter is an OBJECT_PTR so that
+//create_fn_closure can be invoked from within the generated code.
+OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
+{
+  OBJECT_PTR fnobj = convert_native_fn_to_object(fn);
+
+  va_list ap;
+  int i;
+  OBJECT_PTR closed_object;
+  OBJECT_PTR ret;
+
+  int count = get_int_value(count1);
+
+  //since count can be zero,
+  //disabling this
+  //if(!count)
+  //  return NIL;
+
+  ret = cons(fnobj, NIL);
+
+  va_start(ap, fn);
+
+  for(i=0; i<count; i++)
+  {
+    closed_object = (OBJECT_PTR)va_arg(ap, int);
+    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    set_heap(ptr, 1, cons(closed_object, NIL));
+  }
+
+  ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
+
+  assert(IS_FUNCTION2_OBJECT(ret));
+
+  return ret;  
+}
+
+TCCState *compile_functions(OBJECT_PTR lambda_forms)
+{
+  char str[32768];
+  memset(str, 32768, '\0');
+
+  unsigned int len = 0;
+
+  TCCState *tcc_state1 = create_tcc_state1();
+  assert(tcc_state1);
+
+  OBJECT_PTR rest = lambda_forms;
+
+  while(rest != NIL)
+  {
+    len += build_c_string(car(rest), str+len);
+    rest = cdr(rest);
+  }
+
+  printf("%s\n", str); getchar();
+
+  if(tcc_compile_string(tcc_state1, str) == -1)
+    assert(false);
+
+  if(tcc_relocate(tcc_state1, TCC_RELOCATE_AUTO) < 0)
+    assert(false);
+
+  /* char *fname = extract_variable_string(car(lambda_form)); */
+
+  /* nativefn ret = tcc_get_symbol(tcc_state1, fname); */
+
+  /* assert(ret != NULL); */
+
+  /* return ret; */
+
+  return tcc_state1;
+}
+
+OBJECT_PTR get_top_level_sym_value(OBJECT_PTR sym)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+    else if(top_level_symbols[i].sym == sym)
+      return top_level_symbols[i].val;
+  }
+  return NIL; //TODO: should signal an error
+}
+
+void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
+{
+  int i;
+
+  BOOLEAN found = false;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].sym == sym)
+    {
+      top_level_symbols[i].val = val;
+      top_level_symbols[i].delete_flag = false;
+      found = true;
+    }
+  }
+
+  if(!found)
+  {
+    nof_global_vars++;
+
+    global_var_mapping_t *temp = (global_var_mapping_t *)realloc(top_level_symbols, nof_global_vars*sizeof(global_var_mapping_t));
+
+    assert(temp);
+
+    top_level_symbols = temp;
+    top_level_symbols[nof_global_vars-1].sym = sym;
+    top_level_symbols[nof_global_vars-1].val = val;
+    top_level_symbols[nof_global_vars-1].delete_flag = false;
+  }
+}
+
+void remove_top_level_sym(OBJECT_PTR sym)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].sym == sym)
+    {
+      top_level_symbols[i].delete_flag = true;
+      return;
+    }
+  }
+}
+
+OBJECT_PTR reverse(OBJECT_PTR lst)
+{
+  OBJECT_PTR ret = NIL, rest = lst;
+
+  while(rest != NIL)
+  {
+    ret = cons(car(rest), ret);
+
+    rest = cdr(rest);
+  }
+
+  return ret;
+}
+
+/* (defun call-cc1 (clo) */
+/*   ((car clo) clo (cadr saved-continuations) (list (lambda (y x) x)))) */
+
+OBJECT_PTR call_cc1(OBJECT_PTR clo)
+{
+  nativefn fn = extract_native_fn(clo);
+  return fn(clo, CADR(saved_continations), idclo);
 }

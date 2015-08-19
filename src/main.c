@@ -187,6 +187,7 @@ OBJECT_PTR MY_CONT_VAR       = (OBJECT_PTR)((112 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR SAVE_CONTINUATION = (OBJECT_PTR)((113 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR LETREC            = (OBJECT_PTR)((114 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR EXTRACT_NATIVE_FN = (OBJECT_PTR)((115 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CREATE_FN_CLOSURE = (OBJECT_PTR)((116 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -200,7 +201,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 31
+#define NOF_NON_SPECIAL_SYMBOLS 32
 
 char err_buf[500];
 
@@ -241,6 +242,10 @@ inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) ==
 inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == MACRO_TAG;          }
 inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == ARRAY_TAG;          }
 inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return (x & BIT_MASK) == CONTINUATION_TAG;   }
+
+inline BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == NATIVE_FN_TAG;      }
+inline BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == FUNCTION2_TAG;   }
+inline BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2_TAG;   }
 
 //registers
 OBJECT_PTR reg_accumulator;
@@ -636,6 +641,12 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
     else
       length += print_array_object_to_string(obj_ptr, buf, filled_buf_len+length);
   }
+  else if(IS_FUNCTION2_OBJECT(obj_ptr))
+    length += sprintf(buf+filled_buf_len+length, "#<FUNCTION2 #x%08x> ", obj_ptr);
+  else if(IS_MACRO2_OBJECT(obj_ptr))
+    length += sprintf(buf+filled_buf_len+length, "#<MACRO2 #x%08x> ", obj_ptr);
+  else if(IS_NATIVE_FN_OBJECT(obj_ptr))
+    length += sprintf(buf+filled_buf_len+length, "#<NATIVEFN #x%08x> ", obj_ptr);
   else
     assert(false);
 
@@ -689,6 +700,12 @@ void print_object(OBJECT_PTR obj_ptr)
       else
 	print_array_object(obj_ptr);
     }
+    else if(IS_FUNCTION2_OBJECT(obj_ptr))
+      length += sprintf(buf+length, "#<FUNCTION2 #x%08x> ", obj_ptr);
+    else if(IS_MACRO2_OBJECT(obj_ptr))
+      length += sprintf(buf+length, "#<MACRO2 #x%08x> ", obj_ptr);
+    else if(IS_NATIVE_FN_OBJECT(obj_ptr))
+      length += sprintf(buf+length, "#<NATIVEFN #x%08x> ", obj_ptr);
     else
       assert(false);
 
@@ -732,6 +749,12 @@ void print_object(OBJECT_PTR obj_ptr)
       else
 	print_array_object(obj_ptr);
     }
+    else if(IS_FUNCTION2_OBJECT(obj_ptr))
+      fprintf(stdout, "#<FUNCTION2 #x%08x> ", obj_ptr);
+    else if(IS_MACRO2_OBJECT(obj_ptr))
+      fprintf(stdout, "#<MACRO2 #x%08x> ", obj_ptr);
+    else if(IS_NATIVE_FN_OBJECT(obj_ptr))
+      fprintf(stdout, "#<NATIVEFN #x%08x> ", obj_ptr);
     else
       assert(false);
 
@@ -1615,7 +1638,8 @@ int cons_length(OBJECT_PTR cons_obj)
   if(cons_obj == NIL)
     return 0;
 
-  assert(IS_CONS_OBJECT(cons_obj));
+  if(!IS_CONS_OBJECT(cons_obj))
+    assert(false);
 
   rest = cons_obj;
 
@@ -2039,6 +2063,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("SAVE-CONTINUATION");
   packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("LETREC");
   packages[CORE_PACKAGE_INDEX].symbols[115] = strdup("EXTRACT-NATIVE-FN");
+  packages[CORE_PACKAGE_INDEX].symbols[116] = strdup("CREATE-FN-CLOSURE");
 }
 
 int find_package(char* package_name)
@@ -2495,7 +2520,10 @@ BOOLEAN is_valid_object(OBJECT_PTR obj)
      IS_ARRAY_OBJECT(obj)        ||
      IS_CONTINUATION_OBJECT(obj) ||
      IS_INTEGER_OBJECT(obj)      ||
-     IS_FLOAT_OBJECT(obj))
+     IS_FLOAT_OBJECT(obj)        ||
+     IS_NATIVE_FN_OBJECT(obj)    ||
+     IS_FUNCTION2_OBJECT(obj)    ||
+     IS_MACRO2_OBJECT(obj))
     return true;
 
   if(IS_STRING_LITERAL_OBJECT(obj) ||

@@ -60,6 +60,9 @@
 #define MACRO_TAG            8
 #define ARRAY_TAG            9
 #define CONTINUATION_TAG    10
+#define NATIVE_FN_TAG       11
+#define FUNCTION2_TAG       12
+#define MACRO2_TAG          13
 
 #define SYMBOL_STRING_SIZE 100
 
