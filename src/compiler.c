@@ -531,7 +531,8 @@ int main(int argc, char **argv)
     {
       prompt();
       yyparse();
-      repl(1);
+      //repl(1);
+      repl2();
     }
   }
   else

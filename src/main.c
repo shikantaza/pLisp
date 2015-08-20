@@ -244,8 +244,8 @@ inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) ==
 inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return (x & BIT_MASK) == CONTINUATION_TAG;   }
 
 inline BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == NATIVE_FN_TAG;      }
-inline BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == FUNCTION2_TAG;   }
-inline BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2_TAG;   }
+inline BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == FUNCTION2_TAG;      }
+inline BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2_TAG;         }
 
 //registers
 OBJECT_PTR reg_accumulator;
