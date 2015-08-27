@@ -188,11 +188,18 @@ extern BOOLEAN pipe_mode;
 extern FILE *yyin;
 extern BOOLEAN core_library_loaded;
 
+extern BOOLEAN in_error;
 //end of external variables
 
 //external functions
 extern OBJECT_PTR quote(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_add(OBJECT_PTR, ...);
+extern OBJECT_PTR primitive_sub(OBJECT_PTR, ...);
+extern OBJECT_PTR primitive_lt(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_error(OBJECT_PTR);
+extern OBJECT_PTR primitive_print(OBJECT_PTR);
+extern OBJECT_PTR primitive_setcar(OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -231,6 +238,8 @@ char *extract_variable_string(OBJECT_PTR);
 OBJECT_PTR call_cc1(OBJECT_PTR);
 OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
 OBJECT_PTR expand_macro_full(OBJECT_PTR);
+OBJECT_PTR expand_bodies(OBJECT_PTR);
+OBJECT_PTR get_top_level_symbols();
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -691,6 +700,14 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
     return map2(tf, v, NIL, exp);
 }
 
+BOOLEAN is_quoted_expression(OBJECT_PTR exp)
+{
+  if(IS_CONS_OBJECT(exp) && car(exp) == QUOTE)
+    return true;
+  else
+    return false;
+}
+
 OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
 {
   OBJECT_PTR first_exp;
@@ -705,7 +722,7 @@ OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
     else
       return exp;
   }
-  else if(is_atom(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(first_exp == SET)
     return list(3, SETCAR, second(exp), assignment_conversion(third(exp),
@@ -861,7 +878,7 @@ OBJECT_PTR temp9(OBJECT_PTR x,
 
 OBJECT_PTR translate_to_il(OBJECT_PTR exp)
 {
-  if(is_atom(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LETREC)
   {
@@ -1004,7 +1021,7 @@ OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t *env)
     return NIL;
   else if(IS_SYMBOL_OBJECT(exp))
     return get_binding_val(env, exp);
-  else if(is_atom(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LAMBDA)
   {
@@ -1116,6 +1133,8 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
   }
   else if(is_atom(exp))
     return NIL;
+  else if(car_exp == QUOTE)
+    return NIL;
   else if(car_exp == IF)
     return union1(3,
                   free_ids_il(second(exp)),
@@ -1141,7 +1160,7 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
 
 OBJECT_PTR simplify_il_empty_let(OBJECT_PTR exp)
 {
-  if(is_atom(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(first(exp) == LET && second(exp) == NIL)
     return third(exp);
@@ -1170,7 +1189,7 @@ OBJECT_PTR simplify_il_implicit_let(OBJECT_PTR exp)
 
 OBJECT_PTR simplify_il_eta(OBJECT_PTR exp)
 {
-  if(is_atom(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LAMBDA &&
           IS_CONS_OBJECT(third(exp)) &&
@@ -1190,7 +1209,7 @@ OBJECT_PTR simplify_il_eta(OBJECT_PTR exp)
 
 OBJECT_PTR simplify_il_copy_prop(OBJECT_PTR exp)
 {
-  if(is_atom(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LET &&
           cons_length(second(exp)) == 2 &&
@@ -1211,7 +1230,7 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
   if(IS_CONS_OBJECT(exp))
     car_exp = car(exp);
 
-  if(is_atom(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return cps_transform_var_literal(exp);
   else if(car_exp == LAMBDA)
     return cps_transform_abstraction(exp);
@@ -1338,7 +1357,8 @@ OBJECT_PTR cps_trans_primop_internal(OBJECT_PTR primop1,
                 list(1, list(2, 
                              ians, 
                              concat(2, 
-                                    list(2, primop1, convert_int_to_object(cons_length(syms))),
+                                    is_vararg_primop(primop1) ? list(2, primop1, convert_int_to_object(cons_length(syms))) :
+                                                                list(1, primop1),
                                     syms))),
                 list(2, first_sym, ians));
   }
@@ -1467,7 +1487,7 @@ OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
 
   if(exp == NIL)
     return NIL;
-  else if(is_atom(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car_exp == LAMBDA)
   {
@@ -1541,6 +1561,28 @@ OBJECT_PTR replace_macros(OBJECT_PTR exp)
                 replace_macros(cdr(exp)));
 }
 
+OBJECT_PTR get_top_level_symbols()
+{
+  OBJECT_PTR ret = NIL;
+
+  int i;
+
+  for(i=0; i < nof_global_vars; i++)
+  {
+    OBJECT_PTR val = top_level_symbols[i].sym;
+
+    if(ret == NIL)
+      ret = cons(val, NIL);
+    else
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(val, NIL));        
+    }
+  }
+
+  return ret;    
+}
+
 OBJECT_PTR compile_exp(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
@@ -1548,22 +1590,33 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   //TODO: uncomment this to do macro expansion
   //res = expand_macro_full(res);
 
+  res = expand_bodies(res);
+//print_object(res);getchar();
+
   res = process_backquote(res);
+//print_object(res);printf("\n");getchar();
 
-  res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO: get global symbols from top_level_symbols
+  //res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO: get global symbols from top_level_symbols
+  res = assignment_conversion(res, get_top_level_symbols());
+
+//print_object(res);printf("\n");getchar();
   res = translate_to_il(res);
-
+//print_object(res);printf("\n");getchar();
   binding_env_t *env = create_binding_env();
   res = ren_transform(res, env);
-
+//print_object(res);printf("\n");getchar();
   free(env->bindings);
   env->bindings = NULL;
   free(env);
 
   res = simplify_il(res);
+//print_object(res);printf("\n");getchar();
   res = cps_transform(res);
+//print_object(res);printf("\n");getchar();
   res = closure_conv_transform(res);
+//print_object(res);printf("\n");getchar();
   res = lift_transform(res, NIL);
+//print_object(res);printf("\n");getchar();
 
   OBJECT_PTR lambdas = reverse(cdr(res));
 
@@ -1634,12 +1687,13 @@ BOOLEAN arithop(OBJECT_PTR sym)
 BOOLEAN core_op(OBJECT_PTR sym)
 {
   return sym == ATOM    ||
+    sym == IF           ||
     sym == QUOTE        ||
     sym == EQ           ||
     sym == CALL_CC1     ||
     sym == SET          ||
     sym == ERROR        ||
-    sym == LIST         ||
+    sym == LST          ||
     sym == CONS         ||
     sym == CAR          ||
     sym == CDR          ||
@@ -1954,12 +2008,31 @@ char *extract_variable_string(OBJECT_PTR var)
       char *s = (char *)malloc(20*sizeof(char));
       if(var == ADD)
         sprintf(s,"primitive_add");
+      else if(var == SUB)
+        sprintf(s,"primitive_sub");
       else if(var == CAR)
         sprintf(s,"car");
       else if(var == QUOTE)
         sprintf(s,"quote");
+      else if(var == LT)
+        sprintf(s,"primitive_lt");
+      else if(var == ERROR)
+        sprintf(s,"primitive_error");
+      else if(var == IF)
+        sprintf(s, "primitive_if");
+      else if(var == PRINT)
+        sprintf(s, "primitive_print");
+      else if(var == CONS)
+        sprintf(s, "cons");
+      else if(var == SETCAR)
+        sprintf(s, "primitive_setcar");
+      else if(var == CALL_CC1)
+        sprintf(s, "call_cc1");
       else
+      {
+        print_object(var);
         assert(false);
+      }
       return s;
     }
     return convert_to_lower_case(replace_hyphens(raw_name));
@@ -2005,6 +2078,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
   len += sprintf(buf+len, ")\n{\n");
 
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
+  len += sprintf(buf+len, "unsigned int nil = 17;\n");
 
   OBJECT_PTR body = CDDR(second(lambda_form));
 
@@ -2031,6 +2105,8 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
 unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 {
   unsigned int len = 0;
+
+  BOOLEAN primitive_call = false;
 
   if(is_atom(exp))
   {
@@ -2075,36 +2151,50 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
   else //primitive or user-defined function/macro application
   {
 
-    char *var = extract_variable_string(car(exp));
-    len += sprintf(buf+len, "%s(", var);
-    free(var);
-
-    OBJECT_PTR rest = cdr(exp);
-
-    BOOLEAN first_time = true;
-
-    while(rest != NIL)
+    if(car(exp) == QUOTE)
     {
-      if(!first_time)
-        len += sprintf(buf+len, ", ");
+      len += sprintf(buf+len, "%d", second(exp));
+    }
+    else
+    {
+      if(primop(car(exp)))
+        primitive_call = true;
 
-      if(is_atom(car(rest)))
+      char *var = extract_variable_string(car(exp));
+      len += sprintf(buf+len, "%s(", var);
+      free(var);
+
+      OBJECT_PTR rest = cdr(exp);
+
+      BOOLEAN first_time = true;
+
+      while(rest != NIL)
       {
-        char *arg_name = extract_variable_string(car(rest));
-        len += sprintf(buf+len, "%s", arg_name);
-        free(arg_name);
-      }
-      else
-        len += build_c_fragment(car(rest), buf+len, true);
+        if(!first_time)
+          len += sprintf(buf+len, ", ");
 
-      rest = cdr(rest);
-      first_time = false;
+        if(is_atom(car(rest)))
+        {
+          char *arg_name = extract_variable_string(car(rest));
+          len += sprintf(buf+len, "%s", arg_name);
+          free(arg_name);
+        }
+        else
+          len += build_c_fragment(car(rest), buf+len, true);
+
+        rest = cdr(rest);
+        first_time = false;
+      }
+
+      len += sprintf(buf+len, ")");
     }
 
-    len += sprintf(buf+len, ")");
-
     if(!nested_call)
+    {
       len += sprintf(buf+len, ";\n");
+      if(primitive_call)
+        len += sprintf(buf+len, "if(in_error_condition()==1)return 17;\n");
+    }
   }
 
   return len;
@@ -2113,7 +2203,10 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 nativefn extract_native_fn(OBJECT_PTR closure)
 {
   if(!IS_FUNCTION2_OBJECT(closure) && !IS_MACRO2_OBJECT(closure))
+  {
+    print_object(closure);
     assert(false);
+  }
 
   OBJECT_PTR nativefn_obj = get_heap(closure & POINTER_MASK, 0);
 
@@ -2128,6 +2221,11 @@ void save_continuation(OBJECT_PTR cont)
   saved_continations = cons(cont, saved_continations);
 }
 
+int in_error_condition()
+{
+  return in_error;
+}
+
 TCCState *create_tcc_state1()
 {
   TCCState *tcc_state = tcc_new();
@@ -2140,14 +2238,22 @@ TCCState *create_tcc_state1()
 
   tcc_set_output_type(tcc_state, TCC_OUTPUT_MEMORY);
 
-  tcc_add_symbol(tcc_state, "nth", nth);
-  tcc_add_symbol(tcc_state, "save_continuation", save_continuation);
-  tcc_add_symbol(tcc_state, "extract_native_fn", extract_native_fn);
-  tcc_add_symbol(tcc_state, "call_cc1",          call_cc1);
-  tcc_add_symbol(tcc_state, "create_fn_closure", create_fn_closure);
-  tcc_add_symbol(tcc_state, "primitive_add",     primitive_add);
-  tcc_add_symbol(tcc_state, "car",               car);
-  tcc_add_symbol(tcc_state, "quote",             quote);
+  tcc_add_symbol(tcc_state, "nth",                nth);
+  tcc_add_symbol(tcc_state, "save_continuation",  save_continuation);
+  tcc_add_symbol(tcc_state, "extract_native_fn",  extract_native_fn);
+  tcc_add_symbol(tcc_state, "call_cc1",           call_cc1);
+  tcc_add_symbol(tcc_state, "create_fn_closure",  create_fn_closure);
+  tcc_add_symbol(tcc_state, "primitive_add",      primitive_add);
+  tcc_add_symbol(tcc_state, "primitive_sub",      primitive_sub);
+  tcc_add_symbol(tcc_state, "car",                car);
+  tcc_add_symbol(tcc_state, "quote",              quote);
+  tcc_add_symbol(tcc_state, "primitive_error",    primitive_error);
+  tcc_add_symbol(tcc_state, "primitive_lt",       primitive_lt);
+  tcc_add_symbol(tcc_state, "primitive_if",       primitive_if);
+  tcc_add_symbol(tcc_state, "in_error_condition", in_error_condition);
+  tcc_add_symbol(tcc_state, "primitive_print",    primitive_print);
+  tcc_add_symbol(tcc_state, "cons",               cons);
+  tcc_add_symbol(tcc_state, "primitive_setcar",   primitive_setcar);
 
   return tcc_state;
 }
@@ -2269,14 +2375,6 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
 
   if(tcc_relocate(tcc_state1, TCC_RELOCATE_AUTO) < 0)
     assert(false);
-
-  /* char *fname = extract_variable_string(car(lambda_form)); */
-
-  /* nativefn ret = tcc_get_symbol(tcc_state1, fname); */
-
-  /* assert(ret != NULL); */
-
-  /* return ret; */
 
   return tcc_state1;
 }
@@ -2436,7 +2534,7 @@ int repl2()
       }
 
       res = compile_and_evaluate(third(exp));
-      add_top_level_sym(second(exp), res);
+      add_top_level_sym(second(exp), cons(res, NIL));
     }
     else if(car(exp) == SET)
     {
@@ -2459,7 +2557,7 @@ int repl2()
       }
 
       res = compile_and_evaluate(third(exp));
-      add_top_level_sym(second(exp), res);     
+      add_top_level_sym(second(exp), cons(res, NIL));     
 
       //TODO: update closures that refer to this symbol
     }
@@ -2518,6 +2616,16 @@ int repl2()
   return 0;
 }
 
+OBJECT_PTR temp14(OBJECT_PTR x)
+{
+  return list(2, QUOTE, x);
+}
+
+OBJECT_PTR quote_all_arguments(OBJECT_PTR exp)
+{
+  return cons(car(exp), map(temp14, cdr(exp)));
+}
+
 /*
 (defun expand-macro-full (exp)
   (cond ((atom exp) exp)
@@ -2540,7 +2648,7 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
     int retval = get_top_level_sym_value(car(exp), &out);
 
     if(!retval && IS_MACRO2_OBJECT(out))
-      return expand_macro_full(compile_and_evaluate(exp));
+      return expand_macro_full(compile_and_evaluate(quote_all_arguments(exp)));
     else
       return cons(expand_macro_full(car(exp)),
                   expand_macro_full(cdr(exp)));
@@ -2550,4 +2658,46 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
     return cons(expand_macro_full(car(exp)),
                 expand_macro_full(cdr(exp)));
 
+}
+
+BOOLEAN is_vararg_primop(OBJECT_PTR sym)
+{
+  return sym == ADD  ||
+         sym == SUB  ||
+         sym == MULT ||
+         sym == DIV  ||
+         sym == LST;
+}
+
+/*
+(defmacro begin (&rest body)
+  (if (null body)
+      nil
+    (if (eq (length body) 1)
+        (car body)
+      `(let ((,(gensym) ,(car body)))
+         (begin ,@(cdr body))))))
+*/
+OBJECT_PTR expand_body(OBJECT_PTR body)
+{
+  if(body == NIL)
+    return NIL;
+  else if(cons_length(body) == 1)
+    return car(body);
+  else
+    return list(3,
+                LET,
+                list(1, list(2, gensym(), car(body))),
+                expand_body(cdr(body)));
+}
+
+OBJECT_PTR expand_bodies(OBJECT_PTR exp)
+{
+  if(is_atom(exp))
+    return exp;
+  else if(car(exp) == LAMBDA || car(exp) == MACRO)
+    return list(3, first(exp), second(exp), expand_body(CDDR(exp)));
+  else
+    return cons(expand_bodies(car(exp)),
+                expand_bodies(cdr(exp)));
 }
