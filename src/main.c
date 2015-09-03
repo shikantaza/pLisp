@@ -840,7 +840,10 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
   else
   {
      if(!IS_CONS_OBJECT(cons_obj))
+     {
+       print_object(cons_obj);printf("\n");
        assert(false);
+     }
      return get_heap(cons_obj & POINTER_MASK, 0);
   }
 }

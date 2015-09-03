@@ -51,6 +51,8 @@ extern OBJECT_PTR CHAR_POINTER;
 
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
+extern OBJECT_PTR idclo;
+
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 
@@ -607,19 +609,28 @@ OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
   assert(IS_MACRO2_OBJECT(macro_obj));
   assert(args == NIL || IS_CONS_OBJECT(args));
 
-  int nof_args = cons_length(args) + 1; //since the closure (macro object) will be the first argument
+  int nof_args = cons_length(args) + 2; //since the closure (macro object) will be the first argument, and the id closure will be the last argument
   int i;
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
-  assert(arg_types); //TODO: replace this
+  if(!arg_types)
+  {
+    raise_error("Error in invoking macro - malloc() failed (1)");
+    return NIL;
+  }
 
   void **arg_values = (void **)malloc(nof_args * sizeof(void *));
-  assert(arg_values); //TODO: replace this
+  if(!arg_values)
+  {
+    raise_error("Error in invoking macro - malloc() failed (2)");
+    free(arg_types);
+    return NIL;
+  }
 
   i=0;
 
-  arg_types[i] = &ffi_type_sint;
-  arg_values[i] = (int *)malloc(sizeof(int));
+  arg_types[i] = &ffi_type_uint;
+  arg_values[i] = (unsigned int *)malloc(sizeof(unsigned int));
 
   //the first parameter to the native function is
   //the closure (macro object) itself
@@ -631,28 +642,37 @@ OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
 
   while(rest_args != NIL)
   {
-    arg_types[i] = &ffi_type_sint;
-    arg_values[i] = (int *)malloc(sizeof(int));
+    arg_types[i] = &ffi_type_uint;
+    arg_values[i] = (unsigned int *)malloc(sizeof(unsigned int));
     *(int *)arg_values[i] = car(rest_args);
 
     i++;
     rest_args = cdr(rest_args);
   }
+
+  arg_types[i] = &ffi_type_uint;
+  arg_values[i] = (unsigned int *)malloc(sizeof(unsigned int));
+  *(int *)arg_values[i] = idclo;
   
   ffi_cif cif;
   ffi_status status;
 
-  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_sint, arg_types);
+  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_uint, arg_types);
 
-  assert(status == FFI_OK); //TODO: replace this
+  if(status != FFI_OK)
+  {
+    raise_error("Error in invoking macro - ffi_prep_cif() failed");
+    free_arg_values(arg_types, arg_values, args, nof_args);
+    free(arg_values);
+    free(arg_types);
+    return NIL;
+  }
 
   ffi_arg ret_val;
 
   ffi_call(&cif, (void *)extract_native_fn(macro_obj), &ret_val, arg_values);
 
-  //TODO: free the various pointers related to FFI
-  //(also need to free the pointers when we replace the asserts)
-
+  free_arg_values(arg_types, arg_values, args, nof_args);
   free(arg_values);
   free(arg_types);
 

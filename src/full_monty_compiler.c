@@ -1593,18 +1593,18 @@ OBJECT_PTR get_top_level_symbols()
   return ret;    
 }
 
-OBJECT_PTR compile_exp(OBJECT_PTR exp, BOOLEAN expand_macros)
+OBJECT_PTR compile_exp(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
 
-  if(expand_macros)
-    res = expand_macro_full(res);
+  res = expand_macro_full(res);
+//print_object(res);printf("\n");getchar();
 
   res = expand_bodies(res);
 //print_object(res);getchar();
 
   res = process_backquote(res);
-print_object(res);printf("\n");getchar();
+//print_object(res);printf("\n");getchar();
 
   //res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO: get global symbols from top_level_symbols
 //print_object(get_top_level_symbols()); printf("\n"); getchar();
@@ -1930,6 +1930,35 @@ OBJECT_PTR process_backquote(OBJECT_PTR exp)
                 process_backquote(cdr(exp)));
 }
 
+OBJECT_PTR butlast(OBJECT_PTR lst)
+{
+  assert(lst == NIL || IS_CONS_OBJECT(lst));
+
+  int len = cons_length(lst);
+
+  int i=0;
+
+  OBJECT_PTR ret = NIL, rest = lst;
+
+  while(i < len-1)
+  {
+    OBJECT_PTR val = car(rest);
+
+    if(ret == NIL)
+      ret = cons(val, NIL);
+    else
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(val, NIL));      
+    }
+
+    i++;
+    rest = cdr(rest);
+  }
+
+  return ret;
+}
+
 OBJECT_PTR backquote2(OBJECT_PTR exp)
 {
   OBJECT_PTR car_exp;
@@ -1943,7 +1972,7 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
     return CADR(exp);
   else
   {
-    OBJECT_PTR bindings = NIL, res = NIL, rest = exp;
+    OBJECT_PTR res = NIL, rest = exp;
 
     while(rest != NIL)
     {
@@ -1954,39 +1983,56 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
         if(res == NIL)
           res = list(2, LST, list(2, QUOTE, x));
         else
-          res = concat(2, res, list(1,x));
+          res = concat(2, res, list(1,list(2, QUOTE, x)));
       }
       else if(car(x) == COMMA)
       {
-        OBJECT_PTR sym = gensym();
-        bindings = cons(list(2, sym, CADR(x)),
-                        bindings);
+        //OBJECT_PTR sym = gensym();
+        //bindings = cons(list(2, sym, CADR(x)),
+        //                bindings);
         if(res == NIL)
-          res = list(2, LST, sym);
+          res = list(2, LST, CADR(x));
         else
-          res = concat(2, res, list(1,sym));
+          res = concat(2, res, list(1,CADR(x)));
       }
       else if(car(x) == COMMA_AT)
       {
-        OBJECT_PTR sym = gensym();
-        bindings = cons(list(2, sym, CADR(x)),
-                        bindings);
+        //OBJECT_PTR sym = gensym();
+        //bindings = cons(list(2, sym, CADR(x)),
+        //                bindings);
         if(res == NIL)
-          res = sym;
+          res = CADR(x);
         else
         {
-          uintptr_t ptr = last_cell(res) & POINTER_MASK;
-          set_heap(ptr, 1, sym);
+          //uintptr_t ptr = last_cell(res) & POINTER_MASK;
+          //set_heap(ptr, 1, sym);
+          //print_object(butlast(res));printf("\n");getchar();
+          //print_object(car(last_cell(res)));printf("\n");getchar();
+
+          OBJECT_PTR last_cell1 = last_cell(res);
+
+          if(cons_length(butlast(res)) > 1)
+            res = concat(2, butlast(res), list(1, list(3, 
+                                                       CONS, 
+                                                       car(last_cell1), 
+                                                       CADR(x))));
+          else
+            res = list(3, 
+                       CONS, 
+                       car(last_cell1), 
+                       CADR(x));
+
+          //print_object(res);
         }
       }
 
       rest = cdr(rest);
     }
 
-    if(bindings == NIL)
+    //if(bindings == NIL)
       return res;
-    else
-      return list(3, LET, bindings, res);
+    //else
+    //return list(3, LET, bindings, res);
   }
 }
 
@@ -2386,7 +2432,7 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
     rest = cdr(rest);
   }
 
-  //printf("%s\n", str); getchar();
+  printf("%s\n", str); getchar();
 
   if(tcc_compile_string(tcc_state1, str) == -1)
     assert(false);
@@ -2482,7 +2528,7 @@ OBJECT_PTR call_cc1(OBJECT_PTR clo)
   return fn(clo, CADR(saved_continuations), idclo);
 }
 
-OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp,BOOLEAN expand_macros)
+OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 {
   //print_object(exp);getchar();
 
@@ -2497,10 +2543,10 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp,BOOLEAN expand_macros)
   if(IS_CONS_OBJECT(exp) && car(exp) == MACRO)
   {
     macro_flag = true;
-    compiled_form = compile_exp(replace_macros(exp), expand_macros);
+    compiled_form = compile_exp(replace_macros(exp));
   }
   else
-    compiled_form = compile_exp(exp, expand_macros);
+    compiled_form = compile_exp(exp);
 
   if(compiled_form == NIL)
     return NIL;
@@ -2555,7 +2601,7 @@ int repl2()
         return 1;
       }
 
-      res = compile_and_evaluate(third(exp), true);
+      res = compile_and_evaluate(third(exp));
       add_top_level_sym(second(exp), cons(res, NIL));
     }
     else if(car(exp) == SET)
@@ -2578,7 +2624,7 @@ int repl2()
         return 1;
       }
 
-      res = compile_and_evaluate(third(exp), true);
+      res = compile_and_evaluate(third(exp));
       add_top_level_sym(second(exp), cons(res, NIL));     
 
       //TODO: update closures that refer to this symbol
@@ -2601,18 +2647,20 @@ int repl2()
     }
     else
     {
-      res = compile_and_evaluate(exp,true);
+      res = compile_and_evaluate(exp);
     }
 
     if((console_mode || single_expression_mode || pipe_mode) && core_library_loaded)
     {
-      char buf[500];
-      memset(buf, 500, '\0');
+      //char buf[500];
+      //memset(buf, 500, '\0');
 
-      print_object_to_string(res, buf, 0);
+      //print_object_to_string(res, buf, 0);
 
-      fprintf(stdout, "%s\n", buf);
-      fflush(stdout);
+      //fprintf(stdout, "%s\n", buf);
+      //fflush(stdout);
+
+      print_object(res);
     }
     else
     {
@@ -2693,7 +2741,6 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
 
   //printf("Exiting: ");
   //print_object(ret); printf("\n---\n");
-
 
   return ret;
 }
