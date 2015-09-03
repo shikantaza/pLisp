@@ -26,6 +26,8 @@
 
 #include "memory.h"
 
+typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
+
 extern OBJECT_PTR CAAR(OBJECT_PTR);
 extern OBJECT_PTR CADAR(OBJECT_PTR);
 
@@ -598,4 +600,63 @@ int format_for_gui(OBJECT_PTR args)
     print_to_transcript(buf);
 
   return 0;
+}
+
+OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
+{
+  assert(IS_MACRO2_OBJECT(macro_obj));
+  assert(args == NIL || IS_CONS_OBJECT(args));
+
+  int nof_args = cons_length(args) + 1; //since the closure (macro object) will be the first argument
+  int i;
+
+  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  assert(arg_types); //TODO: replace this
+
+  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  assert(arg_values); //TODO: replace this
+
+  i=0;
+
+  arg_types[i] = &ffi_type_sint;
+  arg_values[i] = (int *)malloc(sizeof(int));
+
+  //the first parameter to the native function is
+  //the closure (macro object) itself
+  *(int *)arg_values[i] = macro_obj;
+
+  i++;
+
+  OBJECT_PTR rest_args = args;
+
+  while(rest_args != NIL)
+  {
+    arg_types[i] = &ffi_type_sint;
+    arg_values[i] = (int *)malloc(sizeof(int));
+    *(int *)arg_values[i] = car(rest_args);
+
+    i++;
+    rest_args = cdr(rest_args);
+  }
+  
+  ffi_cif cif;
+  ffi_status status;
+
+  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_sint, arg_types);
+
+  assert(status == FFI_OK); //TODO: replace this
+
+  ffi_arg ret_val;
+
+  ffi_call(&cif, (void *)extract_native_fn(macro_obj), &ret_val, arg_values);
+
+  //TODO: free the various pointers related to FFI
+  //(also need to free the pointers when we replace the asserts)
+
+  free(arg_values);
+  free(arg_types);
+
+  assert(is_valid_object((int)ret_val));
+
+  return (int)ret_val;
 }

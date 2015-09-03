@@ -72,7 +72,7 @@ typedef struct global_var_ref
 unsigned int nof_global_vars = 0;
 global_var_mapping_t *top_level_symbols = NULL;
 
-OBJECT_PTR saved_continations;
+OBJECT_PTR saved_continuations;
 OBJECT_PTR idclo;
 
 //end of global variables
@@ -200,6 +200,11 @@ extern OBJECT_PTR primitive_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_error(OBJECT_PTR);
 extern OBJECT_PTR primitive_print(OBJECT_PTR);
 extern OBJECT_PTR primitive_setcar(OBJECT_PTR);
+
+extern OBJECT_PTR apply_macro(OBJECT_PTR, OBJECT_PTR);
+
+extern OBJECT_PTR primitive_list(OBJECT_PTR, ...);
+
 //end of external functions
 
 //forward declarations
@@ -372,9 +377,11 @@ OBJECT_PTR difference(OBJECT_PTR lst1, OBJECT_PTR lst2)
 
 OBJECT_PTR map(OBJECT_PTR (*f)(OBJECT_PTR), OBJECT_PTR lst)
 {
+  assert(IS_CONS_OBJECT(lst));
+
   OBJECT_PTR ret = NIL, rest = lst;
 
-  while(rest != NIL)
+  while(IS_CONS_OBJECT(rest) && rest != NIL)
   {
     OBJECT_PTR val = f(car(rest));
 
@@ -402,7 +409,7 @@ OBJECT_PTR map2(OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR),
 {
   OBJECT_PTR ret = NIL, rest = lst;
 
-  while(rest != NIL)
+  while(IS_CONS_OBJECT(rest) && rest != NIL)
   {
     OBJECT_PTR val = f(car(rest), v1, v2);
 
@@ -1569,6 +1576,9 @@ OBJECT_PTR get_top_level_symbols()
 
   for(i=0; i < nof_global_vars; i++)
   {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
     OBJECT_PTR val = top_level_symbols[i].sym;
 
     if(ret == NIL)
@@ -1583,20 +1593,21 @@ OBJECT_PTR get_top_level_symbols()
   return ret;    
 }
 
-OBJECT_PTR compile_exp(OBJECT_PTR exp)
+OBJECT_PTR compile_exp(OBJECT_PTR exp, BOOLEAN expand_macros)
 {
   OBJECT_PTR res = clone_object(exp);
 
-  //TODO: uncomment this to do macro expansion
-  //res = expand_macro_full(res);
+  if(expand_macros)
+    res = expand_macro_full(res);
 
   res = expand_bodies(res);
 //print_object(res);getchar();
 
   res = process_backquote(res);
-//print_object(res);printf("\n");getchar();
+print_object(res);printf("\n");getchar();
 
   //res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO: get global symbols from top_level_symbols
+//print_object(get_top_level_symbols()); printf("\n"); getchar();
   res = assignment_conversion(res, get_top_level_symbols());
 
 //print_object(res);printf("\n");getchar();
@@ -1616,7 +1627,7 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   res = closure_conv_transform(res);
 //print_object(res);printf("\n");getchar();
   res = lift_transform(res, NIL);
-//print_object(res);printf("\n");getchar();
+print_object(res);printf("\n");getchar();
 
   OBJECT_PTR lambdas = reverse(cdr(res));
 
@@ -1691,6 +1702,7 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == QUOTE        ||
     sym == EQ           ||
     sym == CALL_CC1     ||
+    sym == SAVE_CONTINUATION ||
     sym == SET          ||
     sym == ERROR        ||
     sym == LST          ||
@@ -1940,7 +1952,7 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
       if(is_atom(x))
       {
         if(res == NIL)
-          res = list(1, x);
+          res = list(2, LST, list(2, QUOTE, x));
         else
           res = concat(2, res, list(1,x));
       }
@@ -1950,7 +1962,7 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
         bindings = cons(list(2, sym, CADR(x)),
                         bindings);
         if(res == NIL)
-          res = list(1, sym);
+          res = list(2, LST, sym);
         else
           res = concat(2, res, list(1,sym));
       }
@@ -1964,9 +1976,10 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
         else
         {
           uintptr_t ptr = last_cell(res) & POINTER_MASK;
-          set_heap(ptr, 1, sym);        
+          set_heap(ptr, 1, sym);
         }
       }
+
       rest = cdr(rest);
     }
 
@@ -2028,6 +2041,10 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "primitive_setcar");
       else if(var == CALL_CC1)
         sprintf(s, "call_cc1");
+      else if(var == SAVE_CONTINUATION)
+        sprintf(s, "save_continuation");
+      else if(var == LST)
+        sprintf(s, "primitive_list");
       else
       {
         print_object(var);
@@ -2077,7 +2094,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
 
   len += sprintf(buf+len, ")\n{\n");
 
-  //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
+  len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
   len += sprintf(buf+len, "unsigned int nil = 17;\n");
 
   OBJECT_PTR body = CDDR(second(lambda_form));
@@ -2218,7 +2235,7 @@ nativefn extract_native_fn(OBJECT_PTR closure)
 
 void save_continuation(OBJECT_PTR cont)
 {
-  saved_continations = cons(cont, saved_continations);
+  saved_continuations = cons(cont, saved_continuations);
 }
 
 int in_error_condition()
@@ -2254,6 +2271,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_print",    primitive_print);
   tcc_add_symbol(tcc_state, "cons",               cons);
   tcc_add_symbol(tcc_state, "primitive_setcar",   primitive_setcar);
+  tcc_add_symbol(tcc_state, "primitive_list",     primitive_list);
 
   return tcc_state;
 }
@@ -2461,11 +2479,13 @@ OBJECT_PTR reverse(OBJECT_PTR lst)
 OBJECT_PTR call_cc1(OBJECT_PTR clo)
 {
   nativefn fn = extract_native_fn(clo);
-  return fn(clo, CADR(saved_continations), idclo);
+  return fn(clo, CADR(saved_continuations), idclo);
 }
 
-OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
+OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp,BOOLEAN expand_macros)
 {
+  //print_object(exp);getchar();
+
   //TODO: idclo initialization to be moved to initialization function
   //that's called only once
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
@@ -2477,10 +2497,10 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   if(IS_CONS_OBJECT(exp) && car(exp) == MACRO)
   {
     macro_flag = true;
-    compiled_form = compile_exp(replace_macros(exp));
+    compiled_form = compile_exp(replace_macros(exp), expand_macros);
   }
   else
-    compiled_form = compile_exp(exp);
+    compiled_form = compile_exp(exp, expand_macros);
 
   if(compiled_form == NIL)
     return NIL;
@@ -2521,8 +2541,10 @@ int repl2()
     if(val != 0)
       return 1;
 
-    saved_continations = NIL;
+    saved_continuations = NIL;
     
+    in_error = false;
+
     OBJECT_PTR res;
 
     if(car(exp) == DEFINE)
@@ -2533,7 +2555,7 @@ int repl2()
         return 1;
       }
 
-      res = compile_and_evaluate(third(exp));
+      res = compile_and_evaluate(third(exp), true);
       add_top_level_sym(second(exp), cons(res, NIL));
     }
     else if(car(exp) == SET)
@@ -2556,7 +2578,7 @@ int repl2()
         return 1;
       }
 
-      res = compile_and_evaluate(third(exp));
+      res = compile_and_evaluate(third(exp), true);
       add_top_level_sym(second(exp), cons(res, NIL));     
 
       //TODO: update closures that refer to this symbol
@@ -2579,7 +2601,7 @@ int repl2()
     }
     else
     {
-      res = compile_and_evaluate(exp);
+      res = compile_and_evaluate(exp,true);
     }
 
     if((console_mode || single_expression_mode || pipe_mode) && core_library_loaded)
@@ -2623,7 +2645,8 @@ OBJECT_PTR temp14(OBJECT_PTR x)
 
 OBJECT_PTR quote_all_arguments(OBJECT_PTR exp)
 {
-  return cons(car(exp), map(temp14, cdr(exp)));
+  //return cons(car(exp), map(temp14, cdr(exp)));
+  return map(temp14, exp);
 }
 
 /*
@@ -2640,24 +2663,39 @@ OBJECT_PTR quote_all_arguments(OBJECT_PTR exp)
  */
 OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
 {
+  OBJECT_PTR ret;
+
+  //printf("Entering: ");
+  //print_object(exp); printf("\n---\n");
+
   if(is_atom(exp))
-    return exp;
+    ret = exp;
   else if(IS_SYMBOL_OBJECT(car(exp)))
   {
+    //print_object(get_top_level_symbols());
     OBJECT_PTR out;
     int retval = get_top_level_sym_value(car(exp), &out);
 
-    if(!retval && IS_MACRO2_OBJECT(out))
-      return expand_macro_full(compile_and_evaluate(quote_all_arguments(exp)));
+    if(!retval && IS_MACRO2_OBJECT(car(out)))
+    {
+      //printf("here\n");
+      //ret = expand_macro_full(compile_and_evaluate(quote_all_arguments(exp), false));
+      ret = apply_macro(car(out), quote_all_arguments(cdr(exp)));
+    }
     else
-      return cons(expand_macro_full(car(exp)),
+      ret =  cons(expand_macro_full(car(exp)),
                   expand_macro_full(cdr(exp)));
 
   }
   else
-    return cons(expand_macro_full(car(exp)),
-                expand_macro_full(cdr(exp)));
+    ret = cons(expand_macro_full(car(exp)),
+               expand_macro_full(cdr(exp)));
 
+  //printf("Exiting: ");
+  //print_object(ret); printf("\n---\n");
+
+
+  return ret;
 }
 
 BOOLEAN is_vararg_primop(OBJECT_PTR sym)

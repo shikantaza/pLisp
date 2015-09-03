@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "plisp.h"
 
@@ -208,4 +209,30 @@ OBJECT_PTR primitive_setcar(OBJECT_PTR obj, OBJECT_PTR val)
   set_heap(obj & POINTER_MASK, 0, val);
 
   return val;
+}
+
+OBJECT_PTR primitive_list(OBJECT_PTR count1, ...)
+{
+  va_list ap;
+  OBJECT_PTR ret;
+  int i;
+
+  unsigned int count = get_int_value(count1);
+
+  if(!count)
+    return NIL;
+
+  va_start(ap, count1);
+
+  ret = cons((OBJECT_PTR)va_arg(ap, int), NIL);
+
+  for(i=1; i<count; i++)
+  {
+    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    set_heap(ptr, 1, cons((OBJECT_PTR)va_arg(ap, int), NIL));
+  }
+
+  va_end(ap);
+
+  return ret;
 }
