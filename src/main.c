@@ -264,6 +264,9 @@ extern OBJECT_PTR debug_env;
 
 extern unsigned int POINTER_MASK;
 
+extern OBJECT_PTR idclo;
+extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
+
 void initialize()
 {
   if(initialize_memory())
@@ -292,6 +295,7 @@ void initialize()
   CONS_HALT_NIL = cons(HALT, NIL);
   CONS_RETURN_NIL = cons(RETURN, NIL);
 
+  idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 }
 
 int add_string(char *str)

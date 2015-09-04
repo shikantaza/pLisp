@@ -122,6 +122,9 @@ extern OBJECT_PTR CONS_RETURN_NIL;
 
 char *core_library_file_name = NULL;
 
+extern OBJECT_PTR idclo;
+extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
+
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -464,6 +467,8 @@ int main(int argc, char **argv)
 
     if(!single_expression_mode && !pipe_mode)
       fprintf(stdout, "done\n");    
+
+    idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
   }
   else
   {

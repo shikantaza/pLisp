@@ -1606,7 +1606,6 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   res = process_backquote(res);
 //print_object(res);printf("\n");getchar();
 
-  //res = assignment_conversion(res, list(2, CALL_CC1, MY_CONT_VAR)); //TODO: get global symbols from top_level_symbols
 //print_object(get_top_level_symbols()); printf("\n"); getchar();
   res = assignment_conversion(res, get_top_level_symbols());
 
@@ -2049,17 +2048,17 @@ char *replace_hyphens(char *s)
 
 char *extract_variable_string(OBJECT_PTR var)
 {
-  //TODO: prefix underscore to the gensym variable names
-  //to avoid name clash with user-defined variables
-
   if(IS_SYMBOL_OBJECT(var))
   {
     char *raw_name = strdup(get_symbol_name(var));
 
     if(raw_name[0] == '#')
     {
-      char *name = substring(raw_name, 2, strlen(raw_name)-2);
+      //char *name = substring(raw_name, 2, strlen(raw_name)-2);
+      char *name = strdup(raw_name);
       free(raw_name);
+      name[0] = '_';
+      name[1] = '_';
       return convert_to_lower_case(replace_hyphens(name));
     }
     else if(primop(var))
@@ -2532,10 +2531,6 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 {
   //print_object(exp);getchar();
 
-  //TODO: idclo initialization to be moved to initialization function
-  //that's called only once
-  idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
-
   OBJECT_PTR compiled_form;
 
   BOOLEAN macro_flag = false;
@@ -2728,7 +2723,8 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
     {
       //printf("here\n");
       //ret = expand_macro_full(compile_and_evaluate(quote_all_arguments(exp), false));
-      ret = apply_macro(car(out), quote_all_arguments(cdr(exp)));
+      //ret = apply_macro(car(out), quote_all_arguments(cdr(exp)));
+      ret = apply_macro(car(out), cdr(exp));
     }
     else
       ret =  cons(expand_macro_full(car(exp)),

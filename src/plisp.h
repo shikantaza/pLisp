@@ -142,6 +142,8 @@ typedef unsigned int (*cmpfn)();
 
 typedef enum {IN_CODE, IN_STRING_LITERAL, IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT} cursor_pos_t;
 
+typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
+
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);

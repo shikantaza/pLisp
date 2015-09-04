@@ -331,7 +331,8 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
   int i;
 
   for(i=0; i<nargs; i++)
-  {    OBJECT_PTR type = CADAR(rest);
+  {    
+    OBJECT_PTR type = CADAR(rest);
 
     if(types[i] == &ffi_type_pointer)
     {
@@ -662,9 +663,13 @@ OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
   if(status != FFI_OK)
   {
     raise_error("Error in invoking macro - ffi_prep_cif() failed");
-    free_arg_values(arg_types, arg_values, args, nof_args);
+
+    for(i=0; i<nof_args; i++)
+      free(arg_values[i]);
+
     free(arg_values);
     free(arg_types);
+
     return NIL;
   }
 
@@ -672,7 +677,9 @@ OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
 
   ffi_call(&cif, (void *)extract_native_fn(macro_obj), &ret_val, arg_values);
 
-  free_arg_values(arg_types, arg_values, args, nof_args);
+  for(i=0; i<nof_args; i++)
+    free(arg_values[i]);
+
   free(arg_values);
   free(arg_types);
 
