@@ -3099,7 +3099,8 @@ unsigned int compile_expression()
     return 1;
   }
 
-  reg_accumulator = compile_exp(car_obj);
+  //reg_accumulator = compile_exp(car_obj);
+  reg_accumulator = compile_and_evaluate(car_obj);
   
   reg_current_value_rib = NIL;
   reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));

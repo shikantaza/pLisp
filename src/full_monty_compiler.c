@@ -42,15 +42,6 @@ typedef struct binding_env
 
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
 
-//mapping of top-level symbols
-//to their values
-typedef struct global_var_mapping
-{
-  OBJECT_PTR sym;
-  OBJECT_PTR val;
-  BOOLEAN delete_flag;
-} global_var_mapping_t;
-
 //see definition of global_var_ref_t
 typedef struct global_var_ref_detail
 {
@@ -58,15 +49,16 @@ typedef struct global_var_ref_detail
   unsigned int pos; //ordinal position of the referred top-level object
 } global_var_ref_detail_t;
 
-//for each top-level symbol,
-//maintain the list of closures
-//that close over that symbol/value
-typedef struct global_var_ref
+//mapping of top-level symbols
+//to their values
+typedef struct global_var_mapping
 {
-  OBJECT_PTR global_var;
+  OBJECT_PTR sym;
+  OBJECT_PTR val;
   unsigned int ref_count;
   global_var_ref_detail_t * references;
-} global_var_ref_t;
+  BOOLEAN delete_flag;
+} global_var_mapping_t;
 
 //global variables
 unsigned int nof_global_vars = 0;
@@ -245,6 +237,8 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
 OBJECT_PTR expand_macro_full(OBJECT_PTR);
 OBJECT_PTR expand_bodies(OBJECT_PTR);
 OBJECT_PTR get_top_level_symbols();
+int add_reference_to_top_level_sym(OBJECT_PTR, int, OBJECT_PTR);
+int update_references(OBJECT_PTR, OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -377,11 +371,11 @@ OBJECT_PTR difference(OBJECT_PTR lst1, OBJECT_PTR lst2)
 
 OBJECT_PTR map(OBJECT_PTR (*f)(OBJECT_PTR), OBJECT_PTR lst)
 {
-  assert(IS_CONS_OBJECT(lst));
+  assert(lst == NIL || IS_CONS_OBJECT(lst));
 
   OBJECT_PTR ret = NIL, rest = lst;
 
-  while(IS_CONS_OBJECT(rest) && rest != NIL)
+  while(rest != NIL)
   {
     OBJECT_PTR val = f(car(rest));
 
@@ -409,7 +403,7 @@ OBJECT_PTR map2(OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR),
 {
   OBJECT_PTR ret = NIL, rest = lst;
 
-  while(IS_CONS_OBJECT(rest) && rest != NIL)
+  while(rest != NIL)
   {
     OBJECT_PTR val = f(car(rest), v1, v2);
 
@@ -1593,9 +1587,18 @@ OBJECT_PTR get_top_level_symbols()
   return ret;    
 }
 
-OBJECT_PTR compile_exp(OBJECT_PTR exp)
+//OBJECT_PTR compile_exp(OBJECT_PTR exp)
+OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
+
+  BOOLEAN macro_flag = false;
+
+  if(IS_CONS_OBJECT(res) && car(res) == MACRO)
+  {
+    macro_flag = true;
+    res = replace_macros(res);
+  }
 
   res = expand_macro_full(res);
 //print_object(res);printf("\n");getchar();
@@ -1626,7 +1629,7 @@ OBJECT_PTR compile_exp(OBJECT_PTR exp)
   res = closure_conv_transform(res);
 //print_object(res);printf("\n");getchar();
   res = lift_transform(res, NIL);
-print_object(res);printf("\n");getchar();
+//print_object(res);printf("\n");getchar();
 
   OBJECT_PTR lambdas = reverse(cdr(res));
 
@@ -1674,12 +1677,34 @@ print_object(res);printf("\n");getchar();
     rest = cdr(rest);
   }
 
-  //ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + ((function == true) ? FUNCTION2_TAG : MACRO2_TAG);
   ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
 
-  //assert(IS_FUNCTION2_OBJECT(ret) || IS_MACRO2_OBJECT(ret));
+  nativefn tt = extract_native_fn(ret);
 
-  return ret;
+  OBJECT_PTR ret1 = tt(ret, idclo);
+
+  if(macro_flag)
+    ret1 = ((ret1 >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
+
+  //record which top-level symbols
+  //are referred by the closure.
+  //this is necessary to update the
+  //closure object when any of these
+  //top level symbols are updated
+  int i=1;
+  rest = cdr(closure_components);
+
+  while(rest != NIL)
+  {
+    if(add_reference_to_top_level_sym(car(rest), i, ret1))
+    {
+      raise_error("Unable to add reference to top level");
+      return NIL;
+    }
+    rest = cdr(rest);
+  }
+
+  return ret1;
 }
 
 BOOLEAN arithop(OBJECT_PTR sym)
@@ -2139,7 +2164,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
 
   len += sprintf(buf+len, ")\n{\n");
 
-  len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
+  //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
   len += sprintf(buf+len, "unsigned int nil = 17;\n");
 
   OBJECT_PTR body = CDDR(second(lambda_form));
@@ -2431,7 +2456,7 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
     rest = cdr(rest);
   }
 
-  printf("%s\n", str); getchar();
+  //printf("%s\n", str); getchar();
 
   if(tcc_compile_string(tcc_state1, str) == -1)
     assert(false);
@@ -2487,6 +2512,9 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
     top_level_symbols[nof_global_vars-1].sym = sym;
     top_level_symbols[nof_global_vars-1].val = val;
     top_level_symbols[nof_global_vars-1].delete_flag = false;
+
+    top_level_symbols[nof_global_vars-1].ref_count = 0;
+    top_level_symbols[nof_global_vars-1].references = NULL;
   }
 }
 
@@ -2524,37 +2552,37 @@ OBJECT_PTR reverse(OBJECT_PTR lst)
 OBJECT_PTR call_cc1(OBJECT_PTR clo)
 {
   nativefn fn = extract_native_fn(clo);
-  return fn(clo, CADR(saved_continuations), idclo);
+  return fn(clo, CADDR(saved_continuations), idclo);
 }
 
-OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
-{
-  //print_object(exp);getchar();
+/* OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp) */
+/* { */
+/*   //print_object(exp);getchar(); */
 
-  OBJECT_PTR compiled_form;
+/*   OBJECT_PTR compiled_form; */
 
-  BOOLEAN macro_flag = false;
+/*   BOOLEAN macro_flag = false; */
 
-  if(IS_CONS_OBJECT(exp) && car(exp) == MACRO)
-  {
-    macro_flag = true;
-    compiled_form = compile_exp(replace_macros(exp));
-  }
-  else
-    compiled_form = compile_exp(exp);
+/*   if(IS_CONS_OBJECT(exp) && car(exp) == MACRO) */
+/*   { */
+/*     macro_flag = true; */
+/*     compiled_form = compile_exp(replace_macros(exp)); */
+/*   } */
+/*   else */
+/*     compiled_form = compile_exp(exp); */
 
-  if(compiled_form == NIL)
-    return NIL;
+/*   if(compiled_form == NIL) */
+/*     return NIL; */
 
-  nativefn tt = extract_native_fn(compiled_form);
+/*   nativefn tt = extract_native_fn(compiled_form); */
 
-  OBJECT_PTR ret = tt(compiled_form, idclo);
+/*   OBJECT_PTR ret = tt(compiled_form, idclo); */
 
-  if(macro_flag)
-    return ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
+/*   if(macro_flag) */
+/*     return ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG; */
 
-  return ret;
-}
+/*   return ret; */
+/* } */
 
 int repl2()
 {
@@ -2622,7 +2650,11 @@ int repl2()
       res = compile_and_evaluate(third(exp));
       add_top_level_sym(second(exp), cons(res, NIL));     
 
-      //TODO: update closures that refer to this symbol
+      if(update_references(second(exp), res))
+      {
+        raise_error("Update of reference to top level symbol failed");
+        return 1;
+      }
     }
     else if(IS_SYMBOL_OBJECT(exp))
     {
@@ -2781,4 +2813,78 @@ OBJECT_PTR expand_bodies(OBJECT_PTR exp)
   else
     return cons(expand_bodies(car(exp)),
                 expand_bodies(cdr(exp)));
+}
+
+int add_reference_to_top_level_sym(OBJECT_PTR sym, int pos, OBJECT_PTR clo)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(top_level_symbols[i].sym == sym)
+    {
+      if(top_level_symbols[i].ref_count == 0)
+      {
+        top_level_symbols[i].ref_count++;
+        top_level_symbols[i].references = (global_var_ref_detail_t *)malloc(sizeof(global_var_ref_detail_t));
+        assert(top_level_symbols[i].references);
+        top_level_symbols[i].references[top_level_symbols[i].ref_count-1].referrer = clo;
+        top_level_symbols[i].references[top_level_symbols[i].ref_count-1].pos = pos;
+      }
+      else
+      {
+        global_var_ref_detail_t *temp;
+        top_level_symbols[i].ref_count++;
+        temp = (global_var_ref_detail_t *)realloc(top_level_symbols[i].references, 
+                                                  top_level_symbols[i].ref_count * sizeof(global_var_ref_detail_t));
+        assert(temp);
+
+        top_level_symbols[i].references = temp;
+        top_level_symbols[i].references[top_level_symbols[i].ref_count-1].referrer = clo;
+        top_level_symbols[i].references[top_level_symbols[i].ref_count-1].pos = pos;
+      }
+      return 0;
+    }
+  }
+  return 1;
+}
+
+int update_references(OBJECT_PTR sym, OBJECT_PTR new_val)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(top_level_symbols[i].sym == sym)
+    {
+      int j;
+
+      for(j=0; j<top_level_symbols[i].ref_count; j++)
+      {
+        OBJECT_PTR clo = top_level_symbols[i].references[j].referrer;
+        print_object(clo);printf("\n");
+        int pos = top_level_symbols[i].references[j].pos;
+
+        OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+
+        OBJECT_PTR rest = cons_eqiv;
+        int k=0;
+
+        for(k=0; k<pos; k++)
+          rest = cdr(rest);
+
+        set_heap(car(rest) & POINTER_MASK, 0, new_val);
+      }
+
+      return 0;
+    }
+  }
+
+  return 1;
 }
