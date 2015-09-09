@@ -60,6 +60,21 @@ typedef struct global_var_mapping
   BOOLEAN delete_flag;
 } global_var_mapping_t;
 
+typedef struct unmet_dependency_detail
+{
+  OBJECT_PTR top_level_sym;
+  unsigned int pos;
+  BOOLEAN delete_flag;
+} unmet_dependency_detail_t;
+
+typedef struct unmet_dependency
+{
+  OBJECT_PTR clo;
+  unsigned int nof_dependencies;
+  unmet_dependency_detail_t *dependencies;
+  BOOLEAN delete_flag;
+} unmet_dependency_t;
+
 //global variables
 unsigned int nof_global_vars = 0;
 global_var_mapping_t *top_level_symbols = NULL;
@@ -67,6 +82,8 @@ global_var_mapping_t *top_level_symbols = NULL;
 OBJECT_PTR saved_continuations;
 OBJECT_PTR idclo;
 
+unsigned int nof_clos_with_unmet_deps = 0;
+unmet_dependency_t *global_unmet_dependencies = NULL;
 //end of global variables
 
 //external variables
@@ -167,6 +184,8 @@ extern OBJECT_PTR CREATE_FN_CLOSURE;
 extern OBJECT_PTR MACRO;
 extern OBJECT_PTR QUOTE;
 
+extern OBJECT_PTR TRUE;
+
 extern unsigned int POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -192,6 +211,8 @@ extern OBJECT_PTR primitive_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_error(OBJECT_PTR);
 extern OBJECT_PTR primitive_print(OBJECT_PTR);
 extern OBJECT_PTR primitive_setcar(OBJECT_PTR);
+extern OBJECT_PTR primitive_mult(OBJECT_PTR);
+extern OBJECT_PTR primitive_equal(OBJECT_PTR);
 
 extern OBJECT_PTR apply_macro(OBJECT_PTR, OBJECT_PTR);
 
@@ -239,6 +260,10 @@ OBJECT_PTR expand_bodies(OBJECT_PTR);
 OBJECT_PTR get_top_level_symbols();
 int add_reference_to_top_level_sym(OBJECT_PTR, int, OBJECT_PTR);
 int update_references(OBJECT_PTR, OBJECT_PTR);
+
+void add_unmet_dependency(OBJECT_PTR, OBJECT_PTR, int);
+BOOLEAN unmet_dependencies_exist(OBJECT_PTR);
+void update_dependencies(OBJECT_PTR, OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -464,13 +489,21 @@ OBJECT_PTR concat(unsigned int count, ...)
   if(!IS_CONS_OBJECT(lst) && lst != NIL)
     assert(false);
 
+  //to skip NILs
   while(lst == NIL)
   {
     start++;
+
+    if(start > count)
+      return NIL;
+
     lst = (OBJECT_PTR)va_arg(ap, int);
 
     if(!IS_CONS_OBJECT(lst) && lst != NIL)
+    {
+      //print_object(lst);
       assert(false);
+    }
   }
 
   ret = clone_object(lst);
@@ -1600,6 +1633,9 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
     res = replace_macros(res);
   }
 
+  //TODO: only free ids that correspond
+  //to top level macro objects should be
+  //considered for the macro expansion
   res = expand_macro_full(res);
 //print_object(res);printf("\n");getchar();
 
@@ -1610,7 +1646,10 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 //print_object(res);printf("\n");getchar();
 
 //print_object(get_top_level_symbols()); printf("\n"); getchar();
-  res = assignment_conversion(res, get_top_level_symbols());
+  //res = assignment_conversion(res, get_top_level_symbols());
+  res = assignment_conversion(res, concat(2, 
+                                          get_top_level_symbols(),
+                                          free_ids_il(res)));
 
 //print_object(res);printf("\n");getchar();
   res = translate_to_il(res);
@@ -1657,24 +1696,40 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   OBJECT_PTR ret = cons(out, NIL);
   OBJECT_PTR rest = cdr(closure_components);
 
+  //OBJECT_PTR undefined_syms = NIL;
+  int pos = 1;
+
   while(rest != NIL)
   {
     OBJECT_PTR out1;
 
     int retval = get_top_level_sym_value(car(rest), &out1);
 
-    if(retval && car(rest) != SAVE_CONTINUATION)
+    if(retval && car(rest) != SAVE_CONTINUATION && car(rest) != TRUE)
     {
       char buf[200];
       memset(buf, 200, '\0');
       sprintf(buf, "Undefined symbol: %s", get_symbol_name(car(rest)));
-      raise_error(buf);
-      return NIL;
+      //raise_error(buf);
+      //return NIL;
+      printf("%s\n", buf);
+      /* add_unmet_dependency(((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG, */
+      /*                      car(rest), */
+      /*                      pos); */
+      /* undefined_syms = cons(cons(car(rest),  */
+      /*                            convert_int_to_object(pos)), */
+      /*                       undefined_syms); */
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));        
+    }
+    else
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(out1, NIL));        
     }
 
-    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-    set_heap(ptr, 1, cons(out1, NIL));        
     rest = cdr(rest);
+    pos++;
   }
 
   ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
@@ -1696,12 +1751,22 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 
   while(rest != NIL)
   {
-    if(add_reference_to_top_level_sym(car(rest), i, ret1))
-    {
-      raise_error("Unable to add reference to top level");
-      return NIL;
-    }
+    /* if(add_reference_to_top_level_sym(car(rest), i, ret1)) */
+    /* { */
+    /*   raise_error("Unable to add reference to top level"); */
+    /*   return NIL; */
+    /* } */
+    add_reference_to_top_level_sym(car(rest), i, ret1);
+
+    //record any unmet dependencies for the closure
+    OBJECT_PTR out1;
+    int retval = get_top_level_sym_value(car(rest), &out1);
+
+    if(retval && car(rest) != SAVE_CONTINUATION && car(rest) != TRUE)
+      add_unmet_dependency(ret1, car(rest), i);
+
     rest = cdr(rest);
+    i++;
   }
 
   return ret1;
@@ -2115,6 +2180,10 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "save_continuation");
       else if(var == LST)
         sprintf(s, "primitive_list");
+      else if(var == MULT)
+        sprintf(s, "primitive_mult");
+      else if(var == EQ)
+        sprintf(s, "primitive_equal");
       else
       {
         print_object(var);
@@ -2295,6 +2364,11 @@ nativefn extract_native_fn(OBJECT_PTR closure)
     assert(false);
   }
 
+  //TODO: replace assert by a raise_error; also,
+  //this check should not be done when
+  //invoked for the top-level closure
+  //assert(!unmet_dependencies_exist(closure));
+
   OBJECT_PTR nativefn_obj = get_heap(closure & POINTER_MASK, 0);
 
   if(!IS_NATIVE_FN_OBJECT(nativefn_obj))
@@ -2342,6 +2416,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "cons",               cons);
   tcc_add_symbol(tcc_state, "primitive_setcar",   primitive_setcar);
   tcc_add_symbol(tcc_state, "primitive_list",     primitive_list);
+  tcc_add_symbol(tcc_state, "primitive_mult",     primitive_mult);
+  tcc_add_symbol(tcc_state, "primitive_equal",    primitive_equal);
 
   return tcc_state;
 }
@@ -2624,8 +2700,22 @@ int repl2()
         return 1;
       }
 
+      //this is to prevent unmet dependecy error
+      //for recursive definitions
+      add_top_level_sym(second(exp), cons(NIL, NIL));
+
       res = compile_and_evaluate(third(exp));
+
       add_top_level_sym(second(exp), cons(res, NIL));
+
+      update_dependencies(second(exp), cons(res, NIL));
+
+      if(update_references(second(exp), res))
+      {
+        raise_error("Update of reference to top level symbol failed");
+        return 1;
+      }
+
     }
     else if(car(exp) == SET)
     {
@@ -2868,7 +2958,7 @@ int update_references(OBJECT_PTR sym, OBJECT_PTR new_val)
       for(j=0; j<top_level_symbols[i].ref_count; j++)
       {
         OBJECT_PTR clo = top_level_symbols[i].references[j].referrer;
-        print_object(clo);printf("\n");
+        //print_object(clo);printf("\n");
         int pos = top_level_symbols[i].references[j].pos;
 
         OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
@@ -2887,4 +2977,133 @@ int update_references(OBJECT_PTR sym, OBJECT_PTR new_val)
   }
 
   return 1;
+}
+
+void add_unmet_dependency(OBJECT_PTR clo, OBJECT_PTR sym, int pos)
+{
+  assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
+  assert(IS_SYMBOL_OBJECT(sym));
+  //assert(pos >= 1 && 
+  //       pos <  cons_length(((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG));
+
+  int i;
+
+  BOOLEAN found = false;
+
+  for(i=0; i<nof_clos_with_unmet_deps; i++)
+  {
+    if(global_unmet_dependencies[i].delete_flag)
+      continue;
+    if(global_unmet_dependencies[i].clo == clo)
+    {
+      found = true;
+      global_unmet_dependencies[i].nof_dependencies++;
+
+      unmet_dependency_detail_t *temp = (unmet_dependency_detail_t *)realloc(global_unmet_dependencies[i].dependencies,
+                                                                             global_unmet_dependencies[i].nof_dependencies * sizeof(unmet_dependency_detail_t *));
+      assert(temp);
+
+      global_unmet_dependencies[i].dependencies = temp;
+      
+      global_unmet_dependencies[i].dependencies[global_unmet_dependencies[i].nof_dependencies - 1].top_level_sym = sym;
+      global_unmet_dependencies[i].dependencies[global_unmet_dependencies[i].nof_dependencies - 1].delete_flag = false;
+      global_unmet_dependencies[i].dependencies[global_unmet_dependencies[i].nof_dependencies - 1].pos = pos;
+
+      break;
+    }
+  }
+
+  if(!found)
+  {
+    nof_clos_with_unmet_deps++;
+    unmet_dependency_t *temp = (unmet_dependency_t *)realloc(global_unmet_dependencies,
+                                                             nof_clos_with_unmet_deps * sizeof(unmet_dependency_t));
+    assert(temp);
+
+    global_unmet_dependencies = temp;
+
+    global_unmet_dependencies[nof_clos_with_unmet_deps-1].clo = clo;
+    global_unmet_dependencies[nof_clos_with_unmet_deps-1].delete_flag = false;
+
+    unmet_dependency_detail_t *det = (unmet_dependency_detail_t *)malloc(sizeof(unmet_dependency_detail_t));
+    assert(det);
+
+    det->top_level_sym = sym;
+    det->delete_flag = false;
+    det->pos = pos;
+
+    global_unmet_dependencies[nof_clos_with_unmet_deps-1].nof_dependencies = 1;
+    global_unmet_dependencies[nof_clos_with_unmet_deps-1].dependencies = det;
+  }
+
+}
+
+BOOLEAN unmet_dependencies_exist(OBJECT_PTR clo)
+{
+  assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
+
+  int i;
+
+  for(i=0; i<nof_clos_with_unmet_deps; i++)
+  {
+    if(global_unmet_dependencies[i].delete_flag)
+      continue;
+
+    if(global_unmet_dependencies[i].clo == clo)
+    {
+      int j;
+      for(j=0; j<global_unmet_dependencies[i].nof_dependencies; j++)
+      {
+        if(global_unmet_dependencies[i].dependencies[j].delete_flag)
+          continue;
+
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
+{
+  int i;
+
+  for(i=0; i<nof_clos_with_unmet_deps; i++)
+  {
+    if(global_unmet_dependencies[i].delete_flag)
+      continue;
+
+    int j;
+    for(j=0; j<global_unmet_dependencies[i].nof_dependencies; j++)
+    {
+      if(global_unmet_dependencies[i].dependencies[j].delete_flag)
+        continue;
+
+      if(global_unmet_dependencies[i].dependencies[j].top_level_sym == sym)
+      {
+        OBJECT_PTR clo = global_unmet_dependencies[i].clo;
+        int pos = global_unmet_dependencies[i].dependencies[j].pos;
+
+        OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+
+        OBJECT_PTR rest = cons_eqiv;
+        int k=0;
+
+        for(k=0; k<pos; k++)
+          rest = cdr(rest);
+
+        set_heap(car(rest) & POINTER_MASK, 0, car(val));
+
+        add_reference_to_top_level_sym(sym, pos, clo);
+
+        break;
+      }
+    }
+  }
+}
+
+void debug_print_closure(OBJECT_PTR clo)
+{
+  print_object(((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG);
 }

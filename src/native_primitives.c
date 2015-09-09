@@ -236,3 +236,95 @@ OBJECT_PTR primitive_list(OBJECT_PTR count1, ...)
 
   return ret;
 }
+
+OBJECT_PTR primitive_mult(OBJECT_PTR count1, ...)
+{
+  va_list ap;
+  OBJECT_PTR arg;
+  int i;
+  float prod = 1;
+
+  BOOLEAN is_float = false;
+
+  unsigned int count = get_int_value(count1);
+
+  if(count < 2)
+  {
+    raise_error("Operator '*' requires at least two arguments");
+    return NIL;
+  }
+
+  va_start(ap, count1);
+
+  for(i=0; i<count; i++)
+  {
+    arg = (OBJECT_PTR)va_arg(ap, int);
+
+    if(IS_FLOAT_OBJECT(arg))
+    {
+      is_float = true;
+      prod *= get_float_value(arg);
+    }
+    else if(IS_INTEGER_OBJECT(arg))
+      prod *= get_int_value(arg);
+    else
+    {
+      raise_error("Argument to operator '*' should be a number");
+      return 1;
+    }
+  }
+
+  va_end(ap);
+
+  return is_float ? convert_float_to_object(prod) : convert_int_to_object((int)prod);
+}
+
+OBJECT_PTR primitive_equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
+{
+  BOOLEAN ret = false;
+
+  //TODO: extend this for array objects (any others?)
+
+  if(obj1 == obj2)
+    ret = true;
+  else
+  {
+    if(IS_CONS_OBJECT(obj1) && IS_CONS_OBJECT(obj2))
+      ret = (equal(car(obj1), car(obj2)) && 
+	     equal(cdr(obj1), cdr(obj2)));
+    else if(IS_INTEGER_OBJECT(obj1))
+    {
+      int val = get_int_value(obj1);
+      if(IS_INTEGER_OBJECT(obj2))
+        ret = (val  == get_int_value(obj2));
+      else if(IS_FLOAT_OBJECT(obj2))
+        ret = (val == get_float_value(obj2));
+    }
+    else if(IS_FLOAT_OBJECT(obj1))
+    {
+      float val = get_float_value(obj1);
+      if(IS_INTEGER_OBJECT(obj2))
+        ret = (val  == get_int_value(obj2));
+      else if(IS_FLOAT_OBJECT(obj2))
+        ret = (val == get_float_value(obj2));
+    }
+    else if(is_string_object(obj1))
+    {
+      char *str1 = get_string(obj1);
+      if(is_string_object(obj2))
+        ret = !strcmp(str1, get_string(obj2));
+      else if(IS_STRING_LITERAL_OBJECT(obj2))
+        ret = !strcmp(str1, strings[(int)obj2 >> OBJECT_SHIFT]);
+    }
+    else if(IS_STRING_LITERAL_OBJECT(obj1))
+    {
+      char *str1 = strings[(int)obj1 >> OBJECT_SHIFT];
+      if(is_string_object(obj2))
+        ret = !strcmp(str1, get_string(obj2));
+      else if(IS_STRING_LITERAL_OBJECT(obj2))
+        ret = !strcmp(str1, strings[(int)obj2 >> OBJECT_SHIFT]);
+    }    
+  }
+  
+  return ret ? TRUE : NIL;
+}
