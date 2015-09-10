@@ -582,7 +582,15 @@ OBJECT_PTR mutating_ids(OBJECT_PTR exp)
   else if(car_exp == LAMBDA)
     return difference(mutating_ids(third(exp)),
                       second(exp));
-  else if(car_exp == LET || car_exp == LETREC)
+  else if(car_exp == LET)
+  {
+    return union1(2,
+                  union1(1,map(mutating_ids,
+                               map(CADR, second(exp)))),
+                  difference(mutating_ids(third(exp)),
+                             union1(1, mutating_ids(map(temp1, second(exp))))));
+  }
+  else if(car_exp == LETREC)
   {
     return difference(union1(2,
                              mutating_ids(third(exp)),
@@ -883,7 +891,7 @@ OBJECT_PTR msubst(OBJECT_PTR ids, OBJECT_PTR exp)
   while(rest != NIL)
   {
     res = subst(list(2, CAR, car(rest)),
-                ids,
+                car(rest),
                 res);
 
     rest = cdr(rest);
@@ -1185,6 +1193,12 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
                               map(CADR, second(exp)))),
                   difference(free_ids_il(third(exp)),
                              map(car, second(exp))));
+  else if(car_exp == LETREC)
+    return difference(union1(2,
+                             flatten(map(free_ids_il,
+                                         map(CADR, second(exp)))),
+                             free_ids_il(third(exp))),
+                      map(car, second(exp)));
   else if(car_exp == ERROR || car_exp == CALL_CC)
     return free_ids_il(second(exp));
   else
@@ -1649,7 +1663,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   //res = assignment_conversion(res, get_top_level_symbols());
   res = assignment_conversion(res, concat(2, 
                                           get_top_level_symbols(),
-                                          free_ids_il(res)));
+                                          free_ids_il(exp)));
 
 //print_object(res);printf("\n");getchar();
   res = translate_to_il(res);
