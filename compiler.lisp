@@ -801,7 +801,7 @@
             (build-evaluatable-exp (compile-exp (expand-macro-full exp))))
     (list 'let
           env0-il
-          (build-evaluatable-exp (compile-exp (expand-macro-full exp))))))
+          (build-evaluatable-exp (compiler:compile-exp (expand-macro-full exp))))))
 
 (defun closure-conv-transform-abs-cont (exp)
   (let ((free-ids (free-ids-il exp))

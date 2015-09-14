@@ -597,7 +597,9 @@ void dealloc(OBJECT_PTR ptr)
       words_deallocated += 1;
       break;
     default:
-      assert(false);
+      //TODO: include new tags
+      //assert(false);
+      break;
   }
 
   free((void *)(ptr & POINTER_MASK));
