@@ -328,3 +328,72 @@ OBJECT_PTR primitive_equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
   
   return ret ? TRUE : NIL;
 }
+
+OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
+{
+  va_list ap;
+  OBJECT_PTR lst, ret, rest;
+  int i, start = 1;
+
+  unsigned int count = get_int_value(count1);
+
+  if(!count)
+    return NIL;
+
+  va_start(ap, count1);
+
+  lst = (OBJECT_PTR)va_arg(ap, int);
+
+  if(!IS_CONS_OBJECT(lst) && lst != NIL)
+  {
+    raise_error("Invalid argument to CONCAT");
+    return NIL;
+  }
+
+  //to skip NILs
+  while(lst == NIL)
+  {
+    start++;
+
+    if(start > count)
+      return NIL;
+
+    lst = (OBJECT_PTR)va_arg(ap, int);
+
+    if(!IS_CONS_OBJECT(lst) && lst != NIL)
+    {
+      raise_error("Invalid argument to CONCAT");
+      return NIL;
+    }
+  }
+
+  ret = clone_object(lst);
+
+  for(i=start; i<count; i++)
+  {
+    lst = (OBJECT_PTR)va_arg(ap, int);
+
+    if(lst == NIL)
+      continue;
+
+    if(!IS_CONS_OBJECT(lst))
+    {
+      raise_error("Invalid argument to CONCAT");
+      return NIL;
+    }
+
+    rest = lst;
+
+    while(rest != NIL)
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(clone_object(car(rest)), NIL));
+
+      rest = cdr(rest);
+    }
+  }
+
+  va_end(ap);
+
+  return ret;
+}

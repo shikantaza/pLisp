@@ -188,6 +188,7 @@ OBJECT_PTR SAVE_CONTINUATION = (OBJECT_PTR)((113 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR LETREC            = (OBJECT_PTR)((114 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR EXTRACT_NATIVE_FN = (OBJECT_PTR)((115 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR CREATE_FN_CLOSURE = (OBJECT_PTR)((116 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CONCAT            = (OBJECT_PTR)((117 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -201,7 +202,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 32
+#define NOF_NON_SPECIAL_SYMBOLS 33
 
 char err_buf[500];
 
@@ -2071,6 +2072,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("LETREC");
   packages[CORE_PACKAGE_INDEX].symbols[115] = strdup("EXTRACT-NATIVE-FN");
   packages[CORE_PACKAGE_INDEX].symbols[116] = strdup("CREATE-FN-CLOSURE");
+  packages[CORE_PACKAGE_INDEX].symbols[117] = strdup("CONCAT");
 }
 
 int find_package(char* package_name)
@@ -2636,8 +2638,9 @@ OBJECT_PTR list(int count, ...)
 
   for(i=1; i<count; i++)
   {
+    OBJECT_PTR val = (OBJECT_PTR)va_arg(ap, int);
     uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-    set_heap(ptr, 1, cons((OBJECT_PTR)va_arg(ap, int), NIL));
+    set_heap(ptr, 1, cons(val, NIL));
   }
 
   va_end(ap);
