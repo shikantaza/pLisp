@@ -78,7 +78,7 @@ typedef struct unmet_dependency
 typedef struct and_rest_mapping
 {
   BOOLEAN delete_flag;
-  OBJECT_PTR clo;
+  OBJECT_PTR sym;
   int pos;
 } and_rest_mapping_t;
 
@@ -232,6 +232,9 @@ extern OBJECT_PTR apply_macro(OBJECT_PTR, OBJECT_PTR);
 
 extern OBJECT_PTR primitive_list(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_concat(OBJECT_PTR, ...);
+
+extern OBJECT_PTR primitive_not(OBJECT_PTR);
+extern OBJECT_PTR primitive_car(OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -269,7 +272,7 @@ TCCState *compile_functions(OBJECT_PTR);
 char *extract_variable_string(OBJECT_PTR);
 OBJECT_PTR call_cc1(OBJECT_PTR);
 OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
-OBJECT_PTR expand_macro_full(OBJECT_PTR);
+OBJECT_PTR expand_macro_full(OBJECT_PTR, BOOLEAN);
 OBJECT_PTR expand_bodies(OBJECT_PTR);
 OBJECT_PTR get_top_level_symbols();
 int add_reference_to_top_level_sym(OBJECT_PTR, int, OBJECT_PTR);
@@ -282,9 +285,11 @@ void update_dependencies(OBJECT_PTR, OBJECT_PTR);
 int location_of_and_rest(OBJECT_PTR);
 OBJECT_PTR strip_and_rest(OBJECT_PTR);
 void record_and_rest_closure(OBJECT_PTR, int);
-OBJECT_PTR handle_and_rest_applications(OBJECT_PTR);
+OBJECT_PTR handle_and_rest_applications(OBJECT_PTR, OBJECT_PTR);
 
 OBJECT_PTR get_free_variables(OBJECT_PTR);
+
+OBJECT_PTR rewrite_zero_arg_applications(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1666,10 +1671,30 @@ OBJECT_PTR get_top_level_symbols()
   return ret;    
 }
 
+OBJECT_PTR replace_t(OBJECT_PTR exp)
+{
+  if(is_atom(exp))
+  {
+    if(exp == TRUE)
+      return list(2, QUOTE, TRUE);
+    else
+      return exp;
+  }
+  else if(cons_length(exp) == 2 &&
+          car(exp) == QUOTE     &&
+          second(exp) == TRUE)
+    return exp;
+  else
+    return map(replace_t, exp);
+}
+
 //OBJECT_PTR compile_exp(OBJECT_PTR exp)
 OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
+
+  res = replace_t(res);
+//print_object(res);printf("\n");getchar();
 
   BOOLEAN macro_flag = false;
 
@@ -1679,44 +1704,29 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   if(IS_CONS_OBJECT(res) && car(res) == MACRO)
   {
     macro_flag = true;
-    res = list(3, LAMBDA, second(exp), third(exp));
+    res = list(3, LAMBDA, second(res), third(res));
   }
 
   //this is not needed since
   //we're disallowing internal macros
   res = replace_macros(res);
-
-  //handle &rest params
-  //TODO: at present only handling &rest
-  //in top-level lambda/macro definitions
-
-  BOOLEAN and_rest_flag = false;
-  int pos_of_and_rest = -1;
-
-  if(IS_CONS_OBJECT(res) && car(res) == LAMBDA)
-  {
-    pos_of_and_rest = location_of_and_rest(second(res));
-
-    if(pos_of_and_rest != -1)
-    {
-      and_rest_flag = true;
-      res = list(3, LAMBDA, strip_and_rest(second(exp)), third(exp));
-    }
-  }
 //print_object(res);printf("\n");getchar();
-  //end of handling &rest params
 
-  res = handle_and_rest_applications(res);
-print_object(res);printf("\n");getchar();
+  //res = handle_and_rest_applications(res, get_free_variables(res));
+//print_object(res);printf("\n");getchar();
 
   //TODO: only free ids that correspond
   //to top level macro objects should be
   //considered for the macro expansion
   OBJECT_PTR prev_res = res;
-  res = expand_macro_full(res);
-print_object(res);printf("\n");getchar();
+  res = expand_macro_full(res, true);
+//print_object(res);printf("\n");getchar();
 
-  if(res != prev_res && car(res) == DEFINE)
+  res = replace_t(res);
+  //res = replace_macros(res);
+  //res = handle_and_rest_applications(res, get_free_variables(res));
+
+  if(res != prev_res && IS_CONS_OBJECT(res) && car(res) == DEFINE)
   {
     if(!IS_SYMBOL_OBJECT(second(res)))
     {
@@ -1749,15 +1759,15 @@ print_object(res);printf("\n");getchar();
   res = process_backquote(res);
 //print_object(res);printf("\n");getchar();
 
-//print_object(get_top_level_symbols()); printf("\n"); getchar();
-  //res = assignment_conversion(res, get_top_level_symbols());
   res = assignment_conversion(res, concat(2, 
                                           get_top_level_symbols(),
-                                          free_ids_il(exp)));
-
+                                          //free_ids_il(exp)));
+                                          get_free_variables(exp)));
 //print_object(res);printf("\n");getchar();
+
   res = translate_to_il(res);
 //print_object(res);printf("\n");getchar();
+
   binding_env_t *env = create_binding_env();
   res = ren_transform(res, env);
 //print_object(res);printf("\n");getchar();
@@ -1767,10 +1777,13 @@ print_object(res);printf("\n");getchar();
 
   res = simplify_il(res);
 //print_object(res);printf("\n");getchar();
+
   res = cps_transform(res);
 //print_object(res);printf("\n");getchar();
+
   res = closure_conv_transform(res);
 //print_object(res);printf("\n");getchar();
+
   res = lift_transform(res, NIL);
 //print_object(res);printf("\n");getchar();
 
@@ -1875,9 +1888,6 @@ print_object(res);printf("\n");getchar();
     rest = cdr(rest);
     i++;
   }
-
-  if(and_rest_flag)
-    record_and_rest_closure(ret1, pos_of_and_rest);
 
   return ret1;
 }
@@ -2286,7 +2296,9 @@ char *extract_variable_string(OBJECT_PTR var)
       else if(var == SUB)
         sprintf(s,"primitive_sub");
       else if(var == CAR)
-        sprintf(s,"car");
+        sprintf(s,"primitive_car");
+      else if(var == CDR)
+        sprintf(s,"cdr");
       else if(var == QUOTE)
         sprintf(s,"quote");
       else if(var == LT)
@@ -2313,6 +2325,8 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "primitive_equal");
       else if(var == CONCAT)
         sprintf(s, "primitive_concat");
+      else if(var == NOT)
+        sprintf(s, "primitive_not");
       else
       {
         print_object(var);
@@ -2472,27 +2486,34 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 
       OBJECT_PTR rest = cdr(exp);
 
-      BOOLEAN first_time = true;
-
-      while(rest != NIL)
+      if(primitive_call && rest == NIL)
       {
-        if(!first_time)
-          len += sprintf(buf+len, ", ");
-
-        if(is_atom(car(rest)))
-        {
-          char *arg_name = extract_variable_string(car(rest));
-          len += sprintf(buf+len, "%s", arg_name);
-          free(arg_name);
-        }
-        else
-          len += build_c_fragment(car(rest), buf+len, true);
-
-        rest = cdr(rest);
-        first_time = false;
+        len += sprintf(buf+len, "17)");
       }
+      else
+      {
+        BOOLEAN first_time = true;
 
-      len += sprintf(buf+len, ")");
+        while(rest != NIL)
+        {
+          if(!first_time)
+            len += sprintf(buf+len, ", ");
+
+          if(is_atom(car(rest)))
+          {
+            char *arg_name = extract_variable_string(car(rest));
+            len += sprintf(buf+len, "%s", arg_name);
+            free(arg_name);
+          }
+          else
+            len += build_c_fragment(car(rest), buf+len, true);
+
+          rest = cdr(rest);
+          first_time = false;
+        }
+
+        len += sprintf(buf+len, ")");
+      }
     }
 
     if(!nested_call)
@@ -2556,7 +2577,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "create_fn_closure",  create_fn_closure);
   tcc_add_symbol(tcc_state, "primitive_add",      primitive_add);
   tcc_add_symbol(tcc_state, "primitive_sub",      primitive_sub);
-  tcc_add_symbol(tcc_state, "car",                car);
+  tcc_add_symbol(tcc_state, "primitive_car",      primitive_car);
+  tcc_add_symbol(tcc_state, "cdr",                cdr);
   tcc_add_symbol(tcc_state, "quote",              quote);
   tcc_add_symbol(tcc_state, "primitive_error",    primitive_error);
   tcc_add_symbol(tcc_state, "primitive_lt",       primitive_lt);
@@ -2569,6 +2591,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_mult",     primitive_mult);
   tcc_add_symbol(tcc_state, "primitive_equal",    primitive_equal);
   tcc_add_symbol(tcc_state, "primitive_concat",   primitive_concat);
+
+  tcc_add_symbol(tcc_state, "primitive_not",      primitive_not);
 
   return tcc_state;
 }
@@ -2667,7 +2691,7 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
 
 TCCState *compile_functions(OBJECT_PTR lambda_forms)
 {
-  char str[32768];
+  char str[65536];
   memset(str, 32768, '\0');
 
   unsigned int len = 0;
@@ -2683,7 +2707,11 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
     rest = cdr(rest);
   }
 
-  //printf("%s\n", str); getchar();
+  assert(len <= 65536);
+
+  //FILE *out = fopen("debug.c", "a");
+  //fprintf(out, "%s\n", str);
+  //fclose(out);
 
   if(tcc_compile_string(tcc_state1, str) == -1)
     assert(false);
@@ -2851,11 +2879,37 @@ int repl2()
         return 1;
       }
 
-      //this is to prevent unmet dependecy error
-      //for recursive definitions
-      add_top_level_sym(second(exp), cons(NIL, NIL));
+      OBJECT_PTR t1 = cons(NIL, NIL);
 
-      res = compile_and_evaluate(third(exp));
+      if(IS_CONS_OBJECT(third(exp)))
+      {
+        if(first(third(exp)) == LAMBDA)
+          t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG,
+                    NIL);
+        else if(first(third(exp)) == MACRO)
+          t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG,
+                    NIL);
+      }      
+
+      //to prevent unmet dependency error
+      //for recursive definitions
+      add_top_level_sym(second(exp), t1);
+
+      res = third(exp);
+
+      //to handle &rest params for recursive definitions
+      if(IS_CONS_OBJECT(third(exp)) && 
+         (car(third(exp)) == LAMBDA || car(third(exp)) == MACRO))
+      {
+        int pos_of_and_rest = location_of_and_rest(second(third(exp)));
+        if(pos_of_and_rest != -1)
+        {
+          res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
+          record_and_rest_closure(second(exp), pos_of_and_rest);
+        }
+      }
+
+      res = compile_and_evaluate(res);
 
       add_top_level_sym(second(exp), cons(res, NIL));
 
@@ -2966,55 +3020,37 @@ OBJECT_PTR quote_all_arguments(OBJECT_PTR exp)
   return map(temp14, exp);
 }
 
-/*
-(defun expand-macro-full (exp)
-  (cond ((atom exp) exp)
-        ((and (symbolp (car exp))
-              (not (eq (car exp)
-                       'let))
-              (not (eq (car exp)
-                       'letrec))
-              (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
-        (t (cons (expand-macro-full (car exp))
-                 (expand-macro-full (cdr exp))))))
- */
-OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
+OBJECT_PTR expand_macro_full_no_rest_handling(OBJECT_PTR exp)
 {
-  OBJECT_PTR ret;
+  return expand_macro_full(exp, false);
+}
 
-  //printf("Entering: ");
-  //print_object(exp); printf("\n---\n");
+OBJECT_PTR expand_macro_full(OBJECT_PTR exp1, BOOLEAN handle_and_rest)
+{
+  OBJECT_PTR exp = handle_and_rest ? handle_and_rest_applications(exp1, get_free_variables(exp1)) : exp1;
+
+  //print_object(exp);printf("^^^\n");getchar();
+
+  OBJECT_PTR ret;
 
   OBJECT_PTR free_variables = get_free_variables(exp);
 
-  if(is_atom(exp))
+  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
     ret = exp;
   else if(IS_SYMBOL_OBJECT(car(exp)) && exists(car(exp), free_variables))
   {
-    //print_object(get_top_level_symbols());
     OBJECT_PTR out;
     int retval = get_top_level_sym_value(car(exp), &out);
 
     if(!retval && IS_MACRO2_OBJECT(car(out)))
     {
-      //printf("here\n");
-      //ret = expand_macro_full(compile_and_evaluate(quote_all_arguments(exp), false));
-      //ret = apply_macro(car(out), quote_all_arguments(cdr(exp)));
-      ret = apply_macro(car(out), cdr(exp));
-    }
+      //print_object(apply_macro(car(out), cdr(exp)));printf("&&&\n"); getchar();
+      ret = expand_macro_full(apply_macro(car(out), cdr(exp)), true); }
     else
-      //ret =  cons(expand_macro_full(car(exp)),
-      //            expand_macro_full(cdr(exp)));
-      ret = map(expand_macro_full, exp);
-
+      ret = map(expand_macro_full_no_rest_handling, exp);
   }
   else
-    //ret = cons(expand_macro_full(car(exp)),
-    //           expand_macro_full(cdr(exp)));
-    ret = map(expand_macro_full, exp);
-
-  //printf("Exiting: ");
-  //print_object(ret); printf("\n---\n");
+    ret = map(expand_macro_full_no_rest_handling, exp);
 
   return ret;
 }
@@ -3329,9 +3365,9 @@ OBJECT_PTR strip_and_rest(OBJECT_PTR lst)
   return ret;
 }
 
-void record_and_rest_closure(OBJECT_PTR clo, int pos_of_and_rest)
+void record_and_rest_closure(OBJECT_PTR sym, int pos_of_and_rest)
 {
-  assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
+  //assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
   assert(pos_of_and_rest >= 0);
 
   nof_and_rest_mappings++;
@@ -3343,13 +3379,13 @@ void record_and_rest_closure(OBJECT_PTR clo, int pos_of_and_rest)
   and_rest_mappings = temp;
 
   and_rest_mappings[nof_and_rest_mappings-1].delete_flag = false;
-  and_rest_mappings[nof_and_rest_mappings-1].clo = clo;
+  and_rest_mappings[nof_and_rest_mappings-1].sym = sym;
   and_rest_mappings[nof_and_rest_mappings-1].pos = pos_of_and_rest;
 }
 
-int and_rest_closure_pos(OBJECT_PTR clo)
+int and_rest_closure_pos(OBJECT_PTR sym)
 {
-  assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
+  //assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
 
   int i;
 
@@ -3358,7 +3394,7 @@ int and_rest_closure_pos(OBJECT_PTR clo)
     if(and_rest_mappings[i].delete_flag)
       continue;
 
-    if(and_rest_mappings[i].clo == clo)
+    if(and_rest_mappings[i].sym == sym)
       return and_rest_mappings[i].pos;
   }
 
@@ -3368,7 +3404,7 @@ int and_rest_closure_pos(OBJECT_PTR clo)
 OBJECT_PTR get_free_variables(OBJECT_PTR exp)
 {
   return difference(free_ids_il(exp),
-                    list(8, LET, LETREC, IF, SET, LAMBDA, MACRO, ERROR, DEFINE));
+                    list(10, LET, LETREC, IF, SET, LAMBDA, MACRO, ERROR, DEFINE, TRUE, NIL));
 }
 
 OBJECT_PTR temp15(OBJECT_PTR x)
@@ -3376,11 +3412,14 @@ OBJECT_PTR temp15(OBJECT_PTR x)
   return list(2, QUOTE, x);
 }
 
-OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp)
+OBJECT_PTR temp16(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
 {
-  OBJECT_PTR free_variables = get_free_variables(exp);
+  return handle_and_rest_applications(x, v1);
+}
 
-  if(is_atom(exp))
+OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variables)
+{
+  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
     return exp;
   else if(exists(car(exp), free_variables))
   {
@@ -3388,26 +3427,78 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp)
 
     int retval = get_top_level_sym_value(car(exp), &out);
 
-    //TODO: handle to-be-defined closures
     if(retval)
       return exp;
 
     OBJECT_PTR clo = car(out);
 
-    //for recursive definitions.
-    //TODO:  &rest in recursive definitions
-    if(clo == NIL)
+    BOOLEAN macro_flag = IS_MACRO2_OBJECT(clo);
+
+    int pos = and_rest_closure_pos(car(exp));
+
+    if(pos != -1)
+    {
+      OBJECT_PTR bindings = NIL;
+      OBJECT_PTR rest = cdr(exp);
+      int i = 0;
+
+      OBJECT_PTR ret = cons(car(exp), NIL);
+
+      assert(cons_length(rest) >= pos);
+
+      while(rest != NIL && i < pos)
+      {
+        OBJECT_PTR val = car(rest);
+
+        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        set_heap(ptr, 1, cons(val, NIL));
+
+        i++;
+        rest = cdr(rest);
+      }
+
+      OBJECT_PTR val;
+
+      if(rest != NIL)
+      {
+        val = macro_flag ? rest : concat(2, list(1, LST), rest);
+
+        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        set_heap(ptr, 1, cons(val, NIL));
+      }
+      else
+      {
+        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        set_heap(ptr, 1, cons(NIL, NIL));
+      }
+
+      return ret;
+    }
+    else
+      return map2(temp16, free_variables, NIL, exp);
+  }
+  else
+    return map2(temp16, free_variables, NIL, exp);
+}
+
+OBJECT_PTR handle_and_rest_applications_old(OBJECT_PTR exp, OBJECT_PTR free_variables)
+{
+  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+    return exp;
+  else if(exists(car(exp), free_variables))
+  {
+    OBJECT_PTR out;
+
+    int retval = get_top_level_sym_value(car(exp), &out);
+
+    if(retval)
       return exp;
 
-    if(!IS_FUNCTION2_OBJECT(clo) && !IS_MACRO2_OBJECT(clo))
-    {
-      print_object(clo);
-      assert(false);
-    }
+    OBJECT_PTR clo = car(out);
 
     BOOLEAN macro_flag = IS_MACRO2_OBJECT(clo);
 
-    int pos = and_rest_closure_pos(clo);
+    int pos = and_rest_closure_pos(car(exp));
 
     OBJECT_PTR ret;
 
@@ -3450,7 +3541,12 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp)
       }
 
       //OBJECT_PTR val = macro_flag ? concat(2, list(1, LST), map(temp15,rest)) : concat(2, list(1, LST), rest);
-      OBJECT_PTR val = macro_flag ? rest : concat(2, list(1, LST), rest);
+      OBJECT_PTR val;
+
+      if(rest == NIL)
+        val = NIL;
+      else
+        val = macro_flag ? rest : concat(2, list(1, LST), rest);
 
       if(!macro_flag)
       {
@@ -3467,7 +3563,7 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp)
       else
       {
         uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-        set_heap(ptr, 1, cons(val, NIL));
+        set_heap(ptr, 1, rest == NIL ? NIL : cons(val, NIL));
       }
 
       if(!macro_flag)
@@ -3476,10 +3572,10 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp)
         return ret;
     }
     else
-      return map(handle_and_rest_applications, exp);
+      return map2(temp16, free_variables, NIL, exp);
   }
   else
-      return map(handle_and_rest_applications, exp);
+    return map2(temp16, free_variables, NIL, exp);
 }
 
 BOOLEAN contains_internal_macros(OBJECT_PTR exp)
@@ -3503,4 +3599,16 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
   }
    
   return true;
+}
+
+OBJECT_PTR rewrite_zero_arg_applications(OBJECT_PTR exp)
+{
+  if(is_atom(exp))
+    return exp;
+  else if(car(exp) == LAMBDA)
+    return list(3, LAMBDA, second(exp), rewrite_zero_arg_applications(third(exp)));
+  else if(exists(car(exp), get_free_variables(exp)) && cons_length(exp) == 1)
+    return list(2, car(exp), NIL);
+  else
+    return map(rewrite_zero_arg_applications, exp);
 }

@@ -397,3 +397,19 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
   return ret;
 }
+
+OBJECT_PTR primitive_not(OBJECT_PTR obj)
+{
+  return obj == NIL ? TRUE : NIL;
+}
+
+OBJECT_PTR primitive_car(OBJECT_PTR obj)
+{
+  if(obj != NIL && !IS_CONS_OBJECT(obj))
+  {
+    print_object(obj);
+    raise_error("Argument to CAR must be a CONS object");
+    return NIL;
+  }
+  return car(obj);
+}
