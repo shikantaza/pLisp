@@ -413,3 +413,78 @@ OBJECT_PTR primitive_car(OBJECT_PTR obj)
   }
   return car(obj);
 }
+
+OBJECT_PTR primitive_gt(OBJECT_PTR v1, OBJECT_PTR v2)
+{
+  float val1, val2;
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+
+  {
+    raise_error("Arguments to > should be integers or floats");
+    return NIL;
+  }
+
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  return (val1 > val2) ? TRUE : NIL;
+}
+
+OBJECT_PTR primitive_geq(OBJECT_PTR v1, OBJECT_PTR v2)
+{
+  float val1, val2;
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+
+  {
+    raise_error("Arguments to >= should be integers or floats");
+    return NIL;
+  }
+
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  return (val1 >= val2) ? TRUE : NIL;
+}
+
+OBJECT_PTR primitive_leq(OBJECT_PTR v1, OBJECT_PTR v2)
+{
+  float val1, val2;
+
+  if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
+     (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
+
+  {
+    raise_error("Arguments to <= should be integers or floats");
+    return NIL;
+  }
+
+  if(IS_FLOAT_OBJECT(v1))
+    val1 = get_float_value(v1);
+  else
+    val1 = get_int_value(v1);
+
+  if(IS_FLOAT_OBJECT(v2))
+    val2 = get_float_value(v2);
+  else
+    val2 = get_int_value(v2);
+	    
+  return (val1 <= val2) ? TRUE : NIL;
+}

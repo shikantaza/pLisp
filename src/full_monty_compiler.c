@@ -221,6 +221,9 @@ extern OBJECT_PTR quote(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_add(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_sub(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_lt(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_gt(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_leq(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_geq(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_error(OBJECT_PTR);
 extern OBJECT_PTR primitive_print(OBJECT_PTR);
@@ -1639,7 +1642,7 @@ OBJECT_PTR replace_macros(OBJECT_PTR exp)
 {
   if(exp == MACRO)
     return LAMBDA;
-  else if(is_atom(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
     return exp;
   else
     return cons(replace_macros(car(exp)),
@@ -2245,7 +2248,7 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
       else
       {
         if(res == NIL)
-          res = backquote2(x);
+          res = list(2, LST, backquote2(x));
         else
           res = concat(2, res, list(1, backquote2(x)));
       }
@@ -2303,6 +2306,12 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s,"quote");
       else if(var == LT)
         sprintf(s,"primitive_lt");
+      else if(var == GT)
+        sprintf(s, "primitive_gt");
+      else if(var == LEQ)
+        sprintf(s, "primitive_leq");
+      else if(var == GEQ)
+        sprintf(s, "primitive_geq");
       else if(var == ERROR)
         sprintf(s,"primitive_error");
       else if(var == IF)
@@ -2327,6 +2336,8 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "primitive_concat");
       else if(var == NOT)
         sprintf(s, "primitive_not");
+      else if(var == GENSYM)
+        sprintf(s, "gensym");
       else
       {
         print_object(var);
@@ -2582,6 +2593,9 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "quote",              quote);
   tcc_add_symbol(tcc_state, "primitive_error",    primitive_error);
   tcc_add_symbol(tcc_state, "primitive_lt",       primitive_lt);
+  tcc_add_symbol(tcc_state, "primitive_gt",       primitive_gt);
+  tcc_add_symbol(tcc_state, "primitive_leq",      primitive_leq);
+  tcc_add_symbol(tcc_state, "primitive_geq",      primitive_geq);
   tcc_add_symbol(tcc_state, "primitive_if",       primitive_if);
   tcc_add_symbol(tcc_state, "in_error_condition", in_error_condition);
   tcc_add_symbol(tcc_state, "primitive_print",    primitive_print);
@@ -2593,6 +2607,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_concat",   primitive_concat);
 
   tcc_add_symbol(tcc_state, "primitive_not",      primitive_not);
+
+  tcc_add_symbol(tcc_state, "gensym",             gensym);
 
   return tcc_state;
 }
