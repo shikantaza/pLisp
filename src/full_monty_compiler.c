@@ -228,16 +228,24 @@ extern OBJECT_PTR primitive_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_error(OBJECT_PTR);
 extern OBJECT_PTR primitive_print(OBJECT_PTR);
 extern OBJECT_PTR primitive_setcar(OBJECT_PTR);
+extern OBJECT_PTR primitive_setcdr(OBJECT_PTR);
 extern OBJECT_PTR primitive_mult(OBJECT_PTR);
 extern OBJECT_PTR primitive_equal(OBJECT_PTR);
 
-extern OBJECT_PTR apply_macro(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR apply_macro_or_fn(OBJECT_PTR, OBJECT_PTR);
 
 extern OBJECT_PTR primitive_list(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_concat(OBJECT_PTR, ...);
 
 extern OBJECT_PTR primitive_not(OBJECT_PTR);
 extern OBJECT_PTR primitive_car(OBJECT_PTR);
+
+extern OBJECT_PTR primitive_atom(OBJECT_PTR);
+extern OBJECT_PTR prim_symbol_value(OBJECT_PTR);
+extern OBJECT_PTR primitive_apply(OBJECT_PTR);
+extern OBJECT_PTR primitive_symbol(OBJECT_PTR);
+extern OBJECT_PTR prim_symbol_name(OBJECT_PTR);
+extern OBJECT_PTR primitive_format(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, ...);
 //end of external functions
 
 //forward declarations
@@ -1856,6 +1864,9 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 
   nativefn tt = extract_native_fn(ret);
 
+  if(!tt)
+    return NIL;
+
   OBJECT_PTR ret1 = tt(ret, idclo);
 
   if(macro_flag)
@@ -2322,6 +2333,8 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "cons");
       else if(var == SETCAR)
         sprintf(s, "primitive_setcar");
+      else if(var == SETCDR)
+        sprintf(s, "primitive_setcdr");
       else if(var == CALL_CC1)
         sprintf(s, "call_cc1");
       else if(var == SAVE_CONTINUATION)
@@ -2338,6 +2351,18 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "primitive_not");
       else if(var == GENSYM)
         sprintf(s, "gensym");
+      else if(var == ATOM)
+        sprintf(s, "primitive_atom");
+      else if(var == SYMBOL_VALUE)
+        sprintf(s, "prim_symbol_value");
+      else if(var == APPLY)
+        sprintf(s, "primitive_apply");
+      else if(var == SYMBL)
+        sprintf(s, "primitive_symbol");
+      else if(var == SYMBOL_NAME)
+        sprintf(s, "prim_symbol_name");
+      else if(var == FORMAT)
+        sprintf(s, "primitive_format");
       else
       {
         print_object(var);
@@ -2530,7 +2555,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
     if(!nested_call)
     {
       len += sprintf(buf+len, ";\n");
-      if(primitive_call)
+      if(primitive_call || car(exp) == EXTRACT_NATIVE_FN)
         len += sprintf(buf+len, "if(in_error_condition()==1)return 17;\n");
     }
   }
@@ -2550,6 +2575,11 @@ nativefn extract_native_fn(OBJECT_PTR closure)
   //this check should not be done when
   //invoked for the top-level closure
   //assert(!unmet_dependencies_exist(closure));
+  if(unmet_dependencies_exist(closure))
+  {
+    raise_error("Unmet dependencies exist for function/macro");
+    return NULL;
+  }
 
   OBJECT_PTR nativefn_obj = get_heap(closure & POINTER_MASK, 0);
 
@@ -2601,6 +2631,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_print",    primitive_print);
   tcc_add_symbol(tcc_state, "cons",               cons);
   tcc_add_symbol(tcc_state, "primitive_setcar",   primitive_setcar);
+  tcc_add_symbol(tcc_state, "primitive_setcdr",   primitive_setcdr);
   tcc_add_symbol(tcc_state, "primitive_list",     primitive_list);
   tcc_add_symbol(tcc_state, "primitive_mult",     primitive_mult);
   tcc_add_symbol(tcc_state, "primitive_equal",    primitive_equal);
@@ -2609,6 +2640,12 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_not",      primitive_not);
 
   tcc_add_symbol(tcc_state, "gensym",             gensym);
+  tcc_add_symbol(tcc_state, "primitive_atom",     primitive_atom);
+  tcc_add_symbol(tcc_state, "prim_symbol_value",  prim_symbol_value);
+  tcc_add_symbol(tcc_state, "primitive_apply",    primitive_apply);
+  tcc_add_symbol(tcc_state, "primitive_symbol",   primitive_symbol);
+  tcc_add_symbol(tcc_state, "prim_symbol_name",   prim_symbol_name);
+  tcc_add_symbol(tcc_state, "primitive_format",   primitive_format);
 
   return tcc_state;
 }
@@ -2823,6 +2860,8 @@ OBJECT_PTR reverse(OBJECT_PTR lst)
 OBJECT_PTR call_cc1(OBJECT_PTR clo)
 {
   nativefn fn = extract_native_fn(clo);
+  if(!fn)
+    return NIL;
   return fn(clo, CADDR(saved_continuations), idclo);
 }
 
@@ -3061,7 +3100,7 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp1, BOOLEAN handle_and_rest)
     if(!retval && IS_MACRO2_OBJECT(car(out)))
     {
       //print_object(apply_macro(car(out), cdr(exp)));printf("&&&\n"); getchar();
-      ret = expand_macro_full(apply_macro(car(out), cdr(exp)), true); }
+      ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(exp)), true); }
     else
       ret = map(expand_macro_full_no_rest_handling, exp);
   }
@@ -3078,7 +3117,8 @@ BOOLEAN is_vararg_primop(OBJECT_PTR sym)
          sym == MULT ||
          sym == DIV  ||
          sym == LST  ||
-         sym == CONCAT;
+         sym == CONCAT ||
+         sym == FORMAT;
 }
 
 /*
@@ -3317,6 +3357,8 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
         set_heap(car(rest) & POINTER_MASK, 0, car(val));
 
         add_reference_to_top_level_sym(sym, pos, clo);
+
+        global_unmet_dependencies[i].dependencies[j].delete_flag = true;
 
         break;
       }
@@ -3627,4 +3669,22 @@ OBJECT_PTR rewrite_zero_arg_applications(OBJECT_PTR exp)
     return list(2, car(exp), NIL);
   else
     return map(rewrite_zero_arg_applications, exp);
+}
+
+//given an object, returns the top-level
+//symbol that is mapped to this object (if
+//such a symbol exists)
+OBJECT_PTR reverse_sym_lookup(OBJECT_PTR obj)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+    else if(car(top_level_symbols[i].val) == obj)
+      return top_level_symbols[i].sym;
+  }
+
+  return NIL;  
 }

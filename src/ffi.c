@@ -605,9 +605,9 @@ int format_for_gui(OBJECT_PTR args)
   return 0;
 }
 
-OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
+OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 {
-  assert(IS_MACRO2_OBJECT(macro_obj));
+  assert(IS_MACRO2_OBJECT(macro_or_fn_obj) || IS_FUNCTION2_OBJECT(macro_or_fn_obj));
   assert(args == NIL || IS_CONS_OBJECT(args));
 
   int nof_args = cons_length(args) + 2; //since the closure (macro object) will be the first argument, and the id closure will be the last argument
@@ -635,7 +635,7 @@ OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
 
   //the first parameter to the native function is
   //the closure (macro object) itself
-  *(int *)arg_values[i] = macro_obj;
+  *(int *)arg_values[i] = macro_or_fn_obj;
 
   i++;
 
@@ -675,7 +675,7 @@ OBJECT_PTR apply_macro(OBJECT_PTR macro_obj, OBJECT_PTR args)
 
   ffi_arg ret_val;
 
-  ffi_call(&cif, (void *)extract_native_fn(macro_obj), &ret_val, arg_values);
+  ffi_call(&cif, (void *)extract_native_fn(macro_or_fn_obj), &ret_val, arg_values);
 
   for(i=0; i<nof_args; i++)
     free(arg_values[i]);

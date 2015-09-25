@@ -211,6 +211,19 @@ OBJECT_PTR primitive_setcar(OBJECT_PTR obj, OBJECT_PTR val)
   return val;
 }
 
+OBJECT_PTR primitive_setcdr(OBJECT_PTR obj, OBJECT_PTR val)
+{
+  if(!(IS_CONS_OBJECT(obj)))
+  {
+    raise_error("First argument to SETCDR should be a CONS object");
+    return NIL;
+  }
+
+  set_heap(obj & POINTER_MASK, 1, val);
+
+  return val;
+}
+
 OBJECT_PTR primitive_list(OBJECT_PTR count1, ...)
 {
   va_list ap;
@@ -487,4 +500,234 @@ OBJECT_PTR primitive_leq(OBJECT_PTR v1, OBJECT_PTR v2)
     val2 = get_int_value(v2);
 	    
   return (val1 <= val2) ? TRUE : NIL;
+}
+
+OBJECT_PTR primitive_atom(OBJECT_PTR obj)
+{
+  return is_atom(obj) ? TRUE : NIL;
+}
+
+OBJECT_PTR prim_symbol_value(OBJECT_PTR sym)
+{
+  if(!IS_SYMBOL_OBJECT(sym))
+  {
+    raise_error("Argument to SYMBOL-VALUE must be a symbol");
+    return NIL;
+  }
+
+  int retval;
+  OBJECT_PTR out;
+
+  retval = get_top_level_sym_value(sym, &out);
+
+  if(retval)
+    return NIL;
+  else
+    return car(out);
+}
+
+OBJECT_PTR primitive_apply(OBJECT_PTR obj, OBJECT_PTR args)
+{
+  if(!IS_FUNCTION2_OBJECT(obj))
+  {
+    raise_error("First argument to APPLY should be a function");
+    return NIL;
+  }
+
+  OBJECT_PTR top_level_sym = reverse_sym_lookup(obj);
+
+  if(top_level_sym != NIL)
+  {
+    int pos = and_rest_closure_pos(top_level_sym);
+
+    if(pos != -1)
+    {
+      OBJECT_PTR rest = args;
+      int i = 0;
+      OBJECT_PTR ret = NIL;
+
+      if(cons_length(rest) < pos)
+      {
+        raise_error("Number of parameters to the function less than the number of fixed parameters");
+        return NIL;
+      }
+
+      while(rest != NIL && i < pos)
+      {
+        OBJECT_PTR val = car(rest);
+
+        if(ret == NIL)
+          ret = cons(val, NIL);
+        else
+        {
+          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          set_heap(ptr, 1, cons(val, NIL));
+        }
+
+        i++;
+        rest = cdr(rest);
+      }
+
+      OBJECT_PTR val;
+
+      if(rest != NIL)
+      {
+        val = rest;
+
+        if(ret == NIL)
+          ret = cons(val, NIL);
+        else
+        {
+          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          set_heap(ptr, 1, cons(val, NIL));
+        }
+      }
+      else
+      {
+        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        set_heap(ptr, 1, cons(NIL, NIL));
+      }
+
+      return apply_macro_or_fn(obj, ret);
+    
+    }
+    else
+      return apply_macro_or_fn(obj, args);
+  }
+  else
+    return apply_macro_or_fn(obj, args);
+}
+
+OBJECT_PTR primitive_symbol(OBJECT_PTR str)
+{
+  if(!IS_STRING_LITERAL_OBJECT(str) && !is_string_object(str))
+  {
+    raise_error("SYMBOL needs one argument, a string object/literal");
+    return NIL;
+  }
+
+  if(IS_STRING_LITERAL_OBJECT(str))
+  {
+    return get_symbol_object((char *)convert_to_upper_case(strdup(strings[(int)str >> OBJECT_SHIFT])));
+  }
+  else if(is_string_object(str))
+  {
+    char msg[500];
+
+    uintptr_t ptr = str & POINTER_MASK;
+
+    int len = *((unsigned int *)ptr);
+
+    int i;
+
+    memset(msg, '\0', 500);
+
+    for(i=1; i <= len; i++)
+      msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
+
+    return get_symbol_object((char *)convert_to_upper_case(msg));
+  }  
+}
+
+OBJECT_PTR prim_symbol_name(OBJECT_PTR sym)
+{
+  char buf[SYMBOL_STRING_SIZE];
+
+  if(!IS_SYMBOL_OBJECT(sym))
+  {
+    raise_error("Parameter to SYMBOL-NAME should be a symbol object");
+    return NIL;
+  }
+
+  memset(buf,'\0',SYMBOL_STRING_SIZE);
+
+  print_symbol(sym, buf);
+
+  return  (OBJECT_PTR)((add_string(buf) << OBJECT_SHIFT) + STRING_LITERAL_TAG);
+}
+
+OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, ...)
+{
+  va_list ap;
+
+  unsigned int count = get_int_value(count1);
+
+  OBJECT_PTR ret = NIL;
+
+  unsigned int i = 1;
+
+  if(count < 2)
+  {
+    raise_error("FORMAT requires at least two arguments, a file descriptor and a format specification string");
+    return NIL;
+  }
+
+  if(fd != NIL && !IS_INTEGER_OBJECT(fd))
+  {
+    raise_error("First parameter to FORMAT must be NIL or an integer denoting a file descriptor");
+    return NIL;
+  }
+
+  if(!IS_STRING_LITERAL_OBJECT(spec) && !is_string_object(spec))
+  {
+    raise_error("Second parameter to FORMAT must be a format specification string");
+    return NIL;
+  }
+
+  va_start(ap, spec);
+
+  while(i <= count - 2)
+  {
+    OBJECT_PTR val = (OBJECT_PTR)va_arg(ap, int);
+
+    if(!(IS_INTEGER_OBJECT(val)        ||
+         IS_FLOAT_OBJECT(val)          ||
+         IS_CHAR_OBJECT(val)           ||
+         IS_STRING_LITERAL_OBJECT(val) ||
+         is_string_object(val)))
+    {
+      raise_error("Parameters to FORMAT should be integers, floats, characters or strings");
+      return NIL;
+    }
+
+    if(ret == NIL)
+      ret = cons(val, NIL);
+    else
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(val, NIL));      
+    }
+
+    i++;
+  }
+
+  ret = cons(fd, cons(spec, ret));
+        
+  if(console_mode)
+  {
+    if(format(ret) == -1)
+    {
+      raise_error("FORMAT error");
+      return NIL;
+    }
+  }
+  else
+  {
+    if(!console_mode && !single_expression_mode && !pipe_mode)
+    {
+      if(format_for_gui(ret) == -1)
+      {
+        raise_error("FORMAT error");
+	return NIL;
+      }
+    }
+    else
+    {
+      if(format(ret) == -1)
+      //error message would have been set in format()
+	return NIL;
+    }
+  }
+
+  return NIL;
 }
