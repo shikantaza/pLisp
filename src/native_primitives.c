@@ -1367,8 +1367,6 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
     OBJECT_PTR sym = top_level_symbols[i].sym;
 
-    printf("%d---\n",sym);
-
     if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == index)
     {
       if(IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))

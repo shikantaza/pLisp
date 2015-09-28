@@ -1641,7 +1641,7 @@ OBJECT_PTR get_source_object(OBJECT_PTR obj)
   {
     OBJECT_PTR cons_equiv = (obj >> (OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
     OBJECT_PTR source = car(last_cell(cons_equiv));
-    return third(source);
+    return CDDR(source);
   }
 }
 
