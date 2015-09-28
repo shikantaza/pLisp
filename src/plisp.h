@@ -73,6 +73,9 @@
 #define true 1
 #define false 0
 
+#define OK 0
+#define NOT_OK 1
+
 #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
 
 #define DEFAULT_DEBUG_WINDOW_POSX 650

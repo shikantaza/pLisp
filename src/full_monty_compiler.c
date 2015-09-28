@@ -60,18 +60,11 @@ typedef struct global_var_mapping
   BOOLEAN delete_flag;
 } global_var_mapping_t;
 
-typedef struct unmet_dependency_detail
-{
-  OBJECT_PTR top_level_sym;
-  unsigned int pos;
-  BOOLEAN delete_flag;
-} unmet_dependency_detail_t;
-
 typedef struct unmet_dependency
 {
   OBJECT_PTR clo;
-  unsigned int nof_dependencies;
-  unmet_dependency_detail_t *dependencies;
+  OBJECT_PTR top_level_sym;
+  unsigned int pos;
   BOOLEAN delete_flag;
 } unmet_dependency_t;
 
@@ -89,7 +82,7 @@ global_var_mapping_t *top_level_symbols = NULL;
 OBJECT_PTR saved_continuations;
 OBJECT_PTR idclo;
 
-unsigned int nof_clos_with_unmet_deps = 0;
+unsigned int nof_unmet_dependencies = 0;
 unmet_dependency_t *global_unmet_dependencies = NULL;
 
 unsigned int nof_and_rest_mappings = 0;
@@ -214,6 +207,8 @@ extern BOOLEAN core_library_loaded;
 extern BOOLEAN in_error;
 
 extern package_t *packages;
+
+extern int current_package;
 //end of external variables
 
 //external functions
@@ -246,6 +241,35 @@ extern OBJECT_PTR primitive_apply(OBJECT_PTR);
 extern OBJECT_PTR primitive_symbol(OBJECT_PTR);
 extern OBJECT_PTR prim_symbol_name(OBJECT_PTR);
 extern OBJECT_PTR primitive_format(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, ...);
+extern OBJECT_PTR primitive_clone(OBJECT_PTR);
+extern OBJECT_PTR primitive_unbind(OBJECT_PTR);
+extern OBJECT_PTR primitive_newline(OBJECT_PTR);
+
+extern OBJECT_PTR primitive_consp(OBJECT_PTR);
+extern OBJECT_PTR primitive_listp(OBJECT_PTR);
+extern OBJECT_PTR primitive_integerp(OBJECT_PTR);
+extern OBJECT_PTR primitive_floatp(OBJECT_PTR);
+extern OBJECT_PTR prim_characterp(OBJECT_PTR);
+extern OBJECT_PTR primitive_symbolp(OBJECT_PTR);
+extern OBJECT_PTR primitive_stringp(OBJECT_PTR);
+extern OBJECT_PTR primitive_arrayp(OBJECT_PTR);
+extern OBJECT_PTR primitive_closurep(OBJECT_PTR);
+extern OBJECT_PTR primitive_macrop(OBJECT_PTR);
+
+extern OBJECT_PTR primitive_string(OBJECT_PTR);
+extern OBJECT_PTR prim_make_array(OBJECT_PTR, ...);
+extern OBJECT_PTR prim_array_set(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR prim_array_get(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR prim_sub_array(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR prim_array_length(OBJECT_PTR);
+extern OBJECT_PTR prim_print_string(OBJECT_PTR);
+
+extern OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR);
+extern OBJECT_PTR prim_call_fgn_func(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+
+extern OBJECT_PTR prim_create_pkg(OBJECT_PTR);
+extern OBJECT_PTR prim_in_package(OBJECT_PTR);
+extern OBJECT_PTR prim_export_pkg(OBJECT_PTR, OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -301,6 +325,8 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR get_free_variables(OBJECT_PTR);
 
 OBJECT_PTR rewrite_zero_arg_applications(OBJECT_PTR);
+
+OBJECT_PTR symbol_to_use(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1699,7 +1725,6 @@ OBJECT_PTR replace_t(OBJECT_PTR exp)
     return map(replace_t, exp);
 }
 
-//OBJECT_PTR compile_exp(OBJECT_PTR exp)
 OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 {
   OBJECT_PTR res = clone_object(exp);
@@ -1745,17 +1770,21 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
       return NIL;
     }
 
+    OBJECT_PTR symbol_to_be_used = symbol_to_use(second(res));
+
+    printf("%d\n", symbol_to_be_used);
+
     //this is to prevent unmet dependecy error
     //for recursive definitions
-    add_top_level_sym(second(res), cons(NIL, NIL));
+    add_top_level_sym(symbol_to_be_used, cons(NIL, NIL));
 
     OBJECT_PTR res1 = compile_and_evaluate(third(res));
 
-    add_top_level_sym(second(res), cons(res1, NIL));
+    add_top_level_sym(symbol_to_be_used, cons(res1, NIL));
 
-    update_dependencies(second(res), cons(res1, NIL));
+    update_dependencies(symbol_to_be_used, cons(res1, NIL));
 
-    if(update_references(second(res), res1))
+    if(update_references(symbol_to_be_used, res1))
     {
       raise_error("Update of reference to top level symbol failed");
       return NIL;
@@ -1831,13 +1860,15 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   {
     OBJECT_PTR out1;
 
-    int retval = get_top_level_sym_value(car(rest), &out1);
+    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(rest));
 
-    if(retval && car(rest) != SAVE_CONTINUATION && car(rest) != TRUE)
+    int retval = get_top_level_sym_value(symbol_to_be_used, &out1);
+
+    if(retval && symbol_to_be_used != SAVE_CONTINUATION && symbol_to_be_used != TRUE)
     {
       char buf[200];
       memset(buf, 200, '\0');
-      sprintf(buf, "Undefined symbol: %s", get_symbol_name(car(rest)));
+      sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
       //raise_error(buf);
       //return NIL;
       printf("%s\n", buf);
@@ -1885,19 +1916,21 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 
   while(rest != NIL)
   {
+    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(rest));
+
     /* if(add_reference_to_top_level_sym(car(rest), i, ret1)) */
     /* { */
     /*   raise_error("Unable to add reference to top level"); */
     /*   return NIL; */
     /* } */
-    add_reference_to_top_level_sym(car(rest), i, ret1);
+    add_reference_to_top_level_sym(symbol_to_be_used, i, ret1);
 
     //record any unmet dependencies for the closure
     OBJECT_PTR out1;
-    int retval = get_top_level_sym_value(car(rest), &out1);
+    int retval = get_top_level_sym_value(symbol_to_be_used, &out1);
 
-    if(retval && car(rest) != SAVE_CONTINUATION && car(rest) != TRUE)
-      add_unmet_dependency(ret1, car(rest), i);
+    if(retval && symbol_to_be_used != SAVE_CONTINUATION && symbol_to_be_used != TRUE)
+      add_unmet_dependency(ret1, symbol_to_be_used, i);
 
     rest = cdr(rest);
     i++;
@@ -2363,6 +2396,56 @@ char *extract_variable_string(OBJECT_PTR var)
         sprintf(s, "prim_symbol_name");
       else if(var == FORMAT)
         sprintf(s, "primitive_format");
+      else if(var == CLONE)
+        sprintf(s, "primitive_clone");
+      else if(var == UNBIND)
+        sprintf(s, "primitive_unbind");
+      else if(var == NEWLINE)
+        sprintf(s, "primitive_newline");
+      else if(var == CONSP)
+        sprintf(s, "primitive_consp");
+      else if(var == LISTP)
+        sprintf(s, "primitive_listp");
+      else if(var == INTEGERP)
+        sprintf(s, "primitive_integerp");
+      else if(var == FLOATP)
+        sprintf(s, "primitive_floatp");
+      else if(var == CHARACTERP)
+        sprintf(s, "prim_characterp");
+      else if(var == SYMBOLP)
+        sprintf(s, "primitive_symbolp");
+      else if(var == STRINGP)
+        sprintf(s, "primitive_stringp");
+      else if(var == ARRAYP)
+        sprintf(s, "primitive_arrayp");
+      else if(var == CLOSUREP)
+        sprintf(s, "primitive_closurep");
+      else if(var == MACROP)
+        sprintf(s, "primitive_macrop");
+      else if(var == STRING)
+        sprintf(s, "primitive_string");
+      else if(var == MAKE_ARRAY)
+        sprintf(s, "prim_make_array");
+      else if(var == ARRAY_SET)
+        sprintf(s, "prim_array_set");
+      else if(var == ARRAY_GET)
+        sprintf(s, "prim_array_get");
+      else if(var == SUB_ARRAY)
+        sprintf(s, "prim_sub_array");
+      else if(var == ARRAY_LENGTH)
+        sprintf(s, "prim_array_length");
+      else if(var == PRINT_STRING)
+        sprintf(s, "prim_print_string");
+      else if(var == LOAD_FOREIGN_LIBRARY)
+        sprintf(s, "prim_load_fgn_lib");
+      else if(var == CALL_FOREIGN_FUNCTION)
+        sprintf(s, "prim_call_fgn_func");
+      else if(var == CREATE_PACKAGE)
+        sprintf(s, "prim_create_pkg");
+      else if(var == IN_PACKAGE)
+        sprintf(s, "prim_in_package");
+      else if(var == EXPORT_PACKAGE)
+        sprintf(s, "prim_export_pkg");
       else
       {
         print_object(var);
@@ -2646,6 +2729,35 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_symbol",   primitive_symbol);
   tcc_add_symbol(tcc_state, "prim_symbol_name",   prim_symbol_name);
   tcc_add_symbol(tcc_state, "primitive_format",   primitive_format);
+  tcc_add_symbol(tcc_state, "primitive_clone",    primitive_clone);
+  tcc_add_symbol(tcc_state, "primitive_unbind",   primitive_unbind);
+  tcc_add_symbol(tcc_state, "primitive_newline",  primitive_newline);
+
+  tcc_add_symbol(tcc_state, "primitive_consp",    primitive_consp);
+  tcc_add_symbol(tcc_state, "primitive_listp",    primitive_listp);
+  tcc_add_symbol(tcc_state, "primitive_integerp", primitive_integerp);
+  tcc_add_symbol(tcc_state, "primitive_floatp",   primitive_floatp);
+  tcc_add_symbol(tcc_state, "prim_characterp",    prim_characterp);
+  tcc_add_symbol(tcc_state, "primitive_symbolp",  primitive_symbolp);
+  tcc_add_symbol(tcc_state, "primitive_stringp",  primitive_stringp);
+  tcc_add_symbol(tcc_state, "primitive_arrayp",   primitive_arrayp);
+  tcc_add_symbol(tcc_state, "primitive_closurep", primitive_closurep);
+  tcc_add_symbol(tcc_state, "primitive_macrop",   primitive_macrop);
+
+  tcc_add_symbol(tcc_state, "primitive_string",   primitive_string);
+  tcc_add_symbol(tcc_state, "prim_make_array",    prim_make_array);
+  tcc_add_symbol(tcc_state, "prim_array_set",     prim_array_set);
+  tcc_add_symbol(tcc_state, "prim_array_get",     prim_array_get);
+  tcc_add_symbol(tcc_state, "prim_sub_array",     prim_sub_array);
+  tcc_add_symbol(tcc_state, "prim_array_length",  prim_array_length);
+  tcc_add_symbol(tcc_state, "prim_print_string",  prim_print_string);
+
+  tcc_add_symbol(tcc_state, "prim_load_fgn_lib",  prim_load_fgn_lib);
+  tcc_add_symbol(tcc_state, "prim_call_fgn_func", prim_call_fgn_func);
+
+  tcc_add_symbol(tcc_state, "prim_create_pkg",    prim_create_pkg);
+  tcc_add_symbol(tcc_state, "prim_in_package",    prim_in_package);
+  tcc_add_symbol(tcc_state, "prim_export_pkg",    prim_export_pkg);
 
   return tcc_state;
 }
@@ -2826,18 +2938,64 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
   }
 }
 
-void remove_top_level_sym(OBJECT_PTR sym)
+int remove_top_level_sym(OBJECT_PTR sym)
 {
-  int i;
+  int i,j,k,p;
+  BOOLEAN found;
 
   for(i=0; i<nof_global_vars; i++)
   {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
     if(top_level_symbols[i].sym == sym)
     {
       top_level_symbols[i].delete_flag = true;
-      return;
+
+      for(j=0; j<top_level_symbols[i].ref_count; j++)
+      {
+        OBJECT_PTR clo = top_level_symbols[i].references[j].referrer;
+        unsigned int pos = top_level_symbols[i].references[j].pos;
+
+        found = false;
+
+        //to reuse existing unmet dependecy records
+        for(k=0; k<nof_unmet_dependencies; k++)
+        {
+          if(global_unmet_dependencies[k].delete_flag)
+            continue;
+
+          if(global_unmet_dependencies[k].clo == clo &&
+             global_unmet_dependencies[k].top_level_sym == sym)
+          {
+            global_unmet_dependencies[k].delete_flag = false;
+            global_unmet_dependencies[k].pos = pos;
+            found = true;
+            break;
+          }
+        }
+
+        if(!found)
+        {
+          nof_unmet_dependencies++;
+
+          unmet_dependency_t *temp = (unmet_dependency_t *)realloc(global_unmet_dependencies,
+                                                                   nof_unmet_dependencies * sizeof(unmet_dependency_t));
+
+          assert(temp);
+
+          global_unmet_dependencies = temp;
+
+          global_unmet_dependencies[nof_unmet_dependencies - 1].clo = clo;
+          global_unmet_dependencies[nof_unmet_dependencies - 1].top_level_sym = sym;
+          global_unmet_dependencies[nof_unmet_dependencies - 1].pos = pos;
+          global_unmet_dependencies[nof_unmet_dependencies - 1].delete_flag = false;
+        }
+      }
     }
+    return OK;
   }
+  return NOT_OK;
 }
 
 OBJECT_PTR reverse(OBJECT_PTR lst)
@@ -2934,6 +3092,8 @@ int repl2()
         return 1;
       }
 
+      OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+
       OBJECT_PTR t1 = cons(NIL, NIL);
 
       if(IS_CONS_OBJECT(third(exp)))
@@ -2948,7 +3108,7 @@ int repl2()
 
       //to prevent unmet dependency error
       //for recursive definitions
-      add_top_level_sym(second(exp), t1);
+      add_top_level_sym(symbol_to_be_used, t1);
 
       res = third(exp);
 
@@ -2960,17 +3120,28 @@ int repl2()
         if(pos_of_and_rest != -1)
         {
           res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
-          record_and_rest_closure(second(exp), pos_of_and_rest);
+          record_and_rest_closure(symbol_to_be_used, pos_of_and_rest);
         }
       }
 
       res = compile_and_evaluate(res);
 
-      add_top_level_sym(second(exp), cons(res, NIL));
+      //store the source of the function/macro as the
+      //last cell in the closure
+      if(IS_FUNCTION2_OBJECT(res) || IS_MACRO2_OBJECT(res))
+      {
+        BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
+        OBJECT_PTR cons_equiv = ((res >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
+        set_heap(ptr, 1, cons(third(exp), NIL));
+        res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
+      }
 
-      update_dependencies(second(exp), cons(res, NIL));
+      add_top_level_sym(symbol_to_be_used, cons(res, NIL));
 
-      if(update_references(second(exp), res))
+      update_dependencies(symbol_to_be_used, cons(res, NIL));
+
+      if(update_references(symbol_to_be_used, res))
       {
         raise_error("Update of reference to top level symbol failed");
         return 1;
@@ -2984,24 +3155,38 @@ int repl2()
         return 1;
       } 
 
+      OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+
       OBJECT_PTR out;
-      int retval = get_top_level_sym_value(second(exp), &out);
+      int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
       if(retval)
       {
         char buf[200];
         memset(buf, 200, '\0');
-        sprintf(buf, "Undefined symbol: %s", get_symbol_name(second(exp)));
+        sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
         raise_error(buf);
         return 1;
       }
 
       res = compile_and_evaluate(third(exp));
-      add_top_level_sym(second(exp), cons(res, NIL));     
 
-      update_dependencies(second(exp), cons(res, NIL));
+      //store the source of the function/macro as the
+      //last cell in the closure
+      if(IS_FUNCTION2_OBJECT(res) || IS_MACRO2_OBJECT(res))
+      {
+        BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
+        OBJECT_PTR cons_equiv = ((res >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
+        set_heap(ptr, 1, cons(third(exp), NIL));
+        res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
+      }
 
-      if(update_references(second(exp), res))
+      add_top_level_sym(symbol_to_be_used, cons(res, NIL));     
+
+      update_dependencies(symbol_to_be_used, cons(res, NIL));
+
+      if(update_references(symbol_to_be_used, res))
       {
         raise_error("Update of reference to top level symbol failed");
         return 1;
@@ -3094,8 +3279,10 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp1, BOOLEAN handle_and_rest)
     ret = exp;
   else if(IS_SYMBOL_OBJECT(car(exp)) && exists(car(exp), free_variables))
   {
+    OBJECT_PTR sym_to_use = symbol_to_use(car(exp));
+
     OBJECT_PTR out;
-    int retval = get_top_level_sym_value(car(exp), &out);
+    int retval = get_top_level_sym_value(sym_to_use, &out);
 
     if(!retval && IS_MACRO2_OBJECT(car(out)))
     {
@@ -3118,7 +3305,8 @@ BOOLEAN is_vararg_primop(OBJECT_PTR sym)
          sym == DIV  ||
          sym == LST  ||
          sym == CONCAT ||
-         sym == FORMAT;
+         sym == FORMAT ||
+         sym == MAKE_ARRAY;
 }
 
 /*
@@ -3246,54 +3434,34 @@ void add_unmet_dependency(OBJECT_PTR clo, OBJECT_PTR sym, int pos)
 
   int i;
 
-  BOOLEAN found = false;
-
-  for(i=0; i<nof_clos_with_unmet_deps; i++)
+  //to reuse existing record if available
+  for(i=0; i<nof_unmet_dependencies; i++)
   {
-    if(global_unmet_dependencies[i].delete_flag)
-      continue;
-    if(global_unmet_dependencies[i].clo == clo)
+    if(global_unmet_dependencies[i].clo == clo &&
+       global_unmet_dependencies[i].top_level_sym == sym)
     {
-      found = true;
-      global_unmet_dependencies[i].nof_dependencies++;
-
-      unmet_dependency_detail_t *temp = (unmet_dependency_detail_t *)realloc(global_unmet_dependencies[i].dependencies,
-                                                                             global_unmet_dependencies[i].nof_dependencies * sizeof(unmet_dependency_detail_t *));
-      assert(temp);
-
-      global_unmet_dependencies[i].dependencies = temp;
-      
-      global_unmet_dependencies[i].dependencies[global_unmet_dependencies[i].nof_dependencies - 1].top_level_sym = sym;
-      global_unmet_dependencies[i].dependencies[global_unmet_dependencies[i].nof_dependencies - 1].delete_flag = false;
-      global_unmet_dependencies[i].dependencies[global_unmet_dependencies[i].nof_dependencies - 1].pos = pos;
-
-      break;
+      global_unmet_dependencies[i].pos = pos;
+      global_unmet_dependencies[i].delete_flag = false;
+      return;
     }
   }
 
-  if(!found)
-  {
-    nof_clos_with_unmet_deps++;
-    unmet_dependency_t *temp = (unmet_dependency_t *)realloc(global_unmet_dependencies,
-                                                             nof_clos_with_unmet_deps * sizeof(unmet_dependency_t));
-    assert(temp);
+  //create fresh unmet dependecy record
+  //if not able to reuse
 
-    global_unmet_dependencies = temp;
+  nof_unmet_dependencies++;
 
-    global_unmet_dependencies[nof_clos_with_unmet_deps-1].clo = clo;
-    global_unmet_dependencies[nof_clos_with_unmet_deps-1].delete_flag = false;
+  unmet_dependency_t *temp = (unmet_dependency_t *)realloc(global_unmet_dependencies,
+                                                           nof_unmet_dependencies * sizeof(unmet_dependency_t));
 
-    unmet_dependency_detail_t *det = (unmet_dependency_detail_t *)malloc(sizeof(unmet_dependency_detail_t));
-    assert(det);
+  assert(temp);
 
-    det->top_level_sym = sym;
-    det->delete_flag = false;
-    det->pos = pos;
+  global_unmet_dependencies = temp;
 
-    global_unmet_dependencies[nof_clos_with_unmet_deps-1].nof_dependencies = 1;
-    global_unmet_dependencies[nof_clos_with_unmet_deps-1].dependencies = det;
-  }
-
+  global_unmet_dependencies[nof_unmet_dependencies - 1].clo = clo;
+  global_unmet_dependencies[nof_unmet_dependencies - 1].top_level_sym = sym;
+  global_unmet_dependencies[nof_unmet_dependencies - 1].pos = pos;
+  global_unmet_dependencies[nof_unmet_dependencies - 1].delete_flag = false;
 }
 
 BOOLEAN unmet_dependencies_exist(OBJECT_PTR clo)
@@ -3302,22 +3470,13 @@ BOOLEAN unmet_dependencies_exist(OBJECT_PTR clo)
 
   int i;
 
-  for(i=0; i<nof_clos_with_unmet_deps; i++)
+  for(i=0; i<nof_unmet_dependencies; i++)
   {
     if(global_unmet_dependencies[i].delete_flag)
       continue;
 
     if(global_unmet_dependencies[i].clo == clo)
-    {
-      int j;
-      for(j=0; j<global_unmet_dependencies[i].nof_dependencies; j++)
-      {
-        if(global_unmet_dependencies[i].dependencies[j].delete_flag)
-          continue;
-
         return true;
-      }
-    }
   }
 
   return false;
@@ -3327,41 +3486,34 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
 {
   int i;
 
-  for(i=0; i<nof_clos_with_unmet_deps; i++)
+  for(i=0; i<nof_unmet_dependencies; i++)
   {
     if(global_unmet_dependencies[i].delete_flag)
       continue;
 
-    int j;
-    for(j=0; j<global_unmet_dependencies[i].nof_dependencies; j++)
+    if(global_unmet_dependencies[i].top_level_sym == sym)
     {
-      if(global_unmet_dependencies[i].dependencies[j].delete_flag)
-        continue;
+      OBJECT_PTR clo = global_unmet_dependencies[i].clo;
 
-      if(global_unmet_dependencies[i].dependencies[j].top_level_sym == sym)
-      {
-        OBJECT_PTR clo = global_unmet_dependencies[i].clo;
+      assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
 
-        assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
+      int pos = global_unmet_dependencies[i].pos;
 
-        int pos = global_unmet_dependencies[i].dependencies[j].pos;
+      OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
 
-        OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR rest = cons_eqiv;
+      int k=0;
 
-        OBJECT_PTR rest = cons_eqiv;
-        int k=0;
+      for(k=0; k<pos; k++)
+        rest = cdr(rest);
 
-        for(k=0; k<pos; k++)
-          rest = cdr(rest);
+      set_heap(car(rest) & POINTER_MASK, 0, car(val));
 
-        set_heap(car(rest) & POINTER_MASK, 0, car(val));
+      add_reference_to_top_level_sym(sym, pos, clo);
 
-        add_reference_to_top_level_sym(sym, pos, clo);
+      global_unmet_dependencies[i].delete_flag = true;
 
-        global_unmet_dependencies[i].dependencies[j].delete_flag = true;
-
-        break;
-      }
+      break;
     }
   }
 }
@@ -3687,4 +3839,24 @@ OBJECT_PTR reverse_sym_lookup(OBJECT_PTR obj)
   }
 
   return NIL;  
+}
+
+OBJECT_PTR symbol_to_use(OBJECT_PTR sym)
+{
+  OBJECT_PTR symbol_given = sym;
+  OBJECT_PTR symbol_to_be_used;
+
+  int package_index = (int)symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+  if(package_index != current_package)
+  {
+    if(package_index == CORE_PACKAGE_INDEX)
+      symbol_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(symbol_given)));
+    else
+      symbol_to_be_used = symbol_given;
+  }
+  else
+    symbol_to_be_used = symbol_given;  
+
+  return symbol_to_be_used;
 }

@@ -963,13 +963,13 @@ unsigned int newline()
 {
   if(cons_length(reg_current_value_rib) != 1)
   {
-    throw_exception("ARG-MISMATCH", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
+    throw_exception("ARG-MISMATCH", "NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
     return;
   }
 
   if(car(reg_current_value_rib) != NIL && !IS_INTEGER_OBJECT(car(reg_current_value_rib)))
   {
-    throw_exception("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument, NIL or an integer denoting a file descriptor");
+    throw_exception("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
     return;
   }
 

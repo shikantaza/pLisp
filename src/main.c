@@ -1575,6 +1575,24 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 
       ret = new_obj + ARRAY_TAG;
     }
+    else if(IS_FUNCTION2_OBJECT(obj))
+    {
+      OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR cloned_cons = clone_object(cons_equiv);
+      ret = ((cloned_cons >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
+    }
+    else if(IS_MACRO2_OBJECT(obj))
+    {
+      OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR cloned_cons = clone_object(cons_equiv);
+      ret = ((cloned_cons >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
+    }
+    else if(IS_NATIVE_FN_OBJECT(obj))
+    {
+      uintptr_t ptr = obj - NATIVE_FN_TAG;
+      ret = convert_native_fn_to_object((nativefn)(*(nativefn *)ptr));
+    }
+
   }
 
   log_function_exit("clone_object");
@@ -1595,8 +1613,16 @@ OBJECT_PTR get_env_list(OBJECT_PTR obj)
 
 OBJECT_PTR get_params_object(OBJECT_PTR obj)
 {
-  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj & POINTER_MASK, 1);
+  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
+
+  if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
+    return get_heap(obj & POINTER_MASK, 1);
+  else
+  {
+    OBJECT_PTR cons_equiv = (obj >> (OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR source = car(last_cell(cons_equiv));
+    return second(source);
+  }
 }
 
 OBJECT_PTR get_body_object(OBJECT_PTR obj)
@@ -1607,8 +1633,16 @@ OBJECT_PTR get_body_object(OBJECT_PTR obj)
 
 OBJECT_PTR get_source_object(OBJECT_PTR obj)
 {
-  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj & POINTER_MASK, 3);
+  assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
+
+  if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
+    return get_heap(obj & POINTER_MASK, 3);
+  else
+  {
+    OBJECT_PTR cons_equiv = (obj >> (OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR source = car(last_cell(cons_equiv));
+    return third(source);
+  }
 }
 
 int print_closure_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
