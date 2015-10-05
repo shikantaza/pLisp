@@ -576,6 +576,8 @@ void cleanup()
 
   cleanup_tcc();
 
+  cleanup_full_monty_global_vars();
+
   log_function_exit("cleanup");
 }
 
@@ -1210,7 +1212,13 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
 
-  if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
+  if((is_atom(cdr_obj)                || 
+      IS_CLOSURE_OBJECT(cdr_obj)      || 
+      IS_MACRO_OBJECT(cdr_obj)        || 
+      IS_CONTINUATION_OBJECT(cdr_obj) || 
+      IS_FUNCTION2_OBJECT(cdr_obj)    ||
+      IS_MACRO2_OBJECT(cdr_obj))  
+     && cdr_obj != NIL)
   {
     if(macro_form)
       length += sprintf(buf+filled_buf_len+length, "%s", (car_obj == BACKQUOTE) ? "`" : ((car_obj == COMMA) ? "," : ((car_obj == QUOTE) ? "'" : ",@")));
@@ -1237,14 +1245,28 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
     rest = macro_form ? cdr(obj) : obj;
 
-    while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
+    while(rest != NIL && 
+          !(IS_ARRAY_OBJECT(rest)        || 
+            is_atom(rest)                || 
+            IS_CLOSURE_OBJECT(rest)      || 
+            IS_MACRO_OBJECT(rest)        || 
+            IS_CONTINUATION_OBJECT(rest) ||
+            IS_FUNCTION2_OBJECT(rest)    ||
+            IS_MACRO2_OBJECT(rest)))
     {
       length += print_object_to_string(car(rest), buf, filled_buf_len+length);
       length += sprintf(buf+filled_buf_len+length, " ");
       rest = cdr(rest);
     }
 
-    if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
+    if((IS_ARRAY_OBJECT(rest)        || 
+        is_atom(rest)                || 
+        IS_CLOSURE_OBJECT(rest)      || 
+        IS_MACRO_OBJECT(rest)        || 
+        IS_CONTINUATION_OBJECT(rest) ||
+        IS_FUNCTION2_OBJECT(rest)    ||
+        IS_MACRO2_OBJECT(rest)) 
+       && rest != NIL)
     {
       length += sprintf(buf+filled_buf_len+length, " . ");
       length += print_object_to_string(rest, buf, filled_buf_len+length);
@@ -1275,7 +1297,13 @@ void print_cons_object(OBJECT_PTR obj)
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
-    if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
+    if((is_atom(cdr_obj)                || 
+        IS_CLOSURE_OBJECT(cdr_obj)      || 
+        IS_MACRO_OBJECT(cdr_obj)        || 
+        IS_CONTINUATION_OBJECT(cdr_obj) ||
+        IS_FUNCTION2_OBJECT(cdr_obj)    ||
+        IS_MACRO2_OBJECT(cdr_obj))  
+       && cdr_obj != NIL)
     {
       print_to_transcript("(");
       print_object(car_obj);
@@ -1289,14 +1317,28 @@ void print_cons_object(OBJECT_PTR obj)
 
       print_to_transcript("(");
 
-      while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
+      while(rest != NIL && 
+            !(IS_ARRAY_OBJECT(rest)        || 
+              is_atom(rest)                || 
+              IS_CLOSURE_OBJECT(rest)      || 
+              IS_MACRO_OBJECT(rest)        || 
+              IS_CONTINUATION_OBJECT(rest) ||
+              IS_FUNCTION2_OBJECT(rest)    ||
+              IS_MACRO2_OBJECT(rest)))
       {
 	print_object(car(rest));
 	print_to_transcript(" ");
 	rest = cdr(rest);
       }
 
-      if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
+      if((IS_ARRAY_OBJECT(rest)        || 
+          is_atom(rest)                || 
+          IS_CLOSURE_OBJECT(rest)      || 
+          IS_MACRO_OBJECT(rest)        || 
+          IS_CONTINUATION_OBJECT(rest) ||
+          IS_FUNCTION2_OBJECT(rest)    ||
+          IS_MACRO2_OBJECT(rest)) 
+         && rest != NIL)
       {
 	print_to_transcript(" . ");
 	print_object(rest);
@@ -1313,7 +1355,13 @@ void print_cons_object(OBJECT_PTR obj)
   {
     fflush(stdout);
 
-    if((is_atom(cdr_obj) || IS_CLOSURE_OBJECT(cdr_obj) || IS_MACRO_OBJECT(cdr_obj) || IS_CONTINUATION_OBJECT(cdr_obj))  && cdr_obj != NIL)
+    if((is_atom(cdr_obj)                || 
+        IS_CLOSURE_OBJECT(cdr_obj)      || 
+        IS_MACRO_OBJECT(cdr_obj)        || 
+        IS_CONTINUATION_OBJECT(cdr_obj) ||
+        IS_FUNCTION2_OBJECT(cdr_obj)    ||
+        IS_MACRO2_OBJECT(cdr_obj))
+       && cdr_obj != NIL)
     {
       fprintf(stdout, "(");
       print_object(car_obj);
@@ -1327,14 +1375,28 @@ void print_cons_object(OBJECT_PTR obj)
 
       fprintf(stdout, "(");
 
-      while(rest != NIL && !(IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)))
+      while(rest != NIL && 
+            !(IS_ARRAY_OBJECT(rest)        || 
+              is_atom(rest)                || 
+              IS_CLOSURE_OBJECT(rest)      || 
+              IS_MACRO_OBJECT(rest)        || 
+              IS_CONTINUATION_OBJECT(rest) ||
+              IS_FUNCTION2_OBJECT(rest)    ||
+              IS_MACRO2_OBJECT(rest)))
       {
 	print_object(car(rest));
 	fprintf(stdout, " ");
 	rest = cdr(rest);
       }
 
-      if((IS_ARRAY_OBJECT(rest) || is_atom(rest) || IS_CLOSURE_OBJECT(rest) || IS_MACRO_OBJECT(rest) || IS_CONTINUATION_OBJECT(rest)) && rest != NIL)
+      if((IS_ARRAY_OBJECT(rest)        || 
+          is_atom(rest)                || 
+          IS_CLOSURE_OBJECT(rest)      || 
+          IS_MACRO_OBJECT(rest)        || 
+          IS_CONTINUATION_OBJECT(rest) ||
+          IS_FUNCTION2_OBJECT(rest)    ||
+          IS_MACRO2_OBJECT(rest)) 
+         && rest != NIL)
       {
 	fprintf(stdout, " . ");
 	print_object(rest);

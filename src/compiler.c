@@ -467,8 +467,6 @@ int main(int argc, char **argv)
 
     if(!single_expression_mode && !pipe_mode)
       fprintf(stdout, "done\n");    
-
-    idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
   }
   else
   {

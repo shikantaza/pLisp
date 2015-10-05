@@ -24,6 +24,8 @@
 
 #include <gtksourceview/gtksource.h>
 
+#include "libtcc.h"
+
 #include "plisp.h"
 #include "memory.h"
 
@@ -31,6 +33,12 @@
 
 #include "queue.h"
 #include "hashtable.h"
+
+typedef struct json_native_fn_src_mapping
+{
+  unsigned int ref;
+  char *source;
+} json_native_fn_src_mapping_t;
 
 extern OBJECT_PTR top_level_env;
 extern unsigned int current_package;
@@ -90,11 +98,32 @@ extern BOOLEAN pipe_mode;
 extern GtkSourceLanguage *source_language;
 extern GtkSourceLanguageManager *lm;
 
+extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
+
+extern nativefn get_nativefn_value(OBJECT_PTR);
+extern char *get_native_fn_source(nativefn);
+extern TCCState *create_tcc_state1();
+extern char *extract_variable_string(OBJECT_PTR);
+
+//global vars pertaining to full monty compiler
+extern unsigned int nof_global_vars;
+extern global_var_mapping_t *top_level_symbols;
+extern OBJECT_PTR saved_continuations;
+extern OBJECT_PTR idclo;
+extern unsigned int nof_unmet_dependencies ;
+extern unmet_dependency_t *global_unmet_dependencies;
+extern unsigned int nof_and_rest_mappings;
+extern and_rest_mapping_t *and_rest_mappings;
+//end of global vars for full monty compiler
+
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
 void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, uintptr_t, unsigned int);
 OBJECT_PTR deserialize_internal(struct JSONObject *, unsigned int, hashtable_t *, queue_t *, BOOLEAN);
 void convert_heap(struct JSONObject *, hashtable_t *, queue_t *, BOOLEAN);
+void recompile_functions_and_macros();
+void recreate_native_fn_objects();
+//end of forward declarations
 
 struct slot
 {
@@ -103,12 +132,15 @@ struct slot
   unsigned int index;
 };
 
+unsigned int nof_json_native_fns;
+json_native_fn_src_mapping_t *json_native_fns;
+
 void add_obj_to_print_list(queue_t *print_queue, OBJECT_PTR obj, hashtable_t *printed_objects)
 {
   //this search is O(n), but this is OK because
   //the queue keeps growing and shrinking, so its
   //size at any point in time is quite small (<10)
-  if(queue_item_exists(print_queue, (void *)obj) || hashtable_get(printed_objects, (void *)obj))
+  if(obj != NIL && (queue_item_exists(print_queue, (void *)obj) || hashtable_get(printed_objects, (void *)obj)))
     return;
 
   //assert(is_dynamic_memory_object(obj));
@@ -234,6 +266,21 @@ void print_heap_representation(FILE *fp,
   {
     print_json_object(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects, single_object);
   }
+  else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
+  {
+    OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+
+    OBJECT_PTR car_obj = car(cons_equiv);
+    OBJECT_PTR cdr_obj = cdr(cons_equiv);
+
+    fprintf(fp, "[");
+    print_json_object(fp, car_obj, print_queue, obj_count, hashtable, printed_objects, single_object);
+    fprintf(fp, ", ");
+    print_json_object(fp, cdr_obj, print_queue, obj_count, hashtable, printed_objects, single_object);
+    fprintf(fp, "] ");
+  }
+  else if(IS_NATIVE_FN_OBJECT(obj))
+    fprintf(fp, "\"%s\"", get_native_fn_source(get_nativefn_value(obj)));
   else if(IS_INTEGER_OBJECT(obj))
     fprintf(fp, "%d", get_int_value(obj));
   else if(IS_FLOAT_OBJECT(obj))
@@ -270,6 +317,127 @@ void print_heap_representation(FILE *fp,
 /* } */
 //#endif
 
+void serialize_full_monty_global_vars(FILE *fp,
+                                      queue_t *print_queue, 
+                                      unsigned int *obj_count,
+                                      hashtable_t *hashtable, 
+                                      hashtable_t *printed_objects,
+                                      BOOLEAN single_object)
+{
+  fprintf(fp, "\"global_vars\" : [");
+
+  int i,j;
+  
+  for(i=0; i<nof_global_vars; i++)
+  {
+    fprintf(fp, "{ ");
+
+    fprintf(fp, "\"delete_flag\" : \"%s\"", top_level_symbols[i].delete_flag ? "true" : "false");
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"sym\" : ");
+    print_json_object(fp, top_level_symbols[i].sym, print_queue, obj_count, hashtable, printed_objects, single_object);
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"val\" : ");
+    print_json_object(fp, top_level_symbols[i].val, print_queue, obj_count, hashtable, printed_objects, single_object);
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"references\" : [");
+
+    for(j=0; j<top_level_symbols[i].ref_count; j++)
+    {
+
+      fprintf(fp, "{ ");
+
+      fprintf(fp, "\"referrer\" : ");
+      print_json_object(fp, top_level_symbols[i].references[j].referrer, print_queue, obj_count, hashtable, printed_objects, single_object);
+      fprintf(fp, ", ");
+
+      fprintf(fp, "\"pos\" : %d ", top_level_symbols[i].references[j].pos);
+
+      fprintf(fp, "}");
+
+      if(j < top_level_symbols[i].ref_count - 1)
+        fprintf(fp, ", ");
+      else
+        fprintf(fp, " ");
+    }
+
+    fprintf(fp, "]");
+
+    fprintf(fp, "}");
+
+    if(i < nof_global_vars - 1)
+      fprintf(fp, ", ");
+    else
+      fprintf(fp, " ");
+  }
+
+  fprintf(fp, "]");
+  fprintf(fp, ", ");
+
+  fprintf(fp, "\"saved_continuations\" : ");
+  print_json_object(fp, saved_continuations, print_queue, obj_count, hashtable, printed_objects, single_object);
+  fprintf(fp, ", ");
+
+  fprintf(fp, "\"unmet_dependencies\" : [");
+
+  for(i=0; i<nof_unmet_dependencies; i++)
+  {
+    fprintf(fp, "{ ");
+
+    fprintf(fp, "\"delete_flag\" : \"%s\"", global_unmet_dependencies[i].delete_flag ? "true" : "false");
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"clo\" : ");
+    print_json_object(fp, global_unmet_dependencies[i].clo, print_queue, obj_count, hashtable, printed_objects, single_object);
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"top_level_sym\" : ");
+    print_json_object(fp, global_unmet_dependencies[i].top_level_sym, print_queue, obj_count, hashtable, printed_objects, false);
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"pos\" : %d ", global_unmet_dependencies[i].pos);
+
+    fprintf(fp, "}");
+
+    if(i < nof_unmet_dependencies - 1)
+      fprintf(fp, ", ");
+    else
+      fprintf(fp, " ");
+  }
+
+  fprintf(fp, "]");
+  fprintf(fp, ", ");
+
+  fprintf(fp, "\"and_rest_mappings\" : [");
+
+  for(i=0; i<nof_and_rest_mappings; i++)
+  {
+    fprintf(fp, "{ ");
+
+    fprintf(fp, "\"delete_flag\" : \"%s\"", and_rest_mappings[i].delete_flag ? "true" : "false");
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"sym\" : ");
+    print_json_object(fp, and_rest_mappings[i].sym, print_queue, obj_count, hashtable, printed_objects, false);
+    fprintf(fp, ", ");
+
+    fprintf(fp, "\"pos\" : %d ", and_rest_mappings[i].pos);
+
+    fprintf(fp, "}");
+
+    if(i < nof_and_rest_mappings - 1)
+      fprintf(fp, ", ");
+    else
+      fprintf(fp, " ");
+  }
+
+  fprintf(fp, "]");
+  fprintf(fp, ", ");
+}
+
 void create_image(char *file_name)
 {
   int i;
@@ -285,6 +453,13 @@ void create_image(char *file_name)
   hashtable_t *printed_objects = hashtable_create(1000001);
 
   fprintf(fp, "{ ");
+
+  serialize_full_monty_global_vars(fp,
+                                   print_queue, 
+                                   obj_count,
+                                   hashtable, 
+                                   printed_objects,
+                                   false);
 
   fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
   fprintf(fp, "\"in_break\" : \"%s\"",       in_break ? "true" : "false");                                             fprintf(fp, ", ");
@@ -433,7 +608,11 @@ void create_image(char *file_name)
   while(!queue_is_empty(print_queue))
   {
     OBJECT_PTR obj = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
-    assert(is_dynamic_memory_object(obj));
+    if(!is_dynamic_memory_object(obj))
+    {
+      print_object(obj);printf("\n");
+      assert(false);
+    }
     print_heap_representation(fp, obj, print_queue, obj_count, hashtable, printed_objects, false);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
   }
@@ -652,6 +831,120 @@ void create_image(char *file_name)
 /*   return ret; */
 /* } */
 
+void deserialize_full_monty_global_vars(struct JSONObject *root,
+                                        struct JSONObject *heap,
+                                        hashtable_t *hashtable,
+                                        queue_t *q,
+                                        BOOLEAN single_object)
+{
+  int i,j;
+
+  struct JSONObject *temp;
+
+  //top level symbols
+  temp = JSON_get_object_item(root, "global_vars");
+  nof_global_vars = JSON_get_array_size(temp);
+
+  top_level_symbols = (global_var_mapping_t *)malloc(nof_global_vars *
+                                                     sizeof(global_var_mapping_t));
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    struct JSONObject *obj = JSON_get_array_item(temp, i);
+
+    top_level_symbols[i].delete_flag = !strcmp(JSON_get_object_item(obj, "delete_flag")->strvalue, "true") ? true : false;
+
+    top_level_symbols[i].sym = deserialize_internal(heap, 
+                                                    JSON_get_object_item(obj, "sym")->ivalue, 
+                                                    hashtable, 
+                                                    q, 
+                                                    single_object);
+
+    top_level_symbols[i].val = deserialize_internal(heap, 
+                                                    JSON_get_object_item(obj, "val")->ivalue, 
+                                                    hashtable, 
+                                                    q, 
+                                                    single_object);
+
+    struct JSONObject *ref_obj = JSON_get_object_item(obj, "references");
+
+    top_level_symbols[i].ref_count = JSON_get_array_size(ref_obj);
+
+    top_level_symbols[i].references = (global_var_ref_detail_t *)malloc(top_level_symbols[i].ref_count *
+                                                                        sizeof(global_var_ref_detail_t));
+
+    for(j=0; j<top_level_symbols[i].ref_count;j++)
+    {
+      struct JSONObject *ref_detail_obj = JSON_get_array_item(ref_obj, j);
+      top_level_symbols[i].references[j].referrer = deserialize_internal(heap, 
+                                                                         JSON_get_object_item(ref_detail_obj, "referrer")->ivalue, 
+                                                                         hashtable, 
+                                                                         q, 
+                                                                         single_object);
+      top_level_symbols[i].references[j].pos = JSON_get_object_item(ref_detail_obj, "pos")->ivalue;
+    }
+  }
+  //end of top level symbols
+
+  saved_continuations = deserialize_internal(heap, 
+                                             JSON_get_object_item(root, "saved_continuations")->ivalue, 
+                                             hashtable, 
+                                             q, 
+                                             single_object);
+
+  //unmet dependencies
+  temp = JSON_get_object_item(root, "unmet_dependencies");
+  nof_unmet_dependencies = JSON_get_array_size(temp);
+
+  global_unmet_dependencies = (unmet_dependency_t *)malloc(nof_unmet_dependencies *
+                                                     sizeof(unmet_dependency_t));
+
+  for(i=0; i<nof_unmet_dependencies; i++)
+  {
+    struct JSONObject *obj = JSON_get_array_item(temp, i);
+
+    global_unmet_dependencies[i].delete_flag = !strcmp(JSON_get_object_item(obj, "delete_flag")->strvalue, "true") ? true : false;
+
+    global_unmet_dependencies[i].clo = deserialize_internal(heap, 
+                                                            JSON_get_object_item(obj, "clo")->ivalue, 
+                                                            hashtable, 
+                                                            q, 
+                                                            single_object);
+
+    global_unmet_dependencies[i].top_level_sym = deserialize_internal(heap, 
+                                                                      JSON_get_object_item(obj, "top_level_sym")->ivalue, 
+                                                                      hashtable, 
+                                                                      q, 
+                                                                      single_object);    
+
+    global_unmet_dependencies[i].pos = JSON_get_object_item(obj, "pos")->ivalue;
+  }
+  //end of unmet dependencies
+
+  //&rest mappings
+  temp = JSON_get_object_item(root, "and_rest_mappings");
+  nof_and_rest_mappings = JSON_get_array_size(temp);
+
+  and_rest_mappings = (and_rest_mapping_t *)malloc(nof_and_rest_mappings *
+                                                   sizeof(and_rest_mapping_t));
+
+  for(i=0; i<nof_and_rest_mappings; i++)
+  {
+    struct JSONObject *obj = JSON_get_array_item(temp, i);
+
+    and_rest_mappings[i].delete_flag = !strcmp(JSON_get_object_item(obj, "delete_flag")->strvalue, "true") ? true : false;
+
+    and_rest_mappings[i].sym = deserialize_internal(heap, 
+                                                    JSON_get_object_item(obj, "sym")->ivalue, 
+                                                    hashtable, 
+                                                    q, 
+                                                    single_object);
+
+    and_rest_mappings[i].pos = JSON_get_object_item(obj, "pos")->ivalue;
+  }
+  //end of &rest mappings
+}
+
 int load_from_image(char *file_name)
 {
   int i, j;
@@ -730,6 +1023,12 @@ int load_from_image(char *file_name)
 
   queue_t *q = queue_create();
 
+  deserialize_full_monty_global_vars(root,
+                                     heap,
+                                     hashtable,
+                                     q,
+                                     false);
+
   top_level_env         = deserialize_internal(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q, false);
   debug_continuation    = deserialize_internal(heap, JSON_get_object_item(root, "debug_continuation")->ivalue,    hashtable, q, false);
   debug_env             = deserialize_internal(heap, JSON_get_object_item(root, "debug_env")->ivalue,             hashtable, q, false);
@@ -743,6 +1042,8 @@ int load_from_image(char *file_name)
   if(console_mode || single_expression_mode || pipe_mode)
   {
     convert_heap(heap, hashtable, q, false);
+    //recompile_functions_and_macros();
+    recreate_native_fn_objects();
     JSON_delete_object(root);
     return 0;
   }
@@ -794,6 +1095,9 @@ int load_from_image(char *file_name)
   }
 
   convert_heap(heap, hashtable, q, false);
+
+  //recompile_functions_and_macros();
+  recreate_native_fn_objects();
 
   if(system_browser_window)
     close_application_window(&system_browser_window);
@@ -1154,7 +1458,10 @@ BOOLEAN is_dynamic_reference(unsigned int ref)
          type == MACRO_TAG        ||
          type == CONTINUATION_TAG ||
          type == INTEGER_TAG      ||
-         type == FLOAT_TAG;
+         type == FLOAT_TAG        ||
+         type == NATIVE_FN_TAG    ||
+         type == FUNCTION2_TAG    ||
+         type == MACRO2_TAG;
 }
 
 void add_to_deserialization_queue(struct JSONObject *heap, queue_t *q, unsigned int ref, uintptr_t ptr, unsigned int index)
@@ -1348,6 +1655,35 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     else
       if(single_object) add_to_deserialization_queue(heap, q, stack_ref, ptr, 0); else set_heap(ptr, 0, stack_ref);
   }
+  else if(object_type == FUNCTION2_TAG || object_type == MACRO2_TAG)
+  {
+    ptr = object_alloc(2, CONS_TAG);
+
+    unsigned int car_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
+    unsigned int cdr_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
+
+    if(is_dynamic_reference(car_ref))
+    {
+       hashtable_entry_t *e = hashtable_get(ht, (void *)car_ref);
+      if(e)
+        set_heap(ptr, 0, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, car_ref, ptr, 0);
+    }
+    else
+      if(single_object) add_to_deserialization_queue(heap, q, car_ref, ptr, 0); else set_heap(ptr, 0, car_ref);
+
+    if(is_dynamic_reference(cdr_ref))
+    {
+      hashtable_entry_t *e = hashtable_get(ht, (void *)cdr_ref);
+      if(e)
+        set_heap(ptr, 1, (OBJECT_PTR)(e->value));
+      else
+        add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1);
+    }
+    else
+      if(single_object) add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1); else set_heap(ptr, 1, cdr_ref);
+  }
   else if(object_type == INTEGER_TAG)
   {
     ptr = object_alloc(1, INTEGER_TAG);
@@ -1377,7 +1713,10 @@ void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q, BOOLEAN 
     if(e)
       set_heap(slot_obj->ptr, slot_obj->index, (OBJECT_PTR)e->value);
     else
-      set_heap(slot_obj->ptr, slot_obj->index, deserialize_internal(heap, ref, ht, q, single_object));
+    {
+      OBJECT_PTR obj = deserialize_internal(heap, ref, ht, q, single_object);
+      set_heap(slot_obj->ptr, slot_obj->index, obj);
+    }
 
     free(slot_obj);
   }
@@ -1462,3 +1801,97 @@ int deserialize(char *file_name)
   return object;
 
 }
+
+void recompile_functions_and_macros()
+{
+  //idlco is initialized here since it's
+  //needed for compilation
+  idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
+
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    OBJECT_PTR val = top_level_symbols[i].val;
+    OBJECT_PTR car_val = car(val);
+
+    if(IS_FUNCTION2_OBJECT(car_val) || IS_MACRO2_OBJECT(car_val))
+    {
+      OBJECT_PTR cons_equiv = ((car_val >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      set_heap(val & POINTER_MASK, 0, compile_and_evaluate(car(cons_equiv)));
+    }
+
+    //TODO: update the references and unmet dependencies
+  }
+}
+
+void json_add_native_fn_source(unsigned int ref, char *source)
+{
+  nof_json_native_fns++;
+
+  json_native_fn_src_mapping_t *temp = (json_native_fn_src_mapping_t *)realloc(json_native_fns, nof_json_native_fns * sizeof(json_native_fn_src_mapping_t));
+
+  assert(temp);
+
+  json_native_fns = temp;
+
+  json_native_fns[nof_json_native_fns-1].ref = ref;
+  json_native_fns[nof_json_native_fns-1].source = strdup(source);
+}
+
+char *get_json_native_fn_source(unsigned int ref)
+{
+  int i;
+  for(i=0; i<nof_json_native_fns; i++)
+  {
+    if(json_native_fns[i].ref == ref)
+      return json_native_fns[i].source;
+  }
+
+  return NULL;
+}
+
+void recreate_native_fn_objects()
+{
+  int i, len=0;
+  char *buf;
+
+  buf = (char *)malloc(nof_json_native_fns * 500);
+  memset(buf, nof_json_native_fns * 500, '\0');
+
+  for(i=0; i<nof_json_native_fns; i++)
+    len += sprintf(buf+len, "%s\n", json_native_fns[i].source);
+
+  TCCState *tcc_state1 = create_tcc_state1();
+  assert(tcc_state1);
+
+  if(tcc_compile_string(tcc_state1, buf) == -1)
+    assert(false);
+
+  if(tcc_relocate(tcc_state1, TCC_RELOCATE_AUTO) < 0)
+    assert(false);
+
+  free(buf);
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || !IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    char *fname = extract_variable_string(top_level_symbols[i].sym);
+
+    top_level_symbols[i].val = convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname));
+  }
+
+  nof_json_native_fns = 0;
+
+  for(i=0; i<nof_json_native_fns; i++)
+    free(json_native_fns[i].source);
+
+  free(json_native_fns);
+}
+
+//TODO: cleanup json_native_fns

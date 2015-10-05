@@ -22,26 +22,10 @@
 #include <assert.h>
 #include <stdint.h>
 #include <dlfcn.h>
+#include <time.h>
 
 #include "plisp.h"
 #include "util.h"
-
-//TODO: remove both typdefs when
-//they are moved to plisp.h
-typedef struct global_var_ref_detail
-{
-  OBJECT_PTR referrer; //referring closure object
-  unsigned int pos; //ordinal position of the referred top-level object
-} global_var_ref_detail_t;
-
-typedef struct global_var_mapping
-{
-  OBJECT_PTR sym;
-  OBJECT_PTR val;
-  unsigned int ref_count;
-  global_var_ref_detail_t * references;
-  BOOLEAN delete_flag;
-} global_var_mapping_t;
 
 extern OBJECT_PTR NIL;
 extern OBJECT_PTR TRUE;
@@ -70,6 +54,10 @@ extern unsigned int nof_global_vars;
 extern global_var_mapping_t *top_level_symbols;
 
 extern OBJECT_PTR DEFUN, DEFMACRO, DEFINE;
+
+extern BOOLEAN in_error;
+
+extern BOOLEAN system_changed;
 
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
@@ -1410,6 +1398,174 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
   } //end of for
 
   fclose(fp);
+
+  return NIL;
+}
+
+OBJECT_PTR prim_expand_macro(OBJECT_PTR exp)
+{
+  return expand_macro_full(exp, true);
+}
+
+OBJECT_PTR primitive_env(OBJECT_PTR dummy)
+{
+  int i;
+
+  OBJECT_PTR ret = NIL;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    OBJECT_PTR val = cons(top_level_symbols[i].sym, car(top_level_symbols[i].val));
+
+    if(ret == NIL)
+      ret = cons(val, NIL);
+    else
+    {
+      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      set_heap(ptr, 1, cons(val, NIL));
+    }
+  }
+
+  return ret;
+}
+
+OBJECT_PTR primitive_time(OBJECT_PTR exp)
+{
+  clock_t start, diff;
+  int msec;
+
+  char buf[100];
+
+  char form[500];
+
+  memset(form, '\0', 500);
+  print_object_to_string(exp, form, 0);
+
+
+  start = clock();
+
+  OBJECT_PTR res = full_monty_eval(exp);
+
+  if(in_error)
+  {
+    raise_error("TIME failed");
+    return NIL;
+  }
+
+  diff = clock() - start;
+  msec = diff * 1000 / CLOCKS_PER_SEC;
+
+  if(!console_mode && !single_expression_mode && !pipe_mode)
+  {
+    memset(buf, '\0', 100);
+    sprintf(buf, "%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
+    print_to_transcript(buf);
+  }
+  else
+    printf("%s took %d seconds %d milliseconds\n", form, msec/1000, msec%1000);
+
+  return res;
+}
+
+OBJECT_PTR prim_serialize(OBJECT_PTR obj, OBJECT_PTR file_name)
+{
+  if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
+  {
+    raise_error("Second argument to SAVE-OBJECT should be a string object or a string literal denoting the file name");
+    return NIL;
+  }
+
+  if(is_string_object(file_name))
+    serialize(obj, get_string(file_name));
+  else
+    serialize(obj, strings[(int)file_name >> OBJECT_SHIFT]);
+
+  return NIL;
+}
+
+OBJECT_PTR prim_deserialize(OBJECT_PTR file_name)
+{
+  if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
+  {
+    raise_error("Argument to LOAD-OBJECT should be a string object or a string literal denoting the file name");
+    return NIL;
+  }
+
+  int ret;
+
+  if(is_string_object(file_name))
+    ret = deserialize(get_string(file_name));
+  else
+    ret = deserialize(strings[(int)file_name >> OBJECT_SHIFT]);
+
+  if(ret == -1)
+  {
+    raise_error("Error in LOAD-OBJECT");
+    return NIL;
+  }
+
+  if(IS_FUNCTION2_OBJECT(ret) || IS_MACRO2_OBJECT(ret))
+  {
+    OBJECT_PTR cons_equiv = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    return compile_and_evaluate(car(cons_equiv));
+  }
+
+  return ret;
+}
+
+OBJECT_PTR prim_load_file(OBJECT_PTR file_name)
+{
+  FILE *temp;
+
+  int ret;
+
+  if(!is_string_object(file_name) && (!IS_STRING_LITERAL_OBJECT(file_name)))
+  {
+    raise_error("Argument to LOAD-FILE should be a string");
+    return NIL;
+  }
+
+  temp = fopen(is_string_object(file_name) ?  get_string(file_name) : strings[(int)file_name >> OBJECT_SHIFT], "r");
+
+  if(!temp)
+  {
+    raise_error("LOAD-FILE unable to open file");
+    return NIL;
+  }
+
+  if(set_up_new_yyin(temp))
+  {
+    raise_error("Unable to read from file");
+    return NIL;
+  }
+
+  while(!yyparse())
+  {
+    repl2();
+  }
+
+  pop_yyin();
+
+  return NIL;
+}
+
+OBJECT_PTR prim_create_image(OBJECT_PTR file_name)
+{
+  if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
+  {
+    raise_error("Argument to CREATE-IMAGE should be a string object or a string literal denoting the file name of the image");
+    return NIL;
+  }
+
+  if(is_string_object(file_name))
+    create_image(get_string(file_name));
+  else
+    create_image(strings[(int)file_name >> OBJECT_SHIFT]);
+
+  system_changed = false;
 
   return NIL;
 }

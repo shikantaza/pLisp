@@ -147,6 +147,45 @@ typedef enum {IN_CODE, IN_STRING_LITERAL, IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_
 
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
 
+//see definition of global_var_ref_t
+typedef struct global_var_ref_detail
+{
+  OBJECT_PTR referrer; //referring closure object
+  unsigned int pos; //ordinal position of the referred top-level object
+} global_var_ref_detail_t;
+
+//mapping of top-level symbols
+//to their values
+typedef struct global_var_mapping
+{
+  OBJECT_PTR sym;
+  OBJECT_PTR val;
+  unsigned int ref_count;
+  global_var_ref_detail_t * references;
+  BOOLEAN delete_flag;
+} global_var_mapping_t;
+
+typedef struct unmet_dependency
+{
+  OBJECT_PTR clo;
+  OBJECT_PTR top_level_sym;
+  unsigned int pos;
+  BOOLEAN delete_flag;
+} unmet_dependency_t;
+
+typedef struct and_rest_mapping
+{
+  BOOLEAN delete_flag;
+  OBJECT_PTR sym;
+  int pos;
+} and_rest_mapping_t;
+
+typedef struct native_fn_src_mapping
+{
+  nativefn fn;
+  char *source;
+} native_fn_src_mapping_t;
+
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);
