@@ -1510,7 +1510,7 @@ OBJECT_PTR prim_deserialize(OBJECT_PTR file_name)
   if(IS_FUNCTION2_OBJECT(ret) || IS_MACRO2_OBJECT(ret))
   {
     OBJECT_PTR cons_equiv = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
-    return compile_and_evaluate(car(cons_equiv));
+    return compile_and_evaluate(last_cell(cons_equiv));
   }
 
   return ret;

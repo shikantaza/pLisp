@@ -1916,8 +1916,8 @@ void recreate_native_fn_objects()
   int i, len=0;
   char *buf;
 
-  buf = (char *)malloc(nof_json_native_fns * 500);
-  memset(buf, nof_json_native_fns * 500, '\0');
+  buf = (char *)malloc(nof_json_native_fns * 1000);
+  memset(buf, nof_json_native_fns * 1000, '\0');
 
   for(i=0; i<nof_json_native_fns; i++)
     len += sprintf(buf+len, "%s\n", json_native_fns[i].source);
