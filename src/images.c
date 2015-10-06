@@ -1760,8 +1760,20 @@ int serialize(OBJECT_PTR obj, char *file_name)
   hashtable_t *printed_objects = hashtable_create(1001);
 
   fprintf(fp, "{ ");
-  fprintf(fp, "\"object\" : " ); 
-  print_json_object(fp, obj, print_queue, obj_count, hashtable, printed_objects, true); 
+  fprintf(fp, "\"object\" : " );
+
+  if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
+  {
+    OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+
+    fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
+    hashtable_put(hashtable, (void *)obj, (void *)  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK) );
+    (*obj_count)++;
+    add_obj_to_print_list(print_queue, last_cell(cons_equiv), printed_objects);
+  }
+  else
+    print_json_object(fp, obj, print_queue, obj_count, hashtable, printed_objects, true); 
+
   fprintf(fp, ", ");
 
   fprintf(fp, "\"heap\" : [");
@@ -1808,6 +1820,8 @@ int deserialize(char *file_name)
   queue_t *q = queue_create();
   hashtable_t *hashtable = hashtable_create(1001);
 
+  unsigned int object_type  = JSON_get_object_item(root, "object")->ivalue & BIT_MASK; 
+
   OBJECT_PTR object = deserialize_internal(heap, JSON_get_object_item(root, "object")->ivalue, hashtable, q, true);
 
   convert_heap(heap, hashtable, q, true);
@@ -1817,8 +1831,10 @@ int deserialize(char *file_name)
 
   JSON_delete_object(root);
 
-  return object;
-
+  if(object_type == FUNCTION2_TAG || object_type == MACRO2_TAG)
+    return ((object >> OBJECT_SHIFT) << OBJECT_SHIFT) + object_type;
+  else
+    return object;
 }
 
 void recompile_functions_and_macros()
@@ -1885,7 +1901,10 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
 
     char *fname = substring(source, 13, 7);
 
-    nativefn fn = (nativefn)tcc_get_symbol(tcc_state1, fname);
+    //crude way to check if fn is the identity function,
+    //but this works as all other native functions
+    //will be named from gensym symbols
+    nativefn fn = !strcmp(fname, "identit") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
     assert(fn);
 
     uintptr_t ptr = obj & POINTER_MASK;
@@ -1939,6 +1958,14 @@ void recreate_native_fn_objects()
       continue;
 
     replace_native_fn(top_level_symbols[i].val, tcc_state1);
+  }
+
+  OBJECT_PTR rest = saved_continuations;
+
+  while(rest != NIL)
+  {
+    replace_native_fn(car(rest), tcc_state1);
+    rest = cdr(rest);
   }
 
   for(i=0; i<nof_json_native_fns; i++)
