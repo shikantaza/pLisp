@@ -28,6 +28,7 @@
 
 #include "plisp.h"
 #include "memory.h"
+#include "util.h"
 
 #include "json.h"
 
@@ -36,7 +37,7 @@
 
 typedef struct json_native_fn_src_mapping
 {
-  unsigned int ref;
+  OBJECT_PTR nativefn_obj;
   char *source;
 } json_native_fn_src_mapping_t;
 
@@ -105,6 +106,8 @@ extern char *get_native_fn_source(nativefn);
 extern TCCState *create_tcc_state1();
 extern char *extract_variable_string(OBJECT_PTR);
 
+extern OBJECT_PTR get_string_object(char *);
+
 //global vars pertaining to full monty compiler
 extern unsigned int nof_global_vars;
 extern global_var_mapping_t *top_level_symbols;
@@ -122,6 +125,8 @@ void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, 
 OBJECT_PTR deserialize_internal(struct JSONObject *, unsigned int, hashtable_t *, queue_t *, BOOLEAN);
 void convert_heap(struct JSONObject *, hashtable_t *, queue_t *, BOOLEAN);
 void recompile_functions_and_macros();
+void json_add_native_fn_source(OBJECT_PTR, char *);
+char *get_json_native_fn_source(unsigned int);
 void recreate_native_fn_objects();
 //end of forward declarations
 
@@ -1541,7 +1546,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
 
     if(is_dynamic_reference(car_ref))
     {
-       hashtable_entry_t *e = hashtable_get(ht, (void *)car_ref);
+      hashtable_entry_t *e = hashtable_get(ht, (void *)car_ref);
       if(e)
         set_heap(ptr, 0, (OBJECT_PTR)(e->value));
       else
@@ -1664,7 +1669,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
 
     if(is_dynamic_reference(car_ref))
     {
-       hashtable_entry_t *e = hashtable_get(ht, (void *)car_ref);
+      hashtable_entry_t *e = hashtable_get(ht, (void *)car_ref);
       if(e)
         set_heap(ptr, 0, (OBJECT_PTR)(e->value));
       else
@@ -1693,6 +1698,20 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
   {
     ptr = object_alloc(1, FLOAT_TAG);
     (*(float *)ptr) = heap_obj->fvalue;
+  }
+  else if(object_type == NATIVE_FN_TAG)
+  {
+    ptr = object_alloc(1, NATIVE_FN_TAG);
+
+    char *source = JSON_get_array_item(heap, ref >> OBJECT_SHIFT)->strvalue;
+    json_add_native_fn_source(ptr + NATIVE_FN_TAG, source);
+
+    //to indicate that the slot
+    //is yet to be initialized
+    set_heap(ptr, 0, 0xbaadf00d);
+
+    //the slot (with the nativefn value will be
+    //filled in later, by recreate_native_fn_objects())
   }
 
   hashtable_put(ht, (void *)ref, (void *)(ptr + object_type));
@@ -1828,7 +1847,7 @@ void recompile_functions_and_macros()
   }
 }
 
-void json_add_native_fn_source(unsigned int ref, char *source)
+void json_add_native_fn_source(OBJECT_PTR nativefn_obj, char *source)
 {
   nof_json_native_fns++;
 
@@ -1838,24 +1857,62 @@ void json_add_native_fn_source(unsigned int ref, char *source)
 
   json_native_fns = temp;
 
-  json_native_fns[nof_json_native_fns-1].ref = ref;
+  json_native_fns[nof_json_native_fns-1].nativefn_obj = nativefn_obj;
   json_native_fns[nof_json_native_fns-1].source = strdup(source);
 }
 
-char *get_json_native_fn_source(unsigned int ref)
+char *get_json_native_fn_source(OBJECT_PTR nativefn_obj)
 {
   int i;
   for(i=0; i<nof_json_native_fns; i++)
   {
-    if(json_native_fns[i].ref == ref)
+    if(json_native_fns[i].nativefn_obj == nativefn_obj)
       return json_native_fns[i].source;
   }
 
   return NULL;
 }
 
+void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
+{
+  if(IS_NATIVE_FN_OBJECT(obj))
+  {
+    //if(get_heap(obj & POINTER_MASK, 0) != 0xbaadf00d)
+    //  return;
+
+    char *source = get_json_native_fn_source(obj);
+    assert(source);
+
+    char *fname = substring(source, 13, 7);
+
+    nativefn fn = (nativefn)tcc_get_symbol(tcc_state1, fname);
+    assert(fn);
+
+    uintptr_t ptr = obj & POINTER_MASK;
+
+    *((nativefn *)ptr) = fn;
+  }
+  else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
+  {
+    OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    replace_native_fn(car(cons_equiv), tcc_state1);
+  }
+  else if(IS_CONS_OBJECT(obj))
+  {
+    OBJECT_PTR rest = obj;
+    while(rest != NIL)
+    {
+      replace_native_fn(car(rest), tcc_state1);
+      rest = cdr(rest);
+    }
+  }
+  //TODO: extend this for arrays (anything else?)
+}
+
 void recreate_native_fn_objects()
 {
+  idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
+
   int i, len=0;
   char *buf;
 
@@ -1878,20 +1935,18 @@ void recreate_native_fn_objects()
 
   for(i=0; i<nof_global_vars; i++)
   {
-    if(top_level_symbols[i].delete_flag || !IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+    if(top_level_symbols[i].delete_flag)
       continue;
 
-    char *fname = extract_variable_string(top_level_symbols[i].sym);
-
-    top_level_symbols[i].val = convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname));
+    replace_native_fn(top_level_symbols[i].val, tcc_state1);
   }
-
-  nof_json_native_fns = 0;
 
   for(i=0; i<nof_json_native_fns; i++)
     free(json_native_fns[i].source);
 
   free(json_native_fns);
+
+  //not really needed as load_from_image() will be called only once on startup
+  nof_json_native_fns = 0;
 }
 
-//TODO: cleanup json_native_fns

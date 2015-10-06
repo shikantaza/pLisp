@@ -269,8 +269,8 @@ OBJECT_PTR closure_conv_transform_abs_cont(OBJECT_PTR);
 OBJECT_PTR closure_conv_transform_abs_no_cont(OBJECT_PTR);
 OBJECT_PTR backquote2(OBJECT_PTR);
 OBJECT_PTR process_backquote(OBJECT_PTR);
-unsigned int build_c_fragment(OBJECT_PTR, char *, BOOLEAN);
-unsigned int build_c_string(OBJECT_PTR, char *);
+unsigned int build_c_fragment(OBJECT_PTR, char *, BOOLEAN, BOOLEAN);
+unsigned int build_c_string(OBJECT_PTR, char *, BOOLEAN);
 OBJECT_PTR convert_native_fn_to_object(nativefn);
 void add_top_level_sym(OBJECT_PTR, OBJECT_PTR);
 int get_top_level_sym_value(OBJECT_PTR, OBJECT_PTR *);
@@ -283,7 +283,7 @@ nativefn get_nativefn_value(OBJECT_PTR);
 OBJECT_PTR reverse(OBJECT_PTR);
 TCCState *create_tcc_state1();
 TCCState *compile_functions(OBJECT_PTR);
-char *extract_variable_string(OBJECT_PTR);
+char *extract_variable_string(OBJECT_PTR, BOOLEAN);
 OBJECT_PTR call_cc1(OBJECT_PTR);
 OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
 OBJECT_PTR expand_macro_full(OBJECT_PTR, BOOLEAN);
@@ -1821,14 +1821,14 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   {
     OBJECT_PTR lambda = car(lambdas);
 
-    char *fname = extract_variable_string(first(lambda));
+    char *fname = extract_variable_string(first(lambda), true);
 
     add_top_level_sym(first(lambda),
                       convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname)));
 
     char source[1000];
     memset(source, 1000, '\0');
-    build_c_string(lambda, source);
+    build_c_string(lambda, source, true);
 
     assert(strlen(source)<=1000);
 
@@ -2315,7 +2315,7 @@ char *replace_hyphens(char *s)
   return s;
 }
 
-char *extract_variable_string(OBJECT_PTR var)
+char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
 {
   if(IS_SYMBOL_OBJECT(var))
   {
@@ -2468,16 +2468,33 @@ char *extract_variable_string(OBJECT_PTR var)
   }
   else
   {
-    char *s = (char *)malloc(10*sizeof(char));
-    memset(s,10,'\0');
-    sprintf(s, "%d", var);
-    return s;
+    if(serialize_flag)
+    {
+      char *s = (char *)malloc(50*sizeof(char));
+      memset(s,50,'\0');
+
+      if(IS_INTEGER_OBJECT(var))
+        sprintf(s, "convert_int_to_object(%d)", get_int_value(var));
+      else if(IS_FLOAT_OBJECT(var))
+        sprintf(s, "convert_float_to_object(%f)", get_float_value(var));
+      else
+        sprintf(s, "%d", var);
+
+      return s;
+    }
+    else
+    {
+      char *s = (char *)malloc(10*sizeof(char));
+      memset(s,10,'\0');
+      sprintf(s, "%d", var);
+      return s;
+    }
   }
 }
 
-unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
+unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize_flag)
 {
-  char *fname = extract_variable_string(car(lambda_form));
+  char *fname = extract_variable_string(car(lambda_form), serialize_flag);
 
   unsigned int len = 0;
 
@@ -2491,7 +2508,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
 
   while(rest != NIL)
   {
-    char *pname = extract_variable_string(car(rest));
+    char *pname = extract_variable_string(car(rest), serialize_flag);
 
     if(!first_time)
       len += sprintf(buf+len, ", ");
@@ -2515,13 +2532,13 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
 
   if(cons_length(body) == 2)
   {
-    len += build_c_fragment(car(body), buf+len, false);
+    len += build_c_fragment(car(body), buf+len, false, serialize_flag);
     //len += sprintf(buf+len, ";\n");
-    len += build_c_fragment(CADR(body), buf+len, false);
+    len += build_c_fragment(CADR(body), buf+len, false, serialize_flag);
   }
   else
   {
-    len += build_c_fragment(car(body), buf+len, false);
+    len += build_c_fragment(car(body), buf+len, false, serialize_flag);
   }
 
   len += sprintf(buf+len, "\n}\n");
@@ -2531,7 +2548,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf)
   return len;
 }
 
-unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
+unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BOOLEAN serialize_flag)
 {
   unsigned int len = 0;
 
@@ -2539,17 +2556,17 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 
   if(is_atom(exp))
   {
-    char *var = extract_variable_string(exp);
+    char *var = extract_variable_string(exp, serialize_flag);
     len += sprintf(buf+len, "%s;\n", var);
     free(var);
   }
   else if(car(exp) == IF)
   {
-    char *test_var = extract_variable_string(second(exp));
+    char *test_var = extract_variable_string(second(exp), serialize_flag);
     len += sprintf(buf+len, "if(%s != nil)", test_var);
-    len += build_c_fragment(third(exp), buf+len, false);
+    len += build_c_fragment(third(exp), buf+len, false, serialize_flag);
     len += sprintf(buf+len, "else\n");
-    len += build_c_fragment(fourth(exp), buf+len, false);
+    len += build_c_fragment(fourth(exp), buf+len, false, serialize_flag);
     free(test_var);
   }
   else if(car(exp) == LET || car(exp) == LET1)
@@ -2560,18 +2577,18 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 
     while(rest != NIL)
     {
-      char *var = extract_variable_string(car(car(rest)));
+      char *var = extract_variable_string(car(car(rest)), serialize_flag);
 
       if(IS_CONS_OBJECT(second(car(rest))) && first(second(car(rest))) == EXTRACT_NATIVE_FN)
       {
         len += sprintf(buf+len, "typedef unsigned int (*nativefn)(unsigned int, ...);\n");
         len += sprintf(buf+len, "nativefn %s = (nativefn)", var);
-        len += build_c_fragment(CADR(car(rest)), buf+len, false);
+        len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
       else
       {
         len += sprintf(buf+len, "unsigned int %s = (unsigned int)", var);
-        len += build_c_fragment(CADR(car(rest)), buf+len, false);
+        len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
 
       rest = cdr(rest);
@@ -2581,7 +2598,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
     if(first(third(exp)) != LET && first(third(exp)) != LET1 && first(third(exp)) != IF)
       len += sprintf(buf+len, "return ");
 
-    len += build_c_fragment(third(exp), buf+len, false);
+    len += build_c_fragment(third(exp), buf+len, false, serialize_flag);
 
     len += sprintf(buf+len, "\n}");
 
@@ -2610,7 +2627,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
       if(primop(car(exp)))
         primitive_call = true;
 
-      char *var = extract_variable_string(car(exp));
+      char *var = extract_variable_string(car(exp), serialize_flag);
       len += sprintf(buf+len, "%s(", var);
       free(var);
 
@@ -2631,12 +2648,12 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call)
 
           if(is_atom(car(rest)))
           {
-            char *arg_name = extract_variable_string(car(rest));
+            char *arg_name = extract_variable_string(car(rest), serialize_flag);
             len += sprintf(buf+len, "%s", arg_name);
             free(arg_name);
           }
           else
-            len += build_c_fragment(car(rest), buf+len, true);
+            len += build_c_fragment(car(rest), buf+len, true, serialize_flag);
 
           rest = cdr(rest);
           first_time = false;
@@ -2783,6 +2800,9 @@ TCCState *create_tcc_state1()
 
   tcc_add_symbol(tcc_state, "primitive_eval",     full_monty_eval);
 
+  tcc_add_symbol(tcc_state, "convert_int_to_object",    convert_int_to_object);
+  tcc_add_symbol(tcc_state, "convert_float_to_object",  convert_float_to_object);
+
   return tcc_state;
 }
 
@@ -2853,6 +2873,8 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
   OBJECT_PTR closed_object;
   OBJECT_PTR ret;
 
+  assert(IS_INTEGER_OBJECT(count1));
+
   int count = get_int_value(count1);
 
   //since count can be zero,
@@ -2892,7 +2914,7 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
 
   while(rest != NIL)
   {
-    len += build_c_string(car(rest), str+len);
+    len += build_c_string(car(rest), str+len, false);
     rest = cdr(rest);
   }
 
