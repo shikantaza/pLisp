@@ -55,6 +55,9 @@ and_rest_mapping_t *and_rest_mappings = NULL;
 
 unsigned int nof_native_fns = 0;
 native_fn_src_mapping_t *native_fn_sources = NULL;
+
+OBJECT_PTR most_recent_closure;
+OBJECT_PTR continuations_for_return;
 //end of global variables
 
 //external variables
@@ -159,6 +162,8 @@ extern OBJECT_PTR TRUE;
 
 extern OBJECT_PTR CONCAT;
 
+extern OBJECT_PTR GET_CONTINUATION;
+
 extern unsigned int POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -262,6 +267,7 @@ OBJECT_PTR cps_transform_primop(OBJECT_PTR);
 OBJECT_PTR cps_transform_error(OBJECT_PTR);
 OBJECT_PTR cps_transform_let(OBJECT_PTR);
 OBJECT_PTR cps_transform_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR cps_transform_return_from(OBJECT_PTR);
 OBJECT_PTR desugar_il(OBJECT_PTR);
 OBJECT_PTR closure_conv_transform(OBJECT_PTR);
 OBJECT_PTR range(int, int, int);
@@ -1342,7 +1348,12 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
   else if(car_exp == LET)
     return cps_transform_let(exp);
   else if(primop(car_exp))
-    return cps_transform_primop(exp);
+  {
+    if(car_exp == RETURN_FROM)
+      return cps_transform_return_from(exp);
+    else
+      return cps_transform_primop(exp);
+  }
   else if(car_exp == IF)
     return cps_transform_if(second(exp),
                             third(exp),
@@ -1497,6 +1508,31 @@ OBJECT_PTR cps_transform_primop(OBJECT_PTR exp)
                                         cdr(exp),
                                         NIL,
                                         ik));
+}
+
+OBJECT_PTR cps_transform_return_from(OBJECT_PTR exp)
+{
+  OBJECT_PTR ik = gensym();
+  OBJECT_PTR i1 = gensym();
+  OBJECT_PTR i2 = gensym();
+
+  return list(4,
+              LAMBDA,
+              list(1, ik),
+              list(2, SAVE_CONTINUATION, ik),
+              list(2,
+                   cps_transform(second(exp)),
+                   list(3,
+                        LAMBDA,
+                        list(1, i1),
+                        list(2,
+                             cps_transform(third(exp)),
+                             list(3,
+                                  LAMBDA,
+                                  list(1, i2),
+                                  list(2,
+                                       list(2, GET_CONTINUATION, i1),
+                                       i2))))));
 }
 
 BOOLEAN primop(OBJECT_PTR sym)
@@ -1974,12 +2010,11 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == SYMBOL_NAME  ||
     sym == FORMAT       ||
     sym == CLONE        ||
-    sym == RETURN       ||
-    sym == RETURN_FROM  ||
     sym == UNBIND       ||
     sym == NEWLINE      ||
     sym == NOT          ||
-    sym == PROGN;
+    sym == RETURN_FROM  ||
+    sym == GET_CONTINUATION;
 }
 
 BOOLEAN string_array_op(OBJECT_PTR sym)
@@ -2457,6 +2492,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "prim_expand_macro");
       else if(var == EVAL)
         sprintf(s, "primitive_eval");
+      else if(var == GET_CONTINUATION)
+        sprintf(s, "get_continuation");
       else
       {
         print_object(var);
@@ -2523,6 +2560,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   len += sprintf(buf+len, ")\n{\n");
 
+  len += sprintf(buf+len, "set_most_recent_closure(%s);\n", extract_variable_string(first(params), serialize_flag));
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
   len += sprintf(buf+len, "unsigned int nil = 17;\n");
 
@@ -2700,9 +2738,34 @@ nativefn extract_native_fn(OBJECT_PTR closure)
   return get_nativefn_value(nativefn_obj);
 }
 
+OBJECT_PTR get_continuation(OBJECT_PTR clo)
+{
+  OBJECT_PTR rest = continuations_for_return;
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR obj = car(rest);
+
+    if(car(obj)== clo)
+      return cdr(obj);
+
+    rest = cdr(rest);
+  }
+
+  raise_error("Unable to get continuation for closure");
+  return NIL;
+}
+
+void set_most_recent_closure(OBJECT_PTR clo)
+{
+  most_recent_closure = clo;
+}
+
 void save_continuation(OBJECT_PTR cont)
 {
   saved_continuations = cons(cont, saved_continuations);
+  if(most_recent_closure != NIL)
+    continuations_for_return = cons(cons(most_recent_closure, cont), continuations_for_return);
 }
 
 int in_error_condition()
@@ -2802,6 +2865,9 @@ TCCState *create_tcc_state1()
 
   tcc_add_symbol(tcc_state, "convert_int_to_object",    convert_int_to_object);
   tcc_add_symbol(tcc_state, "convert_float_to_object",  convert_float_to_object);
+
+  tcc_add_symbol(tcc_state, "set_most_recent_closure",  set_most_recent_closure);
+  tcc_add_symbol(tcc_state, "get_continuation",         get_continuation);
 
   return tcc_state;
 }
@@ -2920,9 +2986,9 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
 
   assert(len <= 65536);
 
-  //FILE *out = fopen("debug.c", "a");
-  //fprintf(out, "%s\n", str);
-  //fclose(out);
+  FILE *out = fopen("debug.c", "a");
+  fprintf(out, "%s\n", str);
+  fclose(out);
 
   if(tcc_compile_string(tcc_state1, str) == -1)
     assert(false);
@@ -3125,6 +3191,8 @@ int repl2()
       return 1;
 
     saved_continuations = NIL;
+    continuations_for_return = NIL;
+    most_recent_closure = NIL;
     
     in_error = false;
 
