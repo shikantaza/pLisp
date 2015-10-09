@@ -316,6 +316,8 @@ OBJECT_PTR symbol_to_use(OBJECT_PTR);
 OBJECT_PTR full_monty_eval(OBJECT_PTR);
 
 void add_native_fn_source(nativefn, char *);
+
+OBJECT_PTR cons_equivalent(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -2505,8 +2507,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
   }
   else
   {
-    if(serialize_flag)
-    {
+    /* if(serialize_flag) */
+    /* { */
       char *s = (char *)malloc(50*sizeof(char));
       memset(s,50,'\0');
 
@@ -2518,14 +2520,14 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "%d", var);
 
       return s;
-    }
-    else
-    {
-      char *s = (char *)malloc(10*sizeof(char));
-      memset(s,10,'\0');
-      sprintf(s, "%d", var);
-      return s;
-    }
+    /* } */
+    /* else */
+    /* { */
+    /*   char *s = (char *)malloc(10*sizeof(char)); */
+    /*   memset(s,10,'\0'); */
+    /*   sprintf(s, "%d", var); */
+    /*   return s; */
+    /* } */
   }
 }
 
@@ -2733,7 +2735,10 @@ nativefn extract_native_fn(OBJECT_PTR closure)
   OBJECT_PTR nativefn_obj = get_heap(closure & POINTER_MASK, 0);
 
   if(!IS_NATIVE_FN_OBJECT(nativefn_obj))
+  {
+    print_object(nativefn_obj);
     assert(false);
+  }
 
   return get_nativefn_value(nativefn_obj);
 }
@@ -2986,9 +2991,9 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
 
   assert(len <= 65536);
 
-  FILE *out = fopen("debug.c", "a");
-  fprintf(out, "%s\n", str);
-  fclose(out);
+  //FILE *out = fopen("debug.c", "a");
+  //fprintf(out, "%s\n", str);
+  //fclose(out);
 
   if(tcc_compile_string(tcc_state1, str) == -1)
     assert(false);
@@ -3193,7 +3198,9 @@ int repl2()
     saved_continuations = NIL;
     continuations_for_return = NIL;
     most_recent_closure = NIL;
-    
+
+    //idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
+
     in_error = false;
 
     OBJECT_PTR res = full_monty_eval(exp);
@@ -3233,6 +3240,20 @@ int repl2()
 
   delete_expression(g_expr);
   g_expr = NULL;
+
+  /* OBJECT_PTR cons_equiv; */
+  /* OBJECT_PTR fnn; */
+
+  /* print_object(idclo); printf(" --- "); */
+  /* cons_equiv = ((idclo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG; */
+  /* fnn = car(cons_equiv); */
+  /* print_object(fnn);printf("\n"); */
+
+  gc(false, true);
+
+  /* print_object(idclo); printf(" --- "); */
+  /* cons_equiv = ((idclo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG; */
+  /* print_object(car(cons_equiv));printf("\n"); */
 
   return 0;
 }
@@ -4035,4 +4056,11 @@ char *get_native_fn_source(nativefn fn)
   }
 
   return NULL;
+}
+
+inline OBJECT_PTR cons_equivalent(OBJECT_PTR obj)
+{
+  assert(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
+
+  return ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
 }

@@ -292,10 +292,10 @@ void initialize()
   debug_continuation = NIL;
   debug_env = NIL;
 
-  CONS_NIL_NIL = cons(NIL, NIL);
-  CONS_APPLY_NIL = cons(APPLY, NIL);
-  CONS_HALT_NIL = cons(HALT, NIL);
-  CONS_RETURN_NIL = cons(RETURN, NIL);
+  //CONS_NIL_NIL = cons(NIL, NIL);
+  //CONS_APPLY_NIL = cons(APPLY, NIL);
+  //CONS_HALT_NIL = cons(HALT, NIL);
+  //CONS_RETURN_NIL = cons(RETURN, NIL);
 
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 }

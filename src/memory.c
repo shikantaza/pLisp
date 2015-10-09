@@ -64,6 +64,15 @@ extern hashtable_t *ht;
 
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
+extern unsigned int nof_global_vars;
+extern global_var_mapping_t *top_level_symbols;
+
+extern OBJECT_PTR saved_continuations;
+extern OBJECT_PTR idclo;
+
+extern OBJECT_PTR most_recent_closure;
+extern OBJECT_PTR continuations_for_return;
+
 //forward declarations
 
 void dealloc(OBJECT_PTR);
@@ -125,6 +134,8 @@ void move_from_white_to_grey(OBJECT_PTR obj)
       remove_node(WHITE, obj);
       insert_node(GREY, obj);
     }
+    else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
+      insert_node(GREY, cons_equivalent(obj));
   }
 }
 
@@ -196,7 +207,10 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
 
     assert(is_dynamic_memory_object(obj));
 
-    insert_node(BLACK, obj);
+    //FUNCTION2 and MACRO2 objects are handled
+    //by handling their undelying CONS objects
+    if(!IS_FUNCTION2_OBJECT(obj) && !IS_MACRO2_OBJECT(obj))
+      insert_node(BLACK, obj);
 
     remove_node(GREY, obj);
 
@@ -230,7 +244,13 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
     }
     else if(IS_CONTINUATION_OBJECT(obj))
       move_from_white_to_grey(get_heap(obj & POINTER_MASK, 0));
-
+    else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
+    {
+      OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      //move_from_white_to_grey(car(cons_equiv));
+      //move_from_white_to_grey(cdr(cons_equiv));
+      move_from_white_to_grey(cons_equiv);
+    }
   } //end of while(!is_set_empty(GREY))
 
   free_white_set_objects();
@@ -265,47 +285,68 @@ BOOLEAN is_dynamic_memory_object(OBJECT_PTR obj)
 
 void pin_globals()
 {
-  if(is_dynamic_memory_object(reg_accumulator))
-    insert_node(GREY, reg_accumulator);
+  /* if(is_dynamic_memory_object(reg_accumulator)) */
+  /*   insert_node(GREY, reg_accumulator); */
 
-  if(is_dynamic_memory_object(reg_next_expression))
-    insert_node(GREY, reg_next_expression);
+  /* if(is_dynamic_memory_object(reg_next_expression)) */
+  /*   insert_node(GREY, reg_next_expression); */
 
-  if(is_dynamic_memory_object(reg_current_value_rib))
-    insert_node(GREY, reg_current_value_rib);
+  /* if(is_dynamic_memory_object(reg_current_value_rib)) */
+  /*   insert_node(GREY, reg_current_value_rib); */
 
-  if(is_dynamic_memory_object(reg_current_env))
-    insert_node(GREY, reg_current_env);
+  /* if(is_dynamic_memory_object(reg_current_env)) */
+  /*   insert_node(GREY, reg_current_env); */
 
-  if(is_dynamic_memory_object(reg_current_stack))
-    insert_node(GREY, reg_current_stack);
+  /* if(is_dynamic_memory_object(reg_current_stack)) */
+  /*   insert_node(GREY, reg_current_stack); */
 
-  if(is_dynamic_memory_object(debug_env))
-    insert_node(GREY, debug_env);
+  /* if(is_dynamic_memory_object(debug_env)) */
+  /*   insert_node(GREY, debug_env); */
 
-  if(is_dynamic_memory_object(debug_continuation))
-    insert_node(GREY, debug_continuation);
+  /* if(is_dynamic_memory_object(debug_continuation)) */
+  /*   insert_node(GREY, debug_continuation); */
 
-  if(is_dynamic_memory_object(debug_execution_stack))
-    insert_node(GREY, debug_execution_stack);
+  /* if(is_dynamic_memory_object(debug_execution_stack)) */
+  /*   insert_node(GREY, debug_execution_stack); */
 
-  if(is_dynamic_memory_object(continuations_map))
-    insert_node(GREY, continuations_map);
+  /* if(is_dynamic_memory_object(continuations_map)) */
+  /*   insert_node(GREY, continuations_map); */
+
+  if(is_dynamic_memory_object(saved_continuations))
+    insert_node(GREY, saved_continuations);
+
+  if(is_dynamic_memory_object(idclo))
+    insert_node(GREY, idclo);
+
+  if(is_dynamic_memory_object(most_recent_closure))
+    insert_node(GREY, most_recent_closure);
+
+  if(is_dynamic_memory_object(continuations_for_return))
+    insert_node(GREY, continuations_for_return);
 }
 
 void build_grey_set()
 {
-  assert(top_level_env != NIL);
+  /* assert(top_level_env != NIL); */
 
-  insert_node(GREY, top_level_env);
+  /* insert_node(GREY, top_level_env); */
 
-  insert_node(GREY, CONS_NIL_NIL);
-  insert_node(GREY, CONS_APPLY_NIL);
-  insert_node(GREY, CONS_HALT_NIL);
-  insert_node(GREY, CONS_RETURN_NIL);
+  int i;
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(is_dynamic_memory_object(top_level_symbols[i].val))
+      insert_node(GREY, top_level_symbols[i].val);
+  }
+
+  /* insert_node(GREY, CONS_NIL_NIL); */
+  /* insert_node(GREY, CONS_APPLY_NIL); */
+  /* insert_node(GREY, CONS_HALT_NIL); */
+  /* insert_node(GREY, CONS_RETURN_NIL); */
 
   pin_globals();
-
 }
 
 #ifndef GC_USES_HASHTABLE
@@ -517,7 +558,7 @@ OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
 
   if(!is_valid_object(ret))
   {
-    printf("%d %d\n", ptr, ret);
+    printf("0x%x 0x%x\n", ptr, ret);
     assert(false);
   }
 
@@ -562,6 +603,8 @@ uintptr_t object_alloc(int size, int tag)
 
 void dealloc(OBJECT_PTR ptr)
 {
+  unsigned int prev_words_deallocated = words_deallocated;
+
   if(!is_valid_object(ptr))
   {
     printf("%d\n", ptr);
@@ -596,11 +639,23 @@ void dealloc(OBJECT_PTR ptr)
     case FLOAT_TAG:
       words_deallocated += 1;
       break;
-    default:
-      //TODO: include new tags
-      //assert(false);
+    /* case FUNCTION2_TAG: */
+    /*   words_allocated += 2; */
+    /*   break; */
+    /* case MACRO2_TAG: */
+    /*   words_allocated += 2; */
+    /*   break; */
+    case NATIVE_FN_TAG:
+      words_deallocated += 1;
       break;
+    default:
+      assert(false);
   }
+
+  uintptr_t p = ptr & POINTER_MASK;
+  int i;
+  for(i=0; i < words_deallocated - prev_words_deallocated; i++)
+    *((unsigned int *)p+i) = 0xFEEEFEEE;
 
   free((void *)(ptr & POINTER_MASK));
 }

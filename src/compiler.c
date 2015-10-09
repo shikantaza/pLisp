@@ -479,11 +479,11 @@ int main(int argc, char **argv)
 			       DEFAULT_TRANSCRIPT_HEIGHT,
 			       default_transcript_text);
 
-    if(load_core_library())
-    {
-      cleanup();
-      exit(1);
-    }
+    /* if(load_core_library()) */
+    /* { */
+    /*   cleanup(); */
+    /*   exit(1); */
+    /* } */
 
     core_library_loaded = true;
   }

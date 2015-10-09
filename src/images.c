@@ -1899,6 +1899,9 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     char *source = get_json_native_fn_source(obj);
     assert(source);
 
+    //note: the last parameter value (7)
+    //will have to be updated if we're
+    //making the size of gensym symbols bigger
     char *fname = substring(source, 13, 7);
 
     //crude way to check if fn is the identity function,
