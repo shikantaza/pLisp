@@ -246,7 +246,7 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
       move_from_white_to_grey(get_heap(obj & POINTER_MASK, 0));
     else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
     {
-      OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR cons_equiv = cons_equivalent(obj);
       //move_from_white_to_grey(car(cons_equiv));
       //move_from_white_to_grey(cdr(cons_equiv));
       move_from_white_to_grey(cons_equiv);

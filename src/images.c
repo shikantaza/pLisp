@@ -273,7 +273,7 @@ void print_heap_representation(FILE *fp,
   }
   else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
   {
-    OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR cons_equiv = cons_equivalent(obj);
 
     OBJECT_PTR car_obj = car(cons_equiv);
     OBJECT_PTR cdr_obj = cdr(cons_equiv);
@@ -1764,7 +1764,7 @@ int serialize(OBJECT_PTR obj, char *file_name)
 
   if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
   {
-    OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR cons_equiv = cons_equivalent(obj);
 
     fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
     hashtable_put(hashtable, (void *)obj, (void *)  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK) );
@@ -1855,7 +1855,7 @@ void recompile_functions_and_macros()
 
     if(IS_FUNCTION2_OBJECT(car_val) || IS_MACRO2_OBJECT(car_val))
     {
-      OBJECT_PTR cons_equiv = ((car_val >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR cons_equiv = cons_equivalent(car_val);
       set_heap(val & POINTER_MASK, 0, compile_and_evaluate(car(cons_equiv)));
     }
 
@@ -1916,7 +1916,7 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
   }
   else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
   {
-    OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR cons_equiv = cons_equivalent(obj);
     replace_native_fn(car(cons_equiv), tcc_state1);
   }
   else if(IS_CONS_OBJECT(obj))

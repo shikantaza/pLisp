@@ -318,6 +318,8 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR);
 void add_native_fn_source(nativefn, char *);
 
 OBJECT_PTR cons_equivalent(OBJECT_PTR);
+OBJECT_PTR process_define(OBJECT_PTR);
+OBJECT_PTR process_set(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1786,35 +1788,12 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   //res = replace_macros(res);
   //res = handle_and_rest_applications(res, get_free_variables(res));
 
-  if(res != prev_res && IS_CONS_OBJECT(res) && car(res) == DEFINE)
+  if(res != prev_res && IS_CONS_OBJECT(res))
   {
-    if(!IS_SYMBOL_OBJECT(second(res)))
-    {
-      raise_error("Second argument to DEFINE should be a symbol");
-      return NIL;
-    }
-
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(second(res));
-
-    printf("%d\n", symbol_to_be_used);
-
-    //this is to prevent unmet dependecy error
-    //for recursive definitions
-    add_top_level_sym(symbol_to_be_used, cons(NIL, NIL));
-
-    OBJECT_PTR res1 = compile_and_evaluate(third(res));
-
-    add_top_level_sym(symbol_to_be_used, cons(res1, NIL));
-
-    update_dependencies(symbol_to_be_used, cons(res1, NIL));
-
-    if(update_references(symbol_to_be_used, res1))
-    {
-      raise_error("Update of reference to top level symbol failed");
-      return NIL;
-    }
-
-    return res1;
+    if(car(res) == DEFINE)
+      return process_define(res);
+    else if(car(res) == SET)
+      return process_set(res);
   }
 
   res = expand_bodies(res);
@@ -3241,19 +3220,7 @@ int repl2()
   delete_expression(g_expr);
   g_expr = NULL;
 
-  /* OBJECT_PTR cons_equiv; */
-  /* OBJECT_PTR fnn; */
-
-  /* print_object(idclo); printf(" --- "); */
-  /* cons_equiv = ((idclo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG; */
-  /* fnn = car(cons_equiv); */
-  /* print_object(fnn);printf("\n"); */
-
   gc(false, true);
-
-  /* print_object(idclo); printf(" --- "); */
-  /* cons_equiv = ((idclo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG; */
-  /* print_object(car(cons_equiv));printf("\n"); */
 
   return 0;
 }
@@ -3297,6 +3264,7 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp1, BOOLEAN handle_and_rest)
 
     if(!retval && IS_MACRO2_OBJECT(car(out)))
     {
+      //print_object(cons_equivalent(car(out)));printf("&&&\n");getchar();
       //print_object(apply_macro_or_fn(car(out), cdr(exp)));printf("&&&\n"); getchar();
       ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(exp)), true); }
     else
@@ -3418,9 +3386,7 @@ int update_references(OBJECT_PTR sym, OBJECT_PTR new_val)
         //print_object(clo);printf("\n");
         int pos = top_level_symbols[i].references[j].pos;
 
-        OBJECT_PTR cons_equiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
-
-        OBJECT_PTR rest = cons_equiv;
+        OBJECT_PTR rest = cons_equivalent(clo);
         int k=0;
 
         for(k=0; k<pos; k++)
@@ -3874,118 +3840,132 @@ OBJECT_PTR symbol_to_use(OBJECT_PTR sym)
   return symbol_to_be_used;
 }
 
+OBJECT_PTR process_define(OBJECT_PTR exp)
+{
+  OBJECT_PTR res;
+
+  if(!IS_SYMBOL_OBJECT(second(exp)))
+  {
+    raise_error("Second argument to DEFINE should be a symbol");
+    return NIL;
+  }
+
+  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+
+  OBJECT_PTR t1 = cons(NIL, NIL);
+
+  if(IS_CONS_OBJECT(third(exp)))
+  {
+    if(first(third(exp)) == LAMBDA)
+      t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG,
+                NIL);
+    else if(first(third(exp)) == MACRO)
+      t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG,
+                NIL);
+  }      
+
+  //to prevent unmet dependency error
+  //for recursive definitions
+  add_top_level_sym(symbol_to_be_used, t1);
+
+  res = third(exp);
+
+  //to handle &rest params for recursive definitions
+  if(IS_CONS_OBJECT(third(exp)) && 
+     (car(third(exp)) == LAMBDA || car(third(exp)) == MACRO))
+  {
+    int pos_of_and_rest = location_of_and_rest(second(third(exp)));
+    if(pos_of_and_rest != -1)
+    {
+      res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
+      record_and_rest_closure(symbol_to_be_used, pos_of_and_rest);
+    }
+  }
+
+  res = compile_and_evaluate(res);
+
+  //store the source of the function/macro as the
+  //last cell in the closure
+  if(IS_FUNCTION2_OBJECT(res) || IS_MACRO2_OBJECT(res))
+  {
+    BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
+    OBJECT_PTR cons_equiv = cons_equivalent(res);
+    uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
+    set_heap(ptr, 1, cons(third(exp), NIL));
+    res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
+  }
+
+  add_top_level_sym(symbol_to_be_used, cons(res, NIL));
+
+  update_dependencies(symbol_to_be_used, cons(res, NIL));
+
+  if(update_references(symbol_to_be_used, res))
+  {
+    raise_error("Update of reference to top level symbol failed");
+    return NIL;
+  }
+
+  return res;
+}
+
+OBJECT_PTR process_set(OBJECT_PTR exp)
+{
+  OBJECT_PTR res;
+
+  if(!IS_SYMBOL_OBJECT(second(exp)))
+  {
+    raise_error("Second argument to SET should be a symbol");
+    return NIL;
+  } 
+
+  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+
+  OBJECT_PTR out;
+  int retval = get_top_level_sym_value(symbol_to_be_used, &out);
+
+  if(retval)
+  {
+    char buf[200];
+    memset(buf, 200, '\0');
+    sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
+    raise_error(buf);
+    return NIL;
+  }
+
+  res = compile_and_evaluate(third(exp));
+
+  //store the source of the function/macro as the
+  //last cell in the closure
+  if(IS_FUNCTION2_OBJECT(res) || IS_MACRO2_OBJECT(res))
+  {
+    BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
+    OBJECT_PTR cons_equiv = cons_equivalent(res);
+    uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
+    set_heap(ptr, 1, cons(third(exp), NIL));
+    res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
+  }
+
+  add_top_level_sym(symbol_to_be_used, cons(res, NIL));     
+
+  update_dependencies(symbol_to_be_used, cons(res, NIL));
+
+  if(update_references(symbol_to_be_used, res))
+  {
+    raise_error("Update of reference to top level symbol failed");
+    return NIL;
+  }
+
+  return res;
+}
+
 OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
 {
   OBJECT_PTR res;
 
   if(car(exp) == DEFINE)
-  {
-    if(!IS_SYMBOL_OBJECT(second(exp)))
-    {
-      raise_error("Second argument to DEFINE should be a symbol");
-      return NIL;
-    }
-
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-
-    OBJECT_PTR t1 = cons(NIL, NIL);
-
-    if(IS_CONS_OBJECT(third(exp)))
-    {
-      if(first(third(exp)) == LAMBDA)
-        t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG,
-                  NIL);
-      else if(first(third(exp)) == MACRO)
-        t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG,
-                  NIL);
-    }      
-
-    //to prevent unmet dependency error
-    //for recursive definitions
-    add_top_level_sym(symbol_to_be_used, t1);
-
-    res = third(exp);
-
-    //to handle &rest params for recursive definitions
-    if(IS_CONS_OBJECT(third(exp)) && 
-       (car(third(exp)) == LAMBDA || car(third(exp)) == MACRO))
-    {
-      int pos_of_and_rest = location_of_and_rest(second(third(exp)));
-      if(pos_of_and_rest != -1)
-      {
-        res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
-        record_and_rest_closure(symbol_to_be_used, pos_of_and_rest);
-      }
-    }
-
-    res = compile_and_evaluate(res);
-
-    //store the source of the function/macro as the
-    //last cell in the closure
-    if(IS_FUNCTION2_OBJECT(res) || IS_MACRO2_OBJECT(res))
-    {
-      BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
-      OBJECT_PTR cons_equiv = ((res >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
-      uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
-      set_heap(ptr, 1, cons(third(exp), NIL));
-      res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
-    }
-
-    add_top_level_sym(symbol_to_be_used, cons(res, NIL));
-
-    update_dependencies(symbol_to_be_used, cons(res, NIL));
-
-    if(update_references(symbol_to_be_used, res))
-    {
-      raise_error("Update of reference to top level symbol failed");
-      return NIL;
-    }
-  }
+    res = process_define(exp);
   else if(car(exp) == SET)
-  {
-    if(!IS_SYMBOL_OBJECT(second(exp)))
-    {
-      raise_error("Second argument to SET should be a symbol");
-      return NIL;
-    } 
-
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-
-    OBJECT_PTR out;
-    int retval = get_top_level_sym_value(symbol_to_be_used, &out);
-
-    if(retval)
-    {
-      char buf[200];
-      memset(buf, 200, '\0');
-      sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
-      raise_error(buf);
-      return NIL;
-    }
-
-    res = compile_and_evaluate(third(exp));
-
-    //store the source of the function/macro as the
-    //last cell in the closure
-    if(IS_FUNCTION2_OBJECT(res) || IS_MACRO2_OBJECT(res))
-    {
-      BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
-      OBJECT_PTR cons_equiv = ((res >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
-      uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
-      set_heap(ptr, 1, cons(third(exp), NIL));
-      res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
-    }
-
-    add_top_level_sym(symbol_to_be_used, cons(res, NIL));     
-
-    update_dependencies(symbol_to_be_used, cons(res, NIL));
-
-    if(update_references(symbol_to_be_used, res))
-    {
-      raise_error("Update of reference to top level symbol failed");
-      return NIL;
-    }
-  }
+    res = process_set(exp);
   else if(IS_SYMBOL_OBJECT(exp))
   {
     OBJECT_PTR out;

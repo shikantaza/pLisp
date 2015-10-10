@@ -1640,13 +1640,13 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
     }
     else if(IS_FUNCTION2_OBJECT(obj))
     {
-      OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR cons_equiv = cons_equivalent(obj);
       OBJECT_PTR cloned_cons = clone_object(cons_equiv);
       ret = ((cloned_cons >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
     }
     else if(IS_MACRO2_OBJECT(obj))
     {
-      OBJECT_PTR cons_equiv = ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+      OBJECT_PTR cons_equiv = cons_equivalent(obj);
       OBJECT_PTR cloned_cons = clone_object(cons_equiv);
       ret = ((cloned_cons >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
     }
@@ -1682,7 +1682,7 @@ OBJECT_PTR get_params_object(OBJECT_PTR obj)
     return get_heap(obj & POINTER_MASK, 1);
   else
   {
-    OBJECT_PTR cons_equiv = (obj >> (OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR cons_equiv = cons_equivalent(obj);
     OBJECT_PTR source = car(last_cell(cons_equiv));
     return second(source);
   }
@@ -1702,7 +1702,7 @@ OBJECT_PTR get_source_object(OBJECT_PTR obj)
     return get_heap(obj & POINTER_MASK, 3);
   else
   {
-    OBJECT_PTR cons_equiv = (obj >> (OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR cons_equiv = cons_equivalent(obj);
     OBJECT_PTR source = car(last_cell(cons_equiv));
     return CDDR(source);
   }
