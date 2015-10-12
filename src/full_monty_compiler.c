@@ -320,6 +320,8 @@ void add_native_fn_source(nativefn, char *);
 OBJECT_PTR cons_equivalent(OBJECT_PTR);
 OBJECT_PTR process_define(OBJECT_PTR);
 OBJECT_PTR process_set(OBJECT_PTR);
+
+OBJECT_PTR flatten(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -543,7 +545,10 @@ OBJECT_PTR concat(unsigned int count, ...)
   lst = (OBJECT_PTR)va_arg(ap, int);
 
   if(!IS_CONS_OBJECT(lst) && lst != NIL)
+  {
+    print_object(lst);printf("\n");
     assert(false);
+  }
 
   //to skip NILs
   while(lst == NIL)
@@ -687,7 +692,8 @@ OBJECT_PTR intersection(OBJECT_PTR lst1, OBJECT_PTR lst2)
 
 OBJECT_PTR partition(OBJECT_PTR ids, OBJECT_PTR exps)
 {
-  OBJECT_PTR mids = union1(1, map(mutating_ids, exps));
+  //OBJECT_PTR mids = union1(1, map(mutating_ids, exps));
+  OBJECT_PTR mids = flatten(union1(1, map(mutating_ids, exps)));
   return cons(intersection(ids, mids),
               difference(ids, mids));
 }
@@ -1843,11 +1849,11 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
     add_top_level_sym(first(lambda),
                       convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname)));
 
-    char source[1000];
-    memset(source, 1000, '\0');
+    char source[2000];
+    memset(source, 2000, '\0');
     build_c_string(lambda, source, true);
 
-    assert(strlen(source)<=1000);
+    assert(strlen(source)<=2000);
 
     add_native_fn_source((nativefn)tcc_get_symbol(tcc_state1, fname),
                          source);
@@ -2227,7 +2233,39 @@ OBJECT_PTR butlast(OBJECT_PTR lst)
   return ret;
 }
 
+OBJECT_PTR backquote2_internal(exp)
+{
+  if(is_atom(exp))
+    return list(2, LST, list(2, QUOTE, exp));
+  else if(car(exp) == COMMA)
+    return list(2, LST, CADR(exp));
+  else if(car(exp) == COMMA_AT)
+    return CADR(exp);
+  else
+    return list(2, LST, backquote2(exp));
+}
+
 OBJECT_PTR backquote2(OBJECT_PTR exp)
+{
+  if(is_atom(exp))
+    return exp;
+
+  OBJECT_PTR res = map(backquote2_internal, exp);
+  OBJECT_PTR ret = cons(CONCAT, NIL);
+  OBJECT_PTR rest = res;
+
+  while(rest != NIL)
+  {
+    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    set_heap(ptr, 1, cons(car(rest), NIL));
+    
+    rest = cdr(rest);
+  }
+
+  return ret;
+}
+
+OBJECT_PTR backquote2_old(OBJECT_PTR exp)
 {
   //print_object(exp);printf("\n"); getchar();
 
