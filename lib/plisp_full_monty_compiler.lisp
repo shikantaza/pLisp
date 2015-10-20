@@ -56,6 +56,17 @@
         nil
       (and ,@(cdr lst)))))
 
+(defmacro and1 (&rest lst)
+  (if (null lst)
+       t
+    (if (eq (length lst) 1)
+        (if (null (car lst))
+            nil
+          t)
+      `(if (not ,(car lst))
+           nil
+         (and1 ,@(cdr lst))))))
+
 (defmacro or (&rest lst)
   (if (null lst)
       nil

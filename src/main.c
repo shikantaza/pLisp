@@ -190,6 +190,9 @@ OBJECT_PTR EXTRACT_NATIVE_FN = (OBJECT_PTR)((115 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR CREATE_FN_CLOSURE = (OBJECT_PTR)((116 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR CONCAT            = (OBJECT_PTR)((117 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR GET_CONTINUATION  = (OBJECT_PTR)((118 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR THROW             = (OBJECT_PTR)((119 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR GET_EXCEPTION_HANDLER  = (OBJECT_PTR)((120 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ADD_EXCEPTION_HANDLER  = (OBJECT_PTR)((121 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -203,7 +206,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 34
+#define NOF_NON_SPECIAL_SYMBOLS 37
 
 char err_buf[500];
 
@@ -2171,6 +2174,10 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[116] = strdup("CREATE-FN-CLOSURE");
   packages[CORE_PACKAGE_INDEX].symbols[117] = strdup("CONCAT");
   packages[CORE_PACKAGE_INDEX].symbols[118] = strdup("GET-CONTINUATION");
+
+  packages[CORE_PACKAGE_INDEX].symbols[119] = strdup("THROW");
+  packages[CORE_PACKAGE_INDEX].symbols[120] = strdup("GET-EXCEPTION-HANDLER");
+  packages[CORE_PACKAGE_INDEX].symbols[121] = strdup("ADD-EXCEPTION-HANDLER");
 }
 
 int find_package(char* package_name)

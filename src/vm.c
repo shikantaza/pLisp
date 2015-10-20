@@ -207,6 +207,8 @@ extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR CONS_RETURN_NIL;
 
+extern exception_object;
+
 extern unsigned int refer(OBJECT_PTR);
 extern unsigned int constant(OBJECT_PTR);
 extern unsigned int assign(OBJECT_PTR);
@@ -536,6 +538,7 @@ void raise_error(char *err_str)
   reg_next_expression = NIL;
 
   in_error = true;
+  exception_object = cons(get_symbol_object("EXCEPTION"), get_string_object(err_str));
 }
 
 void print_stack()

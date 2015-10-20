@@ -58,6 +58,8 @@ native_fn_src_mapping_t *native_fn_sources = NULL;
 
 OBJECT_PTR most_recent_closure;
 OBJECT_PTR continuations_for_return;
+
+OBJECT_PTR exception_object, exception_handlers;
 //end of global variables
 
 //external variables
@@ -164,6 +166,10 @@ extern OBJECT_PTR CONCAT;
 
 extern OBJECT_PTR GET_CONTINUATION;
 
+extern OBJECT_PTR THROW;
+extern OBJECT_PTR GET_EXCEPTION_HANDLER;
+extern OBJECT_PTR ADD_EXCEPTION_HANDLER;
+
 extern unsigned int POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -182,6 +188,8 @@ extern BOOLEAN in_error;
 extern package_t *packages;
 
 extern int current_package;
+
+extern char **strings;
 //end of external variables
 
 //external functions
@@ -197,7 +205,8 @@ extern OBJECT_PTR primitive_error(OBJECT_PTR);
 extern OBJECT_PTR primitive_print(OBJECT_PTR);
 extern OBJECT_PTR primitive_setcar(OBJECT_PTR);
 extern OBJECT_PTR primitive_setcdr(OBJECT_PTR);
-extern OBJECT_PTR primitive_mult(OBJECT_PTR);
+extern OBJECT_PTR primitive_mult(OBJECT_PTR, ...);
+extern OBJECT_PTR primitive_div(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_equal(OBJECT_PTR);
 
 extern OBJECT_PTR apply_macro_or_fn(OBJECT_PTR, OBJECT_PTR);
@@ -254,6 +263,7 @@ extern OBJECT_PTR primitive_time(OBJECT_PTR);
 
 extern OBJECT_PTR primitive_env(OBJECT_PTR);
 extern OBJECT_PTR prim_expand_macro(OBJECT_PTR);
+extern OBJECT_PTR primitive_throw(OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -268,6 +278,8 @@ OBJECT_PTR cps_transform_error(OBJECT_PTR);
 OBJECT_PTR cps_transform_let(OBJECT_PTR);
 OBJECT_PTR cps_transform_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR cps_transform_return_from(OBJECT_PTR);
+OBJECT_PTR cps_transform_throw(OBJECT_PTR);
+OBJECT_PTR cps_transform_call_cc(OBJECT_PTR);
 OBJECT_PTR desugar_il(OBJECT_PTR);
 OBJECT_PTR closure_conv_transform(OBJECT_PTR);
 OBJECT_PTR range(int, int, int);
@@ -322,6 +334,12 @@ OBJECT_PTR process_define(OBJECT_PTR);
 OBJECT_PTR process_set(OBJECT_PTR);
 
 OBJECT_PTR flatten(OBJECT_PTR);
+
+void throw_exception1(char *, char *);
+OBJECT_PTR handle_exception();
+OBJECT_PTR add_exception_handler(OBJECT_PTR);
+unsigned int wrap_float(OBJECT_PTR);
+OBJECT_PTR convert_float_to_object1(unsigned int);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -693,7 +711,7 @@ OBJECT_PTR intersection(OBJECT_PTR lst1, OBJECT_PTR lst2)
 OBJECT_PTR partition(OBJECT_PTR ids, OBJECT_PTR exps)
 {
   //OBJECT_PTR mids = union1(1, map(mutating_ids, exps));
-  OBJECT_PTR mids = flatten(union1(1, map(mutating_ids, exps)));
+  OBJECT_PTR mids = flatten(flatten(union1(1, map(mutating_ids, exps))));
   return cons(intersection(ids, mids),
               difference(ids, mids));
 }
@@ -1361,6 +1379,10 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
   {
     if(car_exp == RETURN_FROM)
       return cps_transform_return_from(exp);
+    else if(car_exp == THROW)
+      return cps_transform_throw(exp);
+    else if(car_exp == CALL_CC1)
+      return cps_transform_call_cc(exp);
     else
       return cps_transform_primop(exp);
   }
@@ -1543,6 +1565,42 @@ OBJECT_PTR cps_transform_return_from(OBJECT_PTR exp)
                                   list(2,
                                        list(2, GET_CONTINUATION, i1),
                                        i2))))));
+}
+
+OBJECT_PTR cps_transform_throw(OBJECT_PTR exp)
+{
+  OBJECT_PTR ik = gensym();
+  OBJECT_PTR i1 = gensym();
+
+  return list(4,
+              LAMBDA,
+              list(1, ik),
+              list(2, SAVE_CONTINUATION, ik),
+              list(2,
+                   cps_transform(second(exp)),
+                   list(3,
+                        LAMBDA,
+                        list(1, i1),
+                        list(2,
+                             THROW,
+                             i1))));
+}
+
+OBJECT_PTR cps_transform_call_cc(OBJECT_PTR exp)
+{
+  OBJECT_PTR ik = gensym();
+  OBJECT_PTR i1 = gensym();
+
+  return list(4,
+              LAMBDA,
+              list(1,ik),
+              list(2, SAVE_CONTINUATION, ik),
+              list(2, 
+                   cps_transform(second(exp)),
+                   list(3,
+                        LAMBDA,
+                        list(1,i1),
+                        list(3,i1,ik,ik))));
 }
 
 BOOLEAN primop(OBJECT_PTR sym)
@@ -1849,11 +1907,11 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
     add_top_level_sym(first(lambda),
                       convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname)));
 
-    char source[2000];
-    memset(source, 2000, '\0');
+    char source[8000];
+    memset(source, 8000, '\0');
     build_c_string(lambda, source, true);
 
-    assert(strlen(source)<=2000);
+    assert(strlen(source)<=8000);
 
     add_native_fn_source((nativefn)tcc_get_symbol(tcc_state1, fname),
                          source);
@@ -2001,7 +2059,10 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == NEWLINE      ||
     sym == NOT          ||
     sym == RETURN_FROM  ||
-    sym == GET_CONTINUATION;
+    sym == GET_CONTINUATION ||
+    sym == THROW        ||
+    sym == GET_EXCEPTION_HANDLER ||
+    sym == ADD_EXCEPTION_HANDLER;
 }
 
 BOOLEAN string_array_op(OBJECT_PTR sym)
@@ -2386,7 +2447,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
     }
     else if(primop(var))
     {
-      char *s = (char *)malloc(20*sizeof(char));
+      char *s = (char *)malloc(40*sizeof(char));
       if(var == ADD)
         sprintf(s,"primitive_add");
       else if(var == SUB)
@@ -2425,6 +2486,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "primitive_list");
       else if(var == MULT)
         sprintf(s, "primitive_mult");
+      else if(var == DIV)
+        sprintf(s, "primitive_div");
       else if(var == EQ)
         sprintf(s, "primitive_equal");
       else if(var == CONCAT)
@@ -2513,6 +2576,12 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "primitive_eval");
       else if(var == GET_CONTINUATION)
         sprintf(s, "get_continuation");
+      else if(var == ADD_EXCEPTION_HANDLER)
+        sprintf(s, "add_exception_handler");
+      else if(var == GET_EXCEPTION_HANDLER)
+        sprintf(s, "get_exception_handler");
+      else if(var == THROW)
+        sprintf(s, "primitive_throw");
       else
       {
         print_object(var);
@@ -2532,7 +2601,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       if(IS_INTEGER_OBJECT(var))
         sprintf(s, "convert_int_to_object(%d)", get_int_value(var));
       else if(IS_FLOAT_OBJECT(var))
-        sprintf(s, "convert_float_to_object(%f)", get_float_value(var));
+        sprintf(s, "convert_float_to_object1(%d)", wrap_float(var));
       else
         sprintf(s, "%d", var);
 
@@ -2684,6 +2753,9 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       if(primop(car(exp)))
         primitive_call = true;
 
+      if(car(exp) == THROW)
+        len += sprintf(buf+len, "return ");
+
       char *var = extract_variable_string(car(exp), serialize_flag);
       len += sprintf(buf+len, "%s(", var);
       free(var);
@@ -2723,8 +2795,8 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
     if(!nested_call)
     {
       len += sprintf(buf+len, ";\n");
-      if(primitive_call || car(exp) == EXTRACT_NATIVE_FN)
-        len += sprintf(buf+len, "if(in_error_condition()==1)return 17;\n");
+      if((primitive_call && car(exp) != THROW) || car(exp) == EXTRACT_NATIVE_FN)
+        len += sprintf(buf+len, "if(in_error_condition()==1)return handle_exception();\n");
     }
   }
 
@@ -2735,8 +2807,10 @@ nativefn extract_native_fn(OBJECT_PTR closure)
 {
   if(!IS_FUNCTION2_OBJECT(closure) && !IS_MACRO2_OBJECT(closure))
   {
-    print_object(closure);
-    assert(false);
+    //print_object(closure);
+    //assert(false);
+    throw_exception1("EXCEPTION", "Attempt to invoke an object that is not a function or a macro");
+    return NULL;
   }
 
   //TODO: replace assert by a raise_error; also,
@@ -2758,6 +2832,11 @@ nativefn extract_native_fn(OBJECT_PTR closure)
   }
 
   return get_nativefn_value(nativefn_obj);
+}
+
+OBJECT_PTR get_exception_handler()
+{
+  return car(exception_handlers);
 }
 
 OBJECT_PTR get_continuation(OBJECT_PTR clo)
@@ -2830,6 +2909,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_setcdr",   primitive_setcdr);
   tcc_add_symbol(tcc_state, "primitive_list",     primitive_list);
   tcc_add_symbol(tcc_state, "primitive_mult",     primitive_mult);
+  tcc_add_symbol(tcc_state, "primitive_div",      primitive_div);
   tcc_add_symbol(tcc_state, "primitive_equal",    primitive_equal);
   tcc_add_symbol(tcc_state, "primitive_concat",   primitive_concat);
 
@@ -2886,10 +2966,15 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_eval",     full_monty_eval);
 
   tcc_add_symbol(tcc_state, "convert_int_to_object",    convert_int_to_object);
-  tcc_add_symbol(tcc_state, "convert_float_to_object",  convert_float_to_object);
+  tcc_add_symbol(tcc_state, "convert_float_to_object",  convert_float_to_object1);
 
   tcc_add_symbol(tcc_state, "set_most_recent_closure",  set_most_recent_closure);
   tcc_add_symbol(tcc_state, "get_continuation",         get_continuation);
+
+  tcc_add_symbol(tcc_state, "handle_exception",         handle_exception);
+  tcc_add_symbol(tcc_state, "add_exception_handler",    add_exception_handler);
+  tcc_add_symbol(tcc_state, "get_exception_handler",    get_exception_handler);
+  tcc_add_symbol(tcc_state, "primitive_throw",          primitive_throw);
 
   return tcc_state;
 }
@@ -2990,8 +3075,8 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
 
 TCCState *compile_functions(OBJECT_PTR lambda_forms)
 {
-  char str[65536];
-  memset(str, 32768, '\0');
+  char str[131072];
+  memset(str, 131072, '\0');
 
   unsigned int len = 0;
 
@@ -3006,7 +3091,7 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
     rest = cdr(rest);
   }
 
-  assert(len <= 65536);
+  assert(len <= 131072);
 
   //FILE *out = fopen("debug.c", "a");
   //fprintf(out, "%s\n", str);
@@ -3153,8 +3238,19 @@ OBJECT_PTR call_cc1(OBJECT_PTR clo)
 {
   nativefn fn = extract_native_fn(clo);
   if(!fn)
+  {
+    throw_exception1("EXCEPTION", "Argument to CALL-CC not a function object");
     return NIL;
-  return fn(clo, CADDR(saved_continuations), idclo);
+  }
+
+  print_object(saved_continuations);printf("\n");getchar();
+
+  if(cons_length(saved_continuations) == 1)
+    return fn(clo, car(saved_continuations), idclo);
+  else if(cons_length(saved_continuations) == 2)
+    return fn(clo, CADR(saved_continuations), idclo);
+  else
+    return fn(clo, CADDR(saved_continuations), idclo);
 }
 
 /* OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp) */
@@ -3215,6 +3311,9 @@ int repl2()
     saved_continuations = NIL;
     continuations_for_return = NIL;
     most_recent_closure = NIL;
+
+    exception_object = NIL;
+    exception_handlers = NIL;
 
     //idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 
@@ -3279,13 +3378,18 @@ OBJECT_PTR expand_macro_full_no_rest_handling(OBJECT_PTR exp)
   return expand_macro_full(exp, false);
 }
 
+OBJECT_PTR expand_macro_full_rest_handling(OBJECT_PTR exp)
+{
+  return expand_macro_full(exp, true);
+}
+
 OBJECT_PTR expand_macro_full(OBJECT_PTR exp1, BOOLEAN handle_and_rest)
 {
-  //print_object(exp1);printf("^^^\n");getchar();
+  //print_object(exp1);printf("^^^\n");//getchar();
 
   OBJECT_PTR exp = handle_and_rest ? handle_and_rest_applications(exp1, get_free_variables(exp1)) : exp1;
 
-  //print_object(exp);printf("^^^\n");getchar();
+  //print_object(exp);printf("^^^\n");//getchar();
 
   OBJECT_PTR ret;
 
@@ -3302,13 +3406,16 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp1, BOOLEAN handle_and_rest)
 
     if(!retval && IS_MACRO2_OBJECT(car(out)))
     {
+      //print_object(sym_to_use);printf(" ");print_object(cdr(exp));printf("\n");getchar();
       //print_object(cons_equivalent(car(out)));printf("&&&\n");getchar();
       //print_object(apply_macro_or_fn(car(out), cdr(exp)));printf("&&&\n"); getchar();
       ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(exp)), true); }
     else
+      //ret = map(expand_macro_full_no_rest_handling, exp);
       ret = map(expand_macro_full_no_rest_handling, exp);
   }
   else
+    //ret = map(expand_macro_full_no_rest_handling, exp);
     ret = map(expand_macro_full_no_rest_handling, exp);
 
   return ret;
@@ -3677,6 +3784,8 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
       {
         OBJECT_PTR val = car(rest);
 
+        val = handle_and_rest_applications(val, free_variables);
+
         uintptr_t ptr = last_cell(ret) & POINTER_MASK;
         set_heap(ptr, 1, cons(val, NIL));
 
@@ -3689,6 +3798,8 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
       if(rest != NIL)
       {
         val = macro_flag ? rest : concat(2, list(1, LST), rest);
+
+        val = handle_and_rest_applications(val, free_variables);
 
         uintptr_t ptr = last_cell(ret) & POINTER_MASK;
         set_heap(ptr, 1, cons(val, NIL));
@@ -4081,4 +4192,76 @@ inline OBJECT_PTR cons_equivalent(OBJECT_PTR obj)
   assert(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
 
   return ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+}
+
+OBJECT_PTR handle_exception()
+{
+  assert(exception_object != NIL);
+
+  if(exception_handlers == NIL)
+  {
+    char buf[200];
+    memset(buf, 200, '\0');
+
+    OBJECT_PTR desc_obj = cdr(exception_object);
+
+    sprintf(buf, "Uncaught exception %s: %s", get_symbol_name(car(exception_object)), 
+            is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
+    raise_error(buf);
+    in_error = false;
+    return NIL;
+  }
+
+  //since the exception is going to be handled
+  //by the exception handler, having in_error
+  //stay true will incorrectly signal
+  //that the code in the handler is signalling
+  //an error
+  in_error = false;
+
+  OBJECT_PTR h = car(exception_handlers);
+
+  assert(IS_FUNCTION2_OBJECT(h));
+
+  exception_handlers = cdr(exception_handlers);
+
+  nativefn fn = extract_native_fn(h);
+  assert(fn);
+
+  return fn(h, exception_object, idclo);  
+}
+
+void throw_exception1(char *excp_name, char *excp_str)
+{
+  in_error = true;
+  exception_object = cons(get_symbol_object(excp_name), get_string_object(excp_str));
+}
+
+OBJECT_PTR add_exception_handler(OBJECT_PTR handler)
+{
+  exception_handlers = cons(handler, exception_handlers);
+  return NIL;
+}
+
+//workaround for TCC issue with 
+//float literals in generated code
+
+union float_wrap
+{
+  unsigned int i;
+  float f;
+} ;
+
+unsigned int wrap_float(OBJECT_PTR float_obj)
+{
+  union float_wrap fw;
+  fw.f = get_float_value(float_obj);
+  return fw.i;
+}
+
+OBJECT_PTR convert_float_to_object1(unsigned int i)
+{
+  union float_wrap fw;
+  fw.i = i;
+  return convert_float_to_object(fw.f);
 }
