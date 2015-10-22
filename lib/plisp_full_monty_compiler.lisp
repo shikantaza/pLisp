@@ -92,6 +92,13 @@
       (cons (cons (car x) (car y))
 	    (cons-pair (cdr x) (cdr y)))))
 
+(defun length (lst)
+  (if (null lst)
+      0
+    (if (not (consp lst))
+        (error "Not a list")
+      (+ 1 (length (cdr lst))))))
+
 (defmacro progn (&rest body)
   (if (null body)
       nil
@@ -121,13 +128,6 @@
       (if (eq (caar y) x)
 	  (cadar y)
 	(assoc x (cdr y))))))
-
-(defun length (lst)
-  (if (null lst)
-      0
-    (if (not (consp lst))
-        (error "Not a list")
-      (+ 1 (length (cdr lst))))))
 
 (defun last (lst)
    (if (null (cdr lst))
@@ -204,22 +204,19 @@
 	  (set curr-min x)))
     curr-min))
 
+(defun exception (excp desc)
+  (cons excp desc))
+
 (defun curry (function &rest args)
   (if (not (closurep function)) (throw (exception 'arg-mismatch "First parameter to CURRY should be a closure"))
     (lambda (&rest more-args)
       (apply function (append args more-args)))))
 
-;(defmacro nconc (lst1 lst2)
-; `(set ,lst1 (append ,lst1 ,lst2)))
-
-(defun concat (lst &rest lists)
-  (let ((result (clone lst)))
-    (dolist (x lists)
-      (set result (append result x)))
-    result))
-
 (defmacro nconc (lst &rest lists)
   `(set ,lst (concat ,lst ,@lists)))
+
+(defmacro neq (v1 v2)
+  `(not (eq ,v1 ,v2)))
 
 (defun remove (e lst count)
   (if (null lst)
@@ -253,16 +250,6 @@
 	  (set result (append result (list x)))
 	  ()))
     result))
-
-(defmacro labels (decls &rest body)
-  (let ((f (lambda (decl)
-             (cons (nth 0 decl)
-                   (list (list 'rec (nth 0 decl)
-                               (list 'lambda
-                                     (nth 1 decl)
-                                     (nth 2 decl))))))))
-    `(let ,(map f decls)
-       ,@body)))
 
 (defmacro first (lst)
   `(car ,lst))
@@ -393,9 +380,6 @@
 
 (define exception-handlers nil)
 
-(defun exception (excp desc)
-  (cons excp desc))
-
 (defun concat-strings (str1 str2)
   (let ((l1 (array-length str1))
         (l2 (array-length str2)))
@@ -423,7 +407,7 @@
                                                        (cc (progn ,finally-clause
                                                                   ,(caddr exception-clause))))
                                                      exception-handlers))
-                       (set ret ,body )
+                       (set ret ,body)
                        ,finally-clause
                        ret)))))
 

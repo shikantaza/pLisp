@@ -102,7 +102,7 @@ OBJECT_PTR primitive_add(OBJECT_PTR count1, ...)
     }
     else
     {
-      raise_error("Arguments to ADD should be integers or floats");
+      throw_exception1("INVALID-ARGUMENT", "Arguments to ADD should be integers or floats");
       return NIL;
     }
   }
@@ -126,7 +126,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
 
   if(count < 2)
   {
-    raise_error("'-' requires at least two arguments");
+    throw_exception1("ARG-MISMATCH", "'-' requires at least two arguments");
     return NIL;
   }
 
@@ -143,7 +143,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
     int_res = get_int_value(first_arg);
   else
   {
-    raise_error("Invalid argument for '-' operator");
+    throw_exception1("INVALID-ARGUMENT", "Invalid argument for '-' operator");
     return NIL;
   }
 
@@ -171,7 +171,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
     }
     else
     {
-      raise_error("Invalid argument for '-' operator");
+      throw_exception1("INVALID-ARGUMENT", "Invalid argument for '-' operator");
       return NIL;
     }    
   }
@@ -187,7 +187,7 @@ OBJECT_PTR primitive_lt(OBJECT_PTR v1, OBJECT_PTR v2)
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
 
   {
-    raise_error("Arguments to < should be integers or floats");
+    throw_exception1("INVALID-ARGUMENT", "Arguments to < should be integers or floats");
     return NIL;
   }
 
@@ -232,7 +232,7 @@ OBJECT_PTR primitive_setcar(OBJECT_PTR obj, OBJECT_PTR val)
 {
   if(!(IS_CONS_OBJECT(obj)))
   {
-    raise_error("First argument to SETCAR should be a CONS object");
+    throw_exception1("NOT-A-CONS", "First argument to SETCAR should be a CONS object");
     return NIL;
   }
 
@@ -245,7 +245,7 @@ OBJECT_PTR primitive_setcdr(OBJECT_PTR obj, OBJECT_PTR val)
 {
   if(!(IS_CONS_OBJECT(obj)))
   {
-    raise_error("First argument to SETCDR should be a CONS object");
+    throw_exception1("NOT-A-CONS", "First argument to SETCDR should be a CONS object");
     return NIL;
   }
 
@@ -293,7 +293,7 @@ OBJECT_PTR primitive_mult(OBJECT_PTR count1, ...)
 
   if(count < 2)
   {
-    raise_error("Operator '*' requires at least two arguments");
+    throw_exception1("ARG-MISMATCH", "Operator '*' requires at least two arguments");
     return NIL;
   }
 
@@ -312,7 +312,7 @@ OBJECT_PTR primitive_mult(OBJECT_PTR count1, ...)
       prod *= get_int_value(arg);
     else
     {
-      raise_error("Argument to operator '*' should be a number");
+      throw_exception1("INVALID-ARGUMENT", "Argument to operator '*' should be a number");
       return 1;
     }
   }
@@ -339,7 +339,7 @@ OBJECT_PTR primitive_div(OBJECT_PTR count1, ...)
 
   if(count < 2)
   {
-    raise_error("Operator '/' requires at least two arguments");
+    throw_exception1("ARG-MISMATCH", "Operator '/' requires at least two arguments");
     return NIL;
   }
 
@@ -356,7 +356,7 @@ OBJECT_PTR primitive_div(OBJECT_PTR count1, ...)
     val = get_int_value(first);
   else
   {
-    raise_error("Argument to operator '/' should be a number");
+    throw_exception1("INVALID-ARGUMENT", "Argument to operator '/' should be a number");
     return NIL;
   }
 
@@ -373,14 +373,14 @@ OBJECT_PTR primitive_div(OBJECT_PTR count1, ...)
       prod *= get_int_value(arg);
     else
     {
-      raise_error("Argument to operator '/' should be a number");
+      throw_exception1("INVALID-ARGUMENT", "Argument to operator '/' should be a number");
       return NIL;
     }    
   }
 
   if(prod == 0)
   {
-    throw_exception1("EXCEPTION", "Division by zero");
+    throw_exception1("DIV-BY-ZERO-EXCEPTION", "Division by zero");
     return NIL;
   }
 
@@ -459,7 +459,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
   if(!IS_CONS_OBJECT(lst) && lst != NIL)
   {
-    raise_error("Invalid argument to CONCAT");
+    throw_exception1("INVALID-ARGUMENT", "Invalid argument to CONCAT");
     return NIL;
   }
 
@@ -475,7 +475,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
     if(!IS_CONS_OBJECT(lst) && lst != NIL)
     {
-      raise_error("Invalid argument to CONCAT");
+      throw_exception1("INVALID-ARGUMENT", "Invalid argument to CONCAT");
       return NIL;
     }
   }
@@ -491,7 +491,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
     if(!IS_CONS_OBJECT(lst))
     {
-      raise_error("Invalid argument to CONCAT");
+      throw_exception1("INVALID-ARGUMENT", "Invalid argument to CONCAT");
       return NIL;
     }
 
@@ -521,7 +521,7 @@ OBJECT_PTR primitive_car(OBJECT_PTR obj)
   if(obj != NIL && !IS_CONS_OBJECT(obj))
   {
     print_object(obj);
-    raise_error("Argument to CAR must be a CONS object");
+    throw_exception1("NOT-A-CONS", "Argument to CAR must be a CONS object");
     return NIL;
   }
   return car(obj);
@@ -535,7 +535,7 @@ OBJECT_PTR primitive_gt(OBJECT_PTR v1, OBJECT_PTR v2)
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
 
   {
-    raise_error("Arguments to > should be integers or floats");
+    throw_exception1("INVALID-ARGUMENT", "Arguments to > should be integers or floats");
     return NIL;
   }
 
@@ -560,7 +560,7 @@ OBJECT_PTR primitive_geq(OBJECT_PTR v1, OBJECT_PTR v2)
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
 
   {
-    raise_error("Arguments to >= should be integers or floats");
+    throw_exception1("INVALID-ARGUMENT", "Arguments to >= should be integers or floats");
     return NIL;
   }
 
@@ -585,7 +585,7 @@ OBJECT_PTR primitive_leq(OBJECT_PTR v1, OBJECT_PTR v2)
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
 
   {
-    raise_error("Arguments to <= should be integers or floats");
+    throw_exception1("INVALID-ARGUMENT", "Arguments to <= should be integers or floats");
     return NIL;
   }
 
@@ -611,7 +611,7 @@ OBJECT_PTR prim_symbol_value(OBJECT_PTR sym)
 {
   if(!IS_SYMBOL_OBJECT(sym))
   {
-    raise_error("Argument to SYMBOL-VALUE must be a symbol");
+    throw_exception1("INVALID-ARGUMENT", "Argument to SYMBOL-VALUE must be a symbol");
     return NIL;
   }
 
@@ -630,7 +630,7 @@ OBJECT_PTR primitive_apply(OBJECT_PTR obj, OBJECT_PTR args)
 {
   if(!IS_FUNCTION2_OBJECT(obj))
   {
-    raise_error("First argument to APPLY should be a function");
+    throw_exception1("INVALID-ARGUMENT", "First argument to APPLY should be a function");
     return NIL;
   }
 
@@ -648,7 +648,7 @@ OBJECT_PTR primitive_apply(OBJECT_PTR obj, OBJECT_PTR args)
 
       if(cons_length(rest) < pos)
       {
-        raise_error("Number of parameters to the function less than the number of fixed parameters");
+        throw_exception1("ARG-MISMATCH", "Number of parameters to the function less than the number of fixed parameters");
         return NIL;
       }
 
@@ -702,7 +702,7 @@ OBJECT_PTR primitive_symbol(OBJECT_PTR str)
 {
   if(!IS_STRING_LITERAL_OBJECT(str) && !is_string_object(str))
   {
-    raise_error("SYMBOL needs one argument, a string object/literal");
+    throw_exception1("INVALID-ARGUMENT", "SYMBOL needs one argument, a string object/literal");
     return NIL;
   }
 
@@ -735,7 +735,7 @@ OBJECT_PTR prim_symbol_name(OBJECT_PTR sym)
 
   if(!IS_SYMBOL_OBJECT(sym))
   {
-    raise_error("Parameter to SYMBOL-NAME should be a symbol object");
+    throw_exception1("INVALID-ARGUMENT", "Parameter to SYMBOL-NAME should be a symbol object");
     return NIL;
   }
 
@@ -758,19 +758,19 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
 
   if(count < 2)
   {
-    raise_error("FORMAT requires at least two arguments, a file descriptor and a format specification string");
+    throw_exception1("ARG-MISMATCH", "FORMAT requires at least two arguments, a file descriptor and a format specification string");
     return NIL;
   }
 
   if(fd != NIL && !IS_INTEGER_OBJECT(fd))
   {
-    raise_error("First parameter to FORMAT must be NIL or an integer denoting a file descriptor");
+    throw_exception1("INVALID-ARGUMENT", "First parameter to FORMAT must be NIL or an integer denoting a file descriptor");
     return NIL;
   }
 
   if(!IS_STRING_LITERAL_OBJECT(spec) && !is_string_object(spec))
   {
-    raise_error("Second parameter to FORMAT must be a format specification string");
+    throw_exception1("INVALID-ARGUMENT", "Second parameter to FORMAT must be a format specification string");
     return NIL;
   }
 
@@ -786,7 +786,7 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
          IS_STRING_LITERAL_OBJECT(val) ||
          is_string_object(val)))
     {
-      raise_error("Parameters to FORMAT should be integers, floats, characters or strings");
+      throw_exception1("INVALID-ARGUMENT", "Parameters to FORMAT should be integers, floats, characters or strings");
       return NIL;
     }
 
@@ -807,7 +807,7 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
   {
     if(format(ret) == -1)
     {
-      raise_error("FORMAT error");
+      throw_exception1("EXCEPTION", "FORMAT error");
       return NIL;
     }
   }
@@ -817,7 +817,7 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
     {
       if(format_for_gui(ret) == -1)
       {
-        raise_error("FORMAT error");
+        throw_exception1("EXCEPTION", "FORMAT error");
 	return NIL;
       }
     }
@@ -841,7 +841,7 @@ OBJECT_PTR primitive_unbind(OBJECT_PTR sym)
 {
   if(!IS_SYMBOL_OBJECT(sym))
   {
-    raise_error("Argument to UNBIND must be a symbol");
+    throw_exception1("INVALID-ARGUMENT", "Argument to UNBIND must be a symbol");
     return NIL;
   }
 
@@ -852,13 +852,13 @@ OBJECT_PTR primitive_unbind(OBJECT_PTR sym)
 
   if(retval)
   {
-    raise_error("Symbol to be unbound does not exist");
+    throw_exception1("SYMBOL-NOT-BOUND", "Symbol to be unbound does not exist");
     return NIL;
   }
 
   if(remove_top_level_sym(sym) == NOT_OK)
   {
-    raise_error("Error unbinding symbol");
+    throw_exception1("EXCEPTION", "Error unbinding symbol");
     return NIL;
   }
 
@@ -869,7 +869,7 @@ OBJECT_PTR primitive_newline(OBJECT_PTR obj)
 {
   if(obj != NIL && !IS_INTEGER_OBJECT(obj))
   {
-    raise_error("NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
+    throw_exception1("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
     return;
   }
 
@@ -942,7 +942,7 @@ OBJECT_PTR primitive_string(OBJECT_PTR string_literal)
 {
   if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
   {
-    raise_error("Argument to STRING should be a literal string");
+    throw_exception1("INVALID-ARGUMENT", "Argument to STRING should be a literal string");
     return NIL;
   }        
  
@@ -961,7 +961,7 @@ OBJECT_PTR prim_make_array(OBJECT_PTR count1, OBJECT_PTR size, ...)
 
   if((!(IS_INTEGER_OBJECT(size))))
   {
-    raise_error("First argument to MAKE-ARRAY should be the size of the array (integer)");
+    throw_exception1("INVALID-ARGUMENT", "First argument to MAKE-ARRAY should be the size of the array (integer)");
     return NIL;
   }        
 
@@ -977,13 +977,13 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
 
   if((!(IS_ARRAY_OBJECT(array_obj))))
   {
-    raise_error("First argument to ARRAY-SET should be an array");
+    throw_exception1("INVALID-ARGUMENT", "First argument to ARRAY-SET should be an array");
     return NIL;
   }        
 
   if((!(IS_INTEGER_OBJECT(idx))))
   {
-    raise_error("Second argument to ARRAY-SET should be an integer (index into the array)");
+    throw_exception1("INVALID-ARGUMENT", "Second argument to ARRAY-SET should be an integer (index into the array)");
     return 1;
   }        
 
@@ -1011,7 +1011,7 @@ OBJECT_PTR prim_array_get(OBJECT_PTR array_obj, OBJECT_PTR idx)
 
   if(!IS_INTEGER_OBJECT(idx))
   {
-    raise_error("Second argument to ARRAY-GET should be an integer (index into the array)");
+    throw_exception1("INVALID-ARGUMENT", "Second argument to ARRAY-GET should be an integer (index into the array)");
     return NIL;
   }        
 
@@ -1023,7 +1023,7 @@ OBJECT_PTR prim_array_get(OBJECT_PTR array_obj, OBJECT_PTR idx)
 
     if(index < 0 || index >= strlen(str))
     {
-      raise_error("Array index out of bounds");
+      throw_exception1("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
       return NIL;
     }        
 
@@ -1035,7 +1035,7 @@ OBJECT_PTR prim_array_get(OBJECT_PTR array_obj, OBJECT_PTR idx)
 
     if(!IS_ARRAY_OBJECT(array_obj))
     {
-      raise_error("First argument to ARRAY-GET should be an array");
+      throw_exception1("INVALID-ARGUMENT", "First argument to ARRAY-GET should be an array");
       return NIL;
     }        
 
@@ -1043,7 +1043,7 @@ OBJECT_PTR prim_array_get(OBJECT_PTR array_obj, OBJECT_PTR idx)
 
     if(index < 0 || (index >= array_len))
     {
-      raise_error("Array index out of bounds");
+      throw_exception1("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
       return NIL;
     }        
 
@@ -1057,31 +1057,31 @@ OBJECT_PTR prim_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR array_l
 
   if(!(IS_ARRAY_OBJECT(array)))
   {
-    raise_error("First argument to SUB-ARRAY should be an ARRAY object");
+    throw_exception1("INVALID-ARGUMENT", "First argument to SUB-ARRAY should be an ARRAY object");
     return NIL;
   }
 
   if(!(IS_INTEGER_OBJECT(start)))
   {
-    raise_error("Second argument to SUB-ARRAY should be an integer (start index)");
+    throw_exception1("INVALID-ARGUMENT", "Second argument to SUB-ARRAY should be an integer (start index)");
     return NIL;
   }
 
   if(!(get_int_value(start) >= 0))
   {
-    raise_error("Second argument to SUB-ARRAY should be a non-negative integer");
+    throw_exception1("INVALID-ARGUMENT", "Second argument to SUB-ARRAY should be a non-negative integer");
     return NIL;
   }
 
   if(!(IS_INTEGER_OBJECT(array_length)))
   {
-    raise_error("Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
+    throw_exception1("INVALID-ARGUMENT", "Third argument to SUB-ARRAY should be an integer (length of the sub-array)");
     return NIL;
   }
 
   if(!(get_int_value(array_length) >= 0))
   {
-    raise_error("Third argument to SUB-ARRAY should be a non-negative integer");
+    throw_exception1("INVALID-ARGUMENT", "Third argument to SUB-ARRAY should be a non-negative integer");
     return NIL;
   }
 
@@ -1089,7 +1089,7 @@ OBJECT_PTR prim_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR array_l
 
   if((get_int_value(start) + get_int_value(array_length)) > len)
   {
-    raise_error("Range (start, length) for SUB-ARRAY out of bounds of the array");
+    throw_exception1("INDEX-OUT-OF-BOUNDS", "Range (start, length) for SUB-ARRAY out of bounds of the array");
     return NIL;
   }
 
@@ -1107,7 +1107,7 @@ OBJECT_PTR prim_array_length(OBJECT_PTR array)
   {
     if(!(IS_ARRAY_OBJECT(array)))
     {
-      raise_error("Argument to ARRAY-LENGTH should be an ARRAY object");
+      throw_exception1("INVALID-ARGUMENT", "Argument to ARRAY-LENGTH should be an ARRAY object");
       return NIL;
     }
 
@@ -1120,7 +1120,7 @@ OBJECT_PTR prim_print_string(OBJECT_PTR str)
 {
   if(!(is_string_object(str)) && (!(IS_STRING_LITERAL_OBJECT(str))))
   {
-    raise_error("Argument to PRINT_STRING should be a string object");
+    throw_exception1("INVALID-ARGUMENT", "Argument to PRINT_STRING should be a string object");
     return NIL;
   }
 
@@ -1138,13 +1138,13 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 
   if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
   {
-    raise_error("Argument to LOAD-FOREIGN-LIBRARY should be a string object denoting the library name");
+    throw_exception1("INVALID-ARGUMENT", "Argument to LOAD-FOREIGN-LIBRARY should be a string object denoting the library name");
     return NIL;
   }
 
   if(nof_dl_handles == MAX_FOREIGN_LIBRARY_COUNT)
   {
-    raise_error("Maximum number of foreign libraries has been exceeded");
+    throw_exception1("EXCEPTION", "Maximum number of foreign libraries has been exceeded");
     return NIL;
   }
 
@@ -1154,7 +1154,7 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 
   if(temp == NULL)
   {
-    raise_error("Unable to extend memory for dl_handles");
+    throw_exception1("OUT-OF-MEMORY", "Unable to extend memory for dl_handles");
     return NIL;
   }
 
@@ -1166,7 +1166,7 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 
   if(!ret)
   {
-    raise_error("dl_open() failed");
+    throw_exception1("EXCEPTION", "dl_open() failed");
     return NIL;
   }
 
@@ -1183,7 +1183,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 
   if(!IS_STRING_LITERAL_OBJECT(fn_name) && !is_string_object(fn_name))
   {
-    raise_error("First argument to CALL-FOREIGN-FUNCTION should be the funtion name (string)");
+    throw_exception1("INVALID-ARGUMENT", "First argument to CALL-FOREIGN-FUNCTION should be the funtion name (string)");
     return NIL;
   }
 
@@ -1195,13 +1195,13 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
        /* ret_type == FLOAT_POINTER || */
        ret_type == CHAR_POINTER))
   {
-    raise_error("Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
+    throw_exception1("INVALID-ARGUMENT", "Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
     return NIL;
   }
 
   if(args != NIL && !IS_CONS_OBJECT(args))
   {
-    raise_error("Arguments should be a list of two-element lists (argument, type) -- 1");
+    throw_exception1("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 1");
     return NIL;
   }
 
@@ -1215,13 +1215,13 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 
     if(!IS_CONS_OBJECT(car_rest_args))
     {
-      raise_error("Arguments should be a list of two-element lists (argument, type) -- 2");
+      throw_exception1("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 2");
       return NIL;
     }
 
     if(cons_length(car_rest_args) != 2)
     {
-      raise_error("Arguments should be a list of two-element lists (argument, type) -- 3");
+      throw_exception1("INVALID-ARGUMENT", "Arguments should be a list of two-element lists (argument, type) -- 3");
       return NIL;
     }
 
@@ -1234,7 +1234,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	 is_string_object(val)         ||
 	 IS_SYMBOL_OBJECT(val)))
       {
-	raise_error("Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
+	throw_exception1("INVALID-ARGUMENT", "Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
 	return NIL;
       }
 
@@ -1264,7 +1264,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     {
       if(!IS_INTEGER_OBJECT(val))
       {
-	raise_error("Argument type mismatch: integer expected");
+	throw_exception1("INVALID-ARGUMENT", "Argument type mismatch: integer expected");
 	return NIL;
       }
     }          
@@ -1272,7 +1272,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     {
       if(!IS_FLOAT_OBJECT(val))
       {
-	raise_error("Argument type mismatch: float expected");
+	throw_exception1("INVALID-ARGUMENT", "Argument type mismatch: float expected");
 	return NIL;
       }
     }
@@ -1280,7 +1280,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     {
       if(!IS_CHAR_OBJECT(val))
       {
-	raise_error("Argument type mismatch: character expected");
+	throw_exception1("INVALID-ARGUMENT", "Argument type mismatch: character expected");
 	return NIL;
       }
     }
@@ -1288,7 +1288,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     {
       if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
       {
-	raise_error("Argument type mismatch: string object/literal expected");
+	throw_exception1("INVALID-ARGUMENT", "Argument type mismatch: string object/literal expected");
 	return NIL;
       }
     }
@@ -1296,7 +1296,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     {
       if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
       {
-	raise_error("Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
+	throw_exception1("INVALID-ARGUMENT", "Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
 	return NIL;
       }
     }
@@ -1304,13 +1304,13 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     {
       if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
       {
-	raise_error("Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
+	throw_exception1("INVALID-ARGUMENT", "Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
 	return NIL;
       }
     }
     else
     {
-      raise_error("call_foreign_function(): non-primitive object type not handled");
+      throw_exception1("INVALID-ARGUMENT", "call_foreign_function(): non-primitive object type not handled");
       return NIL;
     }
 
@@ -1326,7 +1326,7 @@ OBJECT_PTR prim_create_pkg(OBJECT_PTR package)
 
   if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
   {
-    raise_error("CREATE-PACKAGE requires a string object or string literal as its argument");
+    throw_exception1("INVALID-ARGUMENT", "CREATE-PACKAGE requires a string object or string literal as its argument");
     return NIL;
   }
 
@@ -1334,7 +1334,7 @@ OBJECT_PTR prim_create_pkg(OBJECT_PTR package)
 
   if(find_package(package_name) != NOT_FOUND)
   {
-    raise_error("Package already exists");
+    throw_exception1("PACKAGE-ALREADY-EXISTS", "Package already exists");
     return NIL;
   }
 
@@ -1349,7 +1349,7 @@ OBJECT_PTR prim_in_package(OBJECT_PTR package)
 
   if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
   {
-    raise_error("IN-PACKAGE requires a string object or string literal as its argument");
+    throw_exception1("INVALID-ARGUMENT", "IN-PACKAGE requires a string object or string literal as its argument");
     return NIL;
   }
 
@@ -1357,7 +1357,7 @@ OBJECT_PTR prim_in_package(OBJECT_PTR package)
 
   if(!strcmp(package_name,"CORE"))
   {
-    raise_error("Core package cannot be updated");
+    throw_exception1("ACCESS-VIOLATION", "Core package cannot be updated");
     return NIL;
   }
   else
@@ -1365,7 +1365,7 @@ OBJECT_PTR prim_in_package(OBJECT_PTR package)
     int index = find_package(package_name);
     if(index == NOT_FOUND)
     {
-      raise_error("Package does not exist");
+      throw_exception1("PACKAGE-NOT-FOUND", "Package does not exist");
       return NIL;
     }
     else
@@ -1384,7 +1384,7 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
   if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
   {
-    raise_error("EXPORT-PACKAGE requires a string object or string literal as its first argument");
+    throw_exception1("INVALID-ARGUMENT", "EXPORT-PACKAGE requires a string object or string literal as its first argument");
     return NIL;
   }
 
@@ -1392,7 +1392,7 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
   if(!IS_STRING_LITERAL_OBJECT(file) && !is_string_object(file))
   {
-    raise_error("EXPORT-PACKAGE requires a string object or string literal as its second argument");
+    throw_exception1("INVALID-ARGUMENT", "EXPORT-PACKAGE requires a string object or string literal as its second argument");
     return NIL;
   }
 
@@ -1400,7 +1400,7 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
   if(find_package(package_name) == NOT_FOUND)
   {
-    raise_error("Package does not exist");
+    throw_exception1("PACKAGE-NOT-FOUND", "Package does not exist");
     return NIL;
   }
 
@@ -1410,7 +1410,7 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
   if(!fp)
   {
-    raise_error("Unable to open file");
+    throw_exception1("FILE-OPEN-ERROR", "Unable to open file");
     return NIL;
   }
 
@@ -1525,7 +1525,7 @@ OBJECT_PTR primitive_time(OBJECT_PTR exp)
 
   if(in_error)
   {
-    raise_error("TIME failed");
+    throw_exception1("EXCEPTION", "TIME failed");
     return NIL;
   }
 
@@ -1548,7 +1548,7 @@ OBJECT_PTR prim_serialize(OBJECT_PTR obj, OBJECT_PTR file_name)
 {
   if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
   {
-    raise_error("Second argument to SAVE-OBJECT should be a string object or a string literal denoting the file name");
+    throw_exception1("INVALID-ARGUMENT", "Second argument to SAVE-OBJECT should be a string object or a string literal denoting the file name");
     return NIL;
   }
 
@@ -1564,7 +1564,7 @@ OBJECT_PTR prim_deserialize(OBJECT_PTR file_name)
 {
   if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
   {
-    raise_error("Argument to LOAD-OBJECT should be a string object or a string literal denoting the file name");
+    throw_exception1("INVALID-ARGUMENT", "Argument to LOAD-OBJECT should be a string object or a string literal denoting the file name");
     return NIL;
   }
 
@@ -1577,7 +1577,7 @@ OBJECT_PTR prim_deserialize(OBJECT_PTR file_name)
 
   if(ret == -1)
   {
-    raise_error("Error in LOAD-OBJECT");
+    throw_exception1("EXCEPTION", "Error in LOAD-OBJECT");
     return NIL;
   }
 
@@ -1598,7 +1598,7 @@ OBJECT_PTR prim_load_file(OBJECT_PTR file_name)
 
   if(!is_string_object(file_name) && (!IS_STRING_LITERAL_OBJECT(file_name)))
   {
-    raise_error("Argument to LOAD-FILE should be a string");
+    throw_exception1("INVALID-ARGUMENT", "Argument to LOAD-FILE should be a string");
     return NIL;
   }
 
@@ -1606,13 +1606,13 @@ OBJECT_PTR prim_load_file(OBJECT_PTR file_name)
 
   if(!temp)
   {
-    raise_error("LOAD-FILE unable to open file");
+    throw_exception1("FILE-OPEN-ERROR", "LOAD-FILE unable to open file");
     return NIL;
   }
 
   if(set_up_new_yyin(temp))
   {
-    raise_error("Unable to read from file");
+    throw_exception1("FILE-READ-ERROR", "Unable to read from file");
     return NIL;
   }
 
@@ -1630,7 +1630,7 @@ OBJECT_PTR prim_create_image(OBJECT_PTR file_name)
 {
   if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
   {
-    raise_error("Argument to CREATE-IMAGE should be a string object or a string literal denoting the file name of the image");
+    throw_exception1("INVALID-ARGUMENT", "Argument to CREATE-IMAGE should be a string object or a string literal denoting the file name of the image");
     return NIL;
   }
 
