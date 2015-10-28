@@ -27,6 +27,8 @@
 #include "plisp.h"
 #include "util.h"
 
+enum {WHITE, GREY, BLACK};
+
 extern OBJECT_PTR NIL;
 extern OBJECT_PTR TRUE;
 
@@ -236,6 +238,9 @@ OBJECT_PTR primitive_setcar(OBJECT_PTR obj, OBJECT_PTR val)
     return NIL;
   }
 
+  if(is_dynamic_memory_object(val))
+    insert_node(GREY, val);
+
   set_heap(obj & POINTER_MASK, 0, val);
 
   return val;
@@ -248,6 +253,9 @@ OBJECT_PTR primitive_setcdr(OBJECT_PTR obj, OBJECT_PTR val)
     throw_exception1("NOT-A-CONS", "First argument to SETCDR should be a CONS object");
     return NIL;
   }
+
+  if(is_dynamic_memory_object(val))
+    insert_node(GREY, val);
 
   set_heap(obj & POINTER_MASK, 1, val);
 
@@ -520,11 +528,22 @@ OBJECT_PTR primitive_car(OBJECT_PTR obj)
 {
   if(obj != NIL && !IS_CONS_OBJECT(obj))
   {
-    print_object(obj);
+    //print_object(obj);
     throw_exception1("NOT-A-CONS", "Argument to CAR must be a CONS object");
     return NIL;
   }
   return car(obj);
+}
+
+OBJECT_PTR primitive_cdr(OBJECT_PTR obj)
+{
+  if(obj != NIL && !IS_CONS_OBJECT(obj))
+  {
+    //print_object(obj);
+    throw_exception1("NOT-A-CONS", "Argument to CDR must be a CONS object");
+    return NIL;
+  }
+  return cdr(obj);
 }
 
 OBJECT_PTR primitive_gt(OBJECT_PTR v1, OBJECT_PTR v2)
@@ -895,7 +914,10 @@ OBJECT_PTR primitive_consp(OBJECT_PTR obj)
 
 OBJECT_PTR primitive_listp(OBJECT_PTR obj)
 {
-  return IS_CONS_OBJECT(obj) ? TRUE : NIL;
+  if(obj == NIL)
+    return TRUE;
+  else
+    return IS_CONS_OBJECT(obj) ? TRUE : NIL;
 }
 
 OBJECT_PTR primitive_integerp(OBJECT_PTR obj)
@@ -984,7 +1006,7 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
   if((!(IS_INTEGER_OBJECT(idx))))
   {
     throw_exception1("INVALID-ARGUMENT", "Second argument to ARRAY-SET should be an integer (index into the array)");
-    return 1;
+    return NIL;
   }        
 
   array_len = *((unsigned int *)ptr);
@@ -993,10 +1015,13 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
 
   if(index < 0 || (index >= array_len))
   {
-    raise_error( "Array index out of bounds");
-    return 1;
+    throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
+    return NIL;
   }        
  
+  if(is_dynamic_memory_object(val))
+    insert_node(GREY, val);
+
   set_heap(ptr, index + 1, val);
 
   return val;
@@ -1478,7 +1503,7 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
 OBJECT_PTR prim_expand_macro(OBJECT_PTR exp)
 {
-  return expand_macro_full(exp, true);
+  return expand_macro_full(exp, false);
 }
 
 OBJECT_PTR primitive_env(OBJECT_PTR dummy)

@@ -295,10 +295,10 @@ void initialize()
   debug_continuation = NIL;
   debug_env = NIL;
 
-  //CONS_NIL_NIL = cons(NIL, NIL);
-  //CONS_APPLY_NIL = cons(APPLY, NIL);
-  //CONS_HALT_NIL = cons(HALT, NIL);
-  //CONS_RETURN_NIL = cons(RETURN, NIL);
+  CONS_NIL_NIL = cons(NIL, NIL);
+  CONS_APPLY_NIL = cons(APPLY, NIL);
+  CONS_HALT_NIL = cons(HALT, NIL);
+  CONS_RETURN_NIL = cons(RETURN, NIL);
 
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 }
@@ -2161,11 +2161,11 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[105] = strdup("DOTIMES");
   packages[CORE_PACKAGE_INDEX].symbols[106] = strdup("DOLIST");
 
-  packages[CORE_PACKAGE_INDEX].symbols[107] = strdup("LET1");
+  packages[CORE_PACKAGE_INDEX].symbols[107] = strdup("LET2");
   packages[CORE_PACKAGE_INDEX].symbols[108] = strdup("DEFUN");
   packages[CORE_PACKAGE_INDEX].symbols[109] = strdup("DEFMACRO");
 
-  packages[CORE_PACKAGE_INDEX].symbols[110] = strdup("NTH");
+  packages[CORE_PACKAGE_INDEX].symbols[110] = strdup("NTH1");
   packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("CALL-CC1");
   packages[CORE_PACKAGE_INDEX].symbols[112] = strdup("MY-CONT-VAR");
   packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("SAVE-CONTINUATION");

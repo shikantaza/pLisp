@@ -28,6 +28,8 @@
 #include "util.h"
 #include "libtcc.h"
 
+#define MAX_C_SOURCE_SIZE 262144
+
 typedef struct binding
 {
   OBJECT_PTR key;
@@ -216,6 +218,7 @@ extern OBJECT_PTR primitive_concat(OBJECT_PTR, ...);
 
 extern OBJECT_PTR primitive_not(OBJECT_PTR);
 extern OBJECT_PTR primitive_car(OBJECT_PTR);
+extern OBJECT_PTR primitive_cdr(OBJECT_PTR);
 
 extern OBJECT_PTR primitive_atom(OBJECT_PTR);
 extern OBJECT_PTR prim_symbol_value(OBJECT_PTR);
@@ -296,7 +299,7 @@ void save_continuation(OBJECT_PTR);
 OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR create_closure(unsigned int, BOOLEAN, OBJECT_PTR, ...);
 nativefn extract_native_fn(OBJECT_PTR);
-OBJECT_PTR nth(OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR nth1(OBJECT_PTR, OBJECT_PTR);
 nativefn get_nativefn_value(OBJECT_PTR);
 OBJECT_PTR reverse(OBJECT_PTR);
 TCCState *create_tcc_state1();
@@ -304,7 +307,7 @@ TCCState *compile_functions(OBJECT_PTR);
 char *extract_variable_string(OBJECT_PTR, BOOLEAN);
 OBJECT_PTR call_cc1(OBJECT_PTR);
 OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
-OBJECT_PTR expand_macro_full(OBJECT_PTR);
+OBJECT_PTR expand_macro_full(OBJECT_PTR, BOOLEAN);
 OBJECT_PTR expand_bodies(OBJECT_PTR);
 OBJECT_PTR get_top_level_symbols();
 int add_reference_to_top_level_sym(OBJECT_PTR, int, OBJECT_PTR);
@@ -1306,7 +1309,7 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
     else
       return list(1, exp);
   }
-  else if(is_atom(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
     return NIL;
   else if(car_exp == QUOTE)
     return NIL;
@@ -1378,7 +1381,7 @@ OBJECT_PTR simplify_il_eta(OBJECT_PTR exp)
           first(third(exp)) != LET &&
           (IS_SYMBOL_OBJECT(first(third(exp))) ||
            (IS_CONS_OBJECT(first(third(exp))) &&
-            first(first(third(exp)) == LAMBDA))) &&
+            first(first(third(exp))) == LAMBDA)) &&
           second(exp) == CDDR(third(exp)) &&
           intersection(free_ids_il(first(third(exp))),
                        second(exp)) == NIL)
@@ -1884,8 +1887,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   //to top level macro objects should be
   //considered for the macro expansion
   OBJECT_PTR prev_res = res;
-  res = expand_macro_full(res);
-//print_object(res);printf("\n");getchar();
+  res = expand_macro_full(res, true);
+//print_object(res);printf("\n");//getchar();
 
   res = handle_and_rest_applications_for_functions(res);
 
@@ -1895,7 +1898,6 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 
   if(res != prev_res && IS_CONS_OBJECT(res))
   {
-    
     if(car(res) == DEFINE)
     {
       OBJECT_PTR r = process_define(res);
@@ -1928,7 +1930,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
                                           get_top_level_symbols(),
                                           //free_ids_il(exp)));
                                           get_free_variables(exp)));
-//print_object(res);printf("\n");getchar();
+//print_object(res);printf("\n");//getchar();
 
   res = translate_to_il(res);
 //print_object(res);printf("\n");getchar();
@@ -2212,7 +2214,7 @@ OBJECT_PTR range(int start, int end, int step)
   return ret;    
 }
 
-OBJECT_PTR nth(OBJECT_PTR n, OBJECT_PTR lst)
+OBJECT_PTR nth1(OBJECT_PTR n, OBJECT_PTR lst)
 {
   assert(IS_CONS_OBJECT(lst) || IS_FUNCTION2_OBJECT(lst) || IS_MACRO2_OBJECT(lst));
 
@@ -2229,14 +2231,14 @@ OBJECT_PTR nth(OBJECT_PTR n, OBJECT_PTR lst)
     if(i_val == 0)
       return car(lst1);
     else
-      return nth(convert_int_to_object(i_val-1), cdr(lst1));
+      return nth1(convert_int_to_object(i_val-1), cdr(lst1));
   }
 }
 
 OBJECT_PTR temp12(OBJECT_PTR x, OBJECT_PTR v1, OBJECT_PTR v2)
 {
   return list(2,
-              nth(x, v1),
+              nth1(x, v1),
               list(3,
                    NTH,
                    primitive_add(convert_int_to_object(2), x, convert_int_to_object(1)),
@@ -2513,7 +2515,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       else if(var == CAR)
         sprintf(s,"primitive_car");
       else if(var == CDR)
-        sprintf(s,"cdr");
+        sprintf(s,"primitive_cdr");
       else if(var == QUOTE)
         sprintf(s,"quote");
       else if(var == LT)
@@ -2944,7 +2946,7 @@ TCCState *create_tcc_state1()
 
   tcc_set_output_type(tcc_state, TCC_OUTPUT_MEMORY);
 
-  tcc_add_symbol(tcc_state, "nth",                nth);
+  tcc_add_symbol(tcc_state, "nth1",               nth1);
   tcc_add_symbol(tcc_state, "save_continuation",  save_continuation);
   tcc_add_symbol(tcc_state, "extract_native_fn",  extract_native_fn);
   tcc_add_symbol(tcc_state, "call_cc1",           call_cc1);
@@ -2952,6 +2954,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_add",      primitive_add);
   tcc_add_symbol(tcc_state, "primitive_sub",      primitive_sub);
   tcc_add_symbol(tcc_state, "primitive_car",      primitive_car);
+  tcc_add_symbol(tcc_state, "primitive_cdr",      primitive_cdr);
   tcc_add_symbol(tcc_state, "cdr",                cdr);
   tcc_add_symbol(tcc_state, "quote",              quote);
   tcc_add_symbol(tcc_state, "primitive_error",    primitive_error);
@@ -3133,8 +3136,8 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
 
 TCCState *compile_functions(OBJECT_PTR lambda_forms)
 {
-  char str[131072];
-  memset(str, 131072, '\0');
+  char str[MAX_C_SOURCE_SIZE];
+  memset(str, MAX_C_SOURCE_SIZE, '\0');
 
   unsigned int len = 0;
 
@@ -3149,9 +3152,9 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
     rest = cdr(rest);
   }
 
-  assert(len <= 131072);
+  assert(len <= MAX_C_SOURCE_SIZE);
 
-  //FILE *out = fopen("debug.c", "a");
+  //FILE *out = fopen("debug.c", "w");
   //fprintf(out, "%s\n", str);
   //fclose(out);
 
@@ -3431,17 +3434,17 @@ OBJECT_PTR quote_all_arguments(OBJECT_PTR exp)
   return map(temp14, exp);
 }
 
-/* OBJECT_PTR expand_macro_full_no_rest_handling(OBJECT_PTR exp) */
-/* { */
-/*   return expand_macro_full(exp, false); */
-/* } */
+OBJECT_PTR exp_macro_full(OBJECT_PTR exp)
+{
+  return expand_macro_full(exp, true);
+}
 
-/* OBJECT_PTR expand_macro_full_rest_handling(OBJECT_PTR exp) */
-/* { */
-/*   return expand_macro_full(exp, true); */
-/* } */
+OBJECT_PTR exp_macro_first_level(OBJECT_PTR exp)
+{
+  return expand_macro_full(exp, false);
+}
 
-OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
+OBJECT_PTR expand_macro_full(OBJECT_PTR exp, BOOLEAN full)
 {
   OBJECT_PTR ret;
 
@@ -3462,15 +3465,28 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp)
       uintptr_t ptr = last_cell(temp1) & POINTER_MASK;
       set_heap(ptr, 1, cdr(exp));        
 
-      OBJECT_PTR temp2 = handle_and_rest_applications_for_macros(temp1);
+      OBJECT_PTR temp2 = expand_bodies(handle_and_rest_applications_for_macros(temp1));
 
-      ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(temp2)));
+      if(full)
+        ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(temp2)), true);
+      else
+        ret = apply_macro_or_fn(car(out), cdr(temp2));
     }
     else
-      ret = map(expand_macro_full, exp);
+    {
+      if(full)
+        ret = map(exp_macro_full, exp);
+      else
+        ret = map(exp_macro_first_level, exp);
+    }
   }
   else
-    ret = map(expand_macro_full, exp);
+  {
+    if(full)
+      ret = map(exp_macro_full, exp);
+    else
+      ret = map(exp_macro_first_level, exp);
+  }
 
   return ret;
 }
@@ -3501,7 +3517,7 @@ OBJECT_PTR expand_body(OBJECT_PTR body)
   if(body == NIL)
     return NIL;
   else if(cons_length(body) == 1)
-    return car(body);
+    return expand_bodies(car(body));
   else
     return list(3,
                 LET,
@@ -3513,7 +3529,7 @@ OBJECT_PTR expand_bodies(OBJECT_PTR exp)
 {
   if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
     return exp;
-  else if(car(exp) == LAMBDA || car(exp) == MACRO)
+  else if(car(exp) == LAMBDA || car(exp) == MACRO || car(exp) == LET || car(exp) == LETREC)
     return list(3, first(exp), second(exp), expand_body(CDDR(exp)));
   else
     return cons(expand_bodies(car(exp)),
@@ -4153,7 +4169,7 @@ OBJECT_PTR reverse_sym_lookup(OBJECT_PTR obj)
   {
     if(top_level_symbols[i].delete_flag)
       continue;
-    else if(car(top_level_symbols[i].val) == obj)
+    else if(IS_CONS_OBJECT(top_level_symbols[i].val) && car(top_level_symbols[i].val) == obj)
       return top_level_symbols[i].sym;
   }
 
@@ -4302,7 +4318,7 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
 {
   OBJECT_PTR res;
 
-  if(car(exp) == DEFINE)
+  if(IS_CONS_OBJECT(exp) && car(exp) == DEFINE)
   {
     res = process_define(exp);
     if(in_error)
@@ -4311,7 +4327,7 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
       res = NIL;
     }
   }
-  else if(car(exp) == SET)
+  else if(IS_CONS_OBJECT(exp) && car(exp) == SET)
   {
     res = process_set(exp);
     if(in_error)

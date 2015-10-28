@@ -56,17 +56,6 @@
         nil
       (and ,@(cdr lst)))))
 
-(defmacro and1 (&rest lst)
-  (if (null lst)
-       t
-    (if (eq (length lst) 1)
-        (if (null (car lst))
-            nil
-          t)
-      `(if (not ,(car lst))
-           nil
-         (and1 ,@(cdr lst))))))
-
 (defmacro or (&rest lst)
   (if (null lst)
       nil
@@ -114,19 +103,34 @@
                         (progn ,@body (,f))))))
         (,f))))
 
-(defun map (f lst)
+;todo: include other special operators
+(defun is-sp-op (sym)
+  (or (eq sym 'car)
+      (eq sym 'cdr)
+      (eq sym 'cons)
+      (eq sym 'gensym)
+      (eq sym 'eval)))
+
+(defun map-internal (f lst)
   (if (null lst)
       nil
-    (cons (f (car lst)) (map f (cdr lst)))))
+    (cons (f (car lst)) (map-internal f (cdr lst)))))
+
+(defmacro map (f lst)
+  (if (is-sp-op f)
+      (let ((sym (gensym)))
+        `(let ((,sym (lambda (x) (,f x))))
+           (map-internal ,sym ,lst)))
+    `(map-internal ,f ,lst)))
 
 (defun assoc (x y)
-  (assert (listp y) "Second argument to ASSOC should be a list of CONS objects")
+  (assert (or (null y) (listp y)) "Second argument to ASSOC should be a list of CONS objects")
   (if (null y)
       nil
     (progn 
       (assert (consp (car y)) "Second argument to ASSOC should be a list of CONS objects")
       (if (eq (caar y) x)
-	  (cadar y)
+	  (cdar y)
 	(assoc x (cdr y))))))
 
 (defun last (lst)
@@ -135,9 +139,11 @@
       (last (cdr lst))))
 
 (defun remove-last (lst)
-  (if (eq (length lst) 1)
+  (if (null lst)
       nil
-      (cons (car lst) (remove-last (cdr lst)))))
+    (if (eq (length lst) 1)
+        nil
+      (cons (car lst) (remove-last (cdr lst))))))
 
 (defun reverse (lst)
   (if (null lst)
@@ -207,10 +213,32 @@
 (defun exception (excp desc)
   (cons excp desc))
 
-(defun curry (function &rest args)
-  (if (not (closurep function)) (throw (exception 'arg-mismatch "First parameter to CURRY should be a closure"))
-    (lambda (&rest more-args)
-      (apply function (append args more-args)))))
+(defmacro generate-syms (n)
+  `(map gensym (range 1 ,n 1)))
+
+(defmacro generate-wrapper (sp-op n)
+  `(let ((evaluated-n ,n))
+     (let ((params (generate-syms evaluated-n)))
+       (list 'lambda params (concat (list (quote ,sp-op)) params)))))
+
+(defmacro apply-sp-op (fn arglist)
+  `(let ((evaluated-arglist ,arglist))
+     (let ((len (length evaluated-arglist)))
+       (let ((wrapper (generate-wrapper ,fn len)))
+         (apply (eval wrapper) evaluated-arglist)))))
+
+(defmacro apply-reg-fn (fn arglist)
+  `(let ((evaluated-arglist ,arglist))
+     (apply ,fn evaluated-arglist)))
+
+(defmacro apply1 (fn arglist)
+  (if (is-sp-op fn)
+      `(apply-sp-op ,fn ,arglist)
+    `(apply-reg-fn ,fn , arglist)))
+
+(defmacro def-curry-fn (f1 f0 &rest args)
+  `(define ,f1 (lambda (&rest more-args)
+                 (apply ,f0 (append (list ,@args) more-args)))))
 
 (defmacro nconc (lst &rest lists)
   `(set ,lst (concat ,lst ,@lists)))
@@ -243,13 +271,18 @@
     (or (eq sym (car lst))
         (in sym (cdr lst)))))
 
-(defun remove-duplicates (lst equality-test)
+(defun rem-duplicates-internal (lst equality-test)
   (let ((result nil))
     (dolist (x lst)
       (if (not (find x result equality-test))
 	  (set result (append result (list x)))
 	  ()))
     result))
+
+(defmacro remove-duplicates (lst equality-test)
+  (if (eq equality-test 'eq)
+      `(rem-duplicates-internal ,lst (lambda (x y) (eq x y)))
+    `(rem-duplicates-internal ,lst ,equality-test)))
 
 (defmacro first (lst)
   `(car ,lst))
@@ -326,7 +359,8 @@
 	     (< (length lst) (+ start len))) (throw (exception 'INDEX-OUT-OF-BOUNDS "SUB-LIST specifies a range outside the list size")))
 	(t   (let ((res))
 	       (for (i start (< i (+ start len)) (incf i) res)
-		    (set res (append res (list (nth i lst)))))))))
+		    (set res (append res (list (nth i lst)))))
+               res))))
 
 (defun last-n (lst n)
   (sub-list lst (- (length lst) n) n))
@@ -336,32 +370,15 @@
   (assert (and (>= n 1) (<= n (length lst))) "Second argument to BUTLAST should be a positive integer less than or equal to the length of the list")
   (sub-list lst 0 (- (length lst) n)))
 
-(defun mapcar-old (f &rest lists)  
-  (let ((min-length (min (map length lists)))
-	(result nil)
-	(i 0))
-    (while (< i min-length)
-      (print result)
-      (break)
-      (set result (append result (list (apply f (map (curry nth i) lists)))))
-      (incf i))
-    result))
-
 (defun mapcar (f &rest lists)
   (if (eq (car lists) nil)
       nil
-    (cons (apply f (map car lists))
-          (apply mapcar (concat (list f) (map cdr lists))))))
-
-(defun flatten-old (lst)
-  (let ((flattened-list))
-    (dolist (x lst)
-      (set flattened-list (append flattened-list x)))
-    flattened-list))
+    (cons (apply1 f (map car lists))
+          (apply1 mapcar (concat (list f) (map cdr lists))))))
 
 (defun flatten (lst)
-  (apply concat (map (lambda (x)
-                       (if (listp x)
+  (apply append  (map (lambda (x)
+                        (if (listp x)
                            x
                          (list x)))
                      lst)))
@@ -390,16 +407,6 @@
         (array-set str (+ i l1) (array-get str2 i)))
       str)))
 
-(defun throw (e)
-  (if (null exception-handlers)
-      (let ((err-str (concat-strings "Uncaught exception: " (symbol-name (car e)))))
-        (error  (if (null (cdr e))
-                    err-str
-                  (concat-strings err-str (concat-strings ":" (cdr e))))))
-    (let ((h (car exception-handlers)))
-      (progn (set exception-handlers (cdr exception-handlers))
-             (h e)))))
-
 (defmacro try (body exception-clause finally-clause)
   `(call-cc (lambda (cc)
               (let ((ret))
@@ -419,19 +426,6 @@
   (if (or (null specs) (eq (length specs) 1))
       `(let ,specs ,@body)
     `(let (,(car specs)) (let1 ,(cdr specs) ,@body))))
-
-(defmacro beginold (&rest body)
-  (if (null body)
-      nil
-    `((lambda (,(gensym)) ,(cadr body)) ,(car body))))
-
-(defmacro begin (&rest body)
-  (if (null body)
-      nil
-    (if (eq (length body) 1)
-        (car body)
-      `(let ((,(gensym) ,(car body)))
-         (begin ,@(cdr body))))))
 
 (defun array-eq (a1 a2)
   (if (or (not (arrayp a1)) (not (arrayp a2)))
@@ -580,45 +574,6 @@
   (let ((ptr (car memory-block)))
     (call-foreign-function "free_memory" 'void '((ptr integer)))))
 
-(defun simplify (exp)
-  (cond ((null exp)
-	 nil)
-	((atom exp)
-	 exp)
-	(t (let ((operator (first exp)))
-	     (cond ((eq operator 'halt)
-		    '(halt))
-		   ((eq operator 'refer)
-		    (list 'refer (second exp) (simplify (first (third exp)))))
-		   ((eq operator 'constant)
-		    (list 'constant (second exp) (simplify (first (third exp)))))
-		   ((eq operator 'close)
-		    (list 'close (second exp) (simplify (first (third exp))) (simplify (first (fifth exp)))))
-		   ((eq operator 'macro)
-		    (list 'macro (second exp) (simplify (first (third exp))) (simplify (first (fifth exp)))))
-		   ((eq operator 'test)
-		    (list 'test (simplify (first (second exp))) (simplify (first (third exp)))))
-		   ((eq operator 'assign)
-		    (list 'assign (second exp) (simplify (first (third exp)))))
-		   ((eq operator 'define)
-		    (list 'define (second exp) (simplify (first (third exp)))))
-		   ((eq operator 'conti)
-		    (list 'conti (simplify (first (second exp)))))
-		   ((eq operator 'frame)
-		    (list 'frame (simplify (first (second exp))) (simplify (first (third exp)))))
-		   ((eq operator 'argument)
-		    (list 'argument (simplify (first (second exp)))))
-		   ((eq operator 'apply)
-		    '(apply))
-		   ((eq operator 'return)
-		    '(return))
-		   ((null operator)
-		    nil)
-		   (t (throw (exception operator))))))))
-
-(defmacro compile (exp)
-  `(simplify (compile1 ,exp nil)))
-
 (defmacro array (dims default-value)
   (if (eq (length dims) 1)
       `(make-array ,(car dims) ,default-value)
@@ -638,17 +593,6 @@
 
 (defmacro aref (a &rest indexes)
   `(build-ref ,a ,indexes))
-
-(defun expand-macro-full (exp)
-  (cond ((atom exp) exp)
-        ((and (symbolp (car exp))
-              (not (eq (car exp)
-                       'let))
-              (not (eq (car exp)
-                       'letrec))
-              (macrop (symbol-value (car exp)))) (expand-macro-full (expand-macro exp)))
-        (t (cons (expand-macro-full (car exp))
-                 (expand-macro-full (cdr exp))))))
 
 (load-file "lib/pos.lisp")
 
