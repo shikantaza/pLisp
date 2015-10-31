@@ -100,10 +100,15 @@ void set_focus_to_last_row(GtkTreeView *);
 
 void show_system_browser_window();
 
+void build_form_for_eval(GtkTextBuffer *);
+
 extern BOOLEAN in_error;
 
 extern OBJECT_PTR DEFUN;
 extern OBJECT_PTR DEFMACRO;
+
+extern unsigned nof_global_vars;
+extern global_var_mapping_t *top_level_symbols;
 
 char *form_for_eval;
 
@@ -901,6 +906,8 @@ void fetch_package_symbols()
 
     store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
 
+#ifdef INTERPRETER_MODE
+
     OBJECT_PTR rest = top_level_env;
 
     while(rest != NIL)
@@ -916,6 +923,25 @@ void fetch_package_symbols()
 
       rest = cdr(rest);
     }
+
+#else
+    int i;
+
+    for(i=0; i<nof_global_vars; i++)
+    {
+      if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+        continue;
+
+      OBJECT_PTR sym = top_level_symbols[i].sym;
+
+      if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+      {
+        gtk_list_store_append(store2, &iter2);
+        gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
+        gtk_list_store_set(store2, &iter2, 1, sym, -1);
+      }
+    }
+#endif
   }
 
   gtk_text_buffer_set_text(system_browser_buffer, "", -1);
@@ -949,13 +975,20 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
+#ifdef INTERPRETER_MODE
     OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
+#else
+    OBJECT_PTR out;
+    int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
+    assert(retval == 0);
+    OBJECT_PTR obj = car(out);
+#endif
 
     gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
     gtk_text_view_set_editable(system_browser_textview, FALSE);
 
-    if(IS_CLOSURE_OBJECT(obj))
+    if(IS_CLOSURE_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       /* print_object_to_string(cons(DEFINE, */
@@ -976,7 +1009,7 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
 
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }
-    else if(IS_MACRO_OBJECT(obj))
+    else if(IS_MACRO_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
     {
       memset(buf, '\0', MAX_STRING_LENGTH);
       /* print_object_to_string(cons(DEFINE, */

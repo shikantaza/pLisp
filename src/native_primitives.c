@@ -1280,7 +1280,7 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	raise_error(err_buf);
 	return NIL;
       }
-      val = out;
+      val = car(out);
     }
 
     type = CADAR(rest_args);

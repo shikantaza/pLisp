@@ -459,6 +459,24 @@ void create_image(char *file_name)
 
   fprintf(fp, "{ ");
 
+#ifdef INTERPRETER_MODE
+
+  fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
+  fprintf(fp, "\"in_break\" : \"%s\"",       in_break ? "true" : "false");                                             fprintf(fp, ", ");
+
+  fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+
+  fprintf(fp, "\"debug_continuation\" : "   ); print_json_object(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_env\" : "            ); print_json_object(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"debug_execution_stack\" : "); print_json_object(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_accumulator\" : "      ); print_json_object(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_next_expression\" : "  ); print_json_object(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_env\" : "      ); print_json_object(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_value_rib\" : "); print_json_object(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+  fprintf(fp, "\"reg_current_stack\" : "    ); print_json_object(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+
+#else
+
   serialize_full_monty_global_vars(fp,
                                    print_queue, 
                                    obj_count,
@@ -466,19 +484,7 @@ void create_image(char *file_name)
                                    printed_objects,
                                    false);
 
-  /* fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", "); */
-  /* fprintf(fp, "\"in_break\" : \"%s\"",       in_break ? "true" : "false");                                             fprintf(fp, ", "); */
-
-  /* fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-
-  /* fprintf(fp, "\"debug_continuation\" : "   ); print_json_object(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"debug_env\" : "            ); print_json_object(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"debug_execution_stack\" : "); print_json_object(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"reg_accumulator\" : "      ); print_json_object(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"reg_next_expression\" : "  ); print_json_object(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"reg_current_env\" : "      ); print_json_object(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"reg_current_value_rib\" : "); print_json_object(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
-  /* fprintf(fp, "\"reg_current_stack\" : "    ); print_json_object(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", "); */
+#endif
 
   fprintf(fp, "\"current_package\" : %d ",     current_package);                                                           fprintf(fp, ", ");
   fprintf(fp, "\"gen_sym_count\" : %d ",       gen_sym_count);                                                             fprintf(fp, ", ");
@@ -1020,13 +1026,31 @@ int load_from_image(char *file_name)
 
   hashtable_t *hashtable = hashtable_create(1001);
 
-  /* temp = JSON_get_object_item(root, "debug_mode"); */
-  /* debug_mode = strcmp(temp->strvalue, "true") ? false : true; */
+#ifdef INTERPRETER_MODE
 
-  /* temp = JSON_get_object_item(root, "in_break"); */
-  /* in_break = strcmp(temp->strvalue, "true") ? false : true; */
+  temp = JSON_get_object_item(root, "debug_mode");
+  debug_mode = strcmp(temp->strvalue, "true") ? false : true;
+
+  temp = JSON_get_object_item(root, "in_break");
+  in_break = strcmp(temp->strvalue, "true") ? false : true;
+
+#endif
 
   queue_t *q = queue_create();
+
+#ifdef INTERPRETER_MODE
+
+  top_level_env         = deserialize_internal(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q, false);
+  debug_continuation    = deserialize_internal(heap, JSON_get_object_item(root, "debug_continuation")->ivalue,    hashtable, q, false);
+  debug_env             = deserialize_internal(heap, JSON_get_object_item(root, "debug_env")->ivalue,             hashtable, q, false);
+  debug_execution_stack = deserialize_internal(heap, JSON_get_object_item(root, "debug_execution_stack")->ivalue, hashtable, q, false);
+  reg_accumulator       = deserialize_internal(heap, JSON_get_object_item(root, "reg_accumulator")->ivalue,       hashtable, q, false);
+  reg_next_expression   = deserialize_internal(heap, JSON_get_object_item(root, "reg_next_expression")->ivalue,   hashtable, q, false);
+  reg_current_env       = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_env")->ivalue,       hashtable, q, false);
+  reg_current_value_rib = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q, false);
+  reg_current_stack     = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q, false);
+
+#else
 
   deserialize_full_monty_global_vars(root,
                                      heap,
@@ -1034,21 +1058,15 @@ int load_from_image(char *file_name)
                                      q,
                                      false);
 
-  /* top_level_env         = deserialize_internal(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q, false); */
-  /* debug_continuation    = deserialize_internal(heap, JSON_get_object_item(root, "debug_continuation")->ivalue,    hashtable, q, false); */
-  /* debug_env             = deserialize_internal(heap, JSON_get_object_item(root, "debug_env")->ivalue,             hashtable, q, false); */
-  /* debug_execution_stack = deserialize_internal(heap, JSON_get_object_item(root, "debug_execution_stack")->ivalue, hashtable, q, false); */
-  /* reg_accumulator       = deserialize_internal(heap, JSON_get_object_item(root, "reg_accumulator")->ivalue,       hashtable, q, false); */
-  /* reg_next_expression   = deserialize_internal(heap, JSON_get_object_item(root, "reg_next_expression")->ivalue,   hashtable, q, false); */
-  /* reg_current_env       = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_env")->ivalue,       hashtable, q, false); */
-  /* reg_current_value_rib = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q, false); */
-  /* reg_current_stack     = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q, false); */
+#endif
 
   if(console_mode || single_expression_mode || pipe_mode)
   {
     convert_heap(heap, hashtable, q, false);
     //recompile_functions_and_macros();
+#ifndef INTERPRETER_MODE
     recreate_native_fn_objects();
+#endif
     JSON_delete_object(root);
     return 0;
   }
@@ -1660,6 +1678,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     else
       if(single_object) add_to_deserialization_queue(heap, q, stack_ref, ptr, 0); else set_heap(ptr, 0, stack_ref);
   }
+#ifndef INTERPRETER_MODE
   else if(object_type == FUNCTION2_TAG || object_type == MACRO2_TAG)
   {
     ptr = object_alloc(2, CONS_TAG);
@@ -1689,6 +1708,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     else
       if(single_object) add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1); else set_heap(ptr, 1, cdr_ref);
   }
+#endif
   else if(object_type == INTEGER_TAG)
   {
     ptr = object_alloc(1, INTEGER_TAG);
@@ -1699,6 +1719,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     ptr = object_alloc(1, FLOAT_TAG);
     (*(float *)ptr) = heap_obj->fvalue;
   }
+#ifndef INTERPRETER_MODE
   else if(object_type == NATIVE_FN_TAG)
   {
     ptr = object_alloc(1, NATIVE_FN_TAG);
@@ -1713,6 +1734,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     //the slot (with the nativefn value will be
     //filled in later, by recreate_native_fn_objects())
   }
+#endif
 
   hashtable_put(ht, (void *)ref, (void *)(ptr + object_type));
 
@@ -1899,15 +1921,15 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     char *source = get_json_native_fn_source(obj);
     assert(source);
 
-    //note: the last parameter value (7)
+    //note: the last parameter value (11)
     //will have to be updated if we're
     //making the size of gensym symbols bigger
-    char *fname = substring(source, 13, 7);
+    char *fname = substring(source, 13, 11);
 
     //crude way to check if fn is the identity function,
     //but this works as all other native functions
     //will be named from gensym symbols
-    nativefn fn = !strcmp(fname, "identit") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
+    nativefn fn = !strcmp(fname, "identity_fu") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
     assert(fn);
 
     uintptr_t ptr = obj & POINTER_MASK;
@@ -1939,6 +1961,8 @@ void recreate_native_fn_objects()
   char *buf;
 
   buf = (char *)malloc(nof_json_native_fns * 1000);
+  assert(buf);
+
   memset(buf, nof_json_native_fns * 1000, '\0');
 
   for(i=0; i<nof_json_native_fns; i++)

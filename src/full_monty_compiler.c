@@ -172,6 +172,9 @@ extern OBJECT_PTR THROW;
 extern OBJECT_PTR GET_EXCEPTION_HANDLER;
 extern OBJECT_PTR ADD_EXCEPTION_HANDLER;
 
+extern OBJECT_PTR DEFUN;
+extern OBJECT_PTR DEFMACRO;
+
 extern unsigned int POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -192,6 +195,8 @@ extern package_t *packages;
 extern int current_package;
 
 extern char **strings;
+
+extern BOOLEAN system_changed;
 //end of external variables
 
 //external functions
@@ -336,8 +341,8 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR);
 void add_native_fn_source(nativefn, char *);
 
 OBJECT_PTR cons_equivalent(OBJECT_PTR);
-OBJECT_PTR process_define(OBJECT_PTR);
-OBJECT_PTR process_set(OBJECT_PTR);
+OBJECT_PTR process_define(OBJECT_PTR, OBJECT_PTR);
+OBJECT_PTR process_set(OBJECT_PTR, OBJECT_PTR);
 
 OBJECT_PTR flatten(OBJECT_PTR);
 
@@ -1826,7 +1831,7 @@ OBJECT_PTR get_top_level_symbols()
 
   for(i=0; i < nof_global_vars; i++)
   {
-    if(top_level_symbols[i].delete_flag)
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i]))
       continue;
 
     OBJECT_PTR val = top_level_symbols[i].sym;
@@ -1860,7 +1865,7 @@ OBJECT_PTR replace_t(OBJECT_PTR exp)
     return map(replace_t, exp);
 }
 
-OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
+OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
 {
   OBJECT_PTR res = clone_object(exp);
 
@@ -1900,7 +1905,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   {
     if(car(res) == DEFINE)
     {
-      OBJECT_PTR r = process_define(res);
+      OBJECT_PTR r = process_define(res, source);
       if(in_error)
       {
         handle_exception();
@@ -1910,7 +1915,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
     }
     else if(car(res) == SET)
     {
-      OBJECT_PTR r = process_set(res);
+      OBJECT_PTR r = process_set(res, source);
       if(in_error)
       {
         handle_exception();
@@ -1996,7 +2001,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
   {
     OBJECT_PTR out1;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(rest));
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(rest));
+    OBJECT_PTR symbol_to_be_used = car(rest);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out1);
 
@@ -2052,7 +2058,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp)
 
   while(rest != NIL)
   {
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(rest));
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(rest));
+    OBJECT_PTR symbol_to_be_used = car(rest);
 
     /* if(add_reference_to_top_level_sym(car(rest), i, ret1)) */
     /* { */
@@ -3027,7 +3034,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_eval",     full_monty_eval);
 
   tcc_add_symbol(tcc_state, "convert_int_to_object",    convert_int_to_object);
-  tcc_add_symbol(tcc_state, "convert_float_to_object",  convert_float_to_object1);
+  tcc_add_symbol(tcc_state, "convert_float_to_object1", convert_float_to_object1);
 
   tcc_add_symbol(tcc_state, "set_most_recent_closure",  set_most_recent_closure);
   tcc_add_symbol(tcc_state, "get_continuation",         get_continuation);
@@ -3170,6 +3177,38 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
 int get_top_level_sym_value(OBJECT_PTR sym, OBJECT_PTR *out)
 {
   int i;
+  OBJECT_PTR sym_to_be_used = sym;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+    else if(top_level_symbols[i].sym == sym_to_be_used)
+    {
+      *out = top_level_symbols[i].val;
+      return 0;
+    }
+  }
+
+  sym_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(sym)));
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+    else if(top_level_symbols[i].sym == sym_to_be_used)
+    {
+      *out = top_level_symbols[i].val;
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+int get_top_level_sym_value_orig(OBJECT_PTR sym, OBJECT_PTR *out)
+{
+  int i;
 
   for(i=0; i<nof_global_vars; i++)
   {
@@ -3197,6 +3236,8 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
       top_level_symbols[i].val = val;
       top_level_symbols[i].delete_flag = false;
       found = true;
+
+      system_changed = true;
     }
   }
 
@@ -3215,6 +3256,8 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
 
     top_level_symbols[nof_global_vars-1].ref_count = 0;
     top_level_symbols[nof_global_vars-1].references = NULL;
+
+    system_changed = true;
   }
 }
 
@@ -3251,6 +3294,9 @@ int remove_top_level_sym(OBJECT_PTR sym)
             global_unmet_dependencies[k].delete_flag = false;
             global_unmet_dependencies[k].pos = pos;
             found = true;
+
+            system_changed = true;
+
             break;
           }
         }
@@ -3270,6 +3316,8 @@ int remove_top_level_sym(OBJECT_PTR sym)
           global_unmet_dependencies[nof_unmet_dependencies - 1].top_level_sym = sym;
           global_unmet_dependencies[nof_unmet_dependencies - 1].pos = pos;
           global_unmet_dependencies[nof_unmet_dependencies - 1].delete_flag = false;
+
+          system_changed = true;
         }
       }
     }
@@ -3454,7 +3502,8 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp, BOOLEAN full)
     ret = exp;
   else if(IS_SYMBOL_OBJECT(car(exp)) && exists(car(exp), free_variables))
   {
-    OBJECT_PTR sym_to_use = symbol_to_use(car(exp));
+    //OBJECT_PTR sym_to_use = symbol_to_use(car(exp));
+    OBJECT_PTR sym_to_use = car(exp);
 
     OBJECT_PTR out;
     int retval = get_top_level_sym_value(sym_to_use, &out);
@@ -3829,7 +3878,8 @@ OBJECT_PTR handle_and_rest_applications_for_macros(OBJECT_PTR exp)
   {
     OBJECT_PTR out;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -3896,7 +3946,8 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
   {
     OBJECT_PTR out;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -3964,7 +4015,8 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
   {
     OBJECT_PTR out;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -4196,7 +4248,7 @@ OBJECT_PTR symbol_to_use(OBJECT_PTR sym)
   return symbol_to_be_used;
 }
 
-OBJECT_PTR process_define(OBJECT_PTR exp)
+OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
 {
   OBJECT_PTR res;
 
@@ -4206,7 +4258,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp)
     return NIL;
   }
 
-  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR t1 = cons(NIL, NIL);
 
@@ -4238,7 +4291,7 @@ OBJECT_PTR process_define(OBJECT_PTR exp)
     }
   }
 
-  res = compile_and_evaluate(res);
+  res = compile_and_evaluate(res, src);
 
   //store the source of the function/macro as the
   //last cell in the closure
@@ -4247,7 +4300,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp)
     BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
     OBJECT_PTR cons_equiv = cons_equivalent(res);
     uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
-    set_heap(ptr, 1, cons(third(exp), NIL));
+    //set_heap(ptr, 1, cons(third(exp), NIL));
+    set_heap(ptr, 1, cons(src, NIL));
     res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
   }
 
@@ -4264,7 +4318,7 @@ OBJECT_PTR process_define(OBJECT_PTR exp)
   return res;
 }
 
-OBJECT_PTR process_set(OBJECT_PTR exp)
+OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
 {
   OBJECT_PTR res;
 
@@ -4274,7 +4328,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp)
     return NIL;
   } 
 
-  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR out;
   int retval = get_top_level_sym_value(symbol_to_be_used, &out);
@@ -4288,7 +4343,7 @@ OBJECT_PTR process_set(OBJECT_PTR exp)
     return NIL;
   }
 
-  res = compile_and_evaluate(third(exp));
+  res = compile_and_evaluate(third(exp), src);
 
   //store the source of the function/macro as the
   //last cell in the closure
@@ -4297,7 +4352,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp)
     BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
     OBJECT_PTR cons_equiv = cons_equivalent(res);
     uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
-    set_heap(ptr, 1, cons(third(exp), NIL));
+    //set_heap(ptr, 1, cons(third(exp), NIL));
+    set_heap(ptr, 1, cons(src, NIL));
     res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
   }
 
@@ -4318,9 +4374,21 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
 {
   OBJECT_PTR res;
 
+  OBJECT_PTR source = NIL;
+
+  if(IS_CONS_OBJECT(exp))
+  {
+    if(car(exp) == DEFINE || car(exp) == SET)
+      source = third(exp);
+    else if(car(exp) == DEFMACRO)
+      source = concat(2, list(2, MACRO, third(exp)), CDDDR(exp));
+    else if(car(exp) == DEFUN)
+      source = concat(2, list(2, LAMBDA, third(exp)), CDDDR(exp));
+  }
+
   if(IS_CONS_OBJECT(exp) && car(exp) == DEFINE)
   {
-    res = process_define(exp);
+    res = process_define(exp, source);
     if(in_error)
     {
       handle_exception();
@@ -4329,7 +4397,7 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
   }
   else if(IS_CONS_OBJECT(exp) && car(exp) == SET)
   {
-    res = process_set(exp);
+    res = process_set(exp, source);
     if(in_error)
     {
       handle_exception();
@@ -4350,11 +4418,11 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
       return NIL;
     }
         
-    res = out;
+    res = car(out);
   }
   else
   {
-    res = compile_and_evaluate(exp);
+    res = compile_and_evaluate(exp, source);
   }
 
   return res;
@@ -4404,6 +4472,8 @@ char *get_native_fn_source(nativefn fn)
     if(native_fn_sources[i].fn == fn)
       return native_fn_sources[i].source;
   }
+
+  assert(false);
 
   return NULL;
 }

@@ -37,7 +37,11 @@ int call_repl(char *expression)
 
   while(yyparse() == 0)
   {
+#ifdef INTERPRETER_MODE
     if(repl(1))
+#else
+    if(repl2())
+#endif
     {
       yy_delete_buffer(buf);
       return -1;

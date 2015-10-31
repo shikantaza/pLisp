@@ -119,8 +119,26 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
     if(IS_SYMBOL_OBJECT(val))
     {
+#ifdef INTERPRETER_MODE
       OBJECT_PTR res = get_symbol_value(val, reg_current_env);
       val = cdr(res);
+#else
+      OBJECT_PTR retval, out;
+      retval = get_top_level_sym_value(val, &out);
+      if(retval)
+      {
+	char buf[SYMBOL_STRING_SIZE];
+        char err_buf[500];
+	print_qualified_symbol(val, buf);
+
+        memset(err_buf, '\0', 500);
+	sprintf(err_buf, "Symbol not bound(3): %s", buf);
+
+	throw_exception1("EXCEPTION", err_buf);
+	return NIL;
+      }
+      val = car(out);
+#endif
     }
 
     if(type == INTEGR) //INTEGER spelt wrongly because it's already bean #define'd
@@ -218,27 +236,35 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       value = convert_int_to_object(*((int *)*(int **)arg_values[i]));
 
+#ifdef INTERPRETER_MODE
       if(update_environment(reg_current_env, sym, value) == NIL)
       {
-	throw_generic_exception("update_environment failed");
+        throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
         free(arg_values);
         free(arg_types);
-	return NIL;
+        return NIL;
       }
+#else
+      add_top_level_sym(sym, cons(value, NIL));
+#endif
     }
     else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
     {
       value = convert_float_to_object(*((float *)*(float **)arg_values[i]));
 
+#ifdef INTERPRETER_MODE
       if(update_environment(reg_current_env, sym, value) == NIL)
       {
-	throw_generic_exception("update_environment failed");
+        throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
         free(arg_values);
         free(arg_types);
-	return NIL;
+        return NIL;
       }
+#else
+      add_top_level_sym(sym, cons(value, NIL));
+#endif
     }
     else if(type == CHAR_POINTER && IS_SYMBOL_OBJECT(sym))
     {
@@ -263,14 +289,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 	//heap[ptr + j + 1] = (str[j] << OBJECT_SHIFT) + CHAR_TAG;
         set_heap(ptr, j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
 
+#ifdef INTERPRETER_MODE
       if(update_environment(reg_current_env, sym, ptr+ARRAY_TAG) == NIL)
       {
-	throw_generic_exception("update_environment failed");
+        throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
         free(arg_values);
         free(arg_types);
-	return NIL;
+        return NIL;
       }
+#else
+      add_top_level_sym(sym, cons(ptr+ARRAY_TAG, NIL));
+#endif
     }
 
     rest_args = cdr(rest_args);

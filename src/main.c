@@ -295,10 +295,12 @@ void initialize()
   debug_continuation = NIL;
   debug_env = NIL;
 
+#ifdef INTERPRETER_MODE
   CONS_NIL_NIL = cons(NIL, NIL);
   CONS_APPLY_NIL = cons(APPLY, NIL);
   CONS_HALT_NIL = cons(HALT, NIL);
   CONS_RETURN_NIL = cons(RETURN, NIL);
+#endif
 
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 }
@@ -844,29 +846,29 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   return retval;
 }
 
-OBJECT_PTR car(OBJECT_PTR cons_obj)
+inline OBJECT_PTR car(OBJECT_PTR cons_obj)
 {
   if(cons_obj == NIL)
     return NIL;
   else
   {
-     if(!IS_CONS_OBJECT(cons_obj))
-     {
-       print_object(cons_obj);printf("\n");
-       assert(false);
-     }
+     /* if(!IS_CONS_OBJECT(cons_obj)) */
+     /* { */
+     /*   print_object(cons_obj);printf("\n"); */
+     /*   assert(false); */
+     /* } */
      return get_heap(cons_obj & POINTER_MASK, 0);
   }
 }
 
-OBJECT_PTR cdr(OBJECT_PTR cons_obj)
+inline OBJECT_PTR cdr(OBJECT_PTR cons_obj)
 {
   if(cons_obj == NIL)
     return NIL;
   else
   {
-    if(!IS_CONS_OBJECT(cons_obj))
-       assert(false);
+    /* if(!IS_CONS_OBJECT(cons_obj)) */
+    /*    assert(false); */
     return get_heap(cons_obj & POINTER_MASK, 1);
   }
 }
@@ -1984,7 +1986,19 @@ BOOLEAN form_contains_comma_at(OBJECT_PTR form)
   return false;
 }
 
-OBJECT_PTR last_cell(OBJECT_PTR list)
+OBJECT_PTR last_cell(OBJECT_PTR lst)
+{
+  OBJECT_PTR rest = lst;
+
+  while(cdr(rest) != NIL)
+  {
+    rest = cdr(rest);
+  }
+  
+  return rest;
+}
+
+OBJECT_PTR last_cell_orig(OBJECT_PTR list)
 {
   if(cdr(list) == NIL)
     return list;
@@ -1996,11 +2010,11 @@ OBJECT_PTR last_cell(OBJECT_PTR list)
 //TODO: package-awareness (is this required?)
 OBJECT_PTR gensym()
 {
-  char sym[7];
+  char sym[20];
 
   gen_sym_count++;
 
-  sprintf(sym, "#:G%04d", gen_sym_count);
+  sprintf(sym, "#:G%08d", gen_sym_count);
 
   return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(sym) << OBJECT_SHIFT) + SYMBOL_TAG);
 }
@@ -2166,7 +2180,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[109] = strdup("DEFMACRO");
 
   packages[CORE_PACKAGE_INDEX].symbols[110] = strdup("NTH1");
-  packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("CALL-CC1");
+  packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("CALL-CC");
   packages[CORE_PACKAGE_INDEX].symbols[112] = strdup("MY-CONT-VAR");
   packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("SAVE-CONTINUATION");
   packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("LETREC");

@@ -547,22 +547,22 @@ void set_heap(uintptr_t ptr, unsigned int index, OBJECT_PTR val)
   *(ptr1 + index) = val;
 }
 
-#ifndef DEBUG_MEMORY
-inline
-#endif
-OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
+inline OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
 {
-  unsigned int *ptr1 = (unsigned int *)ptr;
+  //unsigned int *ptr1 = (unsigned int *)ptr;
 
-  OBJECT_PTR ret = *(ptr1 + index);
+  //OBJECT_PTR ret = *(ptr1 + index);
 
-  if(!is_valid_object(ret))
-  {
-    printf("0x%x 0x%x\n", ptr, ret);
-    assert(false);
-  }
+  /* if(!is_valid_object(ret)) */
+  /* { */
+  /*   printf("0x%x 0x%x\n", ptr, ret); */
+  /*   assert(false); */
+  /* } */
 
-  return ret;
+  //return ret;
+
+  return (OBJECT_PTR)*((unsigned int *)ptr + index);
+
 }
 
 uintptr_t object_alloc(int size, int tag)
@@ -702,7 +702,7 @@ void cleanup_memory()
   grey  = NULL;
   black = NULL;
 
-  //printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
+  printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
 }
 
 void recreate_black()

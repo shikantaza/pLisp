@@ -122,6 +122,12 @@ extern OBJECT_PTR CONS_RETURN_NIL;
 
 char *core_library_file_name = NULL;
 
+extern OBJECT_PTR saved_continuations;
+extern OBJECT_PTR continuations_for_return;
+extern OBJECT_PTR most_recent_closure;
+extern OBJECT_PTR exception_object;
+extern OBJECT_PTR exception_handlers;
+
 extern OBJECT_PTR idclo;
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 
@@ -460,10 +466,12 @@ int main(int argc, char **argv)
       exit(1);
     }
 
+#ifdef INTERPRETER_MODE
     CONS_NIL_NIL = cons(NIL, NIL);
     CONS_APPLY_NIL = cons(APPLY, NIL);
     CONS_HALT_NIL = cons(HALT, NIL);
     CONS_RETURN_NIL = cons(RETURN, NIL);
+#endif
 
     if(!single_expression_mode && !pipe_mode)
       fprintf(stdout, "done\n");    
@@ -472,6 +480,14 @@ int main(int argc, char **argv)
   {
     initialize();
 
+    if(load_core_library())
+    {
+      cleanup();
+      exit(1);
+    }
+
+    core_library_loaded = true;
+
     if(!console_mode && !single_expression_mode && !pipe_mode)
       create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
 			       DEFAULT_TRANSCRIPT_POSY,
@@ -479,13 +495,6 @@ int main(int argc, char **argv)
 			       DEFAULT_TRANSCRIPT_HEIGHT,
 			       default_transcript_text);
 
-    /* if(load_core_library()) */
-    /* { */
-    /*   cleanup(); */
-    /*   exit(1); */
-    /* } */
-
-    core_library_loaded = true;
   }
 
   if(pipe_mode)
@@ -506,7 +515,11 @@ int main(int argc, char **argv)
 
       yy_scan_string(cmd);
       yyparse();
+#ifdef INTERPRETER_MODE
       repl(1);
+#else
+      repl2();
+#endif
     }
 
     if(cmd)
@@ -520,7 +533,11 @@ int main(int argc, char **argv)
   {
     yy_scan_string(expression);
     yyparse();
+#ifdef INTERPRETER_MODE
     repl(1);
+#else
+    repl2();
+#endif
     cleanup();
 
     exit(0);    
@@ -534,8 +551,11 @@ int main(int argc, char **argv)
     {
       prompt();
       yyparse();
-      //repl(1);
+#ifdef INTERPRETER_MODE
+      repl(1);
+#else
       repl2();
+#endif
     }
   }
   else
@@ -734,19 +754,22 @@ int repl(int mode)
 
 int load_core_library()
 {
-  if(!console_mode && !single_expression_mode && !pipe_mode)
-    print_to_transcript("Loading core library...");
-  else if(console_mode)
-  {
-    fprintf(stdout, "Loading core library...");
+  //if(!console_mode && !single_expression_mode && !pipe_mode)
+  //  print_to_transcript("Loading core library...");
+  //else if(console_mode)
+  //{
+    fprintf(stdout, "Loading core library (this may take a while)...");
     fflush(stdout);
-  }
+  //}
+
+#ifdef INTERPRETER_MODE
 
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
                         cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "lib/plisp.lisp"),
                              NIL));
+
 
   OBJECT_PTR temp = compile(src, cons(CONS_HALT_NIL, src));
 
@@ -765,8 +788,6 @@ int load_core_library()
 
   continuations_map = NIL;
 
-  in_error = false;
-
   while(car(reg_next_expression) != NIL)
   {
     eval(false);
@@ -779,17 +800,42 @@ int load_core_library()
 
   //gc(false, true);
 
+#else
+
+  saved_continuations = NIL;
+  continuations_for_return = NIL;
+  most_recent_closure = NIL;
+
+  exception_object = NIL;
+  exception_handlers = NIL;
+
+  OBJECT_PTR src = cons(LOAD_FILE, 
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "lib/plisp_full_monty_compiler.lisp"),
+                             NIL));
+
+  OBJECT_PTR res = full_monty_eval(src);
+
+  if(in_error)
+  {
+    fprintf(stdout, "Error loading core library\n");
+    return 1;
+  }
+
+#endif
+
+  in_error = false;
+
   core_library_loaded = true;
 
-  if(!console_mode && !single_expression_mode && !pipe_mode)
-    print_to_transcript(" done\n");
-  else if(console_mode)
-  {
+  //if(!console_mode && !single_expression_mode && !pipe_mode)
+  //  print_to_transcript(" done\n");
+  //else if(console_mode)
+  //{
     //hack to prevent message being overwritten
     //fprintf(stdout, "Loading core library... done\n");
     fprintf(stdout, " done\n");
     fflush(stdout);
-  }
+  //}
 
   return 0;  
 }
