@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <dlfcn.h>
 #include <gtk/gtk.h>
+#include <time.h>
 
 #include <gtksourceview/gtksource.h>
 
@@ -98,6 +99,9 @@ extern BOOLEAN pipe_mode;
 
 extern GtkSourceLanguage *source_language;
 extern GtkSourceLanguageManager *lm;
+
+extern char *loaded_image_file_name;
+extern BOOLEAN image_mode;
 
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 
@@ -443,8 +447,29 @@ void serialize_full_monty_global_vars(FILE *fp,
   fprintf(fp, ", ");
 }
 
+void backup_image()
+{
+  time_t rawtime;
+  struct tm *timeinfo;
+  char buffer[80];
+
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  strftime(buffer, 80, "%Y%m%d%H%M%S", timeinfo);
+
+  char cmd[200];
+
+  sprintf(cmd, "cp %s %s.%s", loaded_image_file_name, loaded_image_file_name, buffer);
+  system(cmd);
+}
+
 void create_image(char *file_name)
 {
+
+  if(image_mode)
+    backup_image();
+
   int i;
 
   FILE *fp = fopen(file_name, "w");  
@@ -1935,6 +1960,8 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     uintptr_t ptr = obj & POINTER_MASK;
 
     *((nativefn *)ptr) = fn;
+
+    add_native_fn_source(fn, source);
   }
   else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
   {

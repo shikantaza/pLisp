@@ -1976,11 +1976,11 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
     add_top_level_sym(first(lambda),
                       convert_native_fn_to_object((nativefn)tcc_get_symbol(tcc_state1, fname)));
 
-    char source[8000];
-    memset(source, 8000, '\0');
+    char source[32000];
+    memset(source, 32000, '\0');
     build_c_string(lambda, source, true);
 
-    assert(strlen(source)<=8000);
+    assert(strlen(source)<=32000);
 
     add_native_fn_source((nativefn)tcc_get_symbol(tcc_state1, fname),
                          source);
