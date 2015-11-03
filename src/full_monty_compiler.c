@@ -30,6 +30,8 @@
 
 #define MAX_C_SOURCE_SIZE 262144
 
+enum {WHITE, GREY, BLACK};
+
 typedef struct binding
 {
   OBJECT_PTR key;
@@ -90,7 +92,7 @@ extern OBJECT_PTR DEFINE;
 extern OBJECT_PTR CALL_CC;
 extern OBJECT_PTR SAVE_CONTINUATION;
 extern OBJECT_PTR NTH;
-extern OBJECT_PTR CALL_CC1;
+//extern OBJECT_PTR CALL_CC1;
 extern OBJECT_PTR MY_CONT_VAR;
 extern OBJECT_PTR ADD;
 extern OBJECT_PTR SUB;
@@ -140,7 +142,7 @@ extern OBJECT_PTR CLOSUREP;
 extern OBJECT_PTR MACROP;
 extern OBJECT_PTR CONTINUATIONP;
 extern OBJECT_PTR LOAD_FOREIGN_LIBRARY;
-extern OBJECT_PTR CALL_FOREIGN_FUNCTION;
+extern OBJECT_PTR CALL_FF_INTERNAL;
 extern OBJECT_PTR CREATE_PACKAGE;
 extern OBJECT_PTR IN_PACKAGE;
 extern OBJECT_PTR EXPORT_PACKAGE;
@@ -310,7 +312,7 @@ OBJECT_PTR reverse(OBJECT_PTR);
 TCCState *create_tcc_state1();
 TCCState *compile_functions(OBJECT_PTR);
 char *extract_variable_string(OBJECT_PTR, BOOLEAN);
-OBJECT_PTR call_cc1(OBJECT_PTR);
+//OBJECT_PTR call_cc1(OBJECT_PTR);
 OBJECT_PTR create_fn_closure(OBJECT_PTR, nativefn, ...);
 OBJECT_PTR expand_macro_full(OBJECT_PTR, BOOLEAN);
 OBJECT_PTR expand_bodies(OBJECT_PTR);
@@ -350,7 +352,9 @@ void throw_exception1(char *, char *);
 OBJECT_PTR handle_exception();
 OBJECT_PTR add_exception_handler(OBJECT_PTR);
 unsigned int wrap_float(OBJECT_PTR);
-OBJECT_PTR convert_float_to_object1(unsigned int);
+OBJECT_PTR convert_float_to_object1(float);
+OBJECT_PTR convert_int_to_object_for_full_monty(int);
+OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1431,7 +1435,7 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
       return cps_transform_return_from(exp);
     else if(car_exp == THROW)
       return cps_transform_throw(exp);
-    else if(car_exp == CALL_CC1)
+    else if(car_exp == CALL_CC)
       return cps_transform_call_cc(exp);
     else
       return cps_transform_primop(exp);
@@ -2101,7 +2105,7 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == DEFINE       ||
     sym == QUOTE        ||
     sym == EQ           ||
-    sym == CALL_CC1     ||
+    sym == CALL_CC      ||
     sym == SAVE_CONTINUATION ||
     sym == SET          ||
     sym == ERROR        ||
@@ -2161,7 +2165,7 @@ BOOLEAN predicate_op(OBJECT_PTR sym)
 BOOLEAN ffi_op(OBJECT_PTR sym)
 {
   return sym == LOAD_FOREIGN_LIBRARY ||
-    sym == CALL_FOREIGN_FUNCTION;
+    sym == CALL_FF_INTERNAL;
 }
 
 BOOLEAN package_op(OBJECT_PTR sym)
@@ -2499,6 +2503,8 @@ char *replace_hyphens(char *s)
 
 char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
 {
+  assert(is_atom(var));
+
   if(IS_SYMBOL_OBJECT(var))
   {
     char *raw_name = strdup(get_symbol_name(var));
@@ -2545,8 +2551,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "primitive_setcar");
       else if(var == SETCDR)
         sprintf(s, "primitive_setcdr");
-      else if(var == CALL_CC1)
-        sprintf(s, "call_cc1");
+      /* else if(var == CALL_CC1) */
+      /*   sprintf(s, "call_cc1"); */
       else if(var == SAVE_CONTINUATION)
         sprintf(s, "save_continuation");
       else if(var == LST)
@@ -2617,7 +2623,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "prim_print_string");
       else if(var == LOAD_FOREIGN_LIBRARY)
         sprintf(s, "prim_load_fgn_lib");
-      else if(var == CALL_FOREIGN_FUNCTION)
+      else if(var == CALL_FF_INTERNAL)
         sprintf(s, "prim_call_fgn_func");
       else if(var == CREATE_PACKAGE)
         sprintf(s, "prim_create_pkg");
@@ -2668,7 +2674,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       if(IS_INTEGER_OBJECT(var))
         sprintf(s, "convert_int_to_object(%d)", get_int_value(var));
       else if(IS_FLOAT_OBJECT(var))
-        sprintf(s, "convert_float_to_object1(%d)", wrap_float(var));
+        sprintf(s, "convert_float_to_object(%d)", wrap_float(var));
       else
         sprintf(s, "%d", var);
 
@@ -2801,7 +2807,14 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
 
     if(car(exp) == QUOTE)
     {
-      len += sprintf(buf+len, "%d", second(exp));
+      if(IS_INTEGER_OBJECT(second(exp)) || IS_FLOAT_OBJECT(second(exp)))
+      {
+        char* var = extract_variable_string(second(exp), serialize_flag);
+        len += sprintf(buf+len, "%s", var);
+        free(var);
+      }
+      else
+        len += sprintf(buf+len, "%d", second(exp));
     }
     /* else if(car(exp) == IF) */
     /* { */
@@ -2956,7 +2969,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "nth1",               nth1);
   tcc_add_symbol(tcc_state, "save_continuation",  save_continuation);
   tcc_add_symbol(tcc_state, "extract_native_fn",  extract_native_fn);
-  tcc_add_symbol(tcc_state, "call_cc1",           call_cc1);
+  //tcc_add_symbol(tcc_state, "call_cc1",           call_cc1);
   tcc_add_symbol(tcc_state, "create_fn_closure",  create_fn_closure);
   tcc_add_symbol(tcc_state, "primitive_add",      primitive_add);
   tcc_add_symbol(tcc_state, "primitive_sub",      primitive_sub);
@@ -3025,7 +3038,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "prim_deserialize",   prim_deserialize);
 
   tcc_add_symbol(tcc_state, "prim_load_file",     prim_load_file);
-
+  
   tcc_add_symbol(tcc_state, "primitive_time",     primitive_time);
 
   tcc_add_symbol(tcc_state, "primitive_env",      primitive_env);
@@ -3033,8 +3046,8 @@ TCCState *create_tcc_state1()
 
   tcc_add_symbol(tcc_state, "primitive_eval",     full_monty_eval);
 
-  tcc_add_symbol(tcc_state, "convert_int_to_object",    convert_int_to_object);
-  tcc_add_symbol(tcc_state, "convert_float_to_object1", convert_float_to_object1);
+  tcc_add_symbol(tcc_state, "convert_int_to_object",   convert_int_to_object);
+  tcc_add_symbol(tcc_state, "convert_float_to_object", convert_float_to_object);
 
   tcc_add_symbol(tcc_state, "set_most_recent_closure",  set_most_recent_closure);
   tcc_add_symbol(tcc_state, "get_continuation",         get_continuation);
@@ -3161,9 +3174,9 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
 
   assert(len <= MAX_C_SOURCE_SIZE);
 
-  //FILE *out = fopen("debug.c", "w");
-  //fprintf(out, "%s\n", str);
-  //fclose(out);
+  /* FILE *out = fopen("debug.c", "a"); */
+  /* fprintf(out, "%s\n", str); */
+  /* fclose(out); */
 
   if(tcc_compile_string(tcc_state1, str) == -1)
     assert(false);
@@ -3343,24 +3356,24 @@ OBJECT_PTR reverse(OBJECT_PTR lst)
 /* (defun call-cc1 (clo) */
 /*   ((car clo) clo (cadr saved-continuations) (list (lambda (y x) x)))) */
 
-OBJECT_PTR call_cc1(OBJECT_PTR clo)
-{
-  nativefn fn = extract_native_fn(clo);
-  if(!fn)
-  {
-    throw_exception1("EXCEPTION", "Argument to CALL-CC not a function object");
-    return NIL;
-  }
+/* OBJECT_PTR call_cc1(OBJECT_PTR clo) */
+/* { */
+/*   nativefn fn = extract_native_fn(clo); */
+/*   if(!fn) */
+/*   { */
+/*     throw_exception1("EXCEPTION", "Argument to CALL-CC not a function object"); */
+/*     return NIL; */
+/*   } */
 
-  print_object(saved_continuations);printf("\n");getchar();
+/*   print_object(saved_continuations);printf("\n");getchar(); */
 
-  if(cons_length(saved_continuations) == 1)
-    return fn(clo, car(saved_continuations), idclo);
-  else if(cons_length(saved_continuations) == 2)
-    return fn(clo, CADR(saved_continuations), idclo);
-  else
-    return fn(clo, CADDR(saved_continuations), idclo);
-}
+/*   if(cons_length(saved_continuations) == 1) */
+/*     return fn(clo, car(saved_continuations), idclo); */
+/*   else if(cons_length(saved_continuations) == 2) */
+/*     return fn(clo, CADR(saved_continuations), idclo); */
+/*   else */
+/*     return fn(clo, CADDR(saved_continuations), idclo); */
+/* } */
 
 /* OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp) */
 /* { */
@@ -3855,7 +3868,7 @@ int and_rest_closure_pos(OBJECT_PTR sym)
 OBJECT_PTR get_free_variables(OBJECT_PTR exp)
 {
   return difference(free_ids_il(exp),
-                    list(10, LET, LETREC, IF, SET, LAMBDA, MACRO, ERROR, DEFINE, TRUE, NIL));
+                    list(11, LET, LETREC, IF, SET, LAMBDA, MACRO, ERROR, CALL_CC, DEFINE, TRUE, NIL));
 }
 
 OBJECT_PTR temp15(OBJECT_PTR x)
@@ -4550,9 +4563,36 @@ unsigned int wrap_float(OBJECT_PTR float_obj)
   return fw.i;
 }
 
-OBJECT_PTR convert_float_to_object1(unsigned int i)
+OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int i)
 {
   union float_wrap fw;
   fw.i = i;
-  return convert_float_to_object(fw.f);
+  return convert_float_to_object1(fw.f);
+}
+
+//these version of convert_int_to.. and convert_float_t0..
+//were for pinning the newly-created integer
+//and float objects to the grey set. doesn't look
+//like they're needed, retaining them just in case.
+
+inline OBJECT_PTR convert_int_to_object_for_full_monty(int v)
+{
+  uintptr_t ptr = object_alloc(1, INTEGER_TAG);
+
+  *((int *)ptr) = v;
+
+  insert_node(GREY, ptr + INTEGER_TAG);
+
+  return ptr + INTEGER_TAG;
+}
+
+OBJECT_PTR convert_float_to_object1(float v)
+{
+  uintptr_t ptr = object_alloc(1, FLOAT_TAG);
+
+  *((float *)ptr) = v;
+
+  insert_node(GREY, ptr + FLOAT_TAG);
+
+  return ptr + FLOAT_TAG;
 }

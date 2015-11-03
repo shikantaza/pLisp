@@ -53,6 +53,8 @@ extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 extern OBJECT_PTR idclo;
 
+extern unsigned int POINTER_MASK;
+
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 
@@ -232,11 +234,16 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     OBJECT_PTR type = CADAR(rest_args);
     OBJECT_PTR value;
 
+#ifdef INTERPRETER_MODE
     if(type == INT_POINTER && IS_SYMBOL_OBJECT(sym))
+#else
+    if(type == INT_POINTER)
+#endif
     {
+
+#ifdef INTERPRETER_MODE
       value = convert_int_to_object(*((int *)*(int **)arg_values[i]));
 
-#ifdef INTERPRETER_MODE
       if(update_environment(reg_current_env, sym, value) == NIL)
       {
         throw_generic_exception("update_environment failed");
@@ -246,14 +253,20 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;
       }
 #else
-      add_top_level_sym(sym, cons(value, NIL));
+      *((int *)(sym & POINTER_MASK)) = *((int *)*(int **)arg_values[i]);
 #endif
     }
-    else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
-    {
-      value = convert_float_to_object(*((float *)*(float **)arg_values[i]));
 
 #ifdef INTERPRETER_MODE
+    else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
+#else
+    else if(type == FLOAT_POINTER)
+#endif
+    {
+
+#ifdef INTERPRETER_MODE
+      value = convert_float_to_object(*((float *)*(float **)arg_values[i]));
+
       if(update_environment(reg_current_env, sym, value) == NIL)
       {
         throw_generic_exception("update_environment failed");
@@ -263,33 +276,26 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;
       }
 #else
-      add_top_level_sym(sym, cons(value, NIL));
+      *((float *)(sym & POINTER_MASK)) = *((float *)*(float **)arg_values[i]);
 #endif
+
     }
+
+#ifdef INTERPRETER_MODE
     else if(type == CHAR_POINTER && IS_SYMBOL_OBJECT(sym))
     {
       char *str = *(char **)arg_values[i];
 
       int sz = strlen(str);
 
-      //see comment in main.c for why we're not using object_alloc()
-      //unsigned int *raw_ptr;
-      //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
-      //*((int *)raw_ptr) = sz;
-
       uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
 
-      //heap[ptr] = convert_int_to_object(sz);
-      //set_heap(ptr, 0, convert_int_to_object(sz));
-      //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
       *((unsigned int *)ptr) = sz;
 
       int j;
       for(j=0; j< sz; j++)
-	//heap[ptr + j + 1] = (str[j] << OBJECT_SHIFT) + CHAR_TAG;
         set_heap(ptr, j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
 
-#ifdef INTERPRETER_MODE
       if(update_environment(reg_current_env, sym, ptr+ARRAY_TAG) == NIL)
       {
         throw_generic_exception("update_environment failed");
@@ -298,10 +304,50 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         free(arg_types);
         return NIL;
       }
-#else
-      add_top_level_sym(sym, cons(ptr+ARRAY_TAG, NIL));
-#endif
     }
+#else
+    else if(type == CHAR_POINTER)
+    {
+      char *str = *(char **)arg_values[i];
+
+      int sz = strlen(str);
+
+      if(sz > 100)
+      {
+        throw_exception1("EXCEPTION", "Maximum string length permitted for FFI parameters exceeded");
+        free_arg_values(arg_types, arg_values, args, nof_args);
+        free(arg_values);
+        free(arg_types);
+        return NIL;        
+      }
+
+      uintptr_t ptr = sym & POINTER_MASK;
+
+      int orig_len = *((unsigned int *)ptr);
+
+      if(sz > *((unsigned int *)ptr))
+      {
+        throw_exception1("EXCEPTION", "Attempting to write beyond the size of the string");
+        free_arg_values(arg_types, arg_values, args, nof_args);
+        free(arg_values);
+        free(arg_types);
+        return NIL;
+      }
+
+      *((unsigned int *)ptr) = sz;
+
+      int j;
+      for(j=0; j< sz; j++)
+        set_heap(ptr, j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
+
+      for(j=sz+1; j<orig_len+1; j++)
+      {
+        OBJECT_PTR temp = get_heap(sym & POINTER_MASK, j);
+        if(is_dynamic_memory_object(temp))
+          dealloc(temp);
+      }
+    }
+#endif
 
     rest_args = cdr(rest_args);
     i++;

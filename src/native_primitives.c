@@ -1256,31 +1256,10 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	 IS_FLOAT_OBJECT(val)          ||
 	 IS_CHAR_OBJECT(val)           ||
 	 IS_STRING_LITERAL_OBJECT(val) ||
-	 is_string_object(val)         ||
-	 IS_SYMBOL_OBJECT(val)))
-      {
-	throw_exception1("INVALID-ARGUMENT", "Parameter should be integer-, float-, charcter-, or string constant, or a symbol");
-	return NIL;
-      }
-
-    //TODO: this works only for top-level symbols
-    if(IS_SYMBOL_OBJECT(val))
+	 is_string_object(val)))
     {
-      OBJECT_PTR retval, out;
-      retval = get_top_level_sym_value(val, &out);
-      if(retval)
-      {
-	char buf[SYMBOL_STRING_SIZE];
-        char err_buf[500];
-	print_qualified_symbol(val, buf);
-
-        memset(err_buf, '\0', 500);
-	sprintf(err_buf, "Symbol not bound(3): %s", buf);
-
-	raise_error(err_buf);
-	return NIL;
-      }
-      val = car(out);
+      throw_exception1("INVALID-ARGUMENT", "Parameter should be an integer, float, charcter, or string object");
+      return NIL;
     }
 
     type = CADAR(rest_args);
@@ -1319,18 +1298,18 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     }
     else if(type == INT_POINTER)
     {
-      if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_INTEGER_OBJECT(val))
+      if(!IS_INTEGER_OBJECT(val))
       {
-	throw_exception1("INVALID-ARGUMENT", "Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
-	return NIL;
+        throw_exception1("INVALID-ARGUMENT", "Mapping a non-variable to INTEGER-POINTER / Argument type mismatch");
+        return NIL;
       }
     }
     else if(type == FLOAT_POINTER)
     {
-      if(!IS_SYMBOL_OBJECT(CAAR(rest_args)) || !IS_FLOAT_OBJECT(val))
+      if(!IS_FLOAT_OBJECT(val))
       {
-	throw_exception1("INVALID-ARGUMENT", "Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
-	return NIL;
+        throw_exception1("INVALID-ARGUMENT", "Mapping a non-variable to FLOAT-POINTER / Argument type mismatch");
+        return NIL;
       }
     }
     else
