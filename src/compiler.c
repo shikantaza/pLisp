@@ -817,6 +817,7 @@ int load_core_library()
 
   if(in_error)
   {
+    handle_exception();
     fprintf(stdout, "Error loading core library\n");
     return 1;
   }

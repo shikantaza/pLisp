@@ -355,6 +355,8 @@ unsigned int wrap_float(OBJECT_PTR);
 OBJECT_PTR convert_float_to_object1(float);
 OBJECT_PTR convert_int_to_object_for_full_monty(int);
 OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int);
+
+char *generate_lst_construct(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1899,6 +1901,9 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   res = expand_macro_full(res, true);
 //print_object(res);printf("\n");//getchar();
 
+  if(!is_valid_expression(res))
+    return NIL; //error would have been raised in is_valid_expression()
+
   res = handle_and_rest_applications_for_functions(res);
 
   res = replace_t(res);
@@ -2813,8 +2818,16 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
         len += sprintf(buf+len, "%s", var);
         free(var);
       }
+      else if(IS_CONS_OBJECT(second(exp)))
+      {
+        char *v = generate_lst_construct(second(exp));
+        len += sprintf(buf+len, "%s", v);
+        free(v);
+      }
       else
+      {
         len += sprintf(buf+len, "%d", second(exp));
+      }
     }
     /* else if(car(exp) == IF) */
     /* { */
@@ -3444,7 +3457,7 @@ int repl2()
     OBJECT_PTR res = full_monty_eval(exp);
 
     if(in_error)
-      return 1;
+      handle_exception();
 
     if((console_mode || single_expression_mode || pipe_mode) && core_library_loaded)
     {
@@ -4200,6 +4213,304 @@ BOOLEAN contains_internal_macros(OBJECT_PTR exp)
 
 BOOLEAN is_valid_expression(OBJECT_PTR exp)
 {
+  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+    return true;
+
+  OBJECT_PTR car_exp = car(exp);
+
+  unsigned int len = cons_length(exp);
+
+  if(car_exp == ADD && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '+' requires at least two parameters");
+    return false;
+  }
+  else if(car_exp == SUB && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '-' requires at least two parameters");
+    return false;
+  }
+  else if(car_exp == LT && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '<' requires exactly two  parameters");
+    return false;
+  }
+  else if(car_exp == IF && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "IF requires at least a test and a then clause");
+    return false;
+  }
+  else if(car_exp == ERROR && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "ERROR requires a single parameter");
+    return false;
+  }
+  else if(car_exp == PRINT && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "PRINT requires a single parameter");
+    return false;
+  }
+  else if(car_exp == SETCAR && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "SETCAR requires two parameters");
+    return false;
+  }
+  else if(car_exp == SETCDR && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "SETCDR requires two parameters");
+    return false;
+  }
+  else if(car_exp == LIST && len < 2)
+  {
+    throw_exception1("COMPILE-ERROR", "LIST requires at least one parameter");
+    return false;
+  }
+  else if(car_exp == MULT && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '*' requires at least two parameters");
+    return false;
+  }
+  else if(car_exp == DIV && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '/' requires at least two parameters");
+    return false;
+  }
+  else if(car_exp == EQ && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "EQ requires two parameters");
+    return false;
+  }
+  else if(car_exp == CONCAT && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "CONCAT requires at least two parameters");
+    return false;
+  }
+  else if(car_exp == NOT && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "NOT requires a single parameter");
+    return false;
+  }
+  else if(car_exp == CAR && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CAR requires a single parameter");
+    return false;
+  }
+  else if(car_exp == CDR && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CDR requires a single parameter");
+    return false;
+  }
+  else if(car_exp == GT && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '>' requires two parameters");
+    return false;
+  }
+  else if(car_exp == GEQ && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '>=' requires two parameters");
+    return false;
+  }
+  else if(car_exp == LEQ && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "Operator '<=' requires two parameters");
+    return false;
+  }
+  else if(car_exp == ATOM && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "ATOM requires a single parameter");
+    return false;
+  }
+  else if(car_exp == SYMBOL_VALUE && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "SYMBOL-VALUE requires a single parameter");
+    return false;
+  }
+  else if(car_exp == APPLY && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "APPLY requires two parameters");
+    return false;
+  }
+  else if(car_exp == SYMBOL && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "SYMBOL requires a single parameter");
+    return false;
+  }
+  else if(car_exp == SYMBOL_NAME && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "SYMBOL-NAME requires a single parameter");
+    return false;
+  }
+  else if(car_exp == FORMAT && len < 3)
+  {
+    throw_exception1("COMPILE-ERROR", "FORMAT requires at least two parameters");
+    return false;
+  }
+  else if(car_exp == CLONE && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CLONE-OBJECT requires a single parameter");
+    return false;
+  }
+  else if(car_exp == UNBIND && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "UNBIND requires a single parameter");
+    return false;
+  }
+  else if(car_exp == NEWLINE && len != 1)
+  {
+    throw_exception1("COMPILE-ERROR", "NEWLINE takes no  parameters");
+    return false;
+  }
+  else if(car_exp == CONSP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CONSP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == LISTP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "LISTP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == INTEGERP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "INTEGERP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == FLOATP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "FLOATP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == CHARACTERP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CHARACTERP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == SYMBOLP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "SYMBOLP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == STRINGP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "STRINGP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == ARRAYP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "ARRAYP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == CLOSUREP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CLOSUREP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == MACROP && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "MACROP requires a single parameter");
+    return false;
+  }
+  else if(car_exp == STRING && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "STRING requires a single parameter");
+    return false;
+  }
+  else if(car_exp == MAKE_ARRAY && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "MAKE-ARRAY requires two parameters");
+    return false;
+  }
+  else if(car_exp == ARRAY_SET && len != 4)
+  {
+    throw_exception1("COMPILE-ERROR", "ARRAY-SET requires three parameters");
+    return false;
+  }
+  else if(car_exp == ARRAY_GET && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "ARRAY-GET requires two parameters");
+    return false;
+  }
+  else if(car_exp == SUB_ARRAY && len != 4)
+  {
+    throw_exception1("COMPILE-ERROR", "SUB-ARRAY requires three parameters");
+    return false;
+  }
+  else if(car_exp == ARRAY_LENGTH && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "ARRAY-LENGTH requires a single parameter");
+    return false;
+  }
+  else if(car_exp == PRINT_STRING && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "PRINT-STRING requires a single parameter");
+    return false;
+  }
+  else if(car_exp == LOAD_FOREIGN_LIBRARY && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "LOAD-FOREIGN-LIBRARY requires a single parameter");
+    return false;
+  }
+  else if(car_exp == CALL_FF_INTERNAL && len != 4)
+  {
+    throw_exception1("COMPILE-ERROR", "CALL-FOREIGN-FUNCTION requires three parameters");
+    return false;
+  }
+  else if(car_exp == CREATE_PACKAGE && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CREATE-PACKAGE requires a single parameter");
+    return false;
+  }
+  else if(car_exp == IN_PACKAGE && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "IN-PACKAGE requires a single parameter");
+    return false;
+  }
+  else if(car_exp == EXPORT_PACKAGE && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "EXPORT-PACKAGE requires two parameters");
+    return false;
+  }
+  else if(car_exp == EXPAND_MACRO && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "EXPAND-MACRO requires a single parameter");
+    return false;
+  }
+  else if(car_exp == ENV && len != 1)
+  {
+    throw_exception1("COMPILE-ERROR", "ENV takes no parameters");
+    return false;
+  }
+  else if(car_exp == TIME && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "TIME requires a single parameter");
+    return false;
+  }
+  else if(car_exp == SAVE_OBJECT && len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "SAVE-OBJECT requires two parameters");
+    return false;
+  }
+  else if(car_exp == LOAD_OBJECT && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "LOAD-OBJECT requires a single parameter");
+    return false;
+  }
+  else if(car_exp == LOAD_FILE && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "LOAD-FILE requires a single parameter");
+    return false;
+  }
+  else if(car_exp == CREATE_IMAGE && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "CREATE-IMAGE requires a single parameter");
+    return false;
+  }
+  else if(car_exp == THROW && len != 2)
+  {
+    throw_exception1("COMPILE-ERROR", "THROW requires a single parameter");
+    return false;
+  }
+
   if(IS_CONS_OBJECT(exp) &&
      ((car(exp) == MACRO && contains_internal_macros(third(exp))) ||
       (car(exp) != MACRO && contains_internal_macros(exp))))
@@ -4208,6 +4519,16 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     return false;
   }
    
+  OBJECT_PTR rest = exp;
+
+  while(rest != NIL)
+  {
+    if(!is_valid_expression(car(rest)))
+      return false;
+
+    rest = cdr(rest);
+  }
+
   return true;
 }
 
@@ -4595,4 +4916,56 @@ OBJECT_PTR convert_float_to_object1(float v)
   insert_node(GREY, ptr + FLOAT_TAG);
 
   return ptr + FLOAT_TAG;
+}
+
+//generates C code that will construct the list
+//when executed. Used to handle quoted lists in
+//the generated code. 
+char *generate_lst_construct(OBJECT_PTR exp)
+{
+  assert(IS_CONS_OBJECT(exp) || exp == NIL);
+
+  char *buf;
+  buf = malloc(1000 * sizeof(char));
+  assert(buf);
+  memset(buf, 1000, '\0');
+
+  if(exp == NIL)
+  {
+    sprintf(buf, "17");
+    return buf;
+  }
+
+  unsigned int len = 0;
+
+  len += sprintf(buf+len, "primitive_list(convert_int_to_object(%d), ", cons_length(exp));
+
+  OBJECT_PTR rest = exp;
+  BOOLEAN first_time = true;
+
+  while(rest != NIL)
+  {
+    OBJECT_PTR obj = car(rest);
+
+    if(!first_time)
+      len += sprintf(buf+len, ", ");
+
+    if(is_atom(obj))
+      len += sprintf(buf+len, "%s", extract_variable_string(obj, true));
+    else
+    {
+      char *var = generate_lst_construct(obj);
+      len += sprintf(buf+len, "%s", var);
+      free(var);
+    }
+
+    rest = cdr(rest);
+    first_time = false;
+  }
+
+  len += sprintf(buf+len, ")");
+
+  assert(len <= 1000);
+
+  return buf;
 }

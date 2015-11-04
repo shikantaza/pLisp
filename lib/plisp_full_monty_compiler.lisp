@@ -391,7 +391,7 @@
 
 ;needed because FORMAT does not handle newlines
 (defmacro println ()
-  `(call-foreign-function "print_line" 'void nil))
+  `(call-foreign-function "print_line" void nil))
 
 (defmacro alias (sym1 sym2)
   `(define ,sym1 ,sym2))

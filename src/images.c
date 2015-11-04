@@ -1961,6 +1961,7 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
 
     *((nativefn *)ptr) = fn;
 
+    //so that subsequent saves of the image will work correctly
     add_native_fn_source(fn, source);
   }
   else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
