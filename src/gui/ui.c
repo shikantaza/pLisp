@@ -55,6 +55,8 @@ GtkStatusbar *system_browser_statusbar;
 
 GtkTreeView *operators_list;
 
+OBJECT_PTR debug_window_dbg_stack;
+
 extern unsigned int nof_packages;
 extern package_t *packages;
 
@@ -949,7 +951,7 @@ void populate_frames_list(GtkTreeView *list)
 
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
 
-  OBJECT_PTR rest = debug_stack;
+  OBJECT_PTR rest = debug_window_dbg_stack;
 
   while(rest != NIL)
   {
@@ -1336,4 +1338,3 @@ void create_profiler_window(int posx, int posy, int width, int height)
 
   gtk_widget_grab_focus((GtkWidget *)operators_list);
 }
-

@@ -73,6 +73,8 @@ extern OBJECT_PTR idclo;
 extern OBJECT_PTR most_recent_closure;
 extern OBJECT_PTR continuations_for_return;
 
+extern OBJECT_PTR debug_window_dbg_stack;
+
 //forward declarations
 
 void dealloc(OBJECT_PTR);
@@ -345,6 +347,8 @@ void build_grey_set()
   /* insert_node(GREY, CONS_APPLY_NIL); */
   /* insert_node(GREY, CONS_HALT_NIL); */
   /* insert_node(GREY, CONS_RETURN_NIL); */
+
+  insert_node(GREY, debug_window_dbg_stack);
 
   pin_globals();
 }

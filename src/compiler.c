@@ -128,6 +128,8 @@ extern OBJECT_PTR most_recent_closure;
 extern OBJECT_PTR exception_object;
 extern OBJECT_PTR exception_handlers;
 
+extern OBJECT_PTR debug_stack;
+
 extern OBJECT_PTR idclo;
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 
@@ -808,6 +810,8 @@ int load_core_library()
 
   exception_object = NIL;
   exception_handlers = NIL;
+
+  debug_stack = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
                         cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "lib/plisp_full_monty_compiler.lisp"),

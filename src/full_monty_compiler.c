@@ -202,6 +202,8 @@ extern int current_package;
 extern char **strings;
 
 extern BOOLEAN system_changed;
+
+extern OBJECT_PTR debug_window_dbg_stack;
 //end of external variables
 
 //external functions
@@ -4890,6 +4892,8 @@ OBJECT_PTR handle_exception()
             is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
     raise_error(buf);
     in_error = false;
+
+    debug_window_dbg_stack = debug_stack;
 
     create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
 			DEFAULT_DEBUG_WINDOW_POSY,
