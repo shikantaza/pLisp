@@ -64,6 +64,9 @@ OBJECT_PTR most_recent_closure;
 OBJECT_PTR continuations_for_return;
 
 OBJECT_PTR exception_object, exception_handlers;
+
+OBJECT_PTR debug_stack;
+
 //end of global variables
 
 //external variables
@@ -357,6 +360,8 @@ OBJECT_PTR convert_int_to_object_for_full_monty(int);
 OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int);
 
 char *generate_lst_construct(OBJECT_PTR);
+
+void push_into_debug_stack(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -415,10 +420,17 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
 
   while(rest != NIL)
   {
-    if(equal(obj, car(rest)))
+    //if(equal(obj, car(rest)))
+    //if(equal(obj, *((unsigned int *)(rest & POINTER_MASK))))
+    //no need for equal() since compilation only involves 
+    //comparing symbols
+    //if(obj == *((unsigned int *)(rest & POINTER_MASK))) 
+    if(obj == *((unsigned int *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
       return true;
 
-    rest = cdr(rest);
+    //rest = cdr(rest);
+    //rest = *((unsigned int *)(rest & POINTER_MASK) + 1);
+    rest = *((unsigned int *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT  ) + 1);
   }
   return false;
 }
@@ -445,13 +457,14 @@ OBJECT_PTR union1(unsigned int count, ...)
       OBJECT_PTR obj = car(rest);
       if(!exists(obj, ret))
       {
-        if(ret == NIL)
-          ret = cons(clone_object(obj), NIL);
-        else
-        {
-          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-          set_heap(ptr, 1, cons(clone_object(obj), NIL));
-        }
+        /* if(ret == NIL) */
+        /*   ret = cons(clone_object(obj), NIL); */
+        /* else */
+        /* { */
+        /*   uintptr_t ptr = last_cell(ret) & POINTER_MASK; */
+        /*   set_heap(ptr, 1, cons(clone_object(obj), NIL)); */
+        /* } */
+        ret = cons(clone_object(obj), ret);
       }
 
       rest = cdr(rest);
@@ -502,17 +515,32 @@ OBJECT_PTR difference(OBJECT_PTR lst1, OBJECT_PTR lst2)
 {
   OBJECT_PTR ret = NIL, rest = lst1;
 
+  OBJECT_PTR last;
+
   while(rest != NIL)
   {
     OBJECT_PTR obj = car(rest);
     if(!exists(obj, lst2))
     {
+      /* if(ret == NIL) */
+      /*   ret = cons(clone_object(obj), NIL); */
+      /* else */
+      /* { */
+      /*   uintptr_t ptr = last_cell(ret) & POINTER_MASK; */
+      /*   set_heap(ptr, 1, cons(clone_object(obj), NIL)); */
+      /* } */
+      //ret = cons(clone_object(obj), ret);
       if(ret == NIL)
+      {
         ret = cons(clone_object(obj), NIL);
+        last = ret;
+      }
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-        set_heap(ptr, 1, cons(clone_object(obj), NIL));        
+        uintptr_t ptr = last & POINTER_MASK;
+        OBJECT_PTR temp = cons(clone_object(obj), NIL);
+        set_heap(ptr, 1, temp);
+        last = temp;
       }
     }
 
@@ -1842,13 +1870,14 @@ OBJECT_PTR get_top_level_symbols()
 
     OBJECT_PTR val = top_level_symbols[i].sym;
 
-    if(ret == NIL)
-      ret = cons(val, NIL);
-    else
-    {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-      set_heap(ptr, 1, cons(val, NIL));        
-    }
+    /* if(ret == NIL) */
+    /*   ret = cons(val, NIL); */
+    /* else */
+    /* { */
+    /*   uintptr_t ptr = last_cell(ret) & POINTER_MASK; */
+    /*   set_heap(ptr, 1, cons(val, NIL));         */
+    /* } */
+    ret = cons(val, ret);
   }
 
   return ret;    
@@ -2726,6 +2755,29 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   len += sprintf(buf+len, ")\n{\n");
 
+  //debug information
+  len += sprintf(buf+len, "push_into_debug_stack(primitive_list(convert_int_to_object(%d), ", cons_length(params)-1);
+
+  rest = params;
+  first_time = true;
+
+  while(cdr(rest) != NIL) //need to skip the last parameter, hence cdr
+  {
+    char *pname = extract_variable_string(car(rest), serialize_flag);
+
+    if(!first_time)
+      len += sprintf(buf+len, ", ");
+
+    len += sprintf(buf+len, "%s", pname);
+
+    rest = cdr(rest);
+    first_time = false;
+    free(pname);
+  }
+
+  len += sprintf(buf+len, "));\n");
+  //end of debug information
+
   len += sprintf(buf+len, "set_most_recent_closure(%s);\n", extract_variable_string(first(params), serialize_flag));
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
   len += sprintf(buf+len, "unsigned int nil = 17;\n");
@@ -3069,6 +3121,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "add_exception_handler",    add_exception_handler);
   tcc_add_symbol(tcc_state, "get_exception_handler",    get_exception_handler);
   tcc_add_symbol(tcc_state, "primitive_throw",          primitive_throw);
+
+  tcc_add_symbol(tcc_state, "push_into_debug_stack",    push_into_debug_stack);
 
   return tcc_state;
 }
@@ -3449,6 +3503,8 @@ int repl2()
 
     exception_object = NIL;
     exception_handlers = NIL;
+
+    debug_stack = NIL;
 
     //idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 
@@ -4355,9 +4411,9 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     throw_exception1("COMPILE-ERROR", "UNBIND requires a single parameter");
     return false;
   }
-  else if(car_exp == NEWLINE && len != 1)
+  else if(car_exp == NEWLINE && len != 2)
   {
-    throw_exception1("COMPILE-ERROR", "NEWLINE takes no  parameters");
+    throw_exception1("COMPILE-ERROR", "NEWLINE requires a single parameter");
     return false;
   }
   else if(car_exp == CONSP && len != 2)
@@ -4834,6 +4890,12 @@ OBJECT_PTR handle_exception()
             is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
     raise_error(buf);
     in_error = false;
+
+    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+			DEFAULT_DEBUG_WINDOW_POSY,
+			DEFAULT_DEBUG_WINDOW_WIDTH,
+			DEFAULT_DEBUG_WINDOW_HEIGHT);
+
     return NIL;
   }
 
@@ -4951,7 +5013,12 @@ char *generate_lst_construct(OBJECT_PTR exp)
       len += sprintf(buf+len, ", ");
 
     if(is_atom(obj))
-      len += sprintf(buf+len, "%s", extract_variable_string(obj, true));
+    {
+      if(IS_INTEGER_OBJECT(obj) || IS_FLOAT_OBJECT(obj))
+        len += sprintf(buf+len, "%s", extract_variable_string(obj, true));
+      else
+        len += sprintf(buf+len, "%d", obj);
+    }
     else
     {
       char *var = generate_lst_construct(obj);
@@ -4968,4 +5035,30 @@ char *generate_lst_construct(OBJECT_PTR exp)
   assert(len <= 1000);
 
   return buf;
+}
+
+void push_into_debug_stack(OBJECT_PTR form)
+{
+  OBJECT_PTR clo = car(form);
+
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    if(car(top_level_symbols[i].val) == clo)
+    {
+      OBJECT_PTR cons_equiv = cons_equivalent(clo);
+      /* debug_stack = cons(cons(form, last_cell(cons_equiv)), debug_stack); */
+
+      debug_stack = cons(cons(cons(top_level_symbols[i].sym, 
+                                   cdr(form)),
+                              last_cell(cons_equiv)),
+                         debug_stack);
+
+      return;
+    }
+  }
 }

@@ -858,7 +858,8 @@ inline OBJECT_PTR car(OBJECT_PTR cons_obj)
      /*   print_object(cons_obj);printf("\n"); */
      /*   assert(false); */
      /* } */
-     return get_heap(cons_obj & POINTER_MASK, 0);
+     //return get_heap(cons_obj & POINTER_MASK, 0);
+    return (OBJECT_PTR)*((unsigned int *)(cons_obj & POINTER_MASK));
   }
 }
 
@@ -870,7 +871,8 @@ inline OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   {
     /* if(!IS_CONS_OBJECT(cons_obj)) */
     /*    assert(false); */
-    return get_heap(cons_obj & POINTER_MASK, 1);
+    //return get_heap(cons_obj & POINTER_MASK, 1);
+    return (OBJECT_PTR)*((unsigned int *)(cons_obj & POINTER_MASK)+1);
   }
 }
 
@@ -1987,13 +1989,15 @@ BOOLEAN form_contains_comma_at(OBJECT_PTR form)
   return false;
 }
 
-OBJECT_PTR last_cell(OBJECT_PTR lst)
+inline OBJECT_PTR last_cell(OBJECT_PTR lst)
 {
   OBJECT_PTR rest = lst;
 
   while(cdr(rest) != NIL)
   {
-    rest = cdr(rest);
+    //rest = cdr(rest);
+    //rest = (OBJECT_PTR)*((unsigned int *)(rest & POINTER_MASK)+1);
+    rest = (OBJECT_PTR)*((unsigned int *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT )+1);
   }
   
   return rest;

@@ -121,6 +121,7 @@ extern unsigned int nof_unmet_dependencies ;
 extern unmet_dependency_t *global_unmet_dependencies;
 extern unsigned int nof_and_rest_mappings;
 extern and_rest_mapping_t *and_rest_mappings;
+extern OBJECT_PTR debug_stack;
 //end of global vars for full monty compiler
 
 //forward declarations
@@ -389,6 +390,11 @@ void serialize_full_monty_global_vars(FILE *fp,
   fprintf(fp, "\"saved_continuations\" : ");
   print_json_object(fp, saved_continuations, print_queue, obj_count, hashtable, printed_objects, single_object);
   fprintf(fp, ", ");
+
+  fprintf(fp, "\"debug_stack\" : ");
+  print_json_object(fp, debug_stack, print_queue, obj_count, hashtable, printed_objects, single_object);
+  fprintf(fp, ", ");
+
 
   fprintf(fp, "\"unmet_dependencies\" : [");
 
@@ -927,6 +933,12 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
                                              hashtable, 
                                              q, 
                                              single_object);
+
+  debug_stack = deserialize_internal(heap, 
+                                     JSON_get_object_item(root, "debug_stack")->ivalue, 
+                                     hashtable, 
+                                     q, 
+                                     single_object);
 
   //unmet dependencies
   temp = JSON_get_object_item(root, "unmet_dependencies");

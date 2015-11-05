@@ -230,8 +230,10 @@ gboolean delete_event( GtkWidget *widget,
   else if(widget == (GtkWidget *)debugger_window)
   {
     close_application_window((GtkWidget **)&debugger_window);
+#ifdef INTERPRETER_MODE
     //if(!in_error)
       call_repl("(ABORT)");
+#endif
   }
   else if(widget == (GtkWidget *)profiler_window)
   {
