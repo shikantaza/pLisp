@@ -67,6 +67,8 @@ OBJECT_PTR exception_object, exception_handlers;
 
 OBJECT_PTR debug_stack;
 
+BOOLEAN macro_expansion_in_progress;
+
 //end of global variables
 
 //external variables
@@ -180,6 +182,8 @@ extern OBJECT_PTR ADD_EXCEPTION_HANDLER;
 extern OBJECT_PTR DEFUN;
 extern OBJECT_PTR DEFMACRO;
 
+extern OBJECT_PTR REPL_FUNCTION;
+
 extern unsigned int POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -217,8 +221,8 @@ extern OBJECT_PTR primitive_geq(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_error(OBJECT_PTR);
 extern OBJECT_PTR primitive_print(OBJECT_PTR);
-extern OBJECT_PTR primitive_setcar(OBJECT_PTR);
-extern OBJECT_PTR primitive_setcdr(OBJECT_PTR);
+extern OBJECT_PTR primitive_setcar(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR primitive_setcdr(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR primitive_mult(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_div(OBJECT_PTR, ...);
 extern OBJECT_PTR primitive_equal(OBJECT_PTR);
@@ -1929,7 +1933,9 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   //to top level macro objects should be
   //considered for the macro expansion
   OBJECT_PTR prev_res = res;
+  macro_expansion_in_progress = true;
   res = expand_macro_full(res, true);
+  macro_expansion_in_progress = false;
 //print_object(res);printf("\n");//getchar();
 
   if(!is_valid_expression(res))
@@ -2051,15 +2057,12 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
       char buf[200];
       memset(buf, 200, '\0');
       sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
-      //raise_error(buf);
-      //return NIL;
-      printf("%s\n", buf);
-      /* add_unmet_dependency(((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG, */
-      /*                      car(rest), */
-      /*                      pos); */
-      /* undefined_syms = cons(cons(car(rest),  */
-      /*                            convert_int_to_object(pos)), */
-      /*                       undefined_syms); */
+
+      if(!console_mode && !single_expression_mode && !pipe_mode)
+        show_warning_dialog(buf);
+      else
+        printf("%s\n", buf);
+
       uintptr_t ptr = last_cell(ret) & POINTER_MASK;
       set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));        
     }
@@ -2698,7 +2701,27 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       }
       return s;
     }
-    return convert_to_lower_case(replace_hyphens(raw_name));
+    else if(var != EXTRACT_NATIVE_FN && 
+            var != NTH && 
+            var != CREATE_FN_CLOSURE &&
+            var != NIL)
+    {
+      //decorate variable names with
+      //two underscores to prevent
+      //conflicts with C keywords
+
+      char *name = (char *)malloc(2 + strlen(raw_name));
+      name[0] = '-';
+      name[1] = '-';
+
+      strcpy(name+2, raw_name);
+
+      free(raw_name);
+
+      return convert_to_lower_case(replace_hyphens(name));
+    }
+    else
+      return convert_to_lower_case(replace_hyphens(raw_name));
   }
   else
   {
@@ -3822,19 +3845,40 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
 
       assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
 
-      int pos = global_unmet_dependencies[i].pos;
+      //recompile the depending function/macro
+      //if the symbol is a macro
+      if(IS_MACRO2_OBJECT(car(val)))
+      {
+        OBJECT_PTR new_clo = compile_and_evaluate(car(last_cell(cons_equivalent(clo))),
+                                                  car(last_cell(cons_equivalent(clo))));
+        
+        assert(IS_FUNCTION2_OBJECT(new_clo) || IS_MACRO2_OBJECT(new_clo));
 
-      OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        OBJECT_PTR temp1 = cdr(cons_equivalent(clo));
 
-      OBJECT_PTR rest = cons_eqiv;
-      int k=0;
+        //this avoids copying the elements of the CONS objects one by one
+        primitive_setcar(cons_equivalent(clo), car(cons_equivalent(new_clo)));
+        primitive_setcdr(cons_equivalent(clo), cdr(cons_equivalent(new_clo)));
 
-      for(k=0; k<pos; k++)
-        rest = cdr(rest);
+        //should the cdr of the original closure and
+        //the first element of the new closure be explicitly freed?
+      }
+      else
+      {
+        int pos = global_unmet_dependencies[i].pos;
 
-      set_heap(car(rest) & POINTER_MASK, 0, car(val));
+        OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
 
-      add_reference_to_top_level_sym(sym, pos, clo);
+        OBJECT_PTR rest = cons_eqiv;
+        int k=0;
+
+        for(k=0; k<pos; k++)
+          rest = cdr(rest);
+
+        set_heap(car(rest) & POINTER_MASK, 0, car(val));
+
+        add_reference_to_top_level_sym(sym, pos, clo);
+      }
 
       global_unmet_dependencies[i].delete_flag = true;
 
@@ -4650,8 +4694,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   }
 
-  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  OBJECT_PTR symbol_to_be_used = second(exp);
+  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  //OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR t1 = cons(NIL, NIL);
 
@@ -4720,8 +4764,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   } 
 
-  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  OBJECT_PTR symbol_to_be_used = second(exp);
+  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  //OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR out;
   int retval = get_top_level_sym_value(symbol_to_be_used, &out);
@@ -4780,6 +4824,11 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
 
   if(IS_CONS_OBJECT(exp) && car(exp) == DEFINE)
   {
+    debug_stack = cons(list(2, 
+                            cons(REPL_FUNCTION, NIL),
+                            third(exp)),
+                       debug_stack);
+
     res = process_define(exp, source);
     if(in_error)
     {
@@ -4789,6 +4838,11 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
   }
   else if(IS_CONS_OBJECT(exp) && car(exp) == SET)
   {
+    debug_stack = cons(list(2, 
+                            cons(REPL_FUNCTION, NIL),
+                            third(exp)),
+                       debug_stack);
+
     res = process_set(exp, source);
     if(in_error)
     {
@@ -4814,6 +4868,11 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
   }
   else
   {
+    debug_stack = cons(list(2, 
+                            cons(REPL_FUNCTION, NIL),
+                            exp),
+                       debug_stack);
+
     res = compile_and_evaluate(exp, source);
   }
 
@@ -5044,6 +5103,12 @@ char *generate_lst_construct(OBJECT_PTR exp)
 void push_into_debug_stack(OBJECT_PTR form)
 {
   OBJECT_PTR clo = car(form);
+
+  if(macro_expansion_in_progress)
+    return;
+
+  if(IS_MACRO2_OBJECT(clo))
+    return;
 
   int i;
 

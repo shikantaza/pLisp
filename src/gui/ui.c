@@ -786,6 +786,18 @@ void show_error_dialog(char *msg)
   gtk_widget_destroy((GtkWidget *)dialog);
 }
 
+void show_warning_dialog(char *msg)
+{
+  GtkWidget *dialog = gtk_message_dialog_new (action_triggering_window,
+                                              GTK_DIALOG_DESTROY_WITH_PARENT,
+                                              GTK_MESSAGE_WARNING,
+                                              GTK_BUTTONS_CLOSE,
+                                              msg);
+  gtk_dialog_run(GTK_DIALOG (dialog));
+  gtk_widget_destroy((GtkWidget *)dialog);
+}
+
+
 //use this when we include a button to display the stack trace
 void error_window(char *msg)
 {

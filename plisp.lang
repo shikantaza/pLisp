@@ -192,6 +192,7 @@
       <keyword>while</keyword>
       <keyword>rec</keyword>
       <keyword>let</keyword>
+      <keyword>letrec</keyword>
       <keyword>dolist</keyword>
       <keyword>make-string</keyword>
       <keyword>string-set</keyword>

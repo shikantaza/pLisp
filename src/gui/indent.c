@@ -36,6 +36,7 @@
 #define LET1     9
 #define DOLIST   10
 #define DOTIMES  11
+#define LETREC   12
 
 /* determinant form = the characters from the leftmost open paren
    to the current cursor position */
@@ -225,6 +226,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
             form_type = DOLIST;
           else if(!strncmp(tempstr, "DOTIMES", (i-pos)))
             form_type = DOTIMES;
+          else if(!strncmp(tempstr, "LETREC", (i-pos)))
+            form_type = LETREC;
           else
             form_type = FORM;
 
@@ -340,6 +343,8 @@ form_position_t *convert_to_form_position_old(char *str, unsigned int *count)
         fp[(*count)-1].form_type = IF;
       else if(!strncmp(tempstr, "WHILE", (index-i)))
         fp[(*count)-1].form_type = WHILE;
+      else if(!strncmp(tempstr, "LETREC", (index-i)))
+        fp[(*count)-1].form_type = LETREC;
       else
         fp[(*count)-1].form_type = FORM;
         
@@ -407,7 +412,7 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
   if(count == 0)
     return 1;
 
-  if(fp[0].form_type == LET || fp[0].form_type == LET1)
+  if(fp[0].form_type == LET || fp[0].form_type == LET1 || fp[0].form_type == LETREC)
   {
     if(count == 1)
       return 5;

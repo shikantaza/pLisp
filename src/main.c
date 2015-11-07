@@ -194,6 +194,7 @@ OBJECT_PTR THROW             = (OBJECT_PTR)((118 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR GET_EXCEPTION_HANDLER  = (OBJECT_PTR)((119 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR ADD_EXCEPTION_HANDLER  = (OBJECT_PTR)((120 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR CALL_FF_INTERNAL  = (OBJECT_PTR)((121 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR REPL_FUNCTION     = (OBJECT_PTR)((122 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -207,7 +208,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 37
+#define NOF_NON_SPECIAL_SYMBOLS 38
 
 char err_buf[500];
 
@@ -961,6 +962,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
      car_obj == MACRO   || 
      car_obj == LET     ||
      car_obj == LET1    ||
+     car_obj == LETREC  ||
      //car_obj == WHILE   ||
      car_obj == DOTIMES ||
      car_obj == DOLIST)
@@ -975,6 +977,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       length += sprintf(buf+filled_buf_len+length, "(let ");
     else if(car_obj == LET1)
       length += sprintf(buf+filled_buf_len+length, "(let1 ");
+    else if(car_obj == LETREC)
+      length += sprintf(buf+filled_buf_len+length, "(letrec ");
     /* else if(car_obj == WHILE) */
     /*   length += sprintf(buf+filled_buf_len+length, "(while "); */
     else if(car_obj == DOTIMES)
@@ -982,7 +986,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     else if(car_obj == DOLIST)
       length += sprintf(buf+filled_buf_len+length, "(dolist ");
 
-    if(car_obj != LET && car_obj != LET1)
+    if(car_obj != LET && car_obj != LET1 && car_obj != LETREC)
       length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
     else
     {
@@ -2199,6 +2203,8 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[120] = strdup("ADD-EXCEPTION-HANDLER");
 
   packages[CORE_PACKAGE_INDEX].symbols[121] = strdup("CALL-FF-INTERNAL");
+
+  packages[CORE_PACKAGE_INDEX].symbols[122] = strdup("REPL-FUNCTION");
 }
 
 int find_package(char* package_name)

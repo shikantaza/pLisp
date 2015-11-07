@@ -348,7 +348,8 @@ void build_grey_set()
   /* insert_node(GREY, CONS_HALT_NIL); */
   /* insert_node(GREY, CONS_RETURN_NIL); */
 
-  insert_node(GREY, debug_window_dbg_stack);
+  if(debug_window_dbg_stack != NIL)
+    insert_node(GREY, debug_window_dbg_stack);
 
   pin_globals();
 }
