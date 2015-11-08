@@ -1550,6 +1550,21 @@ OBJECT_PTR primitive_time(OBJECT_PTR exp)
 
 OBJECT_PTR prim_serialize(OBJECT_PTR obj, OBJECT_PTR file_name)
 {
+  if(IS_FUNCTION2_OBJECT(obj))
+  {
+    OBJECT_PTR cons_equiv = cons_equivalent(obj);
+
+    //continuation objects cannot be serialized (yet)
+    //because they don't have pLisp source forms that
+    //are needed to recreate functions and macros.
+    //continuation object
+    if(IS_CONS_OBJECT(last_cell(cons_equiv)) && IS_FUNCTION2_OBJECT(car(last_cell(cons_equiv))))
+    {
+      throw_exception1("EXCEPTION", "Continuation objects cannot be serialized");
+      return NIL;
+    }
+  }
+
   if(!(is_string_object(file_name)) && (!(IS_STRING_LITERAL_OBJECT(file_name))))
   {
     throw_exception1("INVALID-ARGUMENT", "Second argument to SAVE-OBJECT should be a string object or a string literal denoting the file name");
