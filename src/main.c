@@ -274,6 +274,14 @@ extern unsigned int POINTER_MASK;
 extern OBJECT_PTR idclo;
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 
+extern char **autocomplete_words;
+extern unsigned int nof_autocomplete_words;
+
+extern int build_help_entries(char *);
+extern void cleanup_help_entries();
+
+extern OBJECT_PTR exception_object;
+
 void initialize()
 {
   if(initialize_memory())
@@ -585,6 +593,12 @@ void cleanup()
   cleanup_tcc();
 
   cleanup_full_monty_global_vars();
+
+  for(i=0; i<nof_autocomplete_words; i++)
+    free(autocomplete_words[i]);
+  free(autocomplete_words); 
+
+  cleanup_help_entries();
 
   log_function_exit("cleanup");
 }

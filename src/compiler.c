@@ -134,6 +134,8 @@ extern OBJECT_PTR debug_window_dbg_stack;
 extern OBJECT_PTR idclo;
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 
+extern void build_autocomplete_words();
+
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
   if(args == NIL)
@@ -498,6 +500,18 @@ int main(int argc, char **argv)
 			       DEFAULT_TRANSCRIPT_HEIGHT,
 			       default_transcript_text);
 
+  }
+
+  build_autocomplete_words();
+
+  if(!console_mode && !single_expression_mode && !pipe_mode)
+  {
+    if(build_help_entries("./doc/help.json"))
+    {
+      fprintf(stderr, "Building help entries failed: %s\n", get_string(cdr(exception_object)));
+      cleanup();
+      exit(1);
+    }
   }
 
   if(pipe_mode)

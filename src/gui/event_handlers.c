@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#include <gtksourceview/gtksource.h>
 #include <assert.h>
 
 #include "../plisp.h"
@@ -55,11 +56,17 @@ extern GtkWindow *system_browser_window;
 extern GtkWindow *debugger_window;
 extern GtkWindow *profiler_window;
 
+extern GtkTextBuffer *help_buffer;
+extern GtkWindow *help_window;
+
 extern GtkTreeView *packages_list;
 extern GtkTreeView *symbols_list;
 
 extern GtkTextBuffer *system_browser_buffer;
 extern GtkTextView *system_browser_textview;
+
+extern GtkSourceView *workspace_source_view;
+extern GtkSourceBuffer *workspace_source_buffer;
 
 extern char *loaded_image_file_name;
 
@@ -113,6 +120,16 @@ extern global_var_mapping_t *top_level_symbols;
 char *form_for_eval;
 
 extern int call_repl(char *);
+
+char *get_current_word(GtkTextBuffer *);
+void do_auto_complete(GtkTextBuffer *);
+
+char **autocomplete_words = NULL;
+unsigned int nof_autocomplete_words = 0;
+
+extern unsigned int current_package;
+
+extern help_entry_t *find_entry(char *);
 
 int get_indents_for_form(char *form)
 {
@@ -695,7 +712,68 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 	  event->keyval == GDK_KEY_Tab)
   {
     indent(widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer);
+    do_auto_complete(widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer);
     return TRUE;
+  }
+  else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
+	  event->keyval == GDK_KEY_F1)
+  {
+    enum {FUNCTION, MACRO, SPECIAL_OPERATOR};
+
+    if(!help_window)
+      create_help_window();
+
+    GtkTextBuffer *buffer = widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer;
+
+    char *s = get_current_word(buffer);
+
+    help_entry_t *entry = find_help_entry(s);
+
+    if(!entry)
+    {
+      show_error_dialog("No help entry available for symbol");
+      return TRUE;
+    }
+
+    char entry_text[MAX_STRING_LENGTH];
+    memset(entry_text, '\0', MAX_STRING_LENGTH);
+
+    unsigned int len = 0;
+    len += sprintf(entry_text+len, "%s %s\n\n", 
+                   entry->type == FUNCTION ? "Function" : (entry->type == MACRO ? "Macro" : "Special Operator"),
+                   entry->name);
+    len += sprintf(entry_text+len, "Syntax: %s\n\n", entry->syntax);
+    len += sprintf(entry_text+len, "Arguments and Values: %s\n\n", entry->args);
+    len += sprintf(entry_text+len, "Descriptions: %s\n\n", entry->desc);
+    len += sprintf(entry_text+len, "Exceptional Situations: %s\n\n", entry->exceptions);
+    len += sprintf(entry_text+len, "Description: %s\n\n", entry->desc);
+    len += sprintf(entry_text+len, "See Also: ");
+
+    unsigned int i;
+    BOOLEAN first_time = true;
+
+    for(i=0; i<entry->see_also_count; i++)
+    {
+      if(!first_time)
+        len += sprintf(entry_text+len, ", ");
+
+      len += sprintf(entry_text+len, "%s", entry->see_also[i]);
+
+      first_time = false;
+    }
+
+    gtk_text_buffer_set_text(help_buffer, "", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, entry_text, -1);
+
+    gtk_widget_show_all(help_window);
+
+    free(s);
+    return TRUE;
+  }
+  else if(widget == (GtkWidget *)help_window && event->keyval == GDK_KEY_Escape)
+  {
+    gtk_widget_set_visible((GtkWidget *)help_window, FALSE);
   }
   /*
   else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
@@ -1534,4 +1612,218 @@ BOOLEAN in_code_or_string_literal_or_comment(GtkTextBuffer *buffer, GtkTextIter 
     return in_multi_line_comment;
   else
     return (!in_string_literal && !in_single_line_comment && !in_multi_line_comment);
+}
+
+enum {FIRST, LAST};
+
+BOOLEAN is_non_identifier_char(char c)
+{
+  return c != '-' && 
+         !(c >= 65 && c <= 90) &&
+         !(c >= 97 && c <= 122) &&
+         !(c >= 48 && c <= 57);
+}
+
+//returns the index of the first or last non-identifier
+//character (non-alphanumeric, non-hyphen) in the string
+//returns -1 if such a character doesn't exist in the string
+unsigned int get_loc_of_non_identifier_character(char *s, int pos)
+{
+  int i;
+  int len = strlen(s);
+
+  if(pos == FIRST)
+  {
+    for(i=0; i<len; i++)
+      if(is_non_identifier_char(s[i]))
+        return i;
+  }
+  else if(pos == LAST)
+  {
+    for(i=len-1; i>=0; i--)
+      if(is_non_identifier_char(s[i]))
+        return i;
+  }
+  return -1;
+}
+
+//returns the word under the cursor (for autocomplete)
+char *get_current_word(GtkTextBuffer *buffer)
+{
+  GtkTextIter curr_iter, line_start_iter, line_end_iter;
+  gint line_number, line_count;
+
+  //get the current iter
+  gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter, gtk_text_buffer_get_insert(buffer));  
+
+  //get the current line
+  line_number = gtk_text_iter_get_line(&curr_iter);
+
+  //get the total number of lines in the buffer
+  line_count = gtk_text_buffer_get_line_count(buffer);
+
+  //get the iter at the beginning of the current line
+  gtk_text_buffer_get_iter_at_line(buffer, &line_start_iter, line_number);
+
+  //get the iter at the end of the current line
+  if(line_number == line_count-1)
+    gtk_text_buffer_get_end_iter(buffer, &line_end_iter);
+  else
+    gtk_text_buffer_get_iter_at_line(buffer, &line_end_iter, line_number+1);
+
+  gchar *str1, *str2;
+
+  //get the strings before and after the cursor
+  str1 = gtk_text_buffer_get_text(buffer, &line_start_iter, &curr_iter, FALSE);
+  str2 = gtk_text_buffer_get_text(buffer, &curr_iter, &line_end_iter, FALSE);
+
+  unsigned int idx1 = get_loc_of_non_identifier_character(str1, LAST);
+  unsigned int idx2 = get_loc_of_non_identifier_character(str2, FIRST);
+
+  char *left, *right;
+
+  if(idx1 == -1)
+    left = strdup(str1);
+  else
+    left = strndup(str1+idx1+1, strlen(str1)-idx1-1);
+
+  if(idx2 == -1)
+    right = strdup(str2);
+  else
+    right = strndup(str2+idx2+1, strlen(str2)-idx2-1);
+
+  char *ret = (char *)malloc((strlen(left) + strlen(right) + 1) * sizeof(char));
+  assert(ret);
+
+  memset(ret, '\0', strlen(left) + strlen(right) + 1);
+
+  sprintf(ret,"%s%s", left, right);
+
+  free(left);
+  free(right);
+
+  return ret;
+}
+
+void add_auto_complete_words(int package_index)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    if(((int)top_level_symbols[i].sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == package_index)
+    {
+      nof_autocomplete_words++;
+
+      char **temp = realloc(autocomplete_words, nof_autocomplete_words * sizeof(char *));
+      assert(temp);
+      autocomplete_words = temp;
+
+      autocomplete_words[nof_autocomplete_words-1] = convert_to_lower_case(strdup(get_symbol_name(top_level_symbols[i].sym)));
+    }
+  }
+}
+
+void build_autocomplete_words()
+{
+  int i;
+
+  for(i=0; i<nof_autocomplete_words; i++)
+    free(autocomplete_words[i]);
+  free(autocomplete_words); 
+
+  //skipping some special operators if there is no pay-off in autocomplete
+  //e.g. operators that are one- or two characters long
+
+  //can make things more efficient by
+  //loading keywords and special ops
+  //only once
+
+  char *keywords_and_special_ops[] = {"let", "letrec", "if", "set", "lambda", "macro", "error", "call-cc", "define", "nil", "atom",
+                                    "concat",  "quote",  "eq",  "list",  "car", "cdr", "print", "symbol-value", "gensym", "setcar", 
+                                    "setcdr", "apply", "symbol", "symbol-name", "format", "clone", "unbind", "newline", "not", 
+                                    "return-from", "throw" ,"string", "make-array", "array-get", "array-set", "sub-array", "array-length", 
+                                    "print-string", "consp", "listp", "integerp", "floatp", "characterp", "symbolp", "stringp",
+                                    "arrayp", "closurep", "macrop", "load-foreign-library", "call-foreign-function", "create-package",
+                                    "in-package", "export-package", "create-image", "save-object", "load-object", "load-file", "profile",
+                                    "time", "env", "expand-macro", "eval"};
+
+
+  nof_autocomplete_words = 63;
+  autocomplete_words = (char **)malloc(nof_autocomplete_words * sizeof(char *));
+  
+  assert(autocomplete_words);
+
+  for(i=0; i<nof_autocomplete_words; i++)
+    autocomplete_words[i] = strdup(keywords_and_special_ops[i]);
+
+  //top-level symbols from core package
+  add_auto_complete_words(CORE_PACKAGE_INDEX);
+
+  if(current_package != CORE_PACKAGE_INDEX)
+    add_auto_complete_words(current_package);
+}
+
+void do_auto_complete(GtkTextBuffer *buffer)
+{
+  char *s = get_current_word(buffer);
+  int i;
+  unsigned int nof_matches = 0;
+  unsigned int len = strlen(s);
+  unsigned int idx;
+
+  for(i=0; i<nof_autocomplete_words; i++)
+  {
+    if(!strncmp(s, autocomplete_words[i], len))
+    {
+      nof_matches++;
+      idx = i;
+    }
+  }
+
+  if(nof_matches == 1)
+  {
+    unsigned int n = strlen(autocomplete_words[idx]) - len;
+    char *buf = (char *)malloc(n * sizeof(char) + 2);
+    memset(buf, '\0', n+2);
+
+    for(i=len; i<len+n; i++)
+      buf[i-len] = autocomplete_words[idx][i];
+
+    GtkTextView *view = (buffer == workspace_source_buffer) ? workspace_source_view : system_browser_textview;
+
+    //going into overwrite mode
+    //to handle the case when autocomplete
+    //is attempted when cursor is in the
+    //middle of an already fully complete symbol
+    gtk_text_view_set_overwrite(view, TRUE);
+    gtk_text_buffer_insert_at_cursor(buffer, (char *)buf, -1);
+    gtk_text_view_set_overwrite(view, FALSE);
+
+    //to take the cursor to the end of the word
+    //(overwrite doesn't move the cursor)
+    GtkTextIter curr_iter;
+    gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter, gtk_text_buffer_get_insert(buffer));
+
+    for(i=0; i<n; i++)
+      gtk_text_iter_forward_char(&curr_iter);
+
+    free(buf);
+  }
+
+  free(s);
+}
+
+void add_to_autocomplete_list(char *word)
+{
+  nof_autocomplete_words++;
+
+  char **temp = realloc(autocomplete_words, nof_autocomplete_words * sizeof(char *));
+  assert(temp);
+  autocomplete_words = temp;
+
+  autocomplete_words[nof_autocomplete_words-1] = word;
 }

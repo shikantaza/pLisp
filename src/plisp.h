@@ -186,6 +186,18 @@ typedef struct native_fn_src_mapping
   char *source;
 } native_fn_src_mapping_t;
 
+typedef struct help_entry
+{
+  unsigned int type;
+  char *name;
+  char *syntax;
+  char *args;
+  char *desc;
+  char *exceptions;
+  unsigned int see_also_count;
+  char **see_also;
+} help_entry_t;
+
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);

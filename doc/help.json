@@ -1,0 +1,11 @@
+{"entries" :
+ [{"type" : 1, 
+   "name" : "get-ext-mem-cell", 
+   "syntax" : "(get-ext-mem-cell blk pos) => result",
+   "args" : "blk: a list; pos: an integer; result: an object",
+   "desc" : "returns the integer, float or character stored in position pos of a native memory block blk that was allocated by one of the alloc-ext-mem-* functions.",
+   "exceptions" : "Throws an exception of type INVALID-INDEX if pos not greater than or equal to zero or less than the size of blk. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively).",
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
+  }
+ ]
+}

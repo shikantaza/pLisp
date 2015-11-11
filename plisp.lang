@@ -52,6 +52,7 @@
       <keyword>cdr</keyword>
       <keyword>cons</keyword>
       <keyword>lambda</keyword>
+      <keyword>define</keyword>
       <keyword>set</keyword>
       <keyword>\+</keyword>
       <keyword>-</keyword>

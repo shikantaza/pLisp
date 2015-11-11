@@ -38,6 +38,9 @@ GtkWindow *system_browser_window;
 GtkWindow *debugger_window;
 GtkWindow *profiler_window;
 
+GtkWindow *help_window = NULL;
+GtkTextBuffer *help_buffer = NULL;
+
 GtkTreeView *packages_list;
 GtkTreeView *symbols_list;
 
@@ -1349,4 +1352,38 @@ void create_profiler_window(int posx, int posy, int width, int height)
   gtk_widget_show_all(win);
 
   gtk_widget_grab_focus((GtkWidget *)operators_list);
+}
+
+void create_help_window()
+{
+  GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+  help_window = win;
+
+  gtk_window_set_decorated((GtkWindow *)win, FALSE);
+
+  gtk_window_set_default_size((GtkWindow *)win, 600, 350);
+  gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
+
+  GtkWidget *scrolled_win, *vbox;
+  GtkWidget *textview = gtk_text_view_new ();
+
+  gtk_text_view_set_wrap_mode((GtkTextView *)textview, GTK_WRAP_WORD);
+
+  help_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
+
+  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Monospace Bold 9"));
+
+  scrolled_win = gtk_scrolled_window_new (NULL, NULL);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
+
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
+  
+  gtk_container_add (GTK_CONTAINER (win), vbox);
+
+  g_signal_connect(G_OBJECT(win), 
+                   "key_press_event", 
+                   G_CALLBACK (handle_key_press_events), 
+                   NULL);
 }

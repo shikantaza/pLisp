@@ -65,6 +65,8 @@ extern BOOLEAN system_changed;
 
 extern void throw_exception1(char *, char *);
 
+extern void build_autocomplete_words();
+
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
   return exp;
@@ -1375,6 +1377,7 @@ OBJECT_PTR prim_in_package(OBJECT_PTR package)
     else
     {
       current_package = index;
+      build_autocomplete_words();
       return NIL;
     }
   }
@@ -1557,7 +1560,9 @@ OBJECT_PTR prim_serialize(OBJECT_PTR obj, OBJECT_PTR file_name)
     //continuation objects cannot be serialized (yet)
     //because they don't have pLisp source forms that
     //are needed to recreate functions and macros.
-    //continuation object
+    //continuation objects are those closures whose
+    //cons equivalents have another closure object
+    //in their last cell (and not the source CONS form)
     if(IS_CONS_OBJECT(last_cell(cons_equiv)) && IS_FUNCTION2_OBJECT(car(last_cell(cons_equiv))))
     {
       throw_exception1("EXCEPTION", "Continuation objects cannot be serialized");

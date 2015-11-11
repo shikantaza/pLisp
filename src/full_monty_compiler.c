@@ -283,6 +283,8 @@ extern OBJECT_PTR primitive_time(OBJECT_PTR);
 extern OBJECT_PTR primitive_env(OBJECT_PTR);
 extern OBJECT_PTR prim_expand_macro(OBJECT_PTR);
 extern OBJECT_PTR primitive_throw(OBJECT_PTR);
+
+extern add_to_autocomplete_list(char *);
 //end of external functions
 
 //forward declarations
@@ -3362,6 +3364,8 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
     top_level_symbols[nof_global_vars-1].ref_count = 0;
     top_level_symbols[nof_global_vars-1].references = NULL;
 
+    add_to_autocomplete_list(convert_to_lower_case(strdup(get_symbol_name(sym))));
+
     system_changed = true;
   }
 }
@@ -4143,8 +4147,8 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
   {
     OBJECT_PTR out;
 
-    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
-    OBJECT_PTR symbol_to_be_used = car(exp);
+    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    //OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -4694,8 +4698,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   }
 
-  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  //OBJECT_PTR symbol_to_be_used = second(exp);
+  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR t1 = cons(NIL, NIL);
 
@@ -4764,8 +4768,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   } 
 
-  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  //OBJECT_PTR symbol_to_be_used = second(exp);
+  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR out;
   int retval = get_top_level_sym_value(symbol_to_be_used, &out);
