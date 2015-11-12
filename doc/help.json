@@ -1,11 +1,54 @@
 {"entries" :
- [{"type" : 1, 
+ [
+  {"type" : 1, 
+   "name" : "alias", 
+   "syntax" : "(alias var1 var2) => NIL",
+   "args" : "var1, var2: symbols",
+   "desc" : "alias creates a new binding between var2 and the object bound to var1",
+   "exceptions" : "Throws an exception of type SYMBOL-NOT-BOUND if var2 is not bound to a value",
+   "examples"   : [ "(define x 100)", "(alias y x)", "y=>100" ],
+   "see-also" : [ "define" ]
+  },
+
+  {"type" : 0, 
+   "name" : "alloc-ext-mem-char", 
+   "syntax" : "(alloc-ext-mem-char n) => (ptr, len, type)",
+   "args" : "n: integer, ptr: integer, len: integer, type: integer",
+   "desc" : "alloc-ext-mem-char allocates raw memory corresponding to n characters. Equivalent to malloc(n*sizeof(char)). Returns the pointer to the allocated memory via a list that also contains the number of characters allocated (i.e. n) and the type of the memory block (integer 3 signifying a character array)",
+   "exceptions" : "None",
+   "examples" : [],
+   "see-also" : [ "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
+  },
+
+  {"type" : 0, 
+   "name" : "alloc-ext-mem-float", 
+   "syntax" : "(alloc-ext-mem-float n) => (ptr, len, type)",
+   "args" : "n: integer, ptr: integer, len: integer, type: integer",
+   "desc" : "alloc-ext-mem-float allocates raw memory corresponding to n floats. Equivalent to malloc(n*sizeof(float)). Returns the pointer to the allocated memory via a list that also contains the number of floats allocated (i.e. n) and the type of the memory block (integer 2 signifying a float array)",
+   "exceptions" : "None",
+   "examples" : [],
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
+  },
+
+  {"type" : 0, 
+   "name" : "alloc-ext-mem-int", 
+   "syntax" : "(alloc-ext-mem-int n) => (ptr, len, type)",
+   "args" : "n: integer, ptr: integer, len: integer, type: integer",
+   "desc" : "alloc-ext-mem-int allocates raw memory corresponding to n integers. Equivalent to malloc(n*sizeof(int)). Returns the pointer to the allocated memory via a list that also contains the number of integers allocated (i.e. n) and the type of the memory block (integer 1 signifying an integer array)",
+   "exceptions" : "None",
+   "examples" : [],
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
+  },
+
+  {"type" : 0, 
    "name" : "get-ext-mem-cell", 
    "syntax" : "(get-ext-mem-cell blk pos) => result",
    "args" : "blk: a list; pos: an integer; result: an object",
    "desc" : "returns the integer, float or character stored in position pos of a native memory block blk that was allocated by one of the alloc-ext-mem-* functions.",
    "exceptions" : "Throws an exception of type INVALID-INDEX if pos not greater than or equal to zero or less than the size of blk. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively).",
+   "examples" : [],
    "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
   }
+
  ]
 }

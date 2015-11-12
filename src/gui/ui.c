@@ -1362,7 +1362,7 @@ void create_help_window()
 
   gtk_window_set_decorated((GtkWindow *)win, FALSE);
 
-  gtk_window_set_default_size((GtkWindow *)win, 600, 350);
+  gtk_window_set_default_size((GtkWindow *)win, 600, 280);
   gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
 
   GtkWidget *scrolled_win, *vbox;
@@ -1370,9 +1370,15 @@ void create_help_window()
 
   gtk_text_view_set_wrap_mode((GtkTextView *)textview, GTK_WRAP_WORD);
 
+  gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
+
   help_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Monospace Bold 9"));
+  gtk_text_buffer_create_tag(help_buffer, "bold", 
+                             "weight", PANGO_WEIGHT_BOLD, 
+                             NULL);
+
+  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Monospace Normal 9"));
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);

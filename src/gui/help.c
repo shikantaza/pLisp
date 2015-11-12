@@ -80,6 +80,22 @@ int build_help_entries(char *file_name)
     help_entries[i].desc       = strdup(JSON_get_object_item(entry, "desc")->strvalue);
     help_entries[i].exceptions = strdup(JSON_get_object_item(entry, "exceptions")->strvalue);
 
+
+    help_entries[i].examples_count = JSON_get_array_size(JSON_get_object_item(entry, "examples"));
+
+    help_entries[i].examples = (char **)malloc(help_entries[i].examples_count * sizeof(char *));
+
+    if(!help_entries[i].examples)
+    {
+      throw_exception1("EXCEPTION", "Unable to allocate memory for examples");
+      JSON_delete_object(root);
+      free(help_entries);
+      return 1;      
+    }
+
+    for(j=0; j<help_entries[i].examples_count; j++)
+      help_entries[i].examples[j] = strdup(JSON_get_array_item(JSON_get_object_item(entry, "examples"), j)->strvalue);
+
     help_entries[i].see_also_count = JSON_get_array_size(JSON_get_object_item(entry, "see-also"));
 
     help_entries[i].see_also = (char **)malloc(help_entries[i].see_also_count * sizeof(char *));

@@ -715,7 +715,9 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     do_auto_complete(widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer);
     return TRUE;
   }
-  else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
+  else if((widget == (GtkWidget *)workspace_window || 
+           widget == (GtkWidget *)system_browser_window || 
+           widget == (GtkWidget *)help_window) && 
 	  event->keyval == GDK_KEY_F1)
   {
     enum {FUNCTION, MACRO, SPECIAL_OPERATOR};
@@ -723,7 +725,14 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     if(!help_window)
       create_help_window();
 
-    GtkTextBuffer *buffer = widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer;
+    GtkTextBuffer *buffer;
+
+    if(widget == (GtkWidget *)workspace_window)
+      buffer = workspace_buffer;
+    else if(widget == (GtkWidget *)system_browser_window)
+      buffer = system_browser_buffer;
+    else
+      buffer = help_buffer;
 
     char *s = get_current_word(buffer);
 
@@ -735,36 +744,87 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       return TRUE;
     }
 
-    char entry_text[MAX_STRING_LENGTH];
-    memset(entry_text, '\0', MAX_STRING_LENGTH);
+    gtk_text_buffer_set_text(help_buffer, "", -1);
 
-    unsigned int len = 0;
-    len += sprintf(entry_text+len, "%s %s\n\n", 
-                   entry->type == FUNCTION ? "Function" : (entry->type == MACRO ? "Macro" : "Special Operator"),
-                   entry->name);
-    len += sprintf(entry_text+len, "Syntax: %s\n\n", entry->syntax);
-    len += sprintf(entry_text+len, "Arguments and Values: %s\n\n", entry->args);
-    len += sprintf(entry_text+len, "Descriptions: %s\n\n", entry->desc);
-    len += sprintf(entry_text+len, "Exceptional Situations: %s\n\n", entry->exceptions);
-    len += sprintf(entry_text+len, "Description: %s\n\n", entry->desc);
-    len += sprintf(entry_text+len, "See Also: ");
+    GtkTextIter start_iter, curr_iter;
+
+    if(entry->type == FUNCTION)
+      gtk_text_buffer_insert_at_cursor(help_buffer, "Function ", -1);
+    else if(entry->type == MACRO)
+      gtk_text_buffer_insert_at_cursor(help_buffer, "Macro ", -1);
+    else
+      gtk_text_buffer_insert_at_cursor(help_buffer, "Special Operator ", -1);
+
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 0);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, entry->name, -1);
+    gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "Syntax: ", -1);
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 2);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, entry->syntax, -1);
+    gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "Arguments and Values: ", -1);
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 4);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, entry->args, -1);
+    gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "Description: ", -1);
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 6);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, entry->desc, -1);
+    gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "Exceptions: ", -1);
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 8);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, entry->exceptions, -1);
+    gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "Examples:\n", -1);
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 10);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
 
     unsigned int i;
+
+    for(i=0; i<entry->examples_count; i++)
+    {
+      gtk_text_buffer_insert_at_cursor(help_buffer, entry->examples[i], -1);
+      gtk_text_buffer_insert_at_cursor(help_buffer, "\n", -1);
+    }
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "\n", -1);
+
+    gtk_text_buffer_insert_at_cursor(help_buffer, "See Also: ", -1);
+    gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 12 + entry->examples_count);
+    gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
+
     BOOLEAN first_time = true;
 
     for(i=0; i<entry->see_also_count; i++)
     {
       if(!first_time)
-        len += sprintf(entry_text+len, ", ");
+        gtk_text_buffer_insert_at_cursor(help_buffer, ", ", -1);
 
-      len += sprintf(entry_text+len, "%s", entry->see_also[i]);
+      gtk_text_buffer_insert_at_cursor(help_buffer, entry->see_also[i], -1);
 
       first_time = false;
     }
-
-    gtk_text_buffer_set_text(help_buffer, "", -1);
-
-    gtk_text_buffer_insert_at_cursor(help_buffer, entry_text, -1);
 
     gtk_widget_show_all(help_window);
 
@@ -1666,7 +1726,7 @@ char *get_current_word(GtkTextBuffer *buffer)
   gtk_text_buffer_get_iter_at_line(buffer, &line_start_iter, line_number);
 
   //get the iter at the end of the current line
-  if(line_number == line_count-1)
+  if(line_number == (line_count-1))
     gtk_text_buffer_get_end_iter(buffer, &line_end_iter);
   else
     gtk_text_buffer_get_iter_at_line(buffer, &line_end_iter, line_number+1);
@@ -1690,7 +1750,7 @@ char *get_current_word(GtkTextBuffer *buffer)
   if(idx2 == -1)
     right = strdup(str2);
   else
-    right = strndup(str2+idx2+1, strlen(str2)-idx2-1);
+    right = strndup(str2, idx2);
 
   char *ret = (char *)malloc((strlen(left) + strlen(right) + 1) * sizeof(char));
   assert(ret);

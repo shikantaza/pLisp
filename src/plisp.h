@@ -194,6 +194,8 @@ typedef struct help_entry
   char *args;
   char *desc;
   char *exceptions;
+  unsigned int examples_count;
+  char **examples;
   unsigned int see_also_count;
   char **see_also;
 } help_entry_t;
