@@ -124,6 +124,8 @@ extern and_rest_mapping_t *and_rest_mappings;
 extern OBJECT_PTR debug_window_dbg_stack;
 //end of global vars for full monty compiler
 
+extern OBJECT_PTR continuation_to_resume;
+
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
 void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, uintptr_t, unsigned int);
@@ -395,6 +397,12 @@ void serialize_full_monty_global_vars(FILE *fp,
   print_json_object(fp, debug_window_dbg_stack, print_queue, obj_count, hashtable, printed_objects, single_object);
   fprintf(fp, ", ");
 
+  fprintf(fp, "\"debug_mode\" : \"%s\"", debug_mode ? "true" : "false");
+  fprintf(fp, ", ");
+
+  fprintf(fp, "\"continuation_to_resume\" : ");
+  print_json_object(fp, continuation_to_resume, print_queue, obj_count, hashtable, printed_objects, single_object);
+  fprintf(fp, ", ");
 
   fprintf(fp, "\"unmet_dependencies\" : [");
 
@@ -936,6 +944,14 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
 
   debug_window_dbg_stack = deserialize_internal(heap, 
                                                 JSON_get_object_item(root, "debug_stack")->ivalue, 
+                                                hashtable, 
+                                                q, 
+                                                single_object);
+
+  debug_mode = !strcmp(JSON_get_object_item(root, "debug_mode")->strvalue, "true") ? true : false;
+
+  continuation_to_resume = deserialize_internal(heap, 
+                                                JSON_get_object_item(root, "continuation_to_resume")->ivalue, 
                                                 hashtable, 
                                                 q, 
                                                 single_object);
@@ -2034,6 +2050,9 @@ void recreate_native_fn_objects()
     replace_native_fn(car(rest), tcc_state1);
     rest = cdr(rest);
   }
+
+  if(is_dynamic_memory_object(continuation_to_resume))
+    replace_native_fn(continuation_to_resume, tcc_state1);
 
   for(i=0; i<nof_json_native_fns; i++)
     free(json_native_fns[i].source);

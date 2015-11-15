@@ -69,6 +69,8 @@ OBJECT_PTR debug_stack;
 
 BOOLEAN macro_expansion_in_progress;
 
+OBJECT_PTR continuation_to_resume;
+
 //end of global variables
 
 //external variables
@@ -184,6 +186,10 @@ extern OBJECT_PTR DEFMACRO;
 
 extern OBJECT_PTR REPL_FUNCTION;
 
+extern OBJECT_PTR SAVE_CONTINUATION_TO_RESUME;
+
+extern OBJECT_PTR ABORT;
+
 extern unsigned int POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -208,6 +214,8 @@ extern char **strings;
 extern BOOLEAN system_changed;
 
 extern OBJECT_PTR debug_window_dbg_stack;
+
+extern BOOLEAN debug_mode;
 //end of external variables
 
 //external functions
@@ -256,6 +264,7 @@ extern OBJECT_PTR primitive_stringp(OBJECT_PTR);
 extern OBJECT_PTR primitive_arrayp(OBJECT_PTR);
 extern OBJECT_PTR primitive_closurep(OBJECT_PTR);
 extern OBJECT_PTR primitive_macrop(OBJECT_PTR);
+extern OBJECT_PTR primitive_contp(OBJECT_PTR);
 
 extern OBJECT_PTR primitive_string(OBJECT_PTR);
 extern OBJECT_PTR prim_make_array(OBJECT_PTR, ...);
@@ -285,6 +294,8 @@ extern OBJECT_PTR prim_expand_macro(OBJECT_PTR);
 extern OBJECT_PTR primitive_throw(OBJECT_PTR);
 
 extern add_to_autocomplete_list(char *);
+
+extern close_debugger_window();
 //end of external functions
 
 //forward declarations
@@ -301,6 +312,7 @@ OBJECT_PTR cps_transform_if(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR cps_transform_return_from(OBJECT_PTR);
 OBJECT_PTR cps_transform_throw(OBJECT_PTR);
 OBJECT_PTR cps_transform_call_cc(OBJECT_PTR);
+OBJECT_PTR cps_transform_break(OBJECT_PTR);
 OBJECT_PTR desugar_il(OBJECT_PTR);
 OBJECT_PTR closure_conv_transform(OBJECT_PTR);
 OBJECT_PTR range(int, int, int);
@@ -370,6 +382,10 @@ OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int);
 char *generate_lst_construct(OBJECT_PTR);
 
 void push_into_debug_stack(OBJECT_PTR);
+
+OBJECT_PTR save_continuation_to_resume(OBJECT_PTR);
+OBJECT_PTR resume_continuation(OBJECT_PTR);
+OBJECT_PTR abort_evaluation();
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -1475,6 +1491,8 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
       return cps_transform_throw(exp);
     else if(car_exp == CALL_CC)
       return cps_transform_call_cc(exp);
+    else if(car_exp == BREAK)
+      return cps_transform_break(exp);
     else
       return cps_transform_primop(exp);
   }
@@ -1693,6 +1711,17 @@ OBJECT_PTR cps_transform_call_cc(OBJECT_PTR exp)
                         LAMBDA,
                         list(1,i1),
                         list(3,i1,ik,ik))));
+}
+
+OBJECT_PTR cps_transform_break(OBJECT_PTR exp)
+{
+  OBJECT_PTR ik = gensym();
+
+  return list(4,
+              LAMBDA,
+              list(1,ik),
+              list(2, SAVE_CONTINUATION, ik),
+              list(2, SAVE_CONTINUATION_TO_RESUME, ik));
 }
 
 BOOLEAN primop(OBJECT_PTR sym)
@@ -2174,7 +2203,8 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == GET_CONTINUATION ||
     sym == THROW        ||
     sym == GET_EXCEPTION_HANDLER ||
-    sym == ADD_EXCEPTION_HANDLER;
+    sym == ADD_EXCEPTION_HANDLER ||
+    sym == SAVE_CONTINUATION_TO_RESUME;
 }
 
 BOOLEAN string_array_op(OBJECT_PTR sym)
@@ -2233,6 +2263,7 @@ BOOLEAN debug_op(OBJECT_PTR sym)
 {
   return sym == BREAK ||
     sym == RESUME     ||
+    sym == ABORT      ||
     sym == ENV        ||
     sym == EXPAND_MACRO;
 }
@@ -2648,6 +2679,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "primitive_closurep");
       else if(var == MACROP)
         sprintf(s, "primitive_macrop");
+      else if(var == CONTINUATIONP)
+        sprintf(s, "primitive_contp");
       else if(var == STRING)
         sprintf(s, "primitive_string");
       else if(var == MAKE_ARRAY)
@@ -2696,6 +2729,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "get_exception_handler");
       else if(var == THROW)
         sprintf(s, "primitive_throw");
+      else if(var == SAVE_CONTINUATION_TO_RESUME)
+        sprintf(s, "save_cont_to_resume");
       else
       {
         print_object(var);
@@ -2706,7 +2741,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
     else if(var != EXTRACT_NATIVE_FN && 
             var != NTH && 
             var != CREATE_FN_CLOSURE &&
-            var != NIL)
+            var != NIL &&
+            var != SAVE_CONTINUATION_TO_RESUME)
     {
       //decorate variable names with
       //two underscores to prevent
@@ -2925,7 +2961,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       if(primop(car(exp)))
         primitive_call = true;
 
-      if(car(exp) == THROW)
+      if(car(exp) == THROW || car(exp) == SAVE_CONTINUATION_TO_RESUME)
         len += sprintf(buf+len, "return ");
 
       char *var = extract_variable_string(car(exp), serialize_flag);
@@ -3109,6 +3145,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_arrayp",   primitive_arrayp);
   tcc_add_symbol(tcc_state, "primitive_closurep", primitive_closurep);
   tcc_add_symbol(tcc_state, "primitive_macrop",   primitive_macrop);
+  tcc_add_symbol(tcc_state, "primitive_contp",    primitive_contp);
 
   tcc_add_symbol(tcc_state, "primitive_string",   primitive_string);
   tcc_add_symbol(tcc_state, "prim_make_array",    prim_make_array);
@@ -3150,6 +3187,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_throw",          primitive_throw);
 
   tcc_add_symbol(tcc_state, "push_into_debug_stack",    push_into_debug_stack);
+
+  tcc_add_symbol(tcc_state, "save_cont_to_resume",      save_continuation_to_resume);
 
   return tcc_state;
 }
@@ -3533,7 +3572,8 @@ int repl2()
     exception_object = NIL;
     exception_handlers = NIL;
 
-    debug_stack = NIL;
+    if(!debug_mode)
+      debug_stack = NIL;
 
     //idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 
@@ -3554,7 +3594,8 @@ int repl2()
       /* fprintf(stdout, "%s\n", buf); */
       /* fflush(stdout); */
 
-      print_object(res);
+      if(!debug_mode)
+        print_object(res);
     }
     else
     {
@@ -3562,14 +3603,18 @@ int repl2()
       {
 	if(core_library_loaded)
 	{
-	  print_object(res);
-	  print_to_transcript("\n");
+          if(!debug_mode)
+          {
+            print_object(res);
+            print_to_transcript("\n");
+          }
 	}
       }
       else
       {
 	if(yyin == stdin)
-	  print_object(res);
+          if(!debug_mode)
+            print_object(res);
       }
     }
   }
@@ -4616,6 +4661,11 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     throw_exception1("COMPILE-ERROR", "THROW requires a single parameter");
     return false;
   }
+  else if(car_exp == BREAK && len != 1)
+  {
+    throw_exception1("COMPILE-ERROR", "BREAK takes no parameters");
+    return false;
+  }
 
   if(IS_CONS_OBJECT(exp) &&
      ((car(exp) == MACRO && contains_internal_macros(third(exp))) ||
@@ -4812,6 +4862,21 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
 
 OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
 {
+
+  if(debug_mode && 
+     IS_CONS_OBJECT(exp) && 
+     cons_length(exp) != 1 && 
+     car(exp) != RESUME && 
+     car(exp) != ABORT &&
+     car(exp) != CREATE_IMAGE)
+  {
+    if(!console_mode && !single_expression_mode && !pipe_mode)
+      show_error_dialog("Expression not permitted in debug mode");
+    else
+      printf("Expression not permitted in debug mode\n");
+    return NIL;
+  }
+
   OBJECT_PTR res;
 
   OBJECT_PTR source = NIL;
@@ -4853,6 +4918,28 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
       handle_exception();
       res = NIL;
     }
+  }
+  else if(IS_CONS_OBJECT(exp) && car(exp) == RESUME)
+  {
+    if(!debug_mode)
+    {
+      show_error_dialog("Not in debug mode");
+      return NIL;
+    }
+    close_debugger_window();
+    res = resume_continuation(continuation_to_resume);
+    //continuation_to_resume = NIL;
+  }
+  else if(IS_CONS_OBJECT(exp) && car(exp) == ABORT)
+  {
+    if(!debug_mode)
+    {
+      show_error_dialog("Not in debug mode");
+      return NIL;
+    }
+    close_debugger_window();
+    res = abort_evaluation();
+    //continuation_to_resume = NIL;
   }
   else if(IS_SYMBOL_OBJECT(exp))
   {
@@ -5134,4 +5221,58 @@ void push_into_debug_stack(OBJECT_PTR form)
       return;
     }
   }
+}
+
+OBJECT_PTR save_continuation_to_resume(OBJECT_PTR cont)
+{
+  debug_mode = true;
+
+  continuation_to_resume = cont;
+
+  debug_window_dbg_stack = debug_stack;
+
+  create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+                      DEFAULT_DEBUG_WINDOW_POSY,
+                      DEFAULT_DEBUG_WINDOW_WIDTH,
+                      DEFAULT_DEBUG_WINDOW_HEIGHT);
+
+  return NIL;
+}
+
+OBJECT_PTR resume_continuation(OBJECT_PTR cont)
+{
+  debug_mode = false;
+
+  if(!IS_FUNCTION2_OBJECT(cont))
+  {
+    print_object(cont);
+    throw_exception1("EXCEPTION", "Attempting to resume by invoking a non-function object");
+    return NIL;
+  }
+
+  nativefn fn = extract_native_fn(cont);
+
+  if(!fn)
+  {
+    throw_exception1("EXCEPTION", "Unable to extract native function object when attempting to resume");
+    return NIL;
+  }
+
+  return fn(cont, idclo);
+}
+
+OBJECT_PTR abort_evaluation()
+{
+  debug_mode = false;
+  return NIL;
+}
+
+BOOLEAN is_continuation_object(OBJECT_PTR obj)
+{
+  OBJECT_PTR cons_equiv = cons_equivalent(obj);
+
+  if(IS_CONS_OBJECT(last_cell(cons_equiv)) && IS_FUNCTION2_OBJECT(car(last_cell(cons_equiv))))
+    return true;
+  else
+    return false;
 }

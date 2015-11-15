@@ -48,6 +48,136 @@
    "exceptions" : "Throws an exception of type INVALID-INDEX if pos not greater than or equal to zero or less than the size of blk. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively).",
    "examples" : [],
    "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
+  },
+
+  {"type" : 0, 
+   "name" : "and", 
+   "syntax" : "(and form*) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "and performs a logical conjunction of its operands. Returns T if all the operands evaluate to non-NIL and NIL otherwise. Returns T if no arguments are passed",
+   "exceptions" : "None",
+   "examples" : [ "(and (eq 1 1) (eq 2 2)) => T", "(and () 3) => NIL" ],
+   "see-also" : [ "or" ]
+  },
+
+  {"type" : 0, 
+   "name" : "append", 
+   "syntax" : "(append list1 list2) => result",
+   "args" : "list1, list2: forms that evaluate to lists; result: a list",
+   "desc" : "append creates a new list by appending the two lists passed as arguments",
+   "exceptions" : "Throws an exception of type EXCEPTION if either of the arguments is not a list",
+   "examples" : [ "(append '(a b) '(c d)) => (a b c d)", "(append () '(1 2)) => (1 2)" ],
+   "see-also" : [ "concat", "nconc" ]
+  },
+
+  {"type" : 2, 
+   "name" : "apply", 
+   "syntax" : "(apply function args) => result",
+   "args" : "function: a form that evaluates to a closure or a continuation; args: a form that evaluates to a list; result: an object",
+   "desc" : "apply applies the closure or continuation passed as its first parameter to the arguments passed as its second parameter",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the first argument is not a closure or a continuation or if the second argument is not a list",
+   "examples" : [ "(apply + '(1 2)) => 3" ],
+   "see-also" : [ "funcall" ]
+  },
+
+  {"type" : 1, 
+   "name" : "array", 
+   "syntax" : "(array dims default-value) => result",
+   "args" : "dims: a list; default-value: an object; result: an array object",
+   "desc" : "array creates an array with the dimensions specified by the list dims and populates the elements of the newly-constructed array with default-value",
+   "exceptions" : "None",
+   "examples" : [ "(define a (array (2 2) 1))", "a => [[1 1] [1 1]]" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "array-eq", 
+   "syntax" : "(array-eq arr1 arr1) => result",
+   "args" : "arr1, arr2: forms that evaluate to array objects; result: T or NIL",
+   "desc" : "array-eq returns T if arr1 and arr2 are structurally equivalent, i.e. they have the same contents, and NIL otherwise",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if either of the arguments is not an array",
+   "examples" : [ "a1 => [1, 2]", "a2 => [1, 2]", "a3 => ['a 'b]", "(array-eq a1 a2) => T", "(array-eq a1 a3) => NIL" ],
+   "see-also" : [ "eq" ]
+  },
+
+  {"type" : 2, 
+   "name" : "array-get", 
+   "syntax" : "(array-get arr index) => result",
+   "args" : "arr: a form that evaluates to an array object; index: a form that evaluates to an integer; result: an object",
+   "desc" : "array-get returns the object at the position index of array arr. Note that array indices start from zero",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array",
+   "examples" : [ "a1 => [1, 2]", "(array-get a1 0) => 1" ],
+   "see-also" : [ "array-set" ]
+  },
+
+  {"type" : 2, 
+   "name" : "array-length", 
+   "syntax" : "(array-length arr) => result",
+   "args" : "arr: a form that evaluates to an array object; result: an integer",
+   "desc" : "array-length returns the length of array arr",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the first argument is not an array",
+   "examples" : [ "a1 => [40, 50]", "(array-length a1) => 2" ],
+   "see-also" : [ ]
+  },
+
+  {"type" : 2, 
+   "name" : "array-set", 
+   "syntax" : "(array-set arr index form) => form",
+   "args" : "arr: a form that evaluates to an array object; index: an integer; form: an object",
+   "desc" : "array-set binds the position index of array arr to form",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array",
+   "examples" : [ "a1 => [40, 50]", "(array-set a1 0 30) => 30", "a1 => [30, 50]" ],
+   "see-also" : [ "array-get" ]
+  },
+
+  {"type" : 2, 
+   "name" : "arrayp", 
+   "syntax" : "(arrayp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "arrayp returns T if form evaluates to an array and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "a1 => [40, 50]", "(arrayp a1) => T", "(arrayp 10) => NIL" ],
+   "see-also" : []
+  },
+
+  {"type" : 1, 
+   "name" : "aset", 
+   "syntax" : "(aset ref val) => val",
+   "args" : "ref: an array reference; val: an object",
+   "desc" : "aset binds val to the array location referred to by ref",
+   "exceptions" : "Throws an exception of type SYMBOL-NOT-BOUND if the array reference is not bound to an array object, and an exception INDEX-OUT-OF-BOUNDS if the index(es) in the reference fall outside the array bounds",
+   "examples" : [ "(define a (array (2 2) 0) => A", "a => [[0 0] [0 0]]", "(aset a[0 0] 100) => 100", "a => [[100 0] [0 0]]" ],
+   "see-also" : []
+  },
+
+  {"type" : 0, 
+   "name" : "assert", 
+   "syntax" : "(assert form) => NIL",
+   "args" : "form: an object",
+   "desc" : "assert throws an exception of type EXCEPTION if form evaluates to NIL",
+   "exceptions" : "See above",
+   "examples" : [],
+   "see-also" : [ ]
+  },
+
+  {"type" : 0, 
+   "name" : "assoc", 
+   "syntax" : "(assoc key pairs) => result",
+   "args" : "key: an object; pairs: a list of CONS objects; result: object",
+   "desc" : "assoc returns the CDR of the pair in pairs whose CAR equals key and NIL otherwise",
+   "exceptions" : "Throws an exception of type EXCEPTION if pairs is not a list of CONS objects",
+   "examples" : ["a => ((1 . x) (2 . y))", "(assoc 1 a) => x", "(assoc 3 a) => NIL"],
+   "see-also" : [ ]
+  },
+
+  {"type" : 2, 
+   "name" : "atom", 
+   "syntax" : "(atom form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "atom returns T if form is an atom and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "(atom 1) => T", "(atom '(1 2)) => NIL" ],
+   "see-also" : []
   }
 
  ]

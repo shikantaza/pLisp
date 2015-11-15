@@ -195,6 +195,7 @@ OBJECT_PTR GET_EXCEPTION_HANDLER  = (OBJECT_PTR)((119 << OBJECT_SHIFT) + SYMBOL_
 OBJECT_PTR ADD_EXCEPTION_HANDLER  = (OBJECT_PTR)((120 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR CALL_FF_INTERNAL  = (OBJECT_PTR)((121 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR REPL_FUNCTION     = (OBJECT_PTR)((122 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR SAVE_CONTINUATION_TO_RESUME     = (OBJECT_PTR)((123 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -208,7 +209,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 38
+#define NOF_NON_SPECIAL_SYMBOLS 39
 
 char err_buf[500];
 
@@ -282,6 +283,8 @@ extern void cleanup_help_entries();
 
 extern OBJECT_PTR exception_object;
 
+extern OBJECT_PTR continuation_to_resume;
+
 void initialize()
 {
   if(initialize_memory())
@@ -313,6 +316,8 @@ void initialize()
 #endif
 
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
+
+  continuation_to_resume = NIL;
 }
 
 int add_string(char *str)
@@ -2219,6 +2224,8 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[121] = strdup("CALL-FF-INTERNAL");
 
   packages[CORE_PACKAGE_INDEX].symbols[122] = strdup("REPL-FUNCTION");
+
+  packages[CORE_PACKAGE_INDEX].symbols[123] = strdup("SAVE-CONTINUATION-TO-RESUME");
 }
 
 int find_package(char* package_name)

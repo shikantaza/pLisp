@@ -113,6 +113,8 @@ extern BOOLEAN image_mode;
 
 extern OBJECT_PTR debug_stack;
 
+extern BOOLEAN debug_mode;
+
 GtkSourceLanguage *source_language;
 GtkSourceLanguageManager *lm;
 
@@ -1149,6 +1151,9 @@ void create_debug_window(int posx, int posy, int width, int height)
   gtk_box_pack_start(GTK_BOX (hbox1), scrolled_win1, TRUE, TRUE, 0);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  if(debug_mode)
+    gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_debugger_toolbar(), FALSE, FALSE, 0);
+
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
 
   //uncomment this to add status bar

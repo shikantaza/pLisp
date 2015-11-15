@@ -75,6 +75,8 @@ extern OBJECT_PTR continuations_for_return;
 
 extern OBJECT_PTR debug_window_dbg_stack;
 
+extern OBJECT_PTR continuation_to_resume;
+
 //forward declarations
 
 void dealloc(OBJECT_PTR);
@@ -325,6 +327,9 @@ void pin_globals()
 
   if(is_dynamic_memory_object(continuations_for_return))
     insert_node(GREY, continuations_for_return);
+
+  if(is_dynamic_memory_object(continuation_to_resume))
+    insert_node(GREY, continuation_to_resume);
 }
 
 void build_grey_set()

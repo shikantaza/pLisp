@@ -688,6 +688,15 @@ void close_application_window(GtkWidget **window)
   *window = NULL;
 }
 
+//this function is needed because
+//referring to debugger_window from full_monty_compiler.c
+//entails #include'ing gtk.h, which screws up the definition of TRUE
+void close_debugger_window()
+{
+  if(debugger_window)
+    close_application_window((GtkWidget **)&debugger_window);
+}
+
 gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
   if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
@@ -1807,12 +1816,12 @@ void build_autocomplete_words()
                                     "setcdr", "apply", "symbol", "symbol-name", "format", "clone", "unbind", "newline", "not", 
                                     "return-from", "throw" ,"string", "make-array", "array-get", "array-set", "sub-array", "array-length", 
                                     "print-string", "consp", "listp", "integerp", "floatp", "characterp", "symbolp", "stringp",
-                                    "arrayp", "closurep", "macrop", "load-foreign-library", "call-foreign-function", "create-package",
+                                    "arrayp", "closurep", "macrop", "continuationp", "load-foreign-library", "call-foreign-function", "create-package",
                                     "in-package", "export-package", "create-image", "save-object", "load-object", "load-file", "profile",
-                                    "time", "env", "expand-macro", "eval"};
+                                    "time", "env", "expand-macro", "eval", "break", "resume", "abort"};
 
 
-  nof_autocomplete_words = 63;
+  nof_autocomplete_words = 66;
   autocomplete_words = (char **)malloc(nof_autocomplete_words * sizeof(char *));
   
   assert(autocomplete_words);

@@ -67,6 +67,8 @@ extern void throw_exception1(char *, char *);
 
 extern void build_autocomplete_words();
 
+extern BOOLEAN is_continuation_object(OBJECT_PTR);
+
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
   return exp;
@@ -962,6 +964,11 @@ OBJECT_PTR primitive_macrop(OBJECT_PTR obj)
   return IS_MACRO2_OBJECT(obj) ? TRUE : NIL;
 }
 
+OBJECT_PTR primitive_contp(OBJECT_PTR obj)
+{
+  return is_continuation_object(obj) ? TRUE : NIL;
+}
+
 OBJECT_PTR primitive_string(OBJECT_PTR string_literal)
 {
   if((!(IS_STRING_LITERAL_OBJECT(string_literal))))
@@ -1555,15 +1562,13 @@ OBJECT_PTR prim_serialize(OBJECT_PTR obj, OBJECT_PTR file_name)
 {
   if(IS_FUNCTION2_OBJECT(obj))
   {
-    OBJECT_PTR cons_equiv = cons_equivalent(obj);
-
     //continuation objects cannot be serialized (yet)
     //because they don't have pLisp source forms that
     //are needed to recreate functions and macros.
     //continuation objects are those closures whose
     //cons equivalents have another closure object
     //in their last cell (and not the source CONS form)
-    if(IS_CONS_OBJECT(last_cell(cons_equiv)) && IS_FUNCTION2_OBJECT(car(last_cell(cons_equiv))))
+    if(is_continuation_object(obj))
     {
       throw_exception1("EXCEPTION", "Continuation objects cannot be serialized");
       return NIL;
