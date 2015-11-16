@@ -1,5 +1,15 @@
 {"entries" :
  [
+  {"type" : 2, 
+   "name" : "abort", 
+   "syntax" : "(abort) => NIL",
+   "args" : "None",
+   "desc" : "Calling abort in debug mode aborts the evaluation of an expression",
+   "exceptions" : "None",
+   "examples" : [ ],
+   "see-also" : [ "break", "resume" ]
+  },
+
   {"type" : 1, 
    "name" : "alias", 
    "syntax" : "(alias var1 var2) => NIL",
@@ -178,7 +188,18 @@
    "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
    "examples" : [ "(atom 1) => T", "(atom '(1 2)) => NIL" ],
    "see-also" : []
+  },
+
+  {"type" : 2, 
+   "name" : "break", 
+   "syntax" : "(break) => NIL",
+   "args" : "None",
+   "desc" : "break stops the evaluation of the expression and passes control to the Debugger",
+   "exceptions" : "None",
+   "examples" : [ ],
+   "see-also" : [ "abort", "resume" ]
   }
+
 
  ]
 }

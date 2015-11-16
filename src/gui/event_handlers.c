@@ -1821,7 +1821,7 @@ void build_autocomplete_words()
                                     "time", "env", "expand-macro", "eval", "break", "resume", "abort"};
 
 
-  nof_autocomplete_words = 66;
+  nof_autocomplete_words = 67;
   autocomplete_words = (char **)malloc(nof_autocomplete_words * sizeof(char *));
   
   assert(autocomplete_words);

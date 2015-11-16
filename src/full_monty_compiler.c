@@ -5250,6 +5250,11 @@ OBJECT_PTR resume_continuation(OBJECT_PTR cont)
     return NIL;
   }
 
+  //to handle (BREAK) at the end
+  //of expressions
+  if(cont == idclo)
+    return NIL;
+
   nativefn fn = extract_native_fn(cont);
 
   if(!fn)
