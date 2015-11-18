@@ -4685,6 +4685,21 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     rest = cdr(rest);
   }
 
+  if(IS_CONS_OBJECT(exp))
+  {
+    rest = cdr(exp);
+
+    while(rest != NIL)
+    {
+      if(primop(car(rest)))
+      {
+        throw_exception1("COMPILE-ERROR", "Expression contains special operator in an operand position");
+        return false;
+      }
+      rest = cdr(rest);
+    }
+  }
+
   return true;
 }
 

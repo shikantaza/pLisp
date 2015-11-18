@@ -43,17 +43,37 @@
     <context id="keyword" style-ref="keyword">
       <prefix>(?&lt;![\w\d_-])</prefix>
       <suffix>(?![\w\d_-])</suffix>
+      <keyword>'</keyword>
+      <keyword>`</keyword>
       <keyword>t</keyword>
       <keyword>nil</keyword>
+      <keyword>lambda</keyword>
+      <keyword>macro</keyword>
+      <keyword>define</keyword>
+      <keyword>set</keyword>
+      <keyword>error</keyword>
+      <keyword>let</keyword>
+      <keyword>let1</keyword>
+      <keyword>letrec</keyword>
+      <keyword>break</keyword>
+      <keyword>abort</keyword>
+      <keyword>resume</keyword>
+      <keyword>if</keyword>
+      <keyword>call-cc</keyword>
+      <keyword>return-from</keyword>
+      <keyword>throw</keyword>
+      <keyword>exception</keyword>
+    </context>
+
+    <context id="function" style-ref="function">
+      <prefix>(?&lt;![\w\d_-])</prefix>
+      <suffix>(?![\w\d_-])</suffix>
       <keyword>quote</keyword>
       <keyword>atom</keyword>
       <keyword>eq</keyword>
       <keyword>car</keyword>
       <keyword>cdr</keyword>
       <keyword>cons</keyword>
-      <keyword>lambda</keyword>
-      <keyword>define</keyword>
-      <keyword>set</keyword>
       <keyword>\+</keyword>
       <keyword>-</keyword>
       <keyword>\*</keyword>
@@ -68,7 +88,6 @@
       <keyword>gensym</keyword>
       <keyword>setcar</keyword>
       <keyword>setcdr</keyword>
-      <keyword>error</keyword>
       <keyword>create-package</keyword>
       <keyword>in-package</keyword>
       <keyword>comma</keyword>
@@ -82,19 +101,12 @@
       <keyword>sub-array</keyword>
       <keyword>array-length</keyword>
       <keyword>print-string</keyword>
-      <keyword>labels</keyword>
       <keyword>create-image</keyword>
-      <keyword>break</keyword>
       <keyword>load-foreign-library</keyword>
       <keyword>call-foreign-function</keyword>
       <keyword>env</keyword>
-      <keyword>if</keyword>
-      <keyword>eval </keyword>
-      <keyword>call-cc </keyword>
-      <keyword>define </keyword>
-      <keyword>resume </keyword>
-      <keyword>backtrace </keyword>
-      <keyword>load-file </keyword>
+      <keyword>eval</keyword>
+      <keyword>load-file</keyword>
       <keyword>consp</keyword>
       <keyword>integerp</keyword>
       <keyword>floatp</keyword>
@@ -105,16 +117,12 @@
       <keyword>closurep</keyword>
       <keyword>macrop</keyword>
       <keyword>continuationp</keyword>
-      <keyword>lambda-expression</keyword>
       <keyword>format</keyword>
       <keyword>clone</keyword>
-      <keyword>return</keyword>
-      <keyword>return-from</keyword>
       <keyword>symbol</keyword>
       <keyword>symbol-name</keyword>
       <keyword>unbind</keyword>
       <keyword>newline</keyword>
-      <keyword>abort</keyword>
       <keyword>time</keyword>
       <keyword>profile</keyword>
       <keyword>not</keyword>
@@ -124,13 +132,7 @@
       <keyword>neq</keyword>
       <keyword>save-object</keyword>
       <keyword>load-object</keyword>
-      <keyword>compile-fn</keyword>
       <keyword>export-package</keyword>
-    </context>
-
-    <context id="function" style-ref="function">
-      <prefix>(?&lt;![\w\d_-])</prefix>
-      <suffix>(?![\w\d_-])</suffix>
       <keyword>defun</keyword>
       <keyword>defmacro</keyword>
       <keyword>cadr</keyword>
@@ -171,9 +173,7 @@
       <keyword>butlast</keyword>
       <keyword>mapcar</keyword>
       <keyword>flatten</keyword>
-      <keyword>exception</keyword>
       <keyword>concat-strings</keyword>
-      <keyword>throw</keyword>
       <keyword>array-eq</keyword>
       <keyword>read</keyword>
       <keyword>read-integer</keyword>
@@ -191,9 +191,6 @@
       <keyword>simplify</keyword>
       <keyword>assert</keyword>
       <keyword>while</keyword>
-      <keyword>rec</keyword>
-      <keyword>let</keyword>
-      <keyword>letrec</keyword>
       <keyword>dolist</keyword>
       <keyword>make-string</keyword>
       <keyword>string-set</keyword>
@@ -220,7 +217,6 @@
       <keyword>alias</keyword>
       <keyword>try</keyword>
       <keyword>unwind-protect</keyword>
-      <keyword>let1</keyword>
       <keyword>compile</keyword>
       <keyword>array</keyword>
       <keyword>build-ref</keyword>

@@ -198,8 +198,207 @@
    "exceptions" : "None",
    "examples" : [ ],
    "see-also" : [ "abort", "resume" ]
-  }
+  },
 
+  {"type" : 0, 
+   "name" : "butlast", 
+   "syntax" : "(butlast lst len) => result",
+   "args" : "lst: a form that evaluates to a list; len: an integer; result: a list",
+   "desc" : "butlast returns a list that comprises the elements of lst excluding the last len elements",
+   "exceptions" : "Throws an exception of type EXCEPTION if lst is not a list or len is not a positive integer smaller than the length of lst",
+   "examples" : [ "(butlast '(1 2 3) 1) => (2 3)" ],
+   "see-also" : []
+  },
+
+  {"type" : 0, 
+   "name" : "caar", 
+   "syntax" : "(caar lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "caar is functionally equivalent to (car (car lst)",
+   "exceptions" : "Throws an exception of type EXCEPTION if either of the applications of car above is not on a list",
+   "examples" : [ "(caar '((1 2) (3, 4)) => 1" ],
+   "see-also" : [ "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fourth", "fifth"  ]
+  },
+
+  {"type" : 0, 
+   "name" : "cadar", 
+   "syntax" : "(cadar lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "cadar is functionally equivalent to (car (cdr (car lst))",
+   "exceptions" : "Throws an exception of type EXCEPTION if any of the applications of car or cdr above is not on a list",
+   "examples" : [ "(cadar '((1 2) (3, 4)) => 2" ],
+   "see-also" : [ "caar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "cadddr", 
+   "syntax" : "(cadddr lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "cadddr is functionally equivalent to (car (cdr (cdr (cdr lst)))), i.e., the fourth element of a list",
+   "exceptions" : "Throws an exception of type EXCEPTION if any of the applications of car or cdr above is not on a list",
+   "examples" : [ "(car (cdr (cdr (cdr '(1 2 3 4))))) => 4" ],
+   "see-also" : [ "caar", "cadar", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "caddr", 
+   "syntax" : "(caddr lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "caddr is functionally equivalent to (car (cdr (cdr lst))), i.e., the third element of a list",
+   "exceptions" : "Throws an exception of type EXCEPTION if any of the applications of car or cdr above is not on a list",
+   "examples" : [ "(car (cdr (cdr '(1 2 3 4)))) => 3" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "cadr", 
+   "syntax" : "(cadr lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "cadr is functionally equivalent to (car (cdr lst)), i.e., the second element of a list",
+   "exceptions" : "Throws an exception of type EXCEPTION if either of the applications of car or cdr above is not on a list",
+   "examples" : [ "(car (cdr '(1 2 3 4))) => 2" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 1, 
+   "name" : "call-foreign-function", 
+   "syntax" : "(call-foreign-function name return-type params) => result",
+   "args" : "name: a form that evaluates to a string; return-type: a symbol; params: a list of CONS objects; result: an object",
+   "desc" : "call-foreign-function invokes a native function called name defined in a shared library that was loaded earlier. return-type denotes the return type of the native function ('void, 'integer, 'float, 'character, or 'character-pointer). params contains information about the parameters to the native function (parameter type and object)",
+   "exceptions" : "call-foreign-function throws an exception of type EXCEPTION if it is not supplied with three parameters. It throws an exception of type ARG-MISMATCH if the parameters are not of the types as described above. ARG-MISMATCH is also thrown if there are any inconsistencies in the params argument (e.g. the parameter type is integer and the object is not an integer)",
+   "examples" : [ "(call-foreign-function some_func void ((ivar integer, fvar float)))" ],
+   "see-also" : [ "load-foreign-library" ]
+  },
+
+  {"type" : 2, 
+   "name" : "call-cc", 
+   "syntax" : "(call-cc lambda-exp) => result",
+   "args" : "lambda-exp: a form; result: an object",
+   "desc" : "call-cc captures the current continuation object and invokes the closure object lambda-exp with this continuation object as the parameter",
+   "exceptions" : "None",
+   "examples" : [ "(call-cc (lambda (cc) (set cont cc)))" ],
+   "see-also" : []
+  },
+
+  {"type" : 2, 
+   "name" : "car", 
+   "syntax" : "(car lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "car returns the first element of a list",
+   "exceptions" : "Throws an exception of type NOT-A-CONS if the argument is not a list",
+   "examples" : [ "(car '(1 2 3 4)) => 1", "(car nil) => NIL" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "cdar", "cddr", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 1, 
+   "name" : "cdar", 
+   "syntax" : "(cdar lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "cdar is functionally equivalent to (cdr (car lst))",
+   "exceptions" : "Throws an exception of type EXCEPTION if either of the applications of car or cdr above is not on a list",
+   "examples" : [ "(cdr (car '((1 2) 3 4))) => (2)" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cddr", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "cddr", 
+   "syntax" : "(cddr lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "cddr is functionally equivalent to (cdr (cdr lst))",
+   "exceptions" : "Throws an exception of type EXCEPTION if either of the applications of cdr above is not on a list",
+   "examples" : [ "(cdr (cdr '(1 2 3 4))) => (3 4)" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cdr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 2, 
+   "name" : "cdr", 
+   "syntax" : "(cdr lst) => result",
+   "args" : "lst: a form that evaluates to a list; result: an object",
+   "desc" : "cdr retuns the list comprising the all the elements of lst except the first one",
+   "exceptions" : "Throws an exception of type EXCEPTION if lst is not a list",
+   "examples" : [ "(cdr '(1 2 3 4)) => (2 3 4)" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "first", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 2, 
+   "name" : "characterp", 
+   "syntax" : "(characterp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "characterp returns T if form evaluates to a character and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied",
+   "examples" : [ "(characterp #\a) => T", "(characterp 10) => NIL" ],
+   "see-also" : [ ]
+  },
+
+  {"type" : 2, 
+   "name" : "clone", 
+   "syntax" : "(clone form) => result",
+   "args" : "form: an object; result: an object",
+   "desc" : "clone makes a deep copy of the object form evaluates to",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied",
+   "examples" : [ "(clone '(1 2 3)) => (1 2 3)" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "closurep", 
+   "syntax" : "(closurep form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "closurep returns T if form evaluates to a closure object and NIL otherwise. Note that special operators are not closures",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied",
+   "examples" : [ "(closurep (lambda (x) x)) => T", "(defun double (n) (* n2)) => DOUBLE", "(closurep double) => T", "(closurep 3) => NIL", "(closurep +) => NIL"  ],
+   "see-also" : []
+  },
+
+  {"type" : 0, 
+   "name" : "concat", 
+   "syntax" : "(concat lst &rest lists) => result",
+   "args" : "lst: a list; lists: a list of the rest of the arguments, which are themselves lists",
+   "desc" : "concat combines the passed lists into a new list",
+   "exceptions" : "None",
+   "examples" : [ "(concat '(1 2 3) '(4 5 6) '(7 8 9)) => '(1 2 3 4 5 6 7 8 9)" ],
+   "see-also" : [ "append", "nconc" ]
+  },
+
+  {"type" : 0, 
+   "name" : "concat-strings", 
+   "syntax" : "(concat-strings str1 str2) => result",
+   "args" : "str1, str2: forms that evaluate to strings; result: a string",
+   "desc" : "concat-strings combines the two strings passed as arguments into a new string",
+   "exceptions" : "None",
+   "examples" : [ "(concat-strings \“abc\” \“def\”) => \“abcdef\”" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 1, 
+   "name" : "cond", 
+   "syntax" : "(cond ((cond1 action1) (cond2 action2) ..)) => result",
+   "args" : "cond1, cond2, …: forms; action1, action2, …: forms; result: an object",
+   "desc" : "cond takes a list comprising condition/action pairs, and evaluates each condition sequentially, stopping at the first condition that evaluates to a non-NIL value. It then evaluates the action corresponding to this condition and returns the result of evaluating that action. If none of the conditions evaluates to a non-NIL value, cond returns NIL. If the last condition is T, the action corresponding to this serves as the default action",
+   "exceptions" : "None",
+   "examples" : [ "(cond ((eq 1 1) 'true) (t 'false))) => TRUE" ],
+   "see-also" : [ "if" ]
+  },
+
+  {"type" : 2, 
+   "name" : "cons", 
+   "syntax" : "(cons obj1 obj2) => result",
+   "args" : "obj1, obj2 : objects; result:a CONS object",
+   "desc" : "cons creates a CONS object from the two objects passed to it as arguments",
+   "exceptions" : "None",
+   "examples" : [ "(cons 1 2) => (1 . 2)", "(cons 'a nil) => (A)" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "cons-pair", 
+   "syntax" : "(cons-pair list1 list2) => result",
+   "args" : "list1, list2: forms that evaluate to lists; result: a list",
+   "desc" : "cons-pair takes two lists and creates a new list, the elements of which are CONS objects obtained by applying cons on the matched elements of the two lists. If the sizes of the two lists are not the same, the shorter of the two lists is padded with NIL values",
+   "exceptions" : "None",
+   "examples" : [ "(cons-pair '(a b) '(1 2)) => ((A . 1) (B . 2))", "(cons-pair '(a b c) '(1 2)) => ((A . 1) (B . 2) (C))" ],
+   "see-also" : [ "pair" ]
+  }
 
  ]
 }

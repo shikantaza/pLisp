@@ -810,9 +810,25 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 
     unsigned int i;
 
+    char text[MAX_STRING_LENGTH];
+    int ii, jj, len;
+
     for(i=0; i<entry->examples_count; i++)
     {
-      gtk_text_buffer_insert_at_cursor(help_buffer, entry->examples[i], -1);
+      ii=0; jj=0; len = strlen(entry->examples[i]);
+      memset(text, '\0', MAX_STRING_LENGTH);
+
+      while(ii<len)
+      {
+        if(entry->examples[i][ii] != '\\')
+        {
+          text[jj] = entry->examples[i][ii];
+          jj++;
+        }
+        ii++;
+      }
+
+      gtk_text_buffer_insert_at_cursor(help_buffer, text, -1);
       gtk_text_buffer_insert_at_cursor(help_buffer, "\n", -1);
     }
 
@@ -1816,12 +1832,12 @@ void build_autocomplete_words()
                                     "setcdr", "apply", "symbol", "symbol-name", "format", "clone", "unbind", "newline", "not", 
                                     "return-from", "throw" ,"string", "make-array", "array-get", "array-set", "sub-array", "array-length", 
                                     "print-string", "consp", "listp", "integerp", "floatp", "characterp", "symbolp", "stringp",
-                                    "arrayp", "closurep", "macrop", "continuationp", "load-foreign-library", "call-foreign-function", "create-package",
+                                    "arrayp", "closurep", "macrop", "continuationp", "load-foreign-library", "create-package",
                                     "in-package", "export-package", "create-image", "save-object", "load-object", "load-file", "profile",
                                     "time", "env", "expand-macro", "eval", "break", "resume", "abort"};
 
 
-  nof_autocomplete_words = 67;
+  nof_autocomplete_words = 66;
   autocomplete_words = (char **)malloc(nof_autocomplete_words * sizeof(char *));
   
   assert(autocomplete_words);
