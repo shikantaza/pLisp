@@ -114,12 +114,14 @@ name_value_pair:
     T_STRING_LITERAL T_COLON value
     {
       $$ = JSON_create_name_value_pair($1, $3);
+      free($1);
     };
 
 value:
     T_STRING_LITERAL 
     {
       $$ = JSON_create_string_object($1);
+      free($1);
     }
     |
     T_INTEGER

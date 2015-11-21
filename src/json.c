@@ -128,15 +128,31 @@ void JSON_delete_object(struct JSONObject *obj)
     struct name_value_pairs *pairs = obj->pairs;
     int i;
     for(i=0; i<pairs->count; i++)
+    {
+      free(pairs->elements[i]->name);
       JSON_delete_object(pairs->elements[i]->value);
+      free(pairs->elements[i]);
+    }
+
+    if(pairs->count > 0)
+      free(pairs->elements);
+
+    free(pairs);
   }
-  else   if(obj->type == JSON_NAME_VALUE_PAIRS)
+  else if(obj->type == JSON_ARRAY)
   {
     struct JSONArray *array = obj->array;
     int i;
     for(i=0; i<array->count; i++)
       JSON_delete_object(array->elements[i]);
+
+    if(array->count > 0)
+      free(array->elements);
+
+    free(array);
   }
+  else if(obj->type == JSON_STRING)
+    free(obj->strvalue);
 
   free(obj);
 }

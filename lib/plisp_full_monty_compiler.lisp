@@ -374,8 +374,8 @@
 (defun mapcar (f &rest lists)
   (if (eq (car lists) nil)
       nil
-    (cons (apply1 f (map car lists))
-          (apply1 mapcar (concat (list f) (map cdr lists))))))
+    (cons (apply1 f (map (lambda (x) (car x)) lists))
+          (apply1 mapcar (concat (list f) (map (lambda (x) (cdr x)) lists))))))
 
 (defun flatten (lst)
   (apply append  (map (lambda (x)

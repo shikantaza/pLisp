@@ -64,7 +64,9 @@ int set_up_new_yyin(FILE *fp)
     return 1;
   }
 
-  include_stack[include_stack_ptr++] = YY_CURRENT_BUFFER;
+  include_stack[include_stack_ptr] = YY_CURRENT_BUFFER;
+
+  include_stack_ptr++;
 
   yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
 
@@ -81,7 +83,7 @@ void pop_yyin()
     yyin = stdin;
   */
 
-  if(--include_stack_ptr == 0)
+  if(include_stack_ptr == 0)
   {
     if(console_mode)
     {
@@ -91,6 +93,7 @@ void pop_yyin()
   }
   else
   {
+    include_stack_ptr--;
     yy_delete_buffer(YY_CURRENT_BUFFER);
     yy_switch_to_buffer(include_stack[include_stack_ptr]);
   }

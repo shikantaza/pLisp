@@ -657,7 +657,8 @@ void create_image(char *file_name)
 
   while(!queue_is_empty(print_queue))
   {
-    OBJECT_PTR obj = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
+    queue_item_t *queue_item = queue_dequeue(print_queue);
+    OBJECT_PTR obj = (OBJECT_PTR)(queue_item->data);
     if(!is_dynamic_memory_object(obj))
     {
       print_object(obj);printf("\n");
@@ -665,6 +666,8 @@ void create_image(char *file_name)
     }
     print_heap_representation(fp, obj, print_queue, obj_count, hashtable, printed_objects, false);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
+
+    free(queue_item);
   }
 
   queue_delete(print_queue);
@@ -1798,7 +1801,8 @@ void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q, BOOLEAN 
 {
   while(!queue_is_empty(q))
   {
-    struct slot *slot_obj = (struct slot *)queue_dequeue(q)->data;
+    queue_item_t *queue_item = queue_dequeue(q);
+    struct slot *slot_obj = (struct slot *)(queue_item->data);
 
     unsigned int ref = slot_obj->ref;
 
@@ -1813,6 +1817,7 @@ void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q, BOOLEAN 
     }
 
     free(slot_obj);
+    free(queue_item);
   }
 }
 
@@ -1855,9 +1860,12 @@ int serialize(OBJECT_PTR obj, char *file_name)
 
   while(!queue_is_empty(print_queue))
   {
-    OBJECT_PTR obj1 = (OBJECT_PTR)((queue_dequeue(print_queue))->data);
+    queue_item_t *queue_item = queue_dequeue(print_queue);
+    OBJECT_PTR obj1 = (OBJECT_PTR)(queue_item->data);
     print_heap_representation(fp, obj1, print_queue, obj_count, hashtable, printed_objects, true);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
+
+    free(queue_item);
   }
 
   fprintf(fp, "]}");
@@ -2053,6 +2061,8 @@ void recreate_native_fn_objects()
 
   if(is_dynamic_memory_object(continuation_to_resume))
     replace_native_fn(continuation_to_resume, tcc_state1);
+
+  free(tcc_state1);
 
   for(i=0; i<nof_json_native_fns; i++)
     free(json_native_fns[i].source);

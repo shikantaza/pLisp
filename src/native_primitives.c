@@ -1664,7 +1664,11 @@ OBJECT_PTR prim_create_image(OBJECT_PTR file_name)
   }
 
   if(is_string_object(file_name))
-    create_image(get_string(file_name));
+  {
+    char *s = get_string(file_name);
+    create_image(s);
+    free(s);
+  }
   else
     create_image(strings[(int)file_name >> OBJECT_SHIFT]);
 

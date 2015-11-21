@@ -2062,6 +2062,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
     free(fname);
   }
 
+  free(tcc_state1);
+
   OBJECT_PTR closure_components = CDDR(first(res));
   OBJECT_PTR out;
   int retval = get_top_level_sym_value(car(closure_components), &out);
@@ -2736,6 +2738,9 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         print_object(var);
         assert(false);
       }
+
+      free(raw_name);
+
       return s;
     }
     else if(var != EXTRACT_NATIVE_FN && 
@@ -2748,7 +2753,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       //two underscores to prevent
       //conflicts with C keywords
 
-      char *name = (char *)malloc(2 + strlen(raw_name));
+      char *name = (char *)malloc(3 + strlen(raw_name));
       name[0] = '-';
       name[1] = '-';
 
@@ -2841,7 +2846,12 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
   len += sprintf(buf+len, "));\n");
   //end of debug information
 
-  len += sprintf(buf+len, "set_most_recent_closure(%s);\n", extract_variable_string(first(params), serialize_flag));
+  char *closure_name = extract_variable_string(first(params), serialize_flag);
+
+  len += sprintf(buf+len, "set_most_recent_closure(%s);\n", closure_name);
+
+  free(closure_name);
+
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
   len += sprintf(buf+len, "unsigned int nil = 17;\n");
 
@@ -5184,7 +5194,11 @@ char *generate_lst_construct(OBJECT_PTR exp)
     if(is_atom(obj))
     {
       if(IS_INTEGER_OBJECT(obj) || IS_FLOAT_OBJECT(obj))
-        len += sprintf(buf+len, "%s", extract_variable_string(obj, true));
+      {
+        char *name = extract_variable_string(obj, true);
+        len += sprintf(buf+len, "%s", name);
+        free(name);
+      }
       else
         len += sprintf(buf+len, "%d", obj);
     }

@@ -113,6 +113,7 @@ atom:
     T_STRING_LITERAL
     {
       $$ = create_expression(STRING_LITERAL, $1, 0, 0, 0);
+      free($1);
     }
     |
     T_CHAR
@@ -123,6 +124,7 @@ atom:
     T_SYMBOL
     {
       $$ = create_expression(SYMBOL, convert_to_upper_case($1), 0, 0, 0);
+      free($1);
     };
 
 list:

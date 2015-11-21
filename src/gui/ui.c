@@ -712,6 +712,8 @@ void setup_language_manager_path(GtkSourceLanguageManager *lm)
   g_free (lang_files);
  
   gtk_source_language_manager_set_search_path (lm, new_langs);
+
+  g_free(new_langs);
 } 
 
 void create_transcript_window(int posx, int posy, int width, int height, char *text)

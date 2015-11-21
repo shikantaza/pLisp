@@ -495,6 +495,8 @@ void delete_expression(expression_t *e)
   {
     for(i=0; i<e->nof_elements; i++)
       delete_expression(e->elements[i]);
+
+    free(e->elements);
   }
 
   free(e);

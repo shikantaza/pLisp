@@ -148,6 +148,8 @@ void hashtable_delete(hashtable_t *tab)
     }
   }
 
+  free(tab->entries);
+
   free(tab);
 }
 

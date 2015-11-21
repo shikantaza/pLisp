@@ -83,14 +83,17 @@ int build_help_entries(char *file_name)
 
     help_entries[i].examples_count = JSON_get_array_size(JSON_get_object_item(entry, "examples"));
 
-    help_entries[i].examples = (char **)malloc(help_entries[i].examples_count * sizeof(char *));
-
-    if(!help_entries[i].examples)
+    if(help_entries[i].examples_count > 0)
     {
-      throw_exception1("EXCEPTION", "Unable to allocate memory for examples");
-      JSON_delete_object(root);
-      free(help_entries);
-      return 1;      
+      help_entries[i].examples = (char **)malloc(help_entries[i].examples_count * sizeof(char *));
+
+      if(!help_entries[i].examples)
+      {
+        throw_exception1("EXCEPTION", "Unable to allocate memory for examples");
+        JSON_delete_object(root);
+        free(help_entries);
+        return 1;      
+      }
     }
 
     for(j=0; j<help_entries[i].examples_count; j++)
@@ -98,14 +101,17 @@ int build_help_entries(char *file_name)
 
     help_entries[i].see_also_count = JSON_get_array_size(JSON_get_object_item(entry, "see-also"));
 
-    help_entries[i].see_also = (char **)malloc(help_entries[i].see_also_count * sizeof(char *));
-
-    if(!help_entries[i].see_also)
+    if(help_entries[i].see_also_count > 0)
     {
-      throw_exception1("EXCEPTION", "Unable to allocate memory for see-also-count");
-      JSON_delete_object(root);
-      free(help_entries);
-      return 1;      
+      help_entries[i].see_also = (char **)malloc(help_entries[i].see_also_count * sizeof(char *));
+
+      if(!help_entries[i].see_also)
+      {
+        throw_exception1("EXCEPTION", "Unable to allocate memory for see-also-count");
+        JSON_delete_object(root);
+        free(help_entries);
+        return 1;      
+      }
     }
 
     for(j=0; j<help_entries[i].see_also_count; j++)
@@ -142,8 +148,17 @@ void cleanup_help_entries()
     free(help_entries[i].desc);
     free(help_entries[i].exceptions);
 
+    for(j=0; j<help_entries[i].examples_count; j++)
+      free(help_entries[i].examples[j]);
+
+    if(help_entries[i].examples_count > 0)
+      free(help_entries[i].examples);
+
     for(j=0; j<help_entries[i].see_also_count; j++)
       free(help_entries[i].see_also[j]);
+
+    if(help_entries[i].see_also_count > 0)
+      free(help_entries[i].see_also);
   }
 
   free(help_entries);
