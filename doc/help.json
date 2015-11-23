@@ -398,7 +398,426 @@
    "exceptions" : "None",
    "examples" : [ "(cons-pair '(a b) '(1 2)) => ((A . 1) (B . 2))", "(cons-pair '(a b c) '(1 2)) => ((A . 1) (B . 2) (C))" ],
    "see-also" : [ "pair" ]
-  }
+  },
 
+  {"type" : 2, 
+   "name" : "consp", 
+   "syntax" : "(consp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "consp returns T if form evaluates to a CONS object and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "(define a (cons 1 2)) => A", "(consp a) => T", "(consp 10) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "continuationp", 
+   "syntax" : "(continuationp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "continuationp returns T if form evaluates to a continuation object and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "(define cont nil) => CONT", "(progn (call-cc (lambda (cc) (set cont cc))) (print 1)) => 1", "(continuationp cont) => T" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "create-image", 
+   "syntax" : "(create-image file-name) => result",
+   "args" : "file-name: a string object; result: NIL",
+   "desc" : "create-image saves the current state of the pLisp system to a file called file-name",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied or if the argument is not a string object",
+   "examples" : [ "(create-image \“plisp.image\”) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "create-package", 
+   "syntax" : "(create-package package-name) => result",
+   "args" : "package-name: string; result: string",
+   "desc" : "create-package creates a new package with the name package-name. It returns the name of the newly-created package",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied or if the argument is not a string object. An exception of type PACKAGE-ALREADY-EXISTS is thrown if the package with name package-name already exists",
+   "examples" : [ "(create-package \“pkg\”) => \“PKG\”" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "define", 
+   "syntax" : "(define var form) => var",
+   "args" : "var: a symbol; form: a form; result: NIL",
+   "desc" : "define evaluates form and binds the result of this evaluation to var in the current environment",
+   "exceptions" : "Throws en exception of type INVALID-ARGUMENT if var is not a symbol",
+   "examples" : [ "(define x 100) => 100", "x => 100" ],
+   "see-also" : [ "alias" ]
+  },
+
+  {"type" : 1, 
+   "name" : "defmacro", 
+   "syntax" : "(defmacro name params &rest body) => result",
+   "args" : "name: symbol; params: list; body: the rest of the arguments converted into a list; result: a macro object",
+   "desc" : "defmacro creates a macro named name with parameters params and body body",
+   "exceptions" : "None",
+   "examples" : [ "(defmacro first (lst) `(car ,lst)) => FIRST" ],
+   "see-also" : [ "defun" ]
+  },
+
+  {"type" : 1, 
+   "name" : "defun", 
+   "syntax" : "(defun name params &rest body) => result",
+   "args" : "name: symbol; params: list; body: the rest of the arguments converted into a list; result: a closure object",
+   "desc" : "defun creates a function named 'name' with parameters 'params' and body 'body'",
+   "exceptions" : "None",
+   "examples" : [ "(defun double (n) (* n 2)) => DOUBLE" ],
+   "see-also" : [ "defmacro" ]
+  },
+
+  {"type" : 1, 
+   "name" : "dolist", 
+   "syntax" : "(dolist spec &rest body) => result",
+   "args" : "spec: a list; body: the rest of the arguments converted into a list; result: an object",
+   "desc" : "dolist evaluates the code in body for each element in the list specified in the CDR of spec, with the value of the element bound to the symbol specified in the CAR of spec. It returns the result of the last evaluation of body",
+   "exceptions" : "None",
+   "examples" : [ "(dolist (x '(1 2 3)) (print x)) =>", "1", "2", "3", "NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 1, 
+   "name" : "dotimes", 
+   "syntax" : "(dotimes spec &rest body) => result",
+   "args" : "spec: a list; body: the rest of the arguments converted into a list; result: an object",
+   "desc" : "dotimes initializes the variable specified in the CAR of spec to zero, and evaluates body with the variable bound to this value. It then successively increments the variable and evaluates body till the value of the variable exceeds the value specified in the CDR of spec. It returns the value of the last evaluation of body",
+   "exceptions" : "None",
+   "examples" : [ "(dotimes (x 3) (print x)) =>", "0", "1", "2", "NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "eq", 
+   "syntax" : "(eq form1 form2) => result",
+   "args" : "form1, form2: forms; result: T or NIL",
+   "desc" : "eq returns T if form1 and form2 are structurally equivalent and NIL otherwise",
+   "exceptions" : "None",
+   "examples" : [ "(eq 1 1) => T", "(eq '(1 2) '(1 2) => T", "(define x “abc”) => X", "(eq x “abc”) => T", "(eq 1 'a) => NIL" ],
+   "see-also" : [ "array-eq" ]
+  },
+
+  {"type" : 2, 
+   "name" : "error", 
+   "syntax" : "(error str) => result",
+   "args" : "str: form that evaluates to a string; result: NIL",
+   "desc" : "error creates and throws an exception of type EXCEPTION using str",
+   "exceptions" : "None",
+   "examples" : [ "(error “Divide by zero”) => -" ],
+   "see-also" : [ "throw" ]
+  },
+
+  {"type" : 2, 
+   "name" : "eval", 
+   "syntax" : "(eval form) => result",
+   "args" : "form: a form; result: an object",
+   "desc" : "eval compiles and evaluates the form 'form'",
+   "exceptions" : "None",
+   "examples" : [ "(eval '(+ 1 1)) => 2" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "exception", 
+   "syntax" : "(exception sym str) => result",
+   "args" : "sym: a symbol; str: a string; result: an exception object",
+   "desc" : "exception creates an exception object from the passed symbol and string and returns it",
+   "exceptions" : "None",
+   "examples" : [ "(exception 'exception “An exception”) => (EXCEPTION . “An exception”)" ],
+   "see-also" : [ "error" ]
+  },
+
+  {"type" : 2, 
+   "name" : "expand-macro", 
+   "syntax" : "(expand-macro form) => result",
+   "args" : "form: a form; result: a form",
+   "desc" : "expand-macro expands the macro application represented by form and returns the result of this expansion. Note that the expansion is only at the first level, i.e. if the expanded form contains any macros, they will not be expanded",
+   "exceptions" : "None",
+   "examples" : [ "(defmacro first (lst) `(car ,lst)) => FIRST", "(expand-macro '(first some-list)) => (CAR SOME-LIST)" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "fifth", 
+   "syntax" : "(fifth lst) => result",
+   "args" : "lst: a list; result: an object",
+   "desc" : "fifth returns the fifth element of 'lst'",
+   "exceptions" : "None",
+   "examples" : [ "(fifth '(1 2 3 4 5 6)) => 5" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fourth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "find", 
+   "syntax" : "(find e lst predicate) => result",
+   "args" : "e: an object: lst: a list; predicate: a closure or a special operator; result: an object",
+   "desc" : "find returns the first element of lst for which predicate returns true when applied to that element and e and NIL if no such element is found",
+   "exceptions" : "None",
+   "examples" : [ "(find 3 '(1 2 3) <) => 1" ],
+   "see-also" : [ "find-if" ]
+  },
+
+  {"type" : 0, 
+   "name" : "find-if", 
+   "syntax" : "(find-if predicate lst) => result",
+   "args" : "predicate: a closure or a special operator; lst: a list; result: an object",
+   "desc" : "find-if returns the first element of lst for which predicate returns true and NIL if no such element is found",
+   "exceptions" : "None",
+   "examples" : [ "(find-if (lambda (x) (stringp x)) '(1 \“abc\” 'X)) => \“abc\”" ],
+   "see-also" : [ "find" ]
+  },
+
+  {"type" : 0, 
+   "name" : "first", 
+   "syntax" : "(first lst) => result",
+   "args" : "lst: a list; result: an object",
+   "desc" : "first returns the first element of a list",
+   "exceptions" : "None",
+   "examples" : [ "(first '(1 2 3)) => 1", "(first ()) => NIL" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "second", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "flatten", 
+   "syntax" : "(flatten lst) => result",
+   "args" : "lst: a list; result: a list",
+   "desc" : "flatten converts the sublists of 'lst' into individual elements",
+   "exceptions" : "None",
+   "examples" : [ "(flatten '((1 2 3) (4 5 6) (7 8 9)) => (1 2 3 4 5 6 7 8 9)" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "floatp", 
+   "syntax" : "(floatp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "floatp returns T if form evaluates to a float and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "(floatp 3.14) => T", "(floatp #\a) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 1, 
+   "name" : "for", 
+   "syntax" : "(for (var init-form cond step-form ret-form) &rest body ) => result",
+   "args" : "var: symbol; init-form, cond, step-form, ret-form: forms; body: rest of the arguments; result: an object",
+   "desc" : "for loops through the execution of 'body', binding 'var' to the value of 'init-form' and updating its value by evaluating 'step-form'. After every execution of 'body', 'cond' is checked, and execution stops if 'cond' evaluates to NIL. Finally 'ret-form' is evaluated and returned",
+   "exceptions" : "None",
+   "examples" : [ "(for (i 0 (< i 3) (incf i) nil) (print i)) =>", "0", "1", "2", "NIL" ],
+   "see-also" : [ "dotimes" ]
+  },
+
+  {"type" : 2, 
+   "name" : "format", 
+   "syntax" : "(format fd str &rest args) => NIL",
+   "args" : "fd: an integer; str: a form that evaluates to a string; args: rest of the arguments in list form",
+   "desc" : "format sends the formatted output specified by the format string 'str' and the arguments to the file specified by the file descriptor 'fd' or to standard output if 'fd' is NIL. The format string is modeled identically to the C format string used in printf and fprintf statements",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if two arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if a) the first argument is neither an integer nor NIL, b) if the second argument is not a string or c) args contains any objects other than integers, floats, characters or strings",
+   "examples" : [ "(define x 100)", "(format nil “%d” x) =>", "100NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "fourth", 
+   "syntax" : "(fourth lst) => result",
+   "args" : "lst: a list; result: an object",
+   "desc" : "fourth returns the fourth element of 'lst'",
+   "exceptions" : "None",
+   "examples" : [ "(fourth '(1 2 3 4 5 6)) => 4" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "third", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "free-ext-mem", 
+   "syntax" : "(free-ext-mem blk) => NIL",
+   "args" : "blk: a list",
+   "desc" : "free-ext-mem frees the native memory block specified by 'blk' that was allocated by one of the alloc-ext-mem-* functions",
+   "exceptions" : "None",
+   "examples" : [  ],
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
+  },
+
+  {"type" : 0, 
+   "name" : "funcall", 
+   "syntax" : "(funcall function &rest args) => result",
+   "args" : "function: a form that evaluates to a closure, a special operator or a continuation, args: the rest of the arguments converted into a list; result: an object",
+   "desc" : "funcall applies the function 'fn' to args",
+   "exceptions" : "None",
+   "examples" : [ "(funcall (lambda (x y) (+ x y)) 1 2) => 3" ],
+   "see-also" : [ "apply" ]
+  },
+
+  {"type" : 2, 
+   "name" : "gensym", 
+   "syntax" : "(gensym) => result",
+   "args" : "result: a symbol",
+   "desc" : "gensym creates a new symbol that is guaranteed to be unique",
+   "exceptions" : "None",
+   "examples" : [ "(gensym) => #:G00027194" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "if", 
+   "syntax" : "(if cond then else) => result",
+   "args" : "cond, then, else: forms; result: an object",
+   "desc" : "if evaluates 'cond', and if 'cond' evaluates to a non-NIL value, evaluates 'then', otherwise evaluates 'else'",
+   "exceptions" : "None",
+   "examples" : [ "(if (> 2 1) 'true 'false) => TRUE" ],
+   "see-also" : [ "cond" ]
+  },
+
+  {"type" : 2, 
+   "name" : "in-package", 
+   "syntax" : "(in-package package-name) => NIL",
+   "args" : "package-name: a form that evaluates to a string",
+   "desc" : "in-package sets the current package to 'package-name'",
+   "exceptions" : "Throws an exception of type ACCESS-VIOLATION if package-name is “CORE”. Throws an exception of type EXCEPTION if package-name does not exist",
+   "examples" : [ "(in-package “some-package”) => NIL" ],
+   "see-also" : [ "create-package" ]
+  },
+
+  {"type" : 1, 
+   "name" : "incf", 
+   "syntax" : "(incf var) => result",
+   "args" : "var: symbol; result: an integer or float",
+   "desc" : "incf increments 'var' by one",
+   "exceptions" : "Throws an exception if var is not bound to an integer or a float",
+   "examples" : [ "(define x 0) => X", "(incf x) => 1", "X => 1" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "inspect-ext-mem", 
+   "syntax" : "(inspect-ext-mem blk ) => NIL",
+   "args" : "blk: a list",
+   "desc" : "inspect-ext-mem prints the contents of a native memory block 'blk' that was allocated by one of the alloc-ext-mem-* functions",
+   "exceptions" : "Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively)",
+   "examples" : [  ],
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "set-ext-mem", "set-ext-mem-cell" ]
+  },
+
+  {"type" : 2, 
+   "name" : "integerp", 
+   "syntax" : "(integerp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "integerp returns T if 'form' evaluates to an integer and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "(integerp 3) => T", "(integerp #\a) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "lambda", 
+   "syntax" : "(lambda params &rest body) => result",
+   "args" : "params: a list; body: the rest of the arguments converted into a list; result: a closure object",
+   "desc" : "lambda creates a function object with params and body",
+   "exceptions" : "None",
+   "examples" : [ "(lambda double (n) (* n 2)) => <funciton>" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "last", 
+   "syntax" : "(last lst) => result",
+   "args" : "lst: a list; result: an object",
+   "desc" : "last returns the last element of 'lst'",
+   "exceptions" : "None",
+   "examples" : [ "(last '(1 2 3)) => 3", "(last '()) => NIL" ],
+   "see-also" : [ "last-n" ]
+  },
+
+  {"type" : 0, 
+   "name" : "last-n", 
+   "syntax" : "(last-n lst n) => result",
+   "args" : "lst: a list; n: an integer; result: a list",
+   "desc" : "last-n returns the last 'n' elements of 'lst'",
+   "exceptions" : "None",
+   "examples" : [ "(last '(1 2 3) 2) => (2 3)" ],
+   "see-also" : [ "last" ]
+  },
+
+  {"type" : 0, 
+   "name" : "length", 
+   "syntax" : "(length lst) => result",
+   "args" : "lst: a list; result: an integer",
+   "desc" : "length returns the number of elements in 'lst'",
+   "exceptions" : "None",
+   "examples" : [ "(length '(1 2 3 4 5)) => 5", "(length '()) => 0" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "let", 
+   "syntax" : "(let decls &rest body) => result",
+   "args" : "decls: a form; body: rest of the arguments converted into a list; result: an object",
+   "desc" : "let executes 'body' after binding the definitions in 'decl'",
+   "exceptions" : "None",
+   "examples" : [ "(let ((x 10) (y 20)) (+ x y)) => 30" ],
+   "see-also" : [ "let1" ]
+  },
+
+  {"type" : 1, 
+   "name" : "let1", 
+   "syntax" : "(let1 decls &rest body) => result",
+   "args" : "decls: a form; body: rest of the arguments converted into a list; result: an object",
+   "desc" : "let1 executes 'body' after binding the definitions in 'decl'. let1 is similar to let, but variables in 'decl' can refer to variables declared earlier",
+   "exceptions" : "None",
+   "examples" : [ "(let1 ((x 10) (y (+ x 10))) (+ x y)) => 30" ],
+   "see-also" : [ "let" ]
+  },
+
+  {"type" : 2, 
+   "name" : "list", 
+   "syntax" : "(list &rest elems) => result",
+   "args" : "elems: arguments converted into a list; result: a list",
+   "desc" : "list creates a list of the elements in 'elems'",
+   "exceptions" : "None",
+   "examples" : [ "(list 'a 'b 'c) => (A B C)" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "listp", 
+   "syntax" : "(listp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "listp returns T if 'form' evaluates to a list and NIL otherwise",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied",
+   "examples" : [ "(listp '(1 2 3)) => T", "(listp '()) => T", "(listp 'a) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "load-file", 
+   "syntax" : "(load-file str) => NIL",
+   "args" : "str: a form that evaluates to a string",
+   "desc" : "load-file loads the file named 'str' and evaluates the expressions defined in the file",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. Exceptions of type FILE-OPEN-ERROR and FILE-READ-ERROR are thrown if the file cannot be opened or read respectively",
+   "examples" : [ "(load-file “1.lisp”) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "load-foreign-library", 
+   "syntax" : "(load-foreign-library str) => NIL",
+   "args" : "str: a form that evaluates to a string",
+   "desc" : "load-foreign-library loads the shared library file named 'str'",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the maximum number of foreign libraries that can be loaded is exceeded. An OUT-OF-MEMOY exception is thrown if there is no memory to allocate for the structures internally needed to load the foreign library. An FFI-OPEN-FAILED exception is thrown if the shared library is an invalid file",
+   "examples" : [ "(load-foreign-library “somelib.so”) => NIL" ],
+   "see-also" : [ "call-foreign-function" ]
+  },
+
+  {"type" : 2, 
+   "name" : "load-object", 
+   "syntax" : "(load-object str) => result",
+   "args" : "str: a form that evaluates to a string; result: an object",
+   "desc" : "load-object loads the object serialized in the file named 'str'",
+   "exceptions" : "Throws an exception of type ARG-MISMATCH if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the file is not a valid file (created using save-object)",
+   "examples" : [ "(load-object “object.lisp”) => <an object>" ],
+   "see-also" : [ "save-object" ]
+  }
  ]
 }
