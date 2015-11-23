@@ -607,6 +607,11 @@ void cleanup()
 
   cleanup_help_entries();
 
+  for(i=0;i<nof_strings; i++)
+    free(strings[i]);
+
+  free(strings);
+
   log_function_exit("cleanup");
 }
 
