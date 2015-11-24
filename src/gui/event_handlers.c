@@ -129,7 +129,7 @@ unsigned int nof_autocomplete_words = 0;
 
 extern unsigned int current_package;
 
-extern help_entry_t *find_entry(char *);
+extern help_entry_t *find_help_entry(char *);
 
 int get_indents_for_form(char *form)
 {
@@ -757,18 +757,37 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 
     GtkTextIter start_iter, curr_iter;
 
+    gint index;
+
+    unsigned int i;
+
     if(entry->type == FUNCTION)
+    {
       gtk_text_buffer_insert_at_cursor(help_buffer, "Function ", -1);
+      index = 9;
+    }
     else if(entry->type == MACRO)
+    {
       gtk_text_buffer_insert_at_cursor(help_buffer, "Macro ", -1);
+      index = 6;
+    }
     else
+    {
       gtk_text_buffer_insert_at_cursor(help_buffer, "Special Operator ", -1);
+      index = 17;
+    }
 
     gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 0);
     gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
     gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
 
     gtk_text_buffer_insert_at_cursor(help_buffer, entry->name, -1);
+
+    gtk_text_buffer_get_iter_at_line_offset(help_buffer, &start_iter, 0, index);
+    gtk_text_buffer_get_end_iter(help_buffer, &curr_iter);
+
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold_blue_foreground", &start_iter, &curr_iter);
+
     gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
 
     gtk_text_buffer_insert_at_cursor(help_buffer, "Syntax: ", -1);
@@ -795,6 +814,16 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     gtk_text_buffer_insert_at_cursor(help_buffer, entry->desc, -1);
     gtk_text_buffer_insert_at_cursor(help_buffer, "\n\n", -1);
 
+    i = 0;
+    while(entry->desc[i] != ' ')
+      i++;
+
+    gtk_text_buffer_get_iter_at_line_offset(help_buffer, &start_iter, 6, 13);
+    gtk_text_buffer_get_iter_at_line_offset(help_buffer, &curr_iter, 6, 13+i);
+
+    gtk_text_buffer_apply_tag_by_name(help_buffer, "bold_blue_foreground", &start_iter, &curr_iter);
+    
+
     gtk_text_buffer_insert_at_cursor(help_buffer, "Exceptions: ", -1);
     gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 8);
     gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
@@ -807,8 +836,6 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     gtk_text_buffer_get_iter_at_line(help_buffer, &start_iter, 10);
     gtk_text_buffer_get_iter_at_mark(help_buffer, &curr_iter, gtk_text_buffer_get_insert(help_buffer));
     gtk_text_buffer_apply_tag_by_name(help_buffer, "bold", &start_iter, &curr_iter);
-
-    unsigned int i;
 
     char text[MAX_STRING_LENGTH];
     int ii, jj, len;
@@ -825,6 +852,13 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
           text[jj] = entry->examples[i][ii];
           jj++;
         }
+        else if(ii < len-1 && entry->examples[i][ii+1] == '\\')
+        {
+          text[jj] = entry->examples[i][ii];
+          jj++;
+          ii++;
+        }
+
         ii++;
       }
 
@@ -841,17 +875,31 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 
     BOOLEAN first_time = true;
 
+    gint line_no = 12 + entry->examples_count;
+
+    index = 10;
+
     for(i=0; i<entry->see_also_count; i++)
     {
       if(!first_time)
+      {
         gtk_text_buffer_insert_at_cursor(help_buffer, ", ", -1);
+        index += 2;
+      }
 
       gtk_text_buffer_insert_at_cursor(help_buffer, entry->see_also[i], -1);
+
+      index += strlen(entry->see_also[i]);
+
+      gtk_text_buffer_get_iter_at_line_offset(help_buffer, &start_iter, line_no, index - strlen(entry->see_also[i]));
+      gtk_text_buffer_get_end_iter(help_buffer, &curr_iter);
+
+      gtk_text_buffer_apply_tag_by_name(help_buffer, "bold_blue_foreground", &start_iter, &curr_iter);
 
       first_time = false;
     }
 
-    gtk_widget_show_all(help_window);
+    gtk_widget_show_all((GtkWidget *)help_window);
 
     free(s);
     return TRUE;
@@ -1878,7 +1926,7 @@ void do_auto_complete(GtkTextBuffer *buffer)
     for(i=len; i<len+n; i++)
       buf[i-len] = autocomplete_words[idx][i];
 
-    GtkTextView *view = (buffer == workspace_source_buffer) ? workspace_source_view : system_browser_textview;
+    GtkTextView *view = (buffer == (GtkTextBuffer *)workspace_source_buffer) ? (GtkTextView *)workspace_source_view : system_browser_textview;
 
     //going into overwrite mode
     //to handle the case when autocomplete

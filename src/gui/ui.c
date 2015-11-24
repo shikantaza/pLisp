@@ -779,7 +779,7 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
     source_language = gtk_source_language_manager_get_language(lm, "plisp");
   }
 
-  gtk_window_set_keep_above(transcript_window, TRUE);
+  //gtk_window_set_keep_above(transcript_window, TRUE);
 }
 
 void show_error_dialog(char *msg)
@@ -1365,9 +1365,11 @@ void create_help_window()
 {
   GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
+  gtk_window_set_title((GtkWindow *)win, "pLisp Symbol Help");
+
   help_window = win;
 
-  gtk_window_set_decorated((GtkWindow *)win, FALSE);
+  //gtk_window_set_decorated((GtkWindow *)win, FALSE);
 
   gtk_window_set_default_size((GtkWindow *)win, 600, 280);
   gtk_window_set_position(GTK_WINDOW(win), GTK_WIN_POS_CENTER);
@@ -1384,6 +1386,9 @@ void create_help_window()
   gtk_text_buffer_create_tag(help_buffer, "bold", 
                              "weight", PANGO_WEIGHT_BOLD, 
                              NULL);
+
+  gtk_text_buffer_create_tag(help_buffer, "bold_blue_foreground",
+                             "weight", PANGO_WEIGHT_BOLD, "foreground", "blue", NULL);  
 
   gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Monospace Normal 9"));
 
