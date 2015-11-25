@@ -1198,7 +1198,408 @@
    "exceptions" : "",
    "examples" : [ "(reverse '(1 1 2 1 3 4)) => (4 3 1 2 1 1)" ],
    "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "save-object", 
+   "syntax" : "(save-object obj str) => NIL",
+   "args" : "obj: an object; str: a form that evaluates to a string",
+   "desc" : "save-object serializes the object obj to the file named str. All objects referred to by obj are included in this serialization",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the second argument is not a string. An exception of type EXCEPTION is thrown if the file cannot be created",
+   "examples" : [ "(save-object some-obj \"object.lisp\") => NIL" ],
+   "see-also" : [ "load-object" ]
+  },
+
+  {"type" : 1, 
+   "name" : "second", 
+   "syntax" : "(second lst) => result",
+   "args" : "lst: a list; result: an object",
+   "desc" : "second returns the second element of a list",
+   "exceptions" : "",
+   "examples" : [ "(second '(1 2 3)) => 2", "(second ()) => NIL" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "third", "fourth", "fifth" ]
+  },
+
+  {"type" : 0, 
+   "name" : "select", 
+   "syntax" : "(select pred lst) => result",
+   "args" : "pred: a closure or a special operator; lst: a list; result: a list",
+   "desc" : "select builds a new list containing the elements in 'lst' for which 'pred' evaluates to a non-NIL value",
+   "exceptions" : "",
+   "examples" : [ "(select (lambda (x) (numberp x)) '(1 2 #\\a \"abc\" 'x)) => (1 2)" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 0, 
+   "name" : "set-ext-mem", 
+   "syntax" : "(set-ext-mem blk arr) => NIL",
+   "args" : "blk: a list; arr: an array",
+   "desc" : "set-ext-mem populates 'blk', that was allocated by one of the alloc-ext-mem-* functions, with the values in 'arr'",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the second argument is not an array or if the length of 'arr' does not match the size of 'blk'",
+   "examples" : [  ],
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem-cell" ]
+  },
+
+  {"type" : 0, 
+   "name" : "set-ext-mem-cell", 
+   "syntax" : "(set-ext-mem-cell blk pos val) => NIL",
+   "args" : "blk: a list; pos: an integer; val: an integer, float or a character",
+   "desc" : "set-ext-mem-cell populates position 'pos' in 'blk', that was allocated by one of the alloc-ext-mem-* functions, with the value 'val'",
+   "exceptions" : "Throws an exception of type INVALID-INDEX if 'pos' does not fall within the bounds of 'blk', and an exception of type INVALID-ARGUMENT if the type of blk does not match that of 'val'",
+   "examples" : [  ],
+   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem" ]
+  },
+
+  {"type" : 2, 
+   "name" : "setcar", 
+   "syntax" : "(setcar lst obj) => obj",
+   "args" : "lst: a list; obj: an object",
+   "desc" : "setcar updates the CAR of 'lst' to 'obj'",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied and ARG-MISMATCH if the first argument is not a list",
+   "examples" : [ "(define x '(1 2)) => X", "x => (1 2)", "(setcar x 100) => 100", "x => (100 2)" ],
+   "see-also" : [ "setcdr" ]
+  },
+
+  {"type" : 2, 
+   "name" : "setcdr", 
+   "syntax" : "(setcdr lst obj) => obj",
+   "args" : "lst: a list; obj: an object",
+   "desc" : "setcar updates the CDR of lst to obj",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied and ARG-MISMATCH if the first argument is not a list",
+   "examples" : [ "(define x '(1 2)) => X", "x => (1 2)", "(setcdr x 100) => 100", "x => (1 200)" ],
+   "see-also" : [ "setcar" ]
+  },
+
+  {"type" : 2, 
+   "name" : "set", 
+   "syntax" : "(set var obj) => obj",
+   "args" : "var: a symbol; obj: an object",
+   "desc" : "set binds var to obj",
+   "exceptions" : "Throws exception SYMBOL-NOT-BOUND if 'var' has not been defined",
+   "examples" : [ "(define x) => X", "(set x 100) => 100", "x => 100" ],
+   "see-also" : [ "setq" ]
+  },
+
+  {"type" : 1, 
+   "name" : "setq", 
+   "syntax" : "(setq var obj) => obj",
+   "args" : "var: a symbol; obj: an object",
+   "desc" : "setq binds var to obj; it is identical to set and is provided to provide limited compatibility to Common Lisp",
+   "exceptions" : "Throws exception SYMBOL-NOT-BOUND if 'var' has not been defined",
+   "examples" : [ "(define x) => X", "(setq x 100) => 100", "x => 100" ],
+   "see-also" : [ "set" ]
+  },
+
+  {"type" : 2, 
+   "name" : "string", 
+   "syntax" : "(string str) => str",
+   "args" : "str: a string literal",
+   "desc" : "string creates a string object from str",
+   "exceptions" : "Throws exception COMPILE-ERROR if exactly one argument is not supplied. An exception INVALID-ARGUMENT is thrown if the argument is not a string literal",
+   "examples" : [ "(define x) => NIL", "(set x (string \"abc\") => X", "x => \"abc\"" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 1, 
+   "name" : "string-get", 
+   "syntax" : "(string-get str pos) => result",
+   "args" : "str: a form that evaluates to a string; pos: an integer; result: a character",
+   "desc" : "string-get returns the character at position 'pos' of 'str'. Note that string indices start at zero",
+   "exceptions" : "Throws exception INDEX-OUT-OF-BOUNDS if 'pos' is not greater than or equal to zero or less than the size of 'str'",
+   "examples" : [ "(define x \"abc\") => X", "(string-get x 0) => #\\a", "(string-get x 2) => #\\c" ],
+   "see-also" : [ "array-get", "array-set", "string-set" ]
+  },
+
+  {"type" : 1, 
+   "name" : "string-set", 
+   "syntax" : "(string-set str pos val) => val",
+   "args" : "str: a form that evaluates to a string; pos: an integer; val: a character",
+   "desc" : "string-set sets the character at position 'pos' of 'str' to 'val'. Note that string indices start at zero",
+   "exceptions" : "Throws exception INDEX-OUT-OF-BOUNDS if 'pos' is not greater than or equal to zero or less than the size of 'str'",
+   "examples" : [ "(define x \"abc\") => \"abc\"", "(string-set x 0 #\\d) => #\\d", "x => \"dbc\"" ],
+   "see-also" : [ "array-get", "array-set", "string-get" ]
+  },
+
+  {"type" : 2, 
+   "name" : "stringp", 
+   "syntax" : "(stringp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "stringp returns T if 'form' evaluates to a string and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied",
+   "examples" : [ "(stringp \"abc\") => T", "(stringp #\\a) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "sub-array", 
+   "syntax" : "(sub-array arr start len) => result",
+   "args" : "arr: a form that evaluates to an array; start, end: integers; result: an array",
+   "desc" : "sub-array creates a new array comprising the elements starting from position 'start' in 'arr' till the position (start + len -1)",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly three arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not an array or the second and third arguments are not integers. Throws an exception of type INDEX-OUT-OF-BOUNDS if 'start' and 'len' specify a range outside the array size",
+   "examples" : [ "(define x (make-array 5 nil)) => [NIL NIL NIL NIL NIL]", "(dolist (i '(0 1 2 3 4)) (array-set x i (+ i 1))) => NIL", "x => [1 2 3 4 5]", "(sub-array x 0 3) => [1 2 3]" ],
+   "see-also" : [ "substring" ]
+  },
+
+  {"type" : 2, 
+   "name" : "sub-list", 
+   "syntax" : "(sub-list lst start len) => result",
+   "args" : "lst: a form that evaluates to a list; start, end: integers; result: a list",
+   "desc" : "sub-list creates a new list comprising the elements starting from position 'start' in 'lst' till the position (start + len -1)",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly three arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a list or the second and third arguments are not integers. Throws an exception of type INDEX-OUT-OF-BOUNDS if start and len specify a range outside the list size",
+   "examples" : [ "(sub-list '(1 2 3 4 5) 0 3) => (1 2 3)" ],
+   "see-also" : [ "sub-array", "substring" ]
+  },
+
+  {"type" : 1, 
+   "name" : "substring", 
+   "syntax" : "(substring str start len) => result",
+   "args" : "str: a form that evaluates to a string; start, end: integers; result: a string",
+   "desc" : "substring creates a new string comprising the elements starting from position 'start' in 'str' till the position (start + len -1)",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly three arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not an array (strings are internally stored as arrays in pLisp) or the second and third arguments are not integers. Throws an exception of type INDEX-OUT-OF-BOUNDS if start and len specify a range outside the string size",
+   "examples" : [ "(define x (make-string 3 #\\a)) => \"aaa\"", "x => \"aaa\"", "(substring x 0 2) => \"aa\"" ],
+   "see-also" : [ "sub-array", "sub-list" ]
+  },
+
+  {"type" : 2, 
+   "name" : "symbol", 
+   "syntax" : "(symbol str) => result",
+   "args" : "str: a form that evaluates to a string; result: a symbol",
+   "desc" : "symbol returns the symbol object represented by 'str'. Note that this operator is case-insensitive",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a string",
+   "examples" : [ "(symbol \"abc\") => ABC" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "symbol-name", 
+   "syntax" : "(symbol-name sym) => result",
+   "args" : "sym: a form that evaluates to a symbol; result: a string",
+   "desc" : "symbol returns the string representation of 'sym'",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol",
+   "examples" : [ "(symbol-name (symbol \"abc\")) => \"ABC\"" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "symbol-value", 
+   "syntax" : "(symbol-value sym) => result",
+   "args" : "sym: a form that evaluates to a symbol; result: an object",
+   "desc" : "symbol returns the object bound to 'sym' in the current environment",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol. Throws SYMBOL-NOT-BOUND if 'sym' is not bound to a value in the current environment",
+   "examples" : [ "(define x 100) => 100", "(symbol-value 'x) => 100" ],
+   "see-also" : [ "symbol-name" ]
+  },
+
+  {"type" : 2, 
+   "name" : "symbolp", 
+   "syntax" : "(symbolp form) => result",
+   "args" : "form: an object; result: T or NIL",
+   "desc" : "symbolp returns T if 'form' evaluates to a symbol and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied",
+   "examples" : [ "(symbolp 'x) => T", "(symbolp #\\a) => NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 1, 
+   "name" : "third", 
+   "syntax" : "(third lst) => result",
+   "args" : "lst: a list; result: an object",
+   "desc" : "third returns the third element of a list",
+   "exceptions" : "",
+   "examples" : [ "(third '(1 2 3)) => 3", "(third ()) => NIL" ],
+   "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "cdr", "first", "second", "fourth", "fifth" ]
+  },
+
+  {"type" : 2, 
+   "name" : "throw", 
+   "syntax" : "(throw ex) => NIL",
+   "args" : "ex: an exception object",
+   "desc" : "throw throws the exception object specified by 'ex'",
+   "exceptions" : "",
+   "examples" : [  ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "time", 
+   "syntax" : "(time exp) => NIL",
+   "args" : "exp: a quoted form",
+   "desc" : "time evaluates 'exp' and prints the time taken for the evaluation. The result is printed to the shell if pLisp was invoked with the '-c' option and to the Transcript if otherwise",
+   "exceptions" : "Throws an EXCEPTION if exp is not a valid pLisp expression",
+   "examples" : [ "(time '(+ 1 1)) =>", "(+ 1 1) took 0 seconds 20 milliseconds", "2" ],
+   "see-also" : [ "profile" ]
+  },
+
+  {"type" : 1, 
+   "name" : "try", 
+   "syntax" : "(try body exception-clause finally-clause) => result",
+   "args" : "body, exception-clause, finally-clause: forms; result: an object",
+   "desc" : "try evaluates 'body', and if any exceptions are thrown during this evaluation, evaluates 'exception-clause'. 'finally-clause' is evaluated irrespective of whether an exception is thrown",
+   "exceptions" : "",
+   "examples" : [ "(try (car 1) (catch (e) \"Error!\") (print \"Done\")) =>", "\"Done\"", "\"Error!\"" ],
+   "see-also" : [ "unwind-protect" ]
+  },
+
+  {"type" : 2, 
+   "name" : "unbind", 
+   "syntax" : "(unbind sym) => NIL",
+   "args" : "sym: a symbol",
+   "desc" : "unbind unbinds 'sym' from the top level enviroment",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied. An exception of type INVALID-ARGUMENT is thrown if the argument is not a symbol. Throws an exception of type SYMBOL-NOT-BOUND if the symbol was not bound already",
+   "examples" : [ "(unbind 'x) => NIL" ],
+   "see-also" : [ "define", "set" ]
+  },
+
+  {"type" : 1, 
+   "name" : "unwind-protect", 
+   "syntax" : "(unwind-protect body finally-clause) => result",
+   "args" : "body, finally-clause: forms; result: an object",
+   "desc" : "unwind-protect evaluates 'body', and if any exceptions are thrown during this evaluation, throws the exception. 'finally-clause' is evaluated before the exception is thrown",
+   "exceptions" : "",
+   "examples" : [ "(unwind-protect (car 1) (print \"Done\"))" ],
+   "see-also" : [ "try" ]
+  },
+
+  {"type" : 1, 
+   "name" : "values", 
+   "syntax" : "(values &rest body) => result",
+   "args" : "body: the arguments converted to a list; result: a list",
+   "desc" : "values bundles the arguments into a list. It is used to return multiple values from an expression",
+   "exceptions" : "",
+   "examples" : [ "(values 1 2 3) => (1 2 3)" ],
+   "see-also" : [ "multiple-value-bind" ]
+  },
+
+  {"type" : 1, 
+   "name" : "while", 
+   "syntax" : "(while cond &rest body) => result",
+   "args" : "cond: a form; body: the rest of the arguments converted to a list; result: an object",
+   "desc" : "while evaluates 'body' while 'cond' evaluates to a non-NIL value. The result of evaluating 'body' for the last time is returned",
+   "exceptions" : "Exceptions thrown by its constituent forms",
+   "examples" : [ "(let ((x 0)) (while (< x 5) (print x) (incf x))) =>", "0", "1", "2", "3", "4", "NIL" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "-", 
+   "syntax" : "(- form*) => result",
+   "args" : "form: a form that evaluates to an integer or a float; result: an integer or a float",
+   "desc" : "- subtracts the sum of the remaining arguments from the first argument",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float",
+   "examples" : [ "(- 2 1) => 1", "(- 10 2 3.14) => 4.860000" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : ",", 
+   "syntax" : ",form => result",
+   "args" : "form: a form; result: an object",
+   "desc" : ", is used in macro bodies to represent forms whose values should be substituted in the compiled form",
+   "exceptions" : "",
+   "examples" : [ "(defmacro first (lst) `(car ,lst)) => <macro>" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : ",@", 
+   "syntax" : ",@form => result",
+   "args" : "form: a form; result: an object",
+   "desc" : ",@ is used in macro bodies to splice the forms (whose values are lists) into a list in the compiled form",
+   "exceptions" : "",
+   "examples" : [ "(defmacro values (&rest body) `(list ,@body))" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "*", 
+   "syntax" : "(* form*) => result",
+   "args" : "form: a form that evaluates to an integer or a float; result: an integer or a float",
+   "desc" : "* multiplies all its arguments",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float",
+   "examples" : [ "(* 2 1) => 2", "(* 1 2 3) => 6" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "/", 
+   "syntax" : "(/ form*) => result",
+   "args" : "form: a form that evaluates to an integer or a float; result: an integer or a float",
+   "desc" : "/ divides the first argument by the product of the remaining arguments. If all the arguments are integers, integer division is performed, otherwise floating point division is performed",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float. An exception DIVIDE-BY-ZERO is thrown if a division by zero is attempted",
+   "examples" : [ "(/ 2 1) => 2", "(/ 1.0 2 3) => 0.166667" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "`", 
+   "syntax" : "`form => result",
+   "args" : "form: a form; result: an object",
+   "desc" : "` is used in macro bodies to represent forms that should be carried over as-is to the compiled form",
+   "exceptions" : "",
+   "examples" : [ "(defmacro first (lst) `(car ,lst)) => <macro>" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "+", 
+   "syntax" : "(+ form*) => result",
+   "args" : "form: a form that evaluates to an integer or a float; result: an integer or a float",
+   "desc" : "+ computes the sum of its arguments",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float",
+   "examples" : [ "(+ 1 2) => 3", "(+ 1 3.14) => 4.140000" ],
+   "see-also" : [  ]
+  },
+
+  {"type" : 2, 
+   "name" : "<", 
+   "syntax" : "(< form1 form2) => result",
+   "args" : "form1, form2: forms that evaluates to integers or floats; result: T or NIL",
+   "desc" : "< returns T if 'form1' is less than 'form2' and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float",
+   "examples" : [ "(< 1 2) => T", "(> 2 7) => NIL" ],
+   "see-also" : [ "<=" ]
+  },
+
+  {"type" : 2, 
+   "name" : "<=", 
+   "syntax" : "(<= form1 form2) => result",
+   "args" : "form1, form2: forms that evaluates to integers or floats; result: T or NIL",
+   "desc" : "<= returns T if 'form1' is less than or equal to 'form2' and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float",
+   "examples" : [ "(<= 1 2) => T", "(<= 2 2) => T", "(<= 4 3) => NIL" ],
+   "see-also" : [ "<" ]
+  },
+
+  {"type" : 2, 
+   "name" : ">", 
+   "syntax" : "(> form1 form2) => result",
+   "args" : "form1, form2: forms that evaluates to integers or floats; result: T or NIL",
+   "desc" : "> returns T if 'form1' is greater than 'form2' and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float",
+   "examples" : [ "(> 2 1) => T", "(> 2 7) => NIL" ],
+   "see-also" : [ ">=" ]
+  },
+
+  {"type" : 2, 
+   "name" : ">=", 
+   "syntax" : "(>= form1 form2) => result",
+   "args" : "form1, form2: forms that evaluates to integers or floats; result: T or NIL",
+   "desc" : ">= returns T if 'form1' is greater than or equal to 'form2' and NIL otherwise",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float",
+   "examples" : [ "(>= 7 2) => T", "(>= 1 2) => NIL", "(>= 1 1) => T" ],
+   "see-also" : [ ">" ]
+  },
+
+  {"type" : 1, 
+   "name" : "def-curry-fn", 
+   "syntax" : "(def-curry-fn f1 f0 &rest args) => result",
+   "args" : "f1: a symbol; f0: a function; args: a list of the rest of the arguments; result: a function",
+   "desc" : "def-curry-function takes a symbol, a function object and a partial list of the arguments to the function, and binds the symbol to a function object which takes as arguments the remaining list of the given function object's arguments. The returned function object invokes the given function object with the parameters comprising the partial list and the supplied parameters list",
+   "exceptions" : "",
+   "examples" : [ "(defun f (a b c) (+ a b c)) => <function>", "(def-curry-fn c f 10 20) => <function>", "(c 30) => 60"],
+   "see-also" : [  ]
   }
+
 
  ]
 }

@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2013 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2015 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -1751,7 +1751,9 @@ enum {FIRST, LAST};
 
 BOOLEAN is_non_identifier_char(char c)
 {
-  return c != '-' && 
+  return c != '-' && c != '+' && c != '*' && c != '/' &&
+         c != '<' && c != '>' && c != '=' &&
+         c != ',' && c != '`' && c != '@' &&
          !(c >= 65 && c <= 90) &&
          !(c >= 97 && c <= 122) &&
          !(c >= 48 && c <= 57);

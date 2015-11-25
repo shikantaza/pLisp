@@ -158,7 +158,7 @@
       <keyword>nth</keyword>
       <keyword>max</keyword>
       <keyword>min</keyword>
-      <keyword>curry</keyword>
+      <keyword>def-curry-fn</keyword>
       <keyword>concat</keyword>
       <keyword>remove</keyword>
       <keyword>find-if</keyword>
