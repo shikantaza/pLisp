@@ -61,6 +61,8 @@
       <keyword>if</keyword>
       <keyword>call-cc</keyword>
       <keyword>return-from</keyword>
+      <keyword>try</keyword>
+      <keyword>catch</keyword>
       <keyword>throw</keyword>
       <keyword>exception</keyword>
     </context>
@@ -188,7 +190,6 @@
       <keyword>get-ext-mem-cell</keyword>
       <keyword>inspect-ext-mem</keyword>
       <keyword>free-ext-mem</keyword>
-      <keyword>simplify</keyword>
       <keyword>assert</keyword>
       <keyword>while</keyword>
       <keyword>dolist</keyword>
@@ -198,7 +199,6 @@
       <keyword>incf</keyword>
       <keyword>for</keyword>
       <keyword>nconc</keyword>
-      <keyword>labels</keyword>
       <keyword>first</keyword>
       <keyword>second</keyword>
       <keyword>third</keyword>
@@ -215,13 +215,9 @@
       <keyword>mapcan</keyword>
       <keyword>println</keyword>
       <keyword>alias</keyword>
-      <keyword>try</keyword>
       <keyword>unwind-protect</keyword>
-      <keyword>compile</keyword>
       <keyword>array</keyword>
-      <keyword>build-ref</keyword>
       <keyword>aset</keyword>
-      <keyword>aref</keyword>
     </context>
 
     <context id="plisp" class="no-spell-check">

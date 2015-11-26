@@ -745,7 +745,18 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 
     char *s = get_current_word(buffer);
 
-    help_entry_t *entry = find_help_entry(s);
+    help_entry_t *entry;
+
+    //to remove the comma that occurs
+    //in the see-also list in the help window
+    if(buffer == help_buffer && s[strlen(s)-1] == ',')
+    {
+      char *s1 = substring(s, 0, strlen(s)-1);
+      entry = find_help_entry(s1);
+      free(s1);
+    }
+    else
+      entry = find_help_entry(s);
 
     if(!entry)
     {
@@ -1752,7 +1763,7 @@ enum {FIRST, LAST};
 BOOLEAN is_non_identifier_char(char c)
 {
   return c != '-' && c != '+' && c != '*' && c != '/' &&
-         c != '<' && c != '>' && c != '=' &&
+         c != '<' && c != '>' && c != '=' && c != '\'' &&
          c != ',' && c != '`' && c != '@' &&
          !(c >= 65 && c <= 90) &&
          !(c >= 97 && c <= 122) &&

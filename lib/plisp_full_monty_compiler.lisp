@@ -450,7 +450,9 @@
   (let ((a (second ref))
 	(last-index (last ref))
 	(indexes (butlast (cddr ref) 1)))
-    `(array-set (build-ref ,a ,indexes) ,last-index ,val)))
+    (if (null indexes)
+        `(array-set ,a ,last-index ,val)
+      `(array-set (build-ref ,a ,indexes) ,last-index ,val))))
 
 (defmacro aref (a &rest indexes)
   `(build-ref ,a ,indexes))
