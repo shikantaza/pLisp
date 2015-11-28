@@ -4677,6 +4677,42 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     return false;
   }
 
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(top_level_symbols[i].sym == car(exp) &&
+       IS_CONS_OBJECT(top_level_symbols[i].val) &&
+       (IS_FUNCTION2_OBJECT(car(top_level_symbols[i].val)) || IS_MACRO2_OBJECT(car(top_level_symbols[i].val))))
+    {
+      OBJECT_PTR cons_equiv = cons_equivalent(car(top_level_symbols[i].val));
+      OBJECT_PTR params = second(car(last_cell(cons_equiv)));
+      
+      int loc = location_of_and_rest(params);
+
+      if(loc == -1)
+      {
+        if(cons_length(cdr(exp)) != cons_length(params))
+        {
+          throw_exception1("COMPILE-ERROR", "Insufficient number of arguments to invoke the function/macro");
+          return false;
+        }
+      }
+      else
+      {
+        if(cons_length(cdr(exp)) < loc)
+        {
+          throw_exception1("COMPILE-ERROR", "Insufficient number of arguments to invoke the function/macro");
+          return false;
+        }
+      }
+      break;
+    }
+  }
+
   if(IS_CONS_OBJECT(exp) &&
      ((car(exp) == MACRO && contains_internal_macros(third(exp))) ||
       (car(exp) != MACRO && contains_internal_macros(exp))))

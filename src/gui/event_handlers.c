@@ -131,6 +131,8 @@ extern unsigned int current_package;
 
 extern help_entry_t *find_help_entry(char *);
 
+char *get_common_prefix(unsigned int, char **);
+
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -990,6 +992,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     close_application_window((GtkWidget **)&workspace_window);
   else if(widget == (GtkWidget *)profiler_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
     close_application_window((GtkWidget **)&profiler_window);
+  else if(widget == (GtkWidget *)debugger_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
+    close_application_window((GtkWidget **)&debugger_window);
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_k)
     create_new_package();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_n)
@@ -1916,49 +1920,83 @@ void build_autocomplete_words()
 void do_auto_complete(GtkTextBuffer *buffer)
 {
   char *s = get_current_word(buffer);
+
+  if(strlen(s) == 0)
+    return;
+
   int i;
   unsigned int nof_matches = 0;
   unsigned int len = strlen(s);
-  unsigned int idx;
+
+  char **matches = NULL;
 
   for(i=0; i<nof_autocomplete_words; i++)
   {
     if(!strncmp(s, autocomplete_words[i], len))
     {
       nof_matches++;
-      idx = i;
+
+      if(nof_matches == 1)
+        matches = (char **)malloc(nof_matches * sizeof(char *));
+      else
+      {
+        char **temp = (char **)realloc(matches, nof_matches * sizeof(char *));
+        assert(temp);
+        matches = temp;
+      }
+
+      matches[nof_matches-1] = strdup(autocomplete_words[i]);
     }
   }
 
-  if(nof_matches == 1)
+  unsigned int n;
+  char *buf;
+
+  char *s1 = get_common_prefix(nof_matches, matches);
+
+  if(s1)
   {
-    unsigned int n = strlen(autocomplete_words[idx]) - len;
-    char *buf = (char *)malloc(n * sizeof(char) + 2);
+    n = strlen(s1) - len;
+
+    if(n==0)
+      return;
+
+    buf = (char *)malloc(n * sizeof(char) + 2);
     memset(buf, '\0', n+2);
 
     for(i=len; i<len+n; i++)
-      buf[i-len] = autocomplete_words[idx][i];
+      buf[i-len] = s1[i];
 
-    GtkTextView *view = (buffer == (GtkTextBuffer *)workspace_source_buffer) ? (GtkTextView *)workspace_source_view : system_browser_textview;
+    free(s1);
 
-    //going into overwrite mode
-    //to handle the case when autocomplete
-    //is attempted when cursor is in the
-    //middle of an already fully complete symbol
-    gtk_text_view_set_overwrite(view, TRUE);
-    gtk_text_buffer_insert_at_cursor(buffer, (char *)buf, -1);
-    gtk_text_view_set_overwrite(view, FALSE);
+    for(i=0; i<nof_matches; i++)
+      free(matches[i]);
 
-    //to take the cursor to the end of the word
-    //(overwrite doesn't move the cursor)
-    GtkTextIter curr_iter;
-    gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter, gtk_text_buffer_get_insert(buffer));
-
-    for(i=0; i<n; i++)
-      gtk_text_iter_forward_char(&curr_iter);
-
-    free(buf);
+    if(matches)
+      free(matches);
   }
+  else
+    return;
+
+  GtkTextView *view = (buffer == (GtkTextBuffer *)workspace_source_buffer) ? (GtkTextView *)workspace_source_view : system_browser_textview;
+
+  //going into overwrite mode
+  //to handle the case when autocomplete
+  //is attempted when cursor is in the
+  //middle of an already fully complete symbol
+  gtk_text_view_set_overwrite(view, TRUE);
+  gtk_text_buffer_insert_at_cursor(buffer, (char *)buf, -1);
+  gtk_text_view_set_overwrite(view, FALSE);
+
+  //to take the cursor to the end of the word
+  //(overwrite doesn't move the cursor)
+  GtkTextIter curr_iter;
+  gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter, gtk_text_buffer_get_insert(buffer));
+
+  for(i=0; i<n; i++)
+    gtk_text_iter_forward_char(&curr_iter);
+
+  free(buf);
 
   free(s);
 }
@@ -1972,4 +2010,48 @@ void add_to_autocomplete_list(char *word)
   autocomplete_words = temp;
 
   autocomplete_words[nof_autocomplete_words-1] = word;
+}
+
+char *get_common_prefix(unsigned int count, char **word_list)
+{
+  if(count == 0)
+    return NULL;
+
+  int idx = 0;
+
+  int i;
+
+  BOOLEAN done = false;
+
+  while(!done)
+  {
+    for(i=0; i<count; i++)
+    {
+      if(!word_list[i][idx])
+      {
+        done = true;
+        break;
+      }
+    }
+
+    if(!done)
+    {
+      for(i=0; i<count-1; i++)
+      {
+        if(word_list[i][idx] != word_list[i+1][idx])
+        {
+          done = true;
+          break;
+        }
+      }
+      if(!done)
+        idx++;
+    }
+  }
+
+  if(idx)
+    return strndup(word_list[0], idx);
+  else
+    return NULL;
+
 }

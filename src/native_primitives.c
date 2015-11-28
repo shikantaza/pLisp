@@ -657,6 +657,12 @@ OBJECT_PTR primitive_apply(OBJECT_PTR obj, OBJECT_PTR args)
     return NIL;
   }
 
+  if(args != NIL && !IS_CONS_OBJECT(args))
+  {
+    throw_exception1("INVALID-ARGUMENT", "Second argument to APPLY should be a list");
+    return NIL;
+  }
+
   OBJECT_PTR top_level_sym = reverse_sym_lookup(obj);
 
   if(top_level_sym != NIL)

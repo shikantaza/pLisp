@@ -21,9 +21,12 @@
 (define defmacro (macro (name vars &rest body)
                         `(define ,name (macro ,vars ,@body))))
 
+(defun exception (excp desc)
+  (cons excp desc))
+
 (defmacro assert (condition text)
   `(if (not ,condition)
-       (error ,text)))
+       (throw (exception 'exception ,text))))
 
 (defun cadr (lst)
   (car (cdr lst)))
@@ -210,9 +213,6 @@
       (if (< x curr-min)
 	  (set curr-min x)))
     curr-min))
-
-(defun exception (excp desc)
-  (cons excp desc))
 
 (defmacro generate-syms (n)
   `(map gensym (range 1 ,n 1)))
