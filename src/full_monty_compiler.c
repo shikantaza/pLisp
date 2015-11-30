@@ -3567,14 +3567,6 @@ int repl2()
   }
   else
   {
-    OBJECT_PTR exp;
-    int val = convert_expression_to_object(g_expr, &exp);
-
-    assert(is_valid_object(exp));
-
-    if(val != 0)
-      return 1;
-
     saved_continuations = NIL;
     continuations_for_return = NIL;
     most_recent_closure = NIL;
@@ -3588,6 +3580,18 @@ int repl2()
     //idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 
     in_error = false;
+
+    OBJECT_PTR exp;
+    int val = convert_expression_to_object(g_expr, &exp);
+
+    assert(is_valid_object(exp));
+
+    if(val != 0)
+    {
+      handle_exception();
+      return 1;
+    }
+
 
     OBJECT_PTR res = full_monty_eval(exp);
 
@@ -5111,10 +5115,11 @@ OBJECT_PTR handle_exception()
 
     debug_window_dbg_stack = debug_stack;
 
-    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-			DEFAULT_DEBUG_WINDOW_POSY,
-			DEFAULT_DEBUG_WINDOW_WIDTH,
-			DEFAULT_DEBUG_WINDOW_HEIGHT);
+    if(debug_window_dbg_stack != NIL)
+      create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+                          DEFAULT_DEBUG_WINDOW_POSY,
+                          DEFAULT_DEBUG_WINDOW_WIDTH,
+                          DEFAULT_DEBUG_WINDOW_HEIGHT);
 
     return NIL;
   }

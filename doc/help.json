@@ -612,7 +612,7 @@
 
   {"type" : 2, 
    "name" : "format", 
-   "syntax" : "(format fd str (&rest args)) => NIL",
+   "syntax" : "(format fd str &rest args) => NIL",
    "args" : "fd: an integer; str: a form that evaluates to a string; args: rest of the arguments in list form",
    "desc" : "format sends the formatted output specified by the format string 'str' and the arguments to the file specified by the file descriptor 'fd' or to standard output if 'fd' is NIL. The format string is modeled identically to the C format string used in printf and fprintf statements",
    "exceptions" : "Throws an exception of type ARG-MISMATCH if two arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if a) the first argument is neither an integer nor NIL, b) if the second argument is not a string or c) args contains any objects other than integers, floats, characters or strings",
@@ -772,7 +772,7 @@
 
   {"type" : 2, 
    "name" : "let", 
-   "syntax" : "(let decls (&rest body)) => result",
+   "syntax" : "(let decls &rest body) => result",
    "args" : "decls: a form; body: rest of the arguments converted into a list; result: an object",
    "desc" : "let executes 'body' after binding the definitions in 'decl'",
    "exceptions" : "None",
@@ -782,7 +782,7 @@
 
   {"type" : 1, 
    "name" : "let1", 
-   "syntax" : "(let1 decls (&rest body)) => result",
+   "syntax" : "(let1 decls &rest body) => result",
    "args" : "decls: a form; body: rest of the arguments converted into a list; result: an object",
    "desc" : "let1 executes 'body' after binding the definitions in 'decl'. let1 is similar to let, but variables in 'decl' can refer to variables declared earlier",
    "exceptions" : "None",
@@ -792,7 +792,7 @@
 
   {"type" : 2, 
    "name" : "letrec", 
-   "syntax" : "(letrec decls (&rest body)) => result",
+   "syntax" : "(letrec decls &rest body) => result",
    "args" : "decls: a form; body: rest of the arguments converted into a list; result: an object",
    "desc" : "letrec executes 'body' after binding the definitions in 'decl'; it differs from 'let' in that the bindings can be (mutually) recursive",
    "exceptions" : "None",
@@ -802,7 +802,7 @@
 
   {"type" : 2, 
    "name" : "list", 
-   "syntax" : "(list (&rest elems)) => result",
+   "syntax" : "(list &rest elems) => result",
    "args" : "elems: arguments converted into a list; result: a list",
    "desc" : "list creates a list of the elements in 'elems'",
    "exceptions" : "None",

@@ -1485,8 +1485,11 @@ int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
     {
       if(find_package(e->package_name) == NOT_FOUND)
       {
-        //TODO: convert this into throw_exception()
-        fprintf(stdout, "Packgage %s does not exist\n", e->package_name);
+        char buf[100];
+        memset(buf, '\0', 100);
+        sprintf(buf, "Package %s does not exist\n", e->package_name);
+        throw_exception1("EXCEPTION", buf);
+        //fprintf(stdout, "Package %s does not exist\n", e->package_name);
         *out_val = NIL;
         return -1;
       }
