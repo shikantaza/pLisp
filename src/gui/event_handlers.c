@@ -87,6 +87,7 @@ extern GtkTreeView *frames_list;
 extern GtkTreeView *variables_list;
 
 extern GtkStatusbar *system_browser_statusbar;
+extern GtkStatusbar *workspace_statusbar;
 
 extern BOOLEAN debug_mode;
 
@@ -132,6 +133,10 @@ extern unsigned int current_package;
 extern help_entry_t *find_help_entry(char *);
 
 char *get_common_prefix(unsigned int, char **);
+
+extern OBJECT_PTR get_signature(char *);
+
+extern get_signature_for_core_symbol(char *);
 
 int get_indents_for_form(char *form)
 {
@@ -260,6 +265,8 @@ gboolean delete_event( GtkWidget *widget,
     hashtable_delete(profiling_tab);
     profiling_tab = NULL;
   }
+  else if(widget == (GtkWidget *)help_window)
+    close_application_window(&help_window);
 
   return FALSE;
 }
@@ -697,6 +704,83 @@ void close_debugger_window()
 {
   if(debugger_window)
     close_application_window((GtkWidget **)&debugger_window);
+}
+
+void handle_cursor_move(GtkWidget *widget,
+                        gpointer data)
+{
+  GtkTextBuffer *buffer = (GtkTextBuffer *)widget;
+  GtkStatusbar *statusbar = (buffer == workspace_buffer) ? workspace_statusbar : system_browser_statusbar;
+  char *s = get_current_word(buffer);
+
+  //TODO: figure out when to clear the status bar
+  /* if(strlen(s) == 0) */
+  /* { */
+  /*   gtk_statusbar_remove_all(statusbar, 0); */
+  /*   return; */
+  /* } */
+
+  
+  if(is_core_symbol(s))
+  {
+    gtk_statusbar_remove_all(statusbar, 0);
+    gtk_statusbar_push(statusbar, 0, get_signature_for_core_symbol(s));
+    return;
+  }
+
+  OBJECT_PTR signature = get_signature(convert_to_upper_case(s));
+
+  if(signature != NIL)
+  {
+    char buf[200];
+    memset(buf, '\0', 200);
+
+    if(!strcmp(s, "DEFUN") || !strcmp(s, "DEFMACRO"))
+    {
+      unsigned int len = 0;
+      len += sprintf(buf, "(%s ", s);
+
+      char buf_params[200];
+      memset(buf_params, '\0', 200);
+
+      print_object_to_string(cdr(signature), buf_params, 0);
+
+      len += sprintf(buf+len, "%s", buf_params+1);
+    }
+    else
+      print_object_to_string(signature, buf, 0);
+
+    //replace newlines with spaces
+    int i;
+    for(i=0; i<strlen(buf); i++)
+      if(buf[i] == '\n')
+        buf[i] = ' ';
+
+    //replace multiple spaces by a single space
+    char buf1[100];
+    memset(buf1, '\0', 100);
+
+    buf1[0] = buf[0];
+
+    i=1;
+    int j=1;
+    while(i<strlen(buf))
+    {
+      if(buf[i-1] == ' ' && buf[i] == ' ')
+        i++;
+      else
+      {
+        buf1[j] = buf[i];
+        j++;
+        i++;
+      }
+    }
+
+    gtk_statusbar_remove_all(statusbar, 0);
+    gtk_statusbar_push(statusbar, 0, convert_to_lower_case(buf1));
+  }
+
+  free(s);
 }
 
 gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)

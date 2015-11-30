@@ -55,6 +55,7 @@ GtkTreeView *frames_list;
 GtkTreeView *variables_list;
 
 GtkStatusbar *system_browser_statusbar;
+GtkStatusbar *workspace_statusbar;
 
 GtkTreeView *operators_list;
 
@@ -103,6 +104,8 @@ extern clear_transcript(GtkWidget *, gpointer);
 extern clear_workspace(GtkWidget *, gpointer);
 
 extern exp_pkg(GtkWidget *, gpointer);
+
+extern void handle_cursor_move(GtkWidget *, gpointer);
 
 /* event handler function definitions end */
 
@@ -283,6 +286,11 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   //workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
   workspace_buffer = workspace_source_buffer;
 
+  g_signal_connect(G_OBJECT(workspace_buffer), 
+                   "notify::cursor-position", 
+                   G_CALLBACK (handle_cursor_move), 
+                   NULL);
+
   /* print_to_workspace("; This is the workspace; type pLisp expressions here.\n"); */
   /* print_to_workspace("; To evaluate an expression, enter the expression\n"); */
   /* print_to_workspace("; and press Ctrl+Enter when the expression is complete\n"); */
@@ -300,6 +308,9 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)create_workspace_toolbar(), FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
+
+  workspace_statusbar = (GtkStatusbar *)gtk_statusbar_new();
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)workspace_statusbar, FALSE, FALSE, 0);  
   
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
@@ -574,6 +585,11 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   //system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
   system_browser_buffer = system_browser_source_buffer;
+
+  g_signal_connect(G_OBJECT(system_browser_buffer), 
+                   "notify::cursor-position", 
+                   G_CALLBACK (handle_cursor_move), 
+                   NULL);
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
@@ -1399,6 +1415,9 @@ void create_help_window()
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
   
   gtk_container_add (GTK_CONTAINER (win), vbox);
+
+  g_signal_connect (win, "delete-event",
+                    G_CALLBACK (delete_event), NULL);
 
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 

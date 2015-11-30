@@ -4688,6 +4688,11 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
        IS_CONS_OBJECT(top_level_symbols[i].val) &&
        (IS_FUNCTION2_OBJECT(car(top_level_symbols[i].val)) || IS_MACRO2_OBJECT(car(top_level_symbols[i].val))))
     {
+      //to handle dummy top-level definitions for
+      //recursive functions/macros
+      if(car(top_level_symbols[i].val) == 0x1c)
+        break;
+
       OBJECT_PTR cons_equiv = cons_equivalent(car(top_level_symbols[i].val));
       OBJECT_PTR params = second(car(last_cell(cons_equiv)));
       
@@ -5345,4 +5350,221 @@ BOOLEAN is_continuation_object(OBJECT_PTR obj)
     return true;
   else
     return false;
+}
+
+BOOLEAN is_core_symbol(char *s)
+{
+  char *core_symbols[77] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET1", "LETREC", "BREAK", "ABORT", "RESUME",
+                            "IF", "CALL-CC", "RETURN-FROM", "CATCH", "THROW",  "ATOM", "EQ", "CAR", "CDR",
+                            "CONS", "+", "-", "*", "/", "PROGN", "PRINT", "LIST", "LISTP", "SYMBOL-VALUE", "GENSYM",
+                            "SETCAR", "SETCDR", "CREATE-PACKAGE", "IN-PACKAGE", "EXPAND-MACRO", "APPLY",
+                            "STRING", "MAKE-ARRAY", "ARRAY-GET", "ARRAY-SET", "SUB-ARRAY", "ARRAY-LENGTH", "PRINT-STRING", "CREATE-IMAGE",
+                            "LOAD-FOREIGN-LIBRARY", "CALL-FOREIGN-FUNCTION", "ENV", "EVAL", "LOAD-FILE", "CONSP", "INTEGERP", "FLOATP",
+                            "CHARACTERP", "SYMBOLP", "STRINGP", "ARRAYP", "CLOSUREP", "MACROP", "CONTINUATIONP", "FORMAT", "CLONE",
+                            "SYMBOL", "SYMBOL-NAME", "UNBIND", "NEWLINE", "TIME", "PROFILE", "NOT", "<", ">", "<=", ">=", "NEQ",
+                            "SAVE-OBJECT", "LOAD-OBJECT", "EXPORT-PACKAGE"};
+
+  int nof_core_symbols = 77;
+
+  int i;
+
+  for(i=0; i<nof_core_symbols; i++)
+  {
+    if(!strcmp(convert_to_upper_case(s),core_symbols[i]))
+      return true;
+  }
+
+  return false;
+                         
+}
+
+OBJECT_PTR get_signature(char *symbol_value)
+{
+  OBJECT_PTR sym = get_symbol_object(symbol_value);
+
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(top_level_symbols[i].sym == sym &&
+       IS_CONS_OBJECT(top_level_symbols[i].val) &&
+       (IS_FUNCTION2_OBJECT(car(top_level_symbols[i].val)) || IS_MACRO2_OBJECT(car(top_level_symbols[i].val))))
+    {
+      return cons(sym, second(car(last_cell(cons_equivalent(car(top_level_symbols[i].val))))));
+    }
+  }
+  return NIL;
+}
+
+char *get_signature_for_core_symbol(char *symbol_name)
+{
+  assert(is_core_symbol(symbol_name));
+
+  char *s = strdup(symbol_name);
+
+  convert_to_upper_case(s);
+
+  char *ret = "";
+
+  if(!strcmp(s, "LAMBDA"))
+    ret = "(lambda params (&rest body))";
+  else if(!strcmp(s,"MACRO"))
+    ret = "(macro parms (&rest body)";
+  else if(!strcmp(s,"DEFINE"))
+    ret = "(define var form)";
+  else if(!strcmp(s,"SET"))
+    ret = "(set var obj)";
+  else if(!strcmp(s,"ERROR"))
+    ret = "(error str)";
+  else if(!strcmp(s,"LET"))
+    ret = "(let decls (&rest body))";
+  else if(!strcmp(s,"LET1"))
+    ret = "(let1 decls (&rest body))";
+  else if(!strcmp(s,"LETREC"))
+    ret = "(letrec decls (&rest body))";
+  else if(!strcmp(s,"BREAK"))
+    ret = "(break)";
+  else if(!strcmp(s,"ABORT"))
+    ret = "(abort))";
+  else if(!strcmp(s,"RESUME"))
+  ret = "(resume)";
+  else if(!strcmp(s,"IF"))
+    ret = "(if cond then else)";
+  else if(!strcmp(s,"CALL-CC"))
+    ret = "(call-cc lambda-exp)";
+  else if(!strcmp(s,"RETURN-FROM"))
+    ret = "(return-from fn ret)";
+  else if(!strcmp(s,"CATCH"))
+    ret = "(catch ex form)";
+  else if(!strcmp(s,"THROW"))
+    ret = "(throw ex)";
+  else if(!strcmp(s,"ATOM"))
+    ret = "(atom x)";
+  else if(!strcmp(s,"EQ"))
+    ret = "(eq form1 form2)";
+  else if(!strcmp(s,"CAR"))
+    ret = "(car lst)";
+  else if(!strcmp(s,"CDR"))
+    ret = "(cdr lst)";
+  else if(!strcmp(s,"CONS"))
+    ret = "(cons obj1 obj2)";
+  else if(!strcmp(s,"+"))
+    ret = "(+ form*)";
+  else if(!strcmp(s,"-"))
+    ret = "(- form*)";
+  else if(!strcmp(s,"*"))
+    ret = "(* form*)";
+  else if(!strcmp(s,"/"))
+    ret = "(/ form*)";
+  else if(!strcmp(s,"PROGN"))
+    ret = "(progn form*)";
+  else if(!strcmp(s,"PRINT"))
+    ret = "(print obj)";
+  else if(!strcmp(s,"LIST"))
+    ret = "(list (&rest elems))";
+  else if(!strcmp(s,"LISTP")) 
+    ret = "(listp form)";
+  else if(!strcmp(s,"SYMBOL-VALUE"))
+    ret = "(symbol-value sym)";
+  else if(!strcmp(s,"GENSYM"))
+    ret = "(gensym)";
+  else if(!strcmp(s,"SETCAR"))
+    ret = "(setcar lst obj)";
+  else if(!strcmp(s,"SETCDR"))
+    ret = "(setcdr lst obj)";
+  else if(!strcmp(s,"CREATE-PACKAGE"))
+    ret = "(create-package package-name)";
+  else if(!strcmp(s,"IN-PACKAGE"))
+    ret = "(in-package)";
+  else if(!strcmp(s,"EXPAND-MACRO")) 
+    ret = "(expand-macro form)";
+  else if(!strcmp(s,"APPLY"))
+    ret = "(apply function args)";
+  else if(!strcmp(s,"STRING")) 
+    ret = "(string str)";
+  else if(!strcmp(s,"MAKE-ARRAY")) 
+    ret = "(make-array size val)";
+  else if(!strcmp(s,"ARRAY-GET"))
+    ret = "(array-get arr index)";
+  else if(!strcmp(s,"ARRAY-SET"))
+    ret = "(array-set arr index form)";
+  else if(!strcmp(s,"SUB-ARRAY"))
+    ret = "(sub-array arr start len)";
+  else if(!strcmp(s,"ARRAY-LENGTH"))
+    ret = "(array-length arr)";
+  else if(!strcmp(s,"PRINT-STRING"))
+    ret = "(print-string str)";
+  else if(!strcmp(s,"CREATE-IMAGE"))
+    ret = "(create-image file-name)";
+  else if(!strcmp(s,"LOAD-FOREIGN-LIBRARY"))
+    ret = "(load-foreign-library str)";
+  else if(!strcmp(s,"CALL-FOREIGN-FUNCTION")) 
+    ret = "(call-foreign-function name return-type params)";
+  else if(!strcmp(s,"ENV"))
+    ret = "(env)";
+  else if(!strcmp(s,"EVAL"))
+    ret = "(eval form)";
+  else if(!strcmp(s,"LOAD-FILE"))
+    ret = "(load-file str)";
+  else if(!strcmp(s,"CONSP"))
+    ret = "(consp form)";
+  else if(!strcmp(s,"INTEGERP")) 
+    ret = "(integerp)";
+  else if(!strcmp(s,"FLOATP"))
+    ret = "(floatp form)";
+  else if(!strcmp(s,"CHARACTERP"))
+    ret = "(characterp form)";
+  else if(!strcmp(s,"SYMBOLP"))
+    ret = "(symbolp form)";
+  else if(!strcmp(s,"STRINGP"))
+    ret = "(stringp form)";
+  else if(!strcmp(s,"ARRAYP"))
+    ret = "(arrayp form)";
+  else if(!strcmp(s,"CLOSUREP")) 
+    ret = "(closurep form)";
+  else if(!strcmp(s,"MACROP"))
+    ret = "(macrop form)";
+  else if(!strcmp(s,"CONTINUATIONP"))
+    ret = "(continuatiop form)";
+  else if(!strcmp(s,"FORMAT"))
+    ret = "(format fd str (&rest args))";
+  else if(!strcmp(s,"CLONE"))
+    ret = "(clone form)";
+  else if(!strcmp(s,"SYMBOL")) 
+    ret = "(symbol str)";
+  else if(!strcmp(s,"SYMBOL-NAME"))
+    ret = "(symbol-name sym)";
+  else if(!strcmp(s,"UNBIND"))
+    ret = "(unbind sym)";
+  else if(!strcmp(s,"NEWLINE")) 
+    ret = "(newline)";
+  else if(!strcmp(s,"TIME"))
+    ret = "(time exp)";
+  else if(!strcmp(s,"PROFILE")) 
+    ret = "(profile exp)";
+  else if(!strcmp(s,"NOT"))
+    ret = "(not form)";
+  else if(!strcmp(s,"<"))
+    ret = "(< form1 form2)";
+  else if(!strcmp(s,">"))
+    ret = "(> form1 form2)";
+  else if(!strcmp(s,"<=")) 
+    ret = "(<= form1 form2)";
+  else if(!strcmp(s,">="))
+    ret = "(>= form1 form2)";
+  else if(!strcmp(s,"NEQ"))
+    ret = "(new form1 form2)";
+  else if(!strcmp(s,"SAVE-OBJECT"))
+    ret = "(save-object obj str)";
+  else if(!strcmp(s,"LOAD-OBJECT"))
+    ret = "(load-object str)";
+  else if(!strcmp(s,"EXPORT-PACKAGE"))
+    ret = "(export-package package-name str)";
+
+  free(s);
+
+  return ret;
 }
