@@ -56,6 +56,8 @@ extern GtkWindow *system_browser_window;
 extern GtkWindow *debugger_window;
 extern GtkWindow *profiler_window;
 
+extern GtkWindow *callers_window;
+
 extern GtkTextBuffer *help_buffer;
 extern GtkWindow *help_window;
 
@@ -67,6 +69,9 @@ extern GtkTextView *system_browser_textview;
 
 extern GtkSourceView *workspace_source_view;
 extern GtkSourceBuffer *workspace_source_buffer;
+
+extern GtkSourceBuffer *callers_source_buffer;
+extern GtkSourceView *callers_source_view;
 
 extern char *loaded_image_file_name;
 
@@ -137,6 +142,8 @@ char *get_common_prefix(unsigned int, char **);
 extern OBJECT_PTR get_signature(char *);
 
 extern get_signature_for_core_symbol(char *);
+
+extern OBJECT_PTR callers_sym;
 
 int get_indents_for_form(char *form)
 {
@@ -267,6 +274,8 @@ gboolean delete_event( GtkWidget *widget,
   }
   else if(widget == (GtkWidget *)help_window)
     close_application_window(&help_window);
+  else if(widget == (GtkWidget *)callers_window)
+    close_application_window(&callers_window);
 
   return FALSE;
 }
@@ -1755,6 +1764,47 @@ void exp_pkg(GtkWidget *widget,
   export_package_gui();
 }
 
+void callers(GtkWidget *widget,
+	     gpointer data)
+{
+  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+  GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list));
+  GtkTreeIter  iter;
+
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list)), &model, &iter))
+  {
+    gchar *symbol_name;
+    gint ptr;
+
+    gtk_tree_model_get(model, &iter,
+                       0, &symbol_name,
+                       -1);
+
+    gtk_tree_model_get(model, &iter,
+                       1, &ptr,
+                       -1);
+
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+
+#ifdef INTERPRETER_MODE
+    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
+#else
+    OBJECT_PTR out;
+    int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
+    assert(retval == 0);
+    OBJECT_PTR obj = car(out);
+#endif
+
+    callers_sym = (OBJECT_PTR)ptr;
+
+    create_callers_window(DEFAULT_SYSTEM_BROWSER_POSX,
+                          DEFAULT_SYSTEM_BROWSER_POSY,
+                          DEFAULT_SYSTEM_BROWSER_WIDTH,
+                          DEFAULT_SYSTEM_BROWSER_HEIGHT);
+  }
+}
+
 BOOLEAN in_string_literal(GtkTextBuffer *buffer, GtkTextIter *iter)
 {
   return in_code_or_string_literal_or_comment(buffer, iter, IN_STRING_LITERAL);
@@ -2138,4 +2188,69 @@ char *get_common_prefix(unsigned int count, char **word_list)
   else
     return NULL;
 
+}
+
+void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
+{
+  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
+  GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (lst));
+  GtkTreeIter  iter;
+
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(lst)), &model, &iter))
+  {
+    gchar *symbol_name;
+    gint ptr;
+
+    gtk_tree_model_get(model, &iter,
+                       0, &symbol_name,
+                       -1);
+
+    gtk_tree_model_get(model, &iter,
+                       1, &ptr,
+                       -1);
+
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+
+#ifdef INTERPRETER_MODE
+    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
+#else
+    OBJECT_PTR out;
+    int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
+    assert(retval == 0);
+    OBJECT_PTR obj = car(out);
+#endif
+
+    gtk_text_buffer_set_text(callers_source_buffer, buf, -1);
+
+    if(IS_CLOSURE_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj))
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      OBJECT_PTR temp = cons(DEFUN, 
+                             cons((OBJECT_PTR)ptr,
+                                  cons(get_params_object(obj),
+                                       get_source_object(obj))));
+
+      print_object_to_string(temp, buf, 0);
+
+      gtk_text_buffer_insert_at_cursor(callers_source_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
+    }
+    else if(IS_MACRO_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
+    {
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      OBJECT_PTR temp = cons(DEFMACRO, 
+                             cons((OBJECT_PTR)ptr,
+                                  cons(get_params_object(obj),
+                                       get_source_object(obj))));
+
+      print_object_to_string(temp, buf, 0);
+
+
+      gtk_text_buffer_insert_at_cursor(callers_source_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
+    }
+    else
+      printf("Warning: invalid object type for caller window\n");
+
+    gtk_text_buffer_insert_at_cursor(callers_source_buffer, "\n", -1);
+  }
 }

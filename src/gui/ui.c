@@ -31,12 +31,15 @@
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;
 GtkTextBuffer *system_browser_buffer;
+GtkSourceBuffer *callers_source_buffer;
 
 GtkWindow *transcript_window;
 GtkWindow *workspace_window;
 GtkWindow *system_browser_window;
 GtkWindow *debugger_window;
 GtkWindow *profiler_window;
+
+GtkWindow *callers_window;
 
 GtkWindow *help_window = NULL;
 GtkTextBuffer *help_buffer = NULL;
@@ -46,6 +49,8 @@ GtkTreeView *symbols_list;
 
 GtkTextView *transcript_textview;
 GtkTextView *system_browser_textview;
+
+GtkSourceView *callers_source_view;
 
 BOOLEAN new_symbol_being_created;
 
@@ -105,8 +110,11 @@ extern clear_workspace(GtkWidget *, gpointer);
 
 extern exp_pkg(GtkWidget *, gpointer);
 
+extern callers(GtkWidget *, gpointer);
+
 extern void handle_cursor_move(GtkWidget *, gpointer);
 
+extern void fetch_symbol_value_for_caller(GtkWidget *, gpointer);
 /* event handler function definitions end */
 
 extern BOOLEAN in_break;
@@ -126,6 +134,11 @@ GtkSourceBuffer *workspace_source_buffer;
 
 GtkSourceView *system_browser_source_view;
 GtkSourceBuffer *system_browser_source_buffer;
+
+extern unsigned nof_global_vars;
+extern global_var_mapping_t *top_level_symbols;
+
+OBJECT_PTR callers_sym;
 
 void set_up_system_browser_source_buffer()
 {
@@ -424,6 +437,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkWidget *delete_icon = gtk_image_new_from_file ("icons/delete.png");
   GtkWidget *refresh_icon = gtk_image_new_from_file ("icons/refresh.png");
   GtkWidget *export_pkg_icon = gtk_image_new_from_file ("icons/export_package.png");
+  GtkWidget *callers_icon = gtk_image_new_from_file ("icons/callers.png");
   GtkWidget *exit_icon = gtk_image_new_from_file ("icons/exit32x32.png");
 
   toolbar = gtk_toolbar_new ();
@@ -497,6 +511,11 @@ GtkToolbar *create_system_browser_toolbar()
   g_signal_connect (export_pkg_button, "clicked", G_CALLBACK (exp_pkg), system_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, export_pkg_button, 5);
 
+  GtkToolItem *callers_button = gtk_tool_button_new(callers_icon, NULL);
+  gtk_tool_item_set_tooltip_text(callers_button, "Callers");
+  g_signal_connect (callers_button, "clicked", G_CALLBACK (callers), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, callers_button, 6);
+
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
   /*                          NULL,                                   /\* button label *\/ */
   /*                          "Close (Ctrl-W)",                       /\* button's tooltip *\/ */
@@ -507,7 +526,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkToolItem *close_button = gtk_tool_button_new(exit_icon, NULL);
   gtk_tool_item_set_tooltip_text(close_button, "Close (Ctrl-W)");
   g_signal_connect (close_button, "clicked", G_CALLBACK (close_window), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 6);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 7);
 
   return (GtkToolbar *)toolbar;
 }
@@ -1423,4 +1442,139 @@ void create_help_window()
                    "key_press_event", 
                    G_CALLBACK (handle_key_press_events), 
                    NULL);
+}
+
+void initialize_callers_symbols_list(GtkTreeView *list)
+{
+  GtkCellRenderer    *renderer;
+  GtkTreeViewColumn  *column1;
+  GtkListStore       *store;
+
+  renderer = gtk_cell_renderer_text_new();
+
+  column1 = gtk_tree_view_column_new_with_attributes("Symbols",
+                                                     renderer, "text", 0, NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
+
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
+
+  gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
+                          GTK_TREE_MODEL(store));
+
+  g_object_unref(store);  
+}
+
+BOOLEAN symbol_exists_in_list(OBJECT_PTR sym, OBJECT_PTR lst)
+{
+  if(lst == NIL)
+    return false;
+
+  if(is_atom(lst))
+    return equal(sym, lst);
+
+  if(symbol_exists_in_list(sym, car(lst)))
+    return true;
+  else
+    return symbol_exists_in_list(sym, cdr(lst));
+}
+
+void populate_callers_symbols_list(GtkTreeView *symbols_list)
+{
+  remove_all_from_list(symbols_list);
+
+  GtkListStore *store;
+  GtkTreeIter  iter;
+
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    OBJECT_PTR val = top_level_symbols[i].val;
+
+    if(IS_CONS_OBJECT(val) &&
+       (IS_FUNCTION2_OBJECT(car(val)) && !is_continuation_object(car(val))) || IS_MACRO2_OBJECT(car(val)))
+    {
+      if(symbol_exists_in_list(callers_sym, car(get_source_object(car(val)))))
+      {
+        char buf[100];
+        memset(buf, '\0', 100);
+
+        print_qualified_symbol(top_level_symbols[i].sym, buf);
+
+        gtk_list_store_append(store, &iter);
+        gtk_list_store_set(store, &iter, 0, buf, -1);  
+        gtk_list_store_set(store, &iter, 1, top_level_symbols[i].sym, -1);
+      }
+    }
+  }
+}
+
+void create_callers_window(int posx, int posy, int width, int height)
+{
+  GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  GtkWidget *scrolled_win1, *scrolled_win2;
+  GtkWidget *vbox, *hbox;
+
+  gtk_window_set_title((GtkWindow *)win, "pLisp Callers");
+
+  gtk_window_set_default_size(win, width, height);
+  gtk_window_move(win, posx, posy); 
+
+  g_signal_connect (win, "delete-event",
+                    G_CALLBACK (delete_event), NULL);
+
+  gtk_container_set_border_width (GTK_CONTAINER (win), 10);
+
+  scrolled_win1 = gtk_scrolled_window_new(NULL, NULL);
+  scrolled_win2 = gtk_scrolled_window_new(NULL, NULL);
+
+  GtkTreeView *symbols_list = (GtkTreeView *)gtk_tree_view_new();
+  gtk_tree_view_set_headers_visible(symbols_list, TRUE);
+  gtk_widget_override_font(GTK_WIDGET(symbols_list), pango_font_description_from_string(FONT));
+
+  initialize_callers_symbols_list(symbols_list);
+
+  gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(symbols_list, 0), 0); 
+
+  populate_callers_symbols_list(symbols_list);
+
+  g_signal_connect(G_OBJECT(symbols_list), "cursor-changed",
+                   G_CALLBACK(fetch_symbol_value_for_caller), NULL);
+
+  gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)symbols_list);
+
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+  gtk_box_pack_start(GTK_BOX (hbox), scrolled_win1, TRUE, TRUE, 0);
+
+  GtkWidget *scrolled_win;
+
+  callers_source_buffer = gtk_source_buffer_new_with_language(source_language);
+  callers_source_view = gtk_source_view_new_with_buffer(callers_source_buffer);
+
+  gtk_widget_override_font(GTK_WIDGET(callers_source_view), pango_font_description_from_string(FONT));
+  gtk_text_view_set_editable((GtkTextView *)callers_source_view, FALSE);
+
+  g_signal_connect(G_OBJECT(callers_source_buffer), 
+                   "notify::cursor-position", 
+                   G_CALLBACK (handle_cursor_move), 
+                   NULL);
+
+  scrolled_win = gtk_scrolled_window_new (NULL, NULL);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), callers_source_view);
+
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
+
+  gtk_container_add (GTK_CONTAINER (win), vbox);
+
+  callers_window = win;
+
+  gtk_widget_show_all(win);
 }

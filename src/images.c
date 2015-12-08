@@ -112,6 +112,9 @@ extern char *extract_variable_string(OBJECT_PTR);
 
 extern OBJECT_PTR get_string_object(char *);
 
+extern GtkWindow *callers_window;
+extern OBJECT_PTR callers_sym;
+
 //global vars pertaining to full monty compiler
 extern unsigned int nof_global_vars;
 extern global_var_mapping_t *top_level_symbols;
@@ -525,6 +528,9 @@ void create_image(char *file_name)
 
 #endif
 
+  fprintf(fp, "\"callers_sym\" : "    );
+  print_json_object(fp, callers_sym,     print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
+
   fprintf(fp, "\"current_package\" : %d ",     current_package);                                                           fprintf(fp, ", ");
   fprintf(fp, "\"gen_sym_count\" : %d ",       gen_sym_count);                                                             fprintf(fp, ", ");
 
@@ -780,6 +786,19 @@ void create_image(char *file_name)
 	    ", \"transcript\" : [ %d, %d, %d, %d, \"%s\" ]", 
 	    posx, posy, width, height, text);
     //end transcript window serialization
+  }
+
+  if(callers_window)
+  {
+    int posx, posy, width, height;
+
+    gtk_window_get_position(callers_window, &posx, &posy);
+    gtk_window_get_size(callers_window, &width, &height);
+
+    fprintf(fp, 
+	    ", \"callers\" : [ %d, %d, %d, %d ]", 
+	    posx, posy, width, height);
+
   }
 
   fprintf(fp, "}");
@@ -1116,6 +1135,8 @@ int load_from_image(char *file_name)
 
 #endif
 
+  callers_sym = deserialize_internal(heap, JSON_get_object_item(root, "callers_sym")->ivalue,     hashtable, q, false);
+
   if(console_mode || single_expression_mode || pipe_mode)
   {
     convert_heap(heap, hashtable, q, false);
@@ -1206,6 +1227,8 @@ int load_from_image(char *file_name)
 
       store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
 
+#ifdef INTERPRETER_MODE
+
       OBJECT_PTR rest = top_level_env;
 
       while(rest != NIL)
@@ -1221,6 +1244,25 @@ int load_from_image(char *file_name)
 
         rest = cdr(rest);
       }
+#else
+      int i;
+
+      for(i=0; i<nof_global_vars; i++)
+      {
+        if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+          continue;
+
+        OBJECT_PTR sym = top_level_symbols[i].sym;
+
+        if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+        {
+          gtk_list_store_append(store2, &iter2);
+          gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);
+          gtk_list_store_set(store2, &iter2, 1, sym, -1);
+        }
+      }
+#endif
+
     }
 
     if(sym_ptr != -1)
@@ -1252,8 +1294,14 @@ int load_from_image(char *file_name)
       char buf[MAX_STRING_LENGTH];
       memset(buf, '\0', MAX_STRING_LENGTH);
 
+#ifdef INTERPRETER_MODE
       OBJECT_PTR obj = cdr(get_symbol_value_from_env(obj1, top_level_env));
-
+#else
+    OBJECT_PTR out;
+    int retval = get_top_level_sym_value((OBJECT_PTR)obj1, &out);
+    assert(retval == 0);
+    OBJECT_PTR obj = car(out);
+#endif
       gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
       gtk_text_view_set_editable(system_browser_textview, FALSE);
@@ -1400,6 +1448,17 @@ int load_from_image(char *file_name)
 			     JSON_get_array_item(transcript, 3)->ivalue,
 			     text);
   }
+
+  struct JSONObject *callers = JSON_get_object_item(root, "callers");
+
+  if(callers_window)
+    close_application_window(&callers_window);
+
+  if(callers)
+    create_callers_window(JSON_get_array_item(callers, 0)->ivalue,
+                          JSON_get_array_item(callers, 1)->ivalue,
+                          JSON_get_array_item(callers, 2)->ivalue,
+                          JSON_get_array_item(callers, 3)->ivalue);
 
   JSON_delete_object(root);
 
