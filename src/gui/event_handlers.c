@@ -145,6 +145,8 @@ extern get_signature_for_core_symbol(char *);
 
 extern OBJECT_PTR callers_sym;
 
+extern void highlight_text(GtkTextBuffer *, char *);
+
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -2252,5 +2254,9 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
       printf("Warning: invalid object type for caller window\n");
 
     gtk_text_buffer_insert_at_cursor(callers_source_buffer, "\n", -1);
+
+    char *text = strdup(get_symbol_name(callers_sym));
+    highlight_text(callers_source_buffer, convert_to_lower_case(text));
+    free(text);
   }
 }

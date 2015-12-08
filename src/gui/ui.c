@@ -1557,6 +1557,9 @@ void create_callers_window(int posx, int posy, int width, int height)
   callers_source_buffer = gtk_source_buffer_new_with_language(source_language);
   callers_source_view = gtk_source_view_new_with_buffer(callers_source_buffer);
 
+  gtk_text_buffer_create_tag(callers_source_buffer, "gray_bg", 
+                             "background", "lightgray", NULL); 
+
   gtk_widget_override_font(GTK_WIDGET(callers_source_view), pango_font_description_from_string(FONT));
   gtk_text_view_set_editable((GtkTextView *)callers_source_view, FALSE);
 
@@ -1577,4 +1580,29 @@ void create_callers_window(int posx, int posy, int width, int height)
   callers_window = win;
 
   gtk_widget_show_all(win);
+}
+
+void highlight_text(GtkTextBuffer *buffer, char *text)
+{
+  GtkTextIter start_sel, end_sel;
+  GtkTextIter start_find, end_find;
+  GtkTextIter start_match, end_match;
+
+  gtk_text_buffer_get_start_iter(buffer, &start_find);
+  gtk_text_buffer_get_end_iter(buffer, &end_find);
+
+  gtk_text_buffer_remove_tag_by_name(buffer, "gray_bg", 
+                                     &start_find, &end_find);  
+
+  while (gtk_text_iter_forward_search(&start_find, text, 
+                                      GTK_TEXT_SEARCH_TEXT_ONLY | 
+                                      GTK_TEXT_SEARCH_VISIBLE_ONLY, 
+                                      &start_match, &end_match, NULL))
+  {
+    gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
+                                      &start_match, &end_match);
+    gint offset = gtk_text_iter_get_offset(&end_match);
+    gtk_text_buffer_get_iter_at_offset(buffer, 
+                                       &start_find, offset);  
+  }
 }
