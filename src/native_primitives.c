@@ -24,6 +24,10 @@
 #include <dlfcn.h>
 #include <time.h>
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/errno.h>
+
 #include "plisp.h"
 #include "util.h"
 
@@ -797,6 +801,19 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
     return NIL;
   }
 
+  if(IS_INTEGER_OBJECT(fd))
+  {
+    int fd1 = get_int_value(fd);
+
+    fcntl(fd1, F_GETFD);
+
+    if(errno != 0 && errno != EAGAIN)
+    {
+      throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
+      return;
+    }  
+  }
+
   if(!IS_STRING_LITERAL_OBJECT(spec) && !is_string_object(spec))
   {
     throw_exception1("INVALID-ARGUMENT", "Second parameter to FORMAT must be a format specification string");
@@ -904,7 +921,17 @@ OBJECT_PTR primitive_newline(OBJECT_PTR obj)
 
   if(obj != NIL)
   {
-    fprintf((FILE *)get_int_value(obj), "\n");
+    int fd = get_int_value(obj);
+
+    fcntl(fd, F_GETFD);
+
+    if(errno != 0 && errno != EAGAIN)
+    {
+      throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
+      return;
+    }  
+
+    write(fd, "\n", 1);
   }
   else
   {

@@ -984,6 +984,60 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
 
+  if(car_obj == LET && !is_valid_let_exp(obj, false))
+  {
+    OBJECT_PTR rest = cdr(obj);
+
+    length += sprintf(buf+filled_buf_len+length, "(let ");
+
+    while(rest != NIL)
+    {
+      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
+      rest = cdr(rest);
+      if(rest != NIL)
+        length += sprintf(buf+filled_buf_len+length, " ");
+    }
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
+  if(car_obj == LET1 && !is_valid_let1_exp(obj, false))
+  {
+    OBJECT_PTR rest = cdr(obj);
+
+    length += sprintf(buf+filled_buf_len+length, "(let1 ");
+
+    while(rest != NIL)
+    {
+      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
+      rest = cdr(rest);
+      if(rest != NIL)
+        length += sprintf(buf+filled_buf_len+length, " ");
+    }
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
+  if(car_obj == LETREC && !is_valid_letrec_exp(obj, false))
+  {
+    OBJECT_PTR rest = cdr(obj);
+
+    length += sprintf(buf+filled_buf_len+length, "(letrec ");
+
+    while(rest != NIL)
+    {
+      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
+      rest = cdr(rest);
+      if(rest != NIL)
+        length += sprintf(buf+filled_buf_len+length, " ");
+    }
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
   if(car_obj == LAMBDA  || 
      car_obj == MACRO   || 
      car_obj == LET     ||

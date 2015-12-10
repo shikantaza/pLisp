@@ -4385,7 +4385,17 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
 
   unsigned int len = cons_length(exp);
 
-  if(car_exp == ADD && len < 3)
+  if(car_exp == LAMBDA && !is_valid_lambda_exp(exp))             //
+    return false;                                                //
+  else if(car_exp == MACRO && !is_valid_macro_exp(exp))          //
+    return false;                                                //
+  else if(car_exp == LET && !is_valid_let_exp(exp, true))        //
+    return false;                                                //exception would have been set in is_valid_*_exp()
+  else if(car_exp == LET1 && !is_valid_let1_exp(exp, true))      //
+    return false;                                                //
+  else if(car_exp == LETREC && !is_valid_letrec_exp(exp, true))  //
+    return false;                                                // 
+  else if(car_exp == ADD && len < 3)
   {
     throw_exception1("COMPILE-ERROR", "Operator '+' requires at least two parameters");
     return false;
@@ -4816,6 +4826,16 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
   {
     throw_exception1("INVALID-ARGUMENT", "Second argument to DEFINE should be a symbol");
     return NIL;
+  }
+
+  if(IS_CONS_OBJECT(third(exp)) && 
+     (car(third(exp)) == LAMBDA || car(third(exp)) == MACRO))
+  {
+    if(car(third(exp)) == LAMBDA && !is_valid_lambda_exp(third(exp)))
+      return NIL; //exception would have been set in is_valid_lambda_exp()
+
+    if(car(third(exp)) == MACRO && !is_valid_macro_exp(third(exp)))
+      return NIL; //exception would have been set in is_valid_macro_exp()
   }
 
   //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
@@ -5561,7 +5581,7 @@ char *get_signature_for_core_symbol(char *symbol_name)
   else if(!strcmp(s,">="))
     ret = "(>= form1 form2)";
   else if(!strcmp(s,"NEQ"))
-    ret = "(new form1 form2)";
+    ret = "(neq form1 form2)";
   else if(!strcmp(s,"SAVE-OBJECT"))
     ret = "(save-object obj str)";
   else if(!strcmp(s,"LOAD-OBJECT"))
@@ -5572,4 +5592,191 @@ char *get_signature_for_core_symbol(char *symbol_name)
   free(s);
 
   return ret;
+}
+
+BOOLEAN is_valid_lambda_exp(exp)
+{
+  unsigned int len = cons_length(exp);
+
+  if(len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "LAMBDA requires exactly two parameters");
+    return false;
+  }
+  if(!IS_CONS_OBJECT(second(exp)))
+  {
+    throw_exception1("COMPILE-ERROR", "First argument to LAMBDA must be a list");
+    return false;
+  }
+
+  OBJECT_PTR rest = second(exp);
+  while(rest != NIL)
+  {
+    if(!IS_SYMBOL_OBJECT(car(rest)))
+    {
+      throw_exception1("COMPILE-ERROR", "First argument to LAMBDA must be a list of symbols");
+      return false;
+    }
+    rest = cdr(rest);
+  }
+
+  return true;
+}
+
+BOOLEAN is_valid_macro_exp(exp)
+{
+  unsigned int len = cons_length(exp);
+
+  if(len != 3)
+  {
+    throw_exception1("COMPILE-ERROR", "MACRO requires exactly two parameters");
+    return false;
+  }
+  if(!IS_CONS_OBJECT(second(exp)))
+  {
+    throw_exception1("COMPILE-ERROR", "First argument to MACRO must be a list");
+    return false;
+  }
+
+  OBJECT_PTR rest = second(exp);
+  while(rest != NIL)
+  {
+    if(!IS_SYMBOL_OBJECT(car(rest)))
+    {
+      throw_exception1("COMPILE-ERROR", "First argument to MACRO must be a list of symbols");
+      return false;
+    }
+    rest = cdr(rest);
+  }
+
+  return true;
+}
+
+BOOLEAN is_valid_let_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
+{
+  unsigned int len = cons_length(exp);
+
+  if(len != 3)
+  {
+    if(throw_excp)
+      throw_exception1("COMPILE-ERROR", "LET requires exactly two parameters");
+    return false;
+  }
+
+  if(!IS_CONS_OBJECT(second(exp)))
+  {
+    if(throw_excp)
+      throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
+    return false;    
+  }
+
+  OBJECT_PTR rest = second(exp);
+  {
+    while(rest != NIL)
+    {
+      if(!IS_CONS_OBJECT(car(rest)))
+      {
+        if(throw_excp)
+          throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
+        return false;    
+      }
+
+      if(!IS_SYMBOL_OBJECT(CAAR(rest)))
+      {
+        if(throw_excp)
+          throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
+        return false;    
+      }
+
+      rest = cdr(rest);
+    }
+  }
+
+  return true;
+}
+
+BOOLEAN is_valid_let1_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
+{
+  unsigned int len = cons_length(exp);
+
+  if(len != 3)
+  {
+    if(throw_excp)
+      throw_exception1("COMPILE-ERROR", "LET1 requires exactly two parameters");
+    return false;
+  }
+
+  if(!IS_CONS_OBJECT(second(exp)))
+  {
+    if(throw_excp)
+      throw_exception1("COMPILE-ERROR", "First argument to LET1 must be a list of (symbol value) bindings");
+    return false;    
+  }
+
+  OBJECT_PTR rest = second(exp);
+  {
+    while(rest != NIL)
+    {
+      if(!IS_CONS_OBJECT(car(rest)))
+      {
+        if(throw_excp)
+          throw_exception1("COMPILE-ERROR", "First argument to LET1 must be a list of (symbol value) bindings");
+        return false;    
+      }
+
+      if(!IS_SYMBOL_OBJECT(CAAR(rest)))
+      {
+        if(throw_excp)
+          throw_exception1("COMPILE-ERROR", "First argument to LET1 must be a list of (symbol value) bindings");
+        return false;    
+      }
+
+      rest = cdr(rest);
+    }
+  }
+
+  return true;
+}
+
+BOOLEAN is_valid_letrec_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
+{
+  unsigned int len = cons_length(exp);
+
+  if(len != 3)
+  {
+    if(throw_excp)
+      throw_exception1("COMPILE-ERROR", "LETREC requires exactly two parameters");
+    return false;
+  }
+
+  if(!IS_CONS_OBJECT(second(exp)))
+  {
+    if(throw_excp)
+      throw_exception1("COMPILE-ERROR", "First argument to LETREC must be a list of (symbol value) bindings");
+    return false;    
+  }
+
+  OBJECT_PTR rest = second(exp);
+  {
+    while(rest != NIL)
+    {
+      if(!IS_CONS_OBJECT(car(rest)))
+      {
+        if(throw_excp)
+          throw_exception1("COMPILE-ERROR", "First argument to LETREC must be a list of (symbol value) bindings");
+        return false;    
+      }
+
+      if(!IS_SYMBOL_OBJECT(CAAR(rest)))
+      {
+        if(throw_excp)
+          throw_exception1("COMPILE-ERROR", "First argument to LETREC must be a list of (symbol value) bindings");
+        return false;    
+      }
+
+      rest = cdr(rest);
+    }
+  }
+
+  return true;
 }

@@ -33,6 +33,7 @@ commands to build .so file:
 #include <string.h>
 #include <math.h>
 #include <stdint.h>
+#include <fcntl.h>
 
 float plisp_random()
 {
@@ -216,15 +217,28 @@ int open_file(char *file_name, char *mode)
   if(!file_name || !mode)
     return -1;
 
-  FILE *fp = fopen(file_name, mode);
+  /* FILE *fp = fopen(file_name, mode); */
 
-  if(!fp)
+  /* if(!fp) */
+  /*   return -1; */
+
+  /* return (uintptr_t)fp; */
+  int fd;
+  mode_t mode1 = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+  if(!strcmp(mode, "r"))
+    fd = open(file_name, O_RDONLY);
+  else if(!strcmp(mode, "w"))
+    fd = open(file_name, O_WRONLY | O_CREAT, mode1);
+  else if(!strcmp(mode, "a"))
+    fd = open(file_name, O_APPEND | O_CREAT, mode1);
+  else
     return -1;
 
-  return (uintptr_t)fp;
+  return (uintptr_t)fd;
 }
 
-void close_file(int fp)
+void close_file(int fd)
 {
-  fclose((FILE*)fp);
+  //fclose((FILE*)fp);
+  close(fd);
 }

@@ -469,7 +469,8 @@ int format(OBJECT_PTR args)
   if(car(args) == NIL)
     i_val = stdout;
   else
-    i_val = get_int_value(car(args));
+    //i_val = get_int_value(car(args));
+    i_val = fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
 
   *(int *)arg_values[i] = i_val;
 
@@ -604,7 +605,8 @@ int format_for_gui(OBJECT_PTR args)
     arg_types[0] = &ffi_type_sint;
     arg_values[0] = (int *)malloc(sizeof(int));
 
-    i_val = get_int_value(car(args));
+    //i_val = get_int_value(car(args));
+    i_val = fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
     *(int *)arg_values[0] = i_val;
   }
 
