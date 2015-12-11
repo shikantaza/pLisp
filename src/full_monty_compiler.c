@@ -386,6 +386,8 @@ void push_into_debug_stack(OBJECT_PTR);
 OBJECT_PTR save_continuation_to_resume(OBJECT_PTR);
 OBJECT_PTR resume_continuation(OBJECT_PTR);
 OBJECT_PTR abort_evaluation();
+
+BOOLEAN exp_contains_comma_comma_at(OBJECT_PTR);
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -2008,6 +2010,13 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   res = process_backquote(res);
 //print_object(res);printf("\n");getchar();
 
+  if(exp_contains_comma_comma_at(res))
+  {
+    throw_exception1("COMPILE-ERROR", "Occurrence of ',' or ',@' outside the context of a function/macro definition");
+    handle_exception();
+    return NIL;
+  }
+
   res = assignment_conversion(res, concat(2, 
                                           get_top_level_symbols(),
                                           //free_ids_il(exp)));
@@ -3478,8 +3487,8 @@ int remove_top_level_sym(OBJECT_PTR sym)
           system_changed = true;
         }
       }
+      return OK;
     }
-    return OK;
   }
   return NOT_OK;
 }
@@ -4902,6 +4911,12 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
 {
   OBJECT_PTR res;
 
+  if(cons_length(exp) != 3)
+  {
+    throw_exception1("INVALID-ARGUMENT", "SET requires two arguments, a symbol and an object");
+    return NIL;
+  }
+
   if(!IS_SYMBOL_OBJECT(second(exp)))
   {
     throw_exception1("INVALID-ARGUMENT", "Second argument to SET should be a symbol");
@@ -5603,7 +5618,7 @@ BOOLEAN is_valid_lambda_exp(exp)
     throw_exception1("COMPILE-ERROR", "LAMBDA requires exactly two parameters");
     return false;
   }
-  if(!IS_CONS_OBJECT(second(exp)))
+  if(!IS_CONS_OBJECT(second(exp)) && second(exp) != NIL)
   {
     throw_exception1("COMPILE-ERROR", "First argument to LAMBDA must be a list");
     return false;
@@ -5632,7 +5647,7 @@ BOOLEAN is_valid_macro_exp(exp)
     throw_exception1("COMPILE-ERROR", "MACRO requires exactly two parameters");
     return false;
   }
-  if(!IS_CONS_OBJECT(second(exp)))
+  if(!IS_CONS_OBJECT(second(exp)) && second(exp) != NIL)
   {
     throw_exception1("COMPILE-ERROR", "First argument to MACRO must be a list");
     return false;
@@ -5779,4 +5794,27 @@ BOOLEAN is_valid_letrec_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
   }
 
   return true;
+}
+
+//recursively checks whether a form contains comma or comma-at 
+//(to be called after processing backquotes)
+BOOLEAN exp_contains_comma_comma_at(OBJECT_PTR exp)
+{
+  if(exp == NIL)
+    return false;
+
+  if(is_atom(exp))
+    return exp == COMMA || exp == COMMA_AT;
+
+  OBJECT_PTR rest = exp;
+
+  while(rest != NIL)
+  {
+    if(exp_contains_comma_comma_at(car(rest)))
+      return true;
+
+    rest = cdr(rest);
+  }
+
+  return false;
 }

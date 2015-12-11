@@ -648,7 +648,10 @@ OBJECT_PTR prim_symbol_value(OBJECT_PTR sym)
   retval = get_top_level_sym_value(sym, &out);
 
   if(retval)
+  {
+    throw_exception1("SYMBOL-NOT-BOUND", "Symbol not bound");
     return NIL;
+  }
   else
     return car(out);
 }
@@ -1710,8 +1713,26 @@ OBJECT_PTR prim_create_image(OBJECT_PTR file_name)
   return NIL;
 }
 
+BOOLEAN is_valid_exception_object(OBJECT_PTR obj)
+{
+  if(!IS_CONS_OBJECT(obj))
+    return false;
+  else if(!IS_SYMBOL_OBJECT(car(obj)))
+    return false;
+  else if(!IS_STRING_LITERAL_OBJECT(cdr(obj)) && !is_string_object(cdr(obj)))
+    return false;
+
+  return true;
+}
+
 OBJECT_PTR primitive_throw(OBJECT_PTR excp)
 {
+  if(!is_valid_exception_object(excp))
+  {
+    throw_exception1("INVALID-ARGUMENT", "Invalid exception object passed to THROW");
+    return NIL;
+  }
+
   exception_object = excp;
   return handle_exception();
 }

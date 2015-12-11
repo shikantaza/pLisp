@@ -1,0 +1,1695 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head></head><body>
+<center><h1>pLisp Language Reference</h1></center><br/><b><a href="#A">A</a> | </b>
+<b><a href="#B">B</a> | </b>
+<b><a href="#C">C</a> | </b>
+<b><a href="#D">D</a> | </b>
+<b><a href="#E">E</a> | </b>
+<b><a href="#F">F</a> | </b>
+<b><a href="#G">G</a> | </b>
+<b><a href="#I">I</a> | </b>
+<b><a href="#L">L</a> | </b>
+<b><a href="#M">M</a> | </b>
+<b><a href="#N">N</a> | </b>
+<b><a href="#O">O</a> | </b>
+<b><a href="#P">P</a> | </b>
+<b><a href="#R">R</a> | </b>
+<b><a href="#S">S</a> | </b>
+<b><a href="#T">T</a> | </b>
+<b><a href="#U">U</a> | </b>
+<b><a href="#V">V</a> | </b>
+<b><a href="#W">W</a> | </b>
+<b><a href="#Non-Alphabetic">Non-Alphabetic</a></b><br/><br/><br/><b><a name="A">A</a></b><br/><br/>
+<li><a href="#abort">abort</a></li><br/>
+<li><a href="#alias">alias</a></li><br/>
+<li><a href="#alloc-ext-mem-char">alloc-ext-mem-char</a></li><br/>
+<li><a href="#alloc-ext-mem-float">alloc-ext-mem-float</a></li><br/>
+<li><a href="#alloc-ext-mem-int">alloc-ext-mem-int</a></li><br/>
+<li><a href="#and">and</a></li><br/>
+<li><a href="#append">append</a></li><br/>
+<li><a href="#apply">apply</a></li><br/>
+<li><a href="#array">array</a></li><br/>
+<li><a href="#array-eq">array-eq</a></li><br/>
+<li><a href="#array-get">array-get</a></li><br/>
+<li><a href="#array-length">array-length</a></li><br/>
+<li><a href="#array-set">array-set</a></li><br/>
+<li><a href="#arrayp">arrayp</a></li><br/>
+<li><a href="#aset">aset</a></li><br/>
+<li><a href="#assert">assert</a></li><br/>
+<li><a href="#assoc">assoc</a></li><br/>
+<li><a href="#atom">atom</a></li><br/>
+<br/><b><a name="B">B</a></b><br/><br/>
+<li><a href="#break">break</a></li><br/>
+<li><a href="#butlast">butlast</a></li><br/>
+<br/><b><a name="C">C</a></b><br/><br/>
+<li><a href="#caar">caar</a></li><br/>
+<li><a href="#cadar">cadar</a></li><br/>
+<li><a href="#cadddr">cadddr</a></li><br/>
+<li><a href="#caddr">caddr</a></li><br/>
+<li><a href="#cadr">cadr</a></li><br/>
+<li><a href="#call-foreign-function">call-foreign-function</a></li><br/>
+<li><a href="#call-cc">call-cc</a></li><br/>
+<li><a href="#car">car</a></li><br/>
+<li><a href="#cdar">cdar</a></li><br/>
+<li><a href="#cddr">cddr</a></li><br/>
+<li><a href="#cdr">cdr</a></li><br/>
+<li><a href="#characterp">characterp</a></li><br/>
+<li><a href="#clone">clone</a></li><br/>
+<li><a href="#closurep">closurep</a></li><br/>
+<li><a href="#concat">concat</a></li><br/>
+<li><a href="#concat-strings">concat-strings</a></li><br/>
+<li><a href="#cond">cond</a></li><br/>
+<li><a href="#cons">cons</a></li><br/>
+<li><a href="#cons-pair">cons-pair</a></li><br/>
+<li><a href="#consp">consp</a></li><br/>
+<li><a href="#continuationp">continuationp</a></li><br/>
+<li><a href="#create-image">create-image</a></li><br/>
+<li><a href="#create-package">create-package</a></li><br/>
+<br/><b><a name="D">D</a></b><br/><br/>
+<li><a href="#define">define</a></li><br/>
+<li><a href="#defmacro">defmacro</a></li><br/>
+<li><a href="#defun">defun</a></li><br/>
+<li><a href="#def-curry-fn">def-curry-fn</a></li><br/>
+<li><a href="#dolist">dolist</a></li><br/>
+<li><a href="#dotimes">dotimes</a></li><br/>
+<br/><b><a name="E">E</a></b><br/><br/>
+<li><a href="#env">env</a></li><br/>
+<li><a href="#eq">eq</a></li><br/>
+<li><a href="#error">error</a></li><br/>
+<li><a href="#eval">eval</a></li><br/>
+<li><a href="#exception">exception</a></li><br/>
+<li><a href="#expand-macro">expand-macro</a></li><br/>
+<li><a href="#export-package">export-package</a></li><br/>
+<br/><b><a name="F">F</a></b><br/><br/>
+<li><a href="#fifth">fifth</a></li><br/>
+<li><a href="#find">find</a></li><br/>
+<li><a href="#find-if">find-if</a></li><br/>
+<li><a href="#first">first</a></li><br/>
+<li><a href="#flatten">flatten</a></li><br/>
+<li><a href="#floatp">floatp</a></li><br/>
+<li><a href="#for">for</a></li><br/>
+<li><a href="#format">format</a></li><br/>
+<li><a href="#fourth">fourth</a></li><br/>
+<li><a href="#free-ext-mem">free-ext-mem</a></li><br/>
+<li><a href="#funcall">funcall</a></li><br/>
+<br/><b><a name="G">G</a></b><br/><br/>
+<li><a href="#gensym">gensym</a></li><br/>
+<li><a href="#get-ext-mem-cell">get-ext-mem-cell</a></li><br/>
+<br/><b><a name="I">I</a></b><br/><br/>
+<li><a href="#if">if</a></li><br/>
+<li><a href="#in-package">in-package</a></li><br/>
+<li><a href="#incf">incf</a></li><br/>
+<li><a href="#inspect-ext-mem">inspect-ext-mem</a></li><br/>
+<li><a href="#integerp">integerp</a></li><br/>
+<br/><b><a name="L">L</a></b><br/><br/>
+<li><a href="#lambda">lambda</a></li><br/>
+<li><a href="#last">last</a></li><br/>
+<li><a href="#last-n">last-n</a></li><br/>
+<li><a href="#length">length</a></li><br/>
+<li><a href="#let">let</a></li><br/>
+<li><a href="#let1">let1</a></li><br/>
+<li><a href="#letrec">letrec</a></li><br/>
+<li><a href="#list">list</a></li><br/>
+<li><a href="#listp">listp</a></li><br/>
+<li><a href="#load-file">load-file</a></li><br/>
+<li><a href="#load-foreign-library">load-foreign-library</a></li><br/>
+<li><a href="#load-object">load-object</a></li><br/>
+<br/><b><a name="M">M</a></b><br/><br/>
+<li><a href="#macro">macro</a></li><br/>
+<li><a href="#macrop">macrop</a></li><br/>
+<li><a href="#make-array">make-array</a></li><br/>
+<li><a href="#make-string">make-string</a></li><br/>
+<li><a href="#map">map</a></li><br/>
+<li><a href="#mapcan">mapcan</a></li><br/>
+<li><a href="#mapcar">mapcar</a></li><br/>
+<li><a href="#max">max</a></li><br/>
+<li><a href="#min">min</a></li><br/>
+<li><a href="#multiple-value-bind">multiple-value-bind</a></li><br/>
+<br/><b><a name="N">N</a></b><br/><br/>
+<li><a href="#nconc">nconc</a></li><br/>
+<li><a href="#neq">neq</a></li><br/>
+<li><a href="#newline">newline</a></li><br/>
+<li><a href="#not">not</a></li><br/>
+<li><a href="#nth">nth</a></li><br/>
+<li><a href="#null">null</a></li><br/>
+<li><a href="#numberp">numberp</a></li><br/>
+<br/><b><a name="O">O</a></b><br/><br/>
+<li><a href="#or">or</a></li><br/>
+<br/><b><a name="P">P</a></b><br/><br/>
+<li><a href="#pair">pair</a></li><br/>
+<li><a href="#print">print</a></li><br/>
+<li><a href="#print-string">print-string</a></li><br/>
+<li><a href="#println">println</a></li><br/>
+<li><a href="#profile">profile</a></li><br/>
+<li><a href="#progn">progn</a></li><br/>
+<br/><b><a name="R">R</a></b><br/><br/>
+<li><a href="#range">range</a></li><br/>
+<li><a href="#read">read</a></li><br/>
+<li><a href="#read-character">read-character</a></li><br/>
+<li><a href="#read-float">read-float</a></li><br/>
+<li><a href="#read-integer">read-integer</a></li><br/>
+<li><a href="#read-string">read-string</a></li><br/>
+<li><a href="#remove">remove</a></li><br/>
+<li><a href="#remove-duplicates">remove-duplicates</a></li><br/>
+<li><a href="#remove-if">remove-if</a></li><br/>
+<li><a href="#remove-if-not">remove-if-not</a></li><br/>
+<li><a href="#remove-last">remove-last</a></li><br/>
+<li><a href="#rest">rest</a></li><br/>
+<li><a href="#resume">resume</a></li><br/>
+<li><a href="#return-from">return-from</a></li><br/>
+<li><a href="#reverse">reverse</a></li><br/>
+<br/><b><a name="S">S</a></b><br/><br/>
+<li><a href="#save-object">save-object</a></li><br/>
+<li><a href="#second">second</a></li><br/>
+<li><a href="#select">select</a></li><br/>
+<li><a href="#set-ext-mem">set-ext-mem</a></li><br/>
+<li><a href="#set-ext-mem-cell">set-ext-mem-cell</a></li><br/>
+<li><a href="#setcar">setcar</a></li><br/>
+<li><a href="#setcdr">setcdr</a></li><br/>
+<li><a href="#set">set</a></li><br/>
+<li><a href="#setq">setq</a></li><br/>
+<li><a href="#string">string</a></li><br/>
+<li><a href="#string-get">string-get</a></li><br/>
+<li><a href="#string-set">string-set</a></li><br/>
+<li><a href="#stringp">stringp</a></li><br/>
+<li><a href="#sub-array">sub-array</a></li><br/>
+<li><a href="#sub-list">sub-list</a></li><br/>
+<li><a href="#substring">substring</a></li><br/>
+<li><a href="#symbol">symbol</a></li><br/>
+<li><a href="#symbol-name">symbol-name</a></li><br/>
+<li><a href="#symbol-value">symbol-value</a></li><br/>
+<li><a href="#symbolp">symbolp</a></li><br/>
+<br/><b><a name="T">T</a></b><br/><br/>
+<li><a href="#third">third</a></li><br/>
+<li><a href="#throw">throw</a></li><br/>
+<li><a href="#time">time</a></li><br/>
+<li><a href="#try">try</a></li><br/>
+<br/><b><a name="U">U</a></b><br/><br/>
+<li><a href="#unbind">unbind</a></li><br/>
+<li><a href="#unwind-protect">unwind-protect</a></li><br/>
+<br/><b><a name="V">V</a></b><br/><br/>
+<li><a href="#values">values</a></li><br/>
+<br/><b><a name="W">W</a></b><br/><br/>
+<li><a href="#while">while</a></li><br/>
+<br/><b><a name="Non-Alphabetic">Non-Alphabetic</a></b><br/><br/>
+<li><a href="#-">-</a></li><br/>
+<li><a href="#,">,</a></li><br/>
+<li><a href="#,@">,@</a></li><br/>
+<li><a href="#*">*</a></li><br/>
+<li><a href="#/">/</a></li><br/>
+<li><a href="#`">`</a></li><br/>
+<li><a href="#'">'</a></li><br/>
+<li><a href="#+">+</a></li><br/>
+<li><a href="#<"><</a></li><br/>
+<li><a href="#<="><=</a></li><br/>
+<li><a href="#>">></a></li><br/>
+<li><a href="#>=">>=</a></li><br/>
+<hr/>
+<a name="abort"></a>
+<i>Special Operator</i><b> abort</b><br/><br/>
+<b>Syntax:</b> (abort) => NIL<br/><br/>
+<b>Arguments:</b> None<br/><br/>
+<b>Description:</b> abort aborts the evaluation of an expression when in debug mode<br/><br/>
+<b>Exceptions:</b> None; an error is raised if abort is invoked when not in debug mode (entered via a 'break')<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#break">break</a>, <a href="#resume">resume</a><hr/>
+<a name="alias"></a>
+<i>Macro</i><b> alias</b><br/><br/>
+<b>Syntax:</b> (alias var1 var2) => NIL<br/><br/>
+<b>Arguments:</b> var1, var2: symbols<br/><br/>
+<b>Description:</b> alias creates a new binding between 'var2' and the object bound to 'var1'<br/><br/>
+<b>Exceptions:</b> An error is raised 'var2' is not bound to a value<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x 100)<br/><br/>(alias y x)<br/><br/>y=>100<br/><br/><b>See Also:</b> 
+<a href="#define">define</a><hr/>
+<a name="alloc-ext-mem-char"></a>
+<i>Function</i><b> alloc-ext-mem-char</b><br/><br/>
+<b>Syntax:</b> (alloc-ext-mem-char n) => (ptr, len, type)<br/><br/>
+<b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
+<b>Description:</b> alloc-ext-mem-char allocates raw memory corresponding to 'n' characters. Equivalent to malloc(n*sizeof(char)). Returns the pointer to the allocated memory via a list that also contains the number of characters allocated (i.e. 'n') and the type of the memory block (integer 3 signifying a character array)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="alloc-ext-mem-float"></a>
+<i>Function</i><b> alloc-ext-mem-float</b><br/><br/>
+<b>Syntax:</b> (alloc-ext-mem-float n) => (ptr, len, type)<br/><br/>
+<b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
+<b>Description:</b> alloc-ext-mem-float allocates raw memory corresponding to 'n' floats. Equivalent to malloc(n*sizeof(float)). Returns the pointer to the allocated memory via a list that also contains the number of floats allocated (i.e. 'n') and the type of the memory block (integer 2 signifying a float array)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="alloc-ext-mem-int"></a>
+<i>Function</i><b> alloc-ext-mem-int</b><br/><br/>
+<b>Syntax:</b> (alloc-ext-mem-int n) => (ptr, len, type)<br/><br/>
+<b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
+<b>Description:</b> alloc-ext-mem-int allocates raw memory corresponding to 'n' integers. Equivalent to malloc(n*sizeof(int)). Returns the pointer to the allocated memory via a list that also contains the number of integers allocated (i.e. 'n') and the type of the memory block (integer 1 signifying an integer array)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="and"></a>
+<i>Macro</i><b> and</b><br/><br/>
+<b>Syntax:</b> (and form*) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> and performs a logical conjunction of its operands. Returns T if all the operands evaluate to non-NIL and NIL otherwise. Returns T if no arguments are passed<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+(and (eq 1 1) (eq 2 2)) => T<br/><br/>(and () 3) => NIL<br/><br/><b>See Also:</b> 
+<a href="#or">or</a><hr/>
+<a name="append"></a>
+<i>Function</i><b> append</b><br/><br/>
+<b>Syntax:</b> (append list1 list2) => result<br/><br/>
+<b>Arguments:</b> list1, list2: forms that evaluate to lists; result: a list<br/><br/>
+<b>Description:</b> append creates a new list by appending the two lists passed as arguments<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and EXCEPTION if either of the arguments is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(append '(a b) '(c d)) => (A B C D)<br/><br/>(append () '(1 2)) => (1 2)<br/><br/><b>See Also:</b> 
+<a href="#concat">concat</a>, <a href="#nconc">nconc</a><hr/>
+<a name="apply"></a>
+<i>Special Operator</i><b> apply</b><br/><br/>
+<b>Syntax:</b> (apply function args) => result<br/><br/>
+<b>Arguments:</b> function: a form that evaluates to a function or a continuation; args: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> apply applies the function or continuation passed as its first parameter to the arguments passed as its second parameter<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if two argments are not passed; throws an exception of type INVALID-ARGUMENT if the first argument is not a function or a continuation or if the second argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(apply (lambda (a b) (+ a b)) '(1 2)) => 3<br/><br/><b>See Also:</b> 
+<a href="#funcall">funcall</a><hr/>
+<a name="array"></a>
+<i>Macro</i><b> array</b><br/><br/>
+<b>Syntax:</b> (array dims default-value) => result<br/><br/>
+<b>Arguments:</b> dims: a list; default-value: an object; result: an array object<br/><br/>
+<b>Description:</b> array creates an array with the dimensions specified by the list 'dims' and populates the elements of the newly-constructed array with 'default-value'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and INVALID-ARGUMENT if the argument type(s) are not as indicated<br/><br/>
+<b>Examples:</b><br/><br/>
+(define a (array (2 2) 1)) => [[1 1] [1 1]]<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="array-eq"></a>
+<i>Function</i><b> array-eq</b><br/><br/>
+<b>Syntax:</b> (array-eq arr1 arr1) => result<br/><br/>
+<b>Arguments:</b> arr1, arr2: forms that evaluate to array objects; result: T or NIL<br/><br/>
+<b>Description:</b> array-eq returns T if 'arr1' and 'arr2' are structurally equivalent, i.e. they have the same contents, and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number/types of argument are not supplied, and INVALID-ARGUMENT if either of the arguments is not an array<br/><br/>
+<b>Examples:</b><br/><br/>
+a1 => [1, 2]<br/><br/>a2 => [1, 2]<br/><br/>a3 => ['a 'b]<br/><br/>(array-eq a1 a2) => T<br/><br/>(array-eq a1 a3) => NIL<br/><br/><b>See Also:</b> 
+<a href="#eq">eq</a><hr/>
+<a name="array-get"></a>
+<i>Special Operator</i><b> array-get</b><br/><br/>
+<b>Syntax:</b> (array-get arr index) => result<br/><br/>
+<b>Arguments:</b> arr: a form that evaluates to an array object; index: a form that evaluates to an integer; result: an object<br/><br/>
+<b>Description:</b> array-get returns the object at the position 'index' of array 'arr'. Note that array indices start from zero<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array<br/><br/>
+<b>Examples:</b><br/><br/>
+a1 => [1, 2]<br/><br/>(array-get a1 0) => 1<br/><br/><b>See Also:</b> 
+<a href="#array-set">array-set</a>, <a href="#string-get">string-get</a>, <a href="#string-set">string-set</a><hr/>
+<a name="array-length"></a>
+<i>Special Operator</i><b> array-length</b><br/><br/>
+<b>Syntax:</b> (array-length arr) => result<br/><br/>
+<b>Arguments:</b> arr: a form that evaluates to an array object; result: an integer<br/><br/>
+<b>Description:</b> array-length returns the length of array 'arr'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied, and an exception of type INVALID-ARGUMENT if the first argument is not an array<br/><br/>
+<b>Examples:</b><br/><br/>
+a1 => [40, 50]<br/><br/>(array-length a1) => 2<br/><br/><b>See Also:</b> 
+<a href="#length">length</a><hr/>
+<a name="array-set"></a>
+<i>Special Operator</i><b> array-set</b><br/><br/>
+<b>Syntax:</b> (array-set arr index form) => form<br/><br/>
+<b>Arguments:</b> arr: a form that evaluates to an array object; index: an integer; form: an object<br/><br/>
+<b>Description:</b> array-set binds the position 'index' of array 'arr' to 'form'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array<br/><br/>
+<b>Examples:</b><br/><br/>
+a1 => [40, 50]<br/><br/>(array-set a1 0 30) => 30<br/><br/>a1 => [30, 50]<br/><br/><b>See Also:</b> 
+<a href="#array-get">array-get</a>, <a href="#string-get">string-get</a>, <a href="#string-set">string-set</a><hr/>
+<a name="arrayp"></a>
+<i>Special Operator</i><b> arrayp</b><br/><br/>
+<b>Syntax:</b> (arrayp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> arrayp returns T if form evaluates to an array and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+a1 => [40, 50]<br/><br/>(arrayp a1) => T<br/><br/>(arrayp 10) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="aset"></a>
+<i>Macro</i><b> aset</b><br/><br/>
+<b>Syntax:</b> (aset ref val) => val<br/><br/>
+<b>Arguments:</b> ref: an array reference; val: an object<br/><br/>
+<b>Description:</b> aset binds 'val' to the array location referred to by 'ref'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type SYMBOL-NOT-BOUND if the array reference is not bound to an array object, and an exception INDEX-OUT-OF-BOUNDS if the index(es) in the reference fall outside the array bounds. An exception of type COMPILE-ERROR is thrown if the required number of arguments are not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(define a (array (2 2) 0) => [[0 0] [0 0]]<br/><br/>a => [[0 0] [0 0]]<br/><br/>(aset a[0 0] 100) => 100<br/><br/>a => [[100 0] [0 0]]<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="assert"></a>
+<i>Macro</i><b> assert</b><br/><br/>
+<b>Syntax:</b> (assert form) => NIL<br/><br/>
+<b>Arguments:</b> form: an object<br/><br/>
+<b>Description:</b> assert throws an exception of type EXCEPTION if form evaluates to NIL<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<hr/>
+<a name="assoc"></a>
+<i>Function</i><b> assoc</b><br/><br/>
+<b>Syntax:</b> (assoc key pairs) => result<br/><br/>
+<b>Arguments:</b> key: an object; pairs: a list of CONS objects; result: object<br/><br/>
+<b>Description:</b> assoc returns the CDR of the pair in 'pairs' whose CAR equals 'key' and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type EXCEPTION if 'pairs' is not a list of CONS objects<br/><br/>
+<b>Examples:</b><br/><br/>
+a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="atom"></a>
+<i>Special Operator</i><b> atom</b><br/><br/>
+<b>Syntax:</b> (atom form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> atom returns T if 'form' is an atom and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(atom 1) => T<br/><br/>(atom '(1 2)) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="break"></a>
+<i>Special Operator</i><b> break</b><br/><br/>
+<b>Syntax:</b> (break) => NIL<br/><br/>
+<b>Arguments:</b> None<br/><br/>
+<b>Description:</b> break stops the evaluation of the expression and passes control to the debugger<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#abort">abort</a>, <a href="#resume">resume</a><hr/>
+<a name="butlast"></a>
+<i>Function</i><b> butlast</b><br/><br/>
+<b>Syntax:</b> (butlast lst len) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; len: an integer; result: a list<br/><br/>
+<b>Description:</b> butlast returns a list that comprises the elements of 'lst' excluding the last 'len' elements<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type EXCEPTION if lst is not a list or len is not a positive integer smaller than the length of lst<br/><br/>
+<b>Examples:</b><br/><br/>
+(butlast '(1 2 3) 1) => (1 2)<br/><br/><b>See Also:</b> 
+<a href="#last">last</a>, <a href="#last-n">last-n</a><hr/>
+<a name="caar"></a>
+<i>Function</i><b> caar</b><br/><br/>
+<b>Syntax:</b> (caar lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> caar is functionally equivalent to (car (car lst)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if either of the applications of car above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(caar '((1 2) (3 4)) => 1<br/><br/><b>See Also:</b> 
+<a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="cadar"></a>
+<i>Function</i><b> cadar</b><br/><br/>
+<b>Syntax:</b> (cadar lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> cadar is functionally equivalent to (car (cdr (car lst))<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if any of the applications of car or cdr above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cadar '((1 2) (3 4)) => 2<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="cadddr"></a>
+<i>Function</i><b> cadddr</b><br/><br/>
+<b>Syntax:</b> (cadddr lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> cadddr is functionally equivalent to (car (cdr (cdr (cdr lst)))), i.e., the fourth element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if any of the applications of car or cdr above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cadddr '(1 2 3 4)) => 4<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="caddr"></a>
+<i>Function</i><b> caddr</b><br/><br/>
+<b>Syntax:</b> (caddr lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> caddr is functionally equivalent to (car (cdr (cdr lst))), i.e., the third element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if any of the applications of car or cdr above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(caddr '(1 2 3 4)) => 3<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="cadr"></a>
+<i>Function</i><b> cadr</b><br/><br/>
+<b>Syntax:</b> (cadr lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> cadr is functionally equivalent to (car (cdr lst)), i.e., the second element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if either of the applications of car or cdr above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cadr '(1 2 3 4)) => 2<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="call-foreign-function"></a>
+<i>Macro</i><b> call-foreign-function</b><br/><br/>
+<b>Syntax:</b> (call-foreign-function name return-type params) => result<br/><br/>
+<b>Arguments:</b> name: a form that evaluates to a string; return-type: a symbol; params: a list of CONS objects; result: an object<br/><br/>
+<b>Description:</b> call-foreign-function invokes a native function called name defined in a shared library that was loaded earlier. 'return-type' denotes the return type of the native function (void, integer, float, character, or character-pointer). 'params' contains information about the parameters to the native function (parameter type and object)<br/><br/>
+<b>Exceptions:</b> call-foreign-function throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied.  It throws an exception of type ARG-MISMATCH if the parameters are not of the types as described above. ARG-MISMATCH is also thrown if there are any inconsistencies in the params argument (e.g. the parameter type is integer and the object is not an integer)<br/><br/>
+<b>Examples:</b><br/><br/>
+(call-foreign-function some_func void ((ivar integer, fvar float)))<br/><br/><b>See Also:</b> 
+<a href="#load-foreign-library">load-foreign-library</a><hr/>
+<a name="call-cc"></a>
+<i>Special Operator</i><b> call-cc</b><br/><br/>
+<b>Syntax:</b> (call-cc lambda-exp) => result<br/><br/>
+<b>Arguments:</b> lambda-exp: a form; result: an object<br/><br/>
+<b>Description:</b> call-cc captures the current continuation object and invokes the function object 'lambda-exp' with this continuation object as the parameter<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied.<br/><br/>
+<b>Examples:</b><br/><br/>
+(call-cc (lambda (cc) (set cont cc)))<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="car"></a>
+<i>Special Operator</i><b> car</b><br/><br/>
+<b>Syntax:</b> (car lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> car returns the first element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type NOT-A-CONS if the argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(car '(1 2 3 4)) => 1<br/><br/>(car nil) => NIL<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="cdar"></a>
+<i>Function</i><b> cdar</b><br/><br/>
+<b>Syntax:</b> (cdar lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> cdar is functionally equivalent to (cdr (car lst))<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if either of the applications of car or cdr above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cdar '((1 2) 3 4)) => (2)<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="cddr"></a>
+<i>Function</i><b> cddr</b><br/><br/>
+<b>Syntax:</b> (cddr lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> cddr is functionally equivalent to (cdr (cdr lst))<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if either of the applications of cdr above is not on a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cddr '(1 2 3 4)) => (3 4)<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="cdr"></a>
+<i>Special Operator</i><b> cdr</b><br/><br/>
+<b>Syntax:</b> (cdr lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> cdr retuns the list comprising the all the elements of 'lst' except the first one<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if lst is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cdr '(1 2 3 4)) => (2 3 4)<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="characterp"></a>
+<i>Special Operator</i><b> characterp</b><br/><br/>
+<b>Syntax:</b> (characterp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> characterp returns T if 'form' evaluates to a character and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(characterp #\\a) => T<br/><br/>(characterp 10) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="clone"></a>
+<i>Special Operator</i><b> clone</b><br/><br/>
+<b>Syntax:</b> (clone form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: an object<br/><br/>
+<b>Description:</b> clone makes a deep copy of the object 'form' evaluates to<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(clone '(1 2 3)) => (1 2 3)<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="closurep"></a>
+<i>Special Operator</i><b> closurep</b><br/><br/>
+<b>Syntax:</b> (closurep form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> closurep returns T if form evaluates to a function object and NIL otherwise. Note that special operators are not closures<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(closurep (lambda (x) x)) => T<br/><br/>(defun double (n) (* n 2)) => <function><br/><br/>(closurep double) => T<br/><br/>(closurep 3) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="concat"></a>
+<i>Function</i><b> concat</b><br/><br/>
+<b>Syntax:</b> (concat lst &rest lists) => result<br/><br/>
+<b>Arguments:</b> lst: a list; lists: a list of the rest of the arguments, which are themselves lists<br/><br/>
+<b>Description:</b> concat combines the passed lists into a new list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if any of its arguments is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(concat '(1 2 3) '(4 5 6) '(7 8 9)) => '(1 2 3 4 5 6 7 8 9)<br/><br/><b>See Also:</b> 
+<a href="#append">append</a>, <a href="#concat-strings">concat-strings</a>, <a href="#nconc">nconc</a><hr/>
+<a name="concat-strings"></a>
+<i>Function</i><b> concat-strings</b><br/><br/>
+<b>Syntax:</b> (concat-strings str1 str2) => result<br/><br/>
+<b>Arguments:</b> str1, str2: forms that evaluate to strings; result: a string<br/><br/>
+<b>Description:</b> concat-strings combines the two strings passed as arguments into a new string<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and an exception of type INVALID-ARGUMENT if either of the two arguments is not a string<br/><br/>
+<b>Examples:</b><br/><br/>
+(concat-strings "abc" "def") => "abcdef"<br/><br/><b>See Also:</b> 
+<a href="#concat">concat</a><hr/>
+<a name="cond"></a>
+<i>Macro</i><b> cond</b><br/><br/>
+<b>Syntax:</b> (cond ((cond1 action1) (cond2 action2) ..)) => result<br/><br/>
+<b>Arguments:</b> cond1, cond2, …: forms; action1, action2, …: forms; result: an object<br/><br/>
+<b>Description:</b> cond takes a list comprising condition/action pairs, and evaluates each condition sequentially, stopping at the first condition that evaluates to a non-NIL value. It then evaluates the action corresponding to this condition and returns the result of evaluating that action. If none of the conditions evaluates to a non-NIL value, cond returns NIL. If the last condition is T, the action corresponding to this serves as the default action<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(cond ((eq 1 1) 'true) (t 'false)) => TRUE<br/><br/><b>See Also:</b> 
+<a href="#if">if</a><hr/>
+<a name="cons"></a>
+<i>Special Operator</i><b> cons</b><br/><br/>
+<b>Syntax:</b> (cons obj1 obj2) => result<br/><br/>
+<b>Arguments:</b> obj1, obj2 : objects; result:a CONS object<br/><br/>
+<b>Description:</b> cons creates a CONS object from the two objects passed to it as arguments<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(cons 1 2) => (1 . 2)<br/><br/>(cons 'a nil) => (A)<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="cons-pair"></a>
+<i>Function</i><b> cons-pair</b><br/><br/>
+<b>Syntax:</b> (cons-pair list1 list2) => result<br/><br/>
+<b>Arguments:</b> list1, list2: forms that evaluate to lists; result: a list<br/><br/>
+<b>Description:</b> cons-pair takes two lists and creates a new list, the elements of which are CONS objects obtained by applying cons on the matched elements of the two lists. If the sizes of the two lists are not the same, the shorter of the two lists is padded with NIL values<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and an exception of type INVALID-ARGUMENT if either of its arguments is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(cons-pair '(a b) '(1 2)) => ((A . 1) (B . 2))<br/><br/>(cons-pair '(a b c) '(1 2)) => ((A . 1) (B . 2) (C))<br/><br/><b>See Also:</b> 
+<a href="#pair">pair</a><hr/>
+<a name="consp"></a>
+<i>Special Operator</i><b> consp</b><br/><br/>
+<b>Syntax:</b> (consp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> consp returns T if 'form' evaluates to a CONS object and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(define a (cons 1 2)) => (1 . 2)<br/><br/>(consp a) => T<br/><br/>(consp 10) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="continuationp"></a>
+<i>Special Operator</i><b> continuationp</b><br/><br/>
+<b>Syntax:</b> (continuationp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> continuationp returns T if 'form' evaluates to a continuation object and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(define cont nil) => NIL<br/><br/>(progn (call-cc (lambda (cc) (set cont cc))) (print 1)) =><br/><br/>1<br/><br/>1<br/><br/>(continuationp cont) => T<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="create-image"></a>
+<i>Special Operator</i><b> create-image</b><br/><br/>
+<b>Syntax:</b> (create-image file-name) => result<br/><br/>
+<b>Arguments:</b> file-name: a string object; result: NIL<br/><br/>
+<b>Description:</b> create-image saves the current state of the pLisp system to a file called 'file-name'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are passed, and an exception of type INVALID-ARGUMENT if the argument is not a string object<br/><br/>
+<b>Examples:</b><br/><br/>
+(create-image "plisp.image") => NIL<br/><br/><b>See Also:</b> 
+<a href="#load-object">load-object</a>, <a href="#save-object">save-object</a><hr/>
+<a name="create-package"></a>
+<i>Special Operator</i><b> create-package</b><br/><br/>
+<b>Syntax:</b> (create-package package-name) => result<br/><br/>
+<b>Arguments:</b> package-name: string; result: string<br/><br/>
+<b>Description:</b> create-package creates a new package with the name 'package-name'. It returns the name of the newly-created package<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are passed, and an exception of type INVALID-ARGUMENT if the argument is not a string object. An exception of type PACKAGE-ALREADY-EXISTS is thrown if the package with name package-name already exists<br/><br/>
+<b>Examples:</b><br/><br/>
+(create-package "pkg") => "PKG"<br/><br/><b>See Also:</b> 
+<a href="#export-package">export-package</a>, <a href="#in-package">in-package</a><hr/>
+<a name="define"></a>
+<i>Special Operator</i><b> define</b><br/><br/>
+<b>Syntax:</b> (define var form) => var<br/><br/>
+<b>Arguments:</b> var: a symbol; form: a form; result: NIL<br/><br/>
+<b>Description:</b> define evaluates 'form' and binds the result of this evaluation to 'var' in the top-level environment<br/><br/>
+<b>Exceptions:</b> Throws en exception of type INVALID-ARGUMENT if var is not a symbol<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x 100) => 100<br/><br/>x => 100<br/><br/><b>See Also:</b> 
+<a href="#alias">alias</a><hr/>
+<a name="defmacro"></a>
+<i>Macro</i><b> defmacro</b><br/><br/>
+<b>Syntax:</b> (defmacro name params &rest body) => result<br/><br/>
+<b>Arguments:</b> name: symbol; params: list; body: the rest of the arguments converted into a list; result: a macro object<br/><br/>
+<b>Description:</b> defmacro creates a macro named 'name' with parameters 'params' and body 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.<br/><br/>
+<b>Examples:</b><br/><br/>
+(defmacro first (lst) `(car ,lst)) => <macro><br/><br/><b>See Also:</b> 
+<a href="#macro">macro</a><hr/>
+<a name="defun"></a>
+<i>Macro</i><b> defun</b><br/><br/>
+<b>Syntax:</b> (defun name params &rest body) => result<br/><br/>
+<b>Arguments:</b> name: symbol; params: list; body: the rest of the arguments converted into a list; result: a function object<br/><br/>
+<b>Description:</b> defun creates a function named 'name' with parameters 'params' and body 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.<br/><br/>
+<b>Examples:</b><br/><br/>
+(defun double (n) (* n 2)) => <function><br/><br/><b>See Also:</b> 
+<a href="#lambda">lambda</a><hr/>
+<a name="def-curry-fn"></a>
+<i>Macro</i><b> def-curry-fn</b><br/><br/>
+<b>Syntax:</b> (def-curry-fn f1 f0 &rest args) => result<br/><br/>
+<b>Arguments:</b> f1: a symbol; f0: a function; args: a list of the rest of the arguments; result: a function<br/><br/>
+<b>Description:</b> def-curry-function takes a symbol, a function object and a partial list of the arguments to the function, and binds the symbol to a function object which takes as arguments the remaining list of the given function object's arguments. The returned function object invokes the given function object with the parameters comprising the partial list and the supplied parameters list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol or if the second argument is not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(defun f (a b c) (+ a b c)) => <function><br/><br/>(def-curry-fn c f 10 20) => <function><br/><br/>(c 30) => 60<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="dolist"></a>
+<i>Macro</i><b> dolist</b><br/><br/>
+<b>Syntax:</b> (dolist spec &rest body) => result<br/><br/>
+<b>Arguments:</b> spec: a list; body: the rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> dolist evaluates the code in 'body' for each element in the list specified in the CDR of 'spec', with the value of the element bound to the symbol specified in the CAR of 'spec'. It returns the result of the last evaluation of 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.<br/><br/>
+<b>Examples:</b><br/><br/>
+(dolist (x '(1 2 3)) (print x)) =><br/><br/>1<br/><br/>2<br/><br/>3<br/><br/>NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="dotimes"></a>
+<i>Macro</i><b> dotimes</b><br/><br/>
+<b>Syntax:</b> (dotimes spec &rest body) => result<br/><br/>
+<b>Arguments:</b> spec: a list; body: the rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> dotimes initializes the variable specified in the CAR of 'spec' to zero, and evaluates 'body' with the variable bound to this value. It then successively increments the variable and evaluates 'body' till the value of the variable exceeds the value specified in the CDR of 'spec'. It returns the value of the last evaluation of 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.<br/><br/>
+<b>Examples:</b><br/><br/>
+(dotimes (x 3) (print x)) =><br/><br/>0<br/><br/>1<br/><br/>2<br/><br/>NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="env"></a>
+<i>Special Operator</i><b> env</b><br/><br/>
+<b>Syntax:</b> (env) => result<br/><br/>
+<b>Arguments:</b> result: an object<br/><br/>
+<b>Description:</b> env returns a list of all the top-level bindings<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if any arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#"></a><hr/>
+<a name="eq"></a>
+<i>Special Operator</i><b> eq</b><br/><br/>
+<b>Syntax:</b> (eq form1 form2) => result<br/><br/>
+<b>Arguments:</b> form1, form2: forms; result: T or NIL<br/><br/>
+<b>Description:</b> eq returns T if 'form1' and 'form2' are structurally equivalent and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(eq 1 1) => T<br/><br/>(eq '(1 2) '(1 2)) => T<br/><br/>(define x "abc") => "abc"<br/><br/>(eq x "abc") => T<br/><br/>(eq 1 'a) => NIL<br/><br/><b>See Also:</b> 
+<a href="#array-eq">array-eq</a><hr/>
+<a name="error"></a>
+<i>Special Operator</i><b> error</b><br/><br/>
+<b>Syntax:</b> (error str) => result<br/><br/>
+<b>Arguments:</b> str: form that evaluates to a string; result: NIL<br/><br/>
+<b>Description:</b> error creates and throws an exception of type EXCEPTION using 'str'<br/><br/>
+<b>Exceptions:</b> Throws exception of type EXCEPTION as described above<br/><br/>
+<b>Examples:</b><br/><br/>
+(error "Divide by zero") => -<br/><br/><b>See Also:</b> 
+<a href="#throw">throw</a><hr/>
+<a name="eval"></a>
+<i>Special Operator</i><b> eval</b><br/><br/>
+<b>Syntax:</b> (eval form) => result<br/><br/>
+<b>Arguments:</b> form: a form; result: an object<br/><br/>
+<b>Description:</b> eval compiles and evaluates the form 'form'<br/><br/>
+<b>Exceptions:</b> Propagates exceptions thrown (if any) by the compilation and evaluation of the form<br/><br/>
+<b>Examples:</b><br/><br/>
+(eval '(+ 1 1)) => 2<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="exception"></a>
+<i>Function</i><b> exception</b><br/><br/>
+<b>Syntax:</b> (exception sym str) => result<br/><br/>
+<b>Arguments:</b> sym: a symbol; str: a string; result: an exception object<br/><br/>
+<b>Description:</b> exception creates an exception object from the passed symbol and string and returns it<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(exception 'exception "An exception") => (EXCEPTION . "An exception")<br/><br/><b>See Also:</b> 
+<a href="#error">error</a><hr/>
+<a name="expand-macro"></a>
+<i>Special Operator</i><b> expand-macro</b><br/><br/>
+<b>Syntax:</b> (expand-macro form) => result<br/><br/>
+<b>Arguments:</b> form: a form; result: a form<br/><br/>
+<b>Description:</b> expand-macro expands the macro application represented by 'form' and returns the result of this expansion. Note that the expansion is only at the first level, i.e. if the expanded form contains any macros, they will not be expanded<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(defmacro first (lst) `(car ,lst)) => <macro><br/><br/>(expand-macro '(first some-list)) => (CAR SOME-LIST)<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="export-package"></a>
+<i>Special Operator</i><b> export-package</b><br/><br/>
+<b>Syntax:</b> (export-package package-name str) => NIL<br/><br/>
+<b>Arguments:</b> package-name: a form that evaluates to a string; str: a form that evaluates to a string<br/><br/>
+<b>Description:</b> export-package writes the contents of the package 'package-name' to the file specified by 'str'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not  passed and an exception of type PACKAGE-NOT-FOUND if 'package-name' does not exist<br/><br/>
+<b>Examples:</b><br/><br/>
+(export-package "user" "user.lisp") => NIL<br/><br/><b>See Also:</b> 
+<a href="#create-package">create-package</a>, <a href="#in-package">in-package</a><hr/>
+<a name="fifth"></a>
+<i>Macro</i><b> fifth</b><br/><br/>
+<b>Syntax:</b> (fifth lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> fifth returns the fifth element of 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type NOT-A-CONS is thrown if the argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(fifth '(1 2 3 4 5 6)) => 5<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a><hr/>
+<a name="find"></a>
+<i>Function</i><b> find</b><br/><br/>
+<b>Syntax:</b> (find e lst predicate) => result<br/><br/>
+<b>Arguments:</b> e: an object: lst: a list; predicate: a function; result: an object<br/><br/>
+<b>Description:</b> find returns the first element of 'lst' for which 'predicate' returns true when applied to that element and 'e' and NIL if no such element is found<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type EXCEPTION is thrown if the second parameter is not a list and the third parameter not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(find 3 '(1 2 3) (lambda (x y) (< x y))) => 1<br/><br/><b>See Also:</b> 
+<a href="#find-if">find-if</a>, <a href="#select">select</a><hr/>
+<a name="find-if"></a>
+<i>Function</i><b> find-if</b><br/><br/>
+<b>Syntax:</b> (find-if predicate lst) => result<br/><br/>
+<b>Arguments:</b> predicate: a function; lst: a list; result: an object<br/><br/>
+<b>Description:</b> find-if returns the first element of 'lst' for which 'predicate' returns true and NIL if no such element is found<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type EXCEPTION is thrown if the first parameter not a function object and the second parameter is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(find-if (lambda (x) (stringp x)) '(1 "abc" 'X)) => "abc"<br/><br/><b>See Also:</b> 
+<a href="#find">find</a>, <a href="#select">select</a><hr/>
+<a name="first"></a>
+<i>Macro</i><b> first</b><br/><br/>
+<b>Syntax:</b> (first lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> first returns the first element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no parameters are supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(first '(1 2 3)) => 1<br/><br/>(first ()) => NIL<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="flatten"></a>
+<i>Function</i><b> flatten</b><br/><br/>
+<b>Syntax:</b> (flatten lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: a list<br/><br/>
+<b>Description:</b> flatten converts the sublists of 'lst' into individual elements<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(flatten '((1 2 3) (4 5 6))) => (1 2 3 4 5 6)<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="floatp"></a>
+<i>Special Operator</i><b> floatp</b><br/><br/>
+<b>Syntax:</b> (floatp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> floatp returns T if 'form' evaluates to a float and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(floatp 3.14) => T<br/><br/>(floatp #\\a) => NIL<br/><br/><b>See Also:</b> 
+<a href="#integerp">integerp</a>, <a href="#numberp">numberp</a><hr/>
+<a name="for"></a>
+<i>Macro</i><b> for</b><br/><br/>
+<b>Syntax:</b> (for (var init-form cond step-form ret-form) &rest body ) => result<br/><br/>
+<b>Arguments:</b> var: symbol; init-form, cond, step-form, ret-form: forms; body: rest of the arguments; result: an object<br/><br/>
+<b>Description:</b> for loops through the execution of 'body', binding 'var' to the value of 'init-form' and updating its value by evaluating 'step-form'. After every execution of 'body', 'cond' is checked, and execution stops if 'cond' evaluates to NIL. Finally 'ret-form' is evaluated and returned<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion<br/><br/>
+<b>Examples:</b><br/><br/>
+(for (i 0 (< i 3) (incf i) nil) (print i)) =><br/><br/>0<br/><br/>1<br/><br/>2<br/><br/>NIL<br/><br/><b>See Also:</b> 
+<a href="#dotimes">dotimes</a><hr/>
+<a name="format"></a>
+<i>Special Operator</i><b> format</b><br/><br/>
+<b>Syntax:</b> (format fd str &rest args) => NIL<br/><br/>
+<b>Arguments:</b> fd: an integer; str: a form that evaluates to a string; args: rest of the arguments in list form<br/><br/>
+<b>Description:</b> format sends the formatted output specified by the format string 'str' and the arguments to the file specified by the file descriptor 'fd' or to standard output if 'fd' is NIL. The format string is modeled identically to the C format string used in printf and fprintf statements<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if two arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if a) the first argument is neither an integer nor NIL, b) if the second argument is not a string or c) args contains any objects other than integers, floats, characters or strings<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x 100) => 100<br/><br/>(format nil "%d" x) =><br/><br/>100NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="fourth"></a>
+<i>Macro</i><b> fourth</b><br/><br/>
+<b>Syntax:</b> (fourth lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> fourth returns the fourth element of 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(fourth '(1 2 3 4 5 6)) => 4<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fifth">fifth</a><hr/>
+<a name="free-ext-mem"></a>
+<i>Function</i><b> free-ext-mem</b><br/><br/>
+<b>Syntax:</b> (free-ext-mem blk) => NIL<br/><br/>
+<b>Arguments:</b> blk: a list<br/><br/>
+<b>Description:</b> free-ext-mem frees the native memory block specified by 'blk' that was allocated by one of the alloc-ext-mem-* functions<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type EXCEPTION is thrown if 'blk' is not a valid native memory block<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="funcall"></a>
+<i>Function</i><b> funcall</b><br/><br/>
+<b>Syntax:</b> (funcall function &rest args) => result<br/><br/>
+<b>Arguments:</b> function: a form that evaluates to a function or a continuation, args: the rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> funcall applies the function 'fn' to 'args'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type INVALID-ARGUMENT is thrown if the first parameter is not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(funcall (lambda (x y) (+ x y)) 1 2) => 3<br/><br/><b>See Also:</b> 
+<a href="#apply">apply</a><hr/>
+<a name="gensym"></a>
+<i>Special Operator</i><b> gensym</b><br/><br/>
+<b>Syntax:</b> (gensym) => result<br/><br/>
+<b>Arguments:</b> result: a symbol<br/><br/>
+<b>Description:</b> gensym creates a new symbol that is guaranteed to be unique<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+(gensym) => #:G00027194<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="get-ext-mem-cell"></a>
+<i>Function</i><b> get-ext-mem-cell</b><br/><br/>
+<b>Syntax:</b> (get-ext-mem-cell blk pos) => result<br/><br/>
+<b>Arguments:</b> blk: a list; pos: an integer; result: an object<br/><br/>
+<b>Description:</b> get-ext-mem-cell returns the integer, float or character stored in position pos of a native memory block blk that was allocated by one of the alloc-ext-mem-* functions<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-INDEX if pos not greater than or equal to zero or less than the size of blk. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively).<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="if"></a>
+<i>Special Operator</i><b> if</b><br/><br/>
+<b>Syntax:</b> (if cond then else) => result<br/><br/>
+<b>Arguments:</b> cond, then, else: forms; result: an object<br/><br/>
+<b>Description:</b> if evaluates 'cond', and if 'cond' evaluates to a non-NIL value, evaluates 'then', otherwise evaluates 'else'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if at least the condition and 'then' parameters are not supplied. Propagates any exception thrown during the evaluation of the 'then' or 'else' forms<br/><br/>
+<b>Examples:</b><br/><br/>
+(if (> 2 1) 'true 'false) => TRUE<br/><br/><b>See Also:</b> 
+<a href="#cond">cond</a><hr/>
+<a name="in-package"></a>
+<i>Special Operator</i><b> in-package</b><br/><br/>
+<b>Syntax:</b> (in-package package-name) => NIL<br/><br/>
+<b>Arguments:</b> package-name: a form that evaluates to a string<br/><br/>
+<b>Description:</b> in-package sets the current package to 'package-name'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception of type ACCESS-VIOLATION if 'package-name' is \"CORE\". Throws an exception of type PACKAGE-NOT-FOUND if 'package-name' does not exist<br/><br/>
+<b>Examples:</b><br/><br/>
+(in-package "some-package") => NIL<br/><br/><b>See Also:</b> 
+<a href="#create-package">create-package</a>, <a href="#export-package">export-package</a><hr/>
+<a name="incf"></a>
+<i>Macro</i><b> incf</b><br/><br/>
+<b>Syntax:</b> (incf var) => result<br/><br/>
+<b>Arguments:</b> var: symbol; result: an integer or float<br/><br/>
+<b>Description:</b> incf increments 'var' by one<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception INVALID-ARGUMENT if 'var' is not a symbol or if it is not bound to an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x 0) => 0<br/><br/>(incf x) => 1<br/><br/>X => 1<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="inspect-ext-mem"></a>
+<i>Function</i><b> inspect-ext-mem</b><br/><br/>
+<b>Syntax:</b> (inspect-ext-mem blk ) => NIL<br/><br/>
+<b>Arguments:</b> blk: a list<br/><br/>
+<b>Description:</b> inspect-ext-mem prints the contents of a native memory block 'blk' that was allocated by one of the alloc-ext-mem-* functions<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required no parameters are supplied. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively)<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="integerp"></a>
+<i>Special Operator</i><b> integerp</b><br/><br/>
+<b>Syntax:</b> (integerp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> integerp returns T if 'form' evaluates to an integer and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(integerp 3) => T<br/><br/>(integerp #\\a) => NIL<br/><br/><b>See Also:</b> 
+<a href="#floatp">floatp</a>, <a href="#numberp">numberp</a><hr/>
+<a name="lambda"></a>
+<i>Special Operator</i><b> lambda</b><br/><br/>
+<b>Syntax:</b> (lambda params &rest body) => result<br/><br/>
+<b>Arguments:</b> params: a list; body: the rest of the arguments converted into a list; result: a function object<br/><br/>
+<b>Description:</b> lambda creates a function object with params 'params' and body 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied or if the first argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(lambda (n) (* n 2)) => <function><br/><br/><b>See Also:</b> 
+<a href="#defun">defun</a><hr/>
+<a name="last"></a>
+<i>Function</i><b> last</b><br/><br/>
+<b>Syntax:</b> (last lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> last returns the last element of 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no parameters are supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(last '(1 2 3)) => 3<br/><br/>(last '()) => NIL<br/><br/><b>See Also:</b> 
+<a href="#butlast">butlast</a>, <a href="#last-n">last-n</a><hr/>
+<a name="last-n"></a>
+<i>Function</i><b> last-n</b><br/><br/>
+<b>Syntax:</b> (last-n lst n) => result<br/><br/>
+<b>Arguments:</b> lst: a list; n: an integer; result: a list<br/><br/>
+<b>Description:</b> last-n returns the last 'n' elements of 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required numbers of parameters is not passed. Throws an exception of type EXCEPTION if 'lst' is not a list and an exception of type INVALID-ARGUMENT if 'n' is not an integer<br/><br/>
+<b>Examples:</b><br/><br/>
+(last-n '(1 2 3) 2) => (2 3)<br/><br/><b>See Also:</b> 
+<a href="#butlast">butlast</a>, <a href="#last">last</a><hr/>
+<a name="length"></a>
+<i>Function</i><b> length</b><br/><br/>
+<b>Syntax:</b> (length lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an integer<br/><br/>
+<b>Description:</b> length returns the number of elements in 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are passed, and an exception of type EXCEPTION if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(length '(1 2 3 4 5)) => 5<br/><br/>(length '()) => 0<br/><br/><b>See Also:</b> 
+<a href="#array-length">array-length</a><hr/>
+<a name="let"></a>
+<i>Special Operator</i><b> let</b><br/><br/>
+<b>Syntax:</b> (let decls &rest body) => result<br/><br/>
+<b>Arguments:</b> decls: a form; body: rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> let executes 'body' after binding the definitions in 'decl'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings<br/><br/>
+<b>Examples:</b><br/><br/>
+(let ((x 10) (y 20)) (+ x y)) => 30<br/><br/><b>See Also:</b> 
+<a href="#letrec">letrec</a>, <a href="#let1">let1</a><hr/>
+<a name="let1"></a>
+<i>Macro</i><b> let1</b><br/><br/>
+<b>Syntax:</b> (let1 decls &rest body) => result<br/><br/>
+<b>Arguments:</b> decls: a form; body: rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> let1 executes 'body' after binding the definitions in 'decl'. let1 is similar to let, but variables in 'decl' can refer to variables declared earlier<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings<br/><br/>
+<b>Examples:</b><br/><br/>
+(let1 ((x 10) (y (+ x 10))) (+ x y)) => 30<br/><br/><b>See Also:</b> 
+<a href="#let">let</a>, <a href="#letrec">letrec</a><hr/>
+<a name="letrec"></a>
+<i>Special Operator</i><b> letrec</b><br/><br/>
+<b>Syntax:</b> (letrec decls &rest body) => result<br/><br/>
+<b>Arguments:</b> decls: a form; body: rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> letrec executes 'body' after binding the definitions in 'decl'; it differs from 'let' in that the bindings can be (mutually) recursive<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings<br/><br/>
+<b>Examples:</b><br/><br/>
+(letrec ((fact (lambda (n) (if (eq n 0) 1 (* n (fact (- n 1))))))) (fact 10.0)) => 3628800<br/><br/><b>See Also:</b> 
+<a href="#let">let</a>, <a href="#let1">let1</a><hr/>
+<a name="list"></a>
+<i>Special Operator</i><b> list</b><br/><br/>
+<b>Syntax:</b> (list &rest elems) => result<br/><br/>
+<b>Arguments:</b> elems: arguments converted into a list; result: a list<br/><br/>
+<b>Description:</b> list creates a list of the elements in 'elems'<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+(list 'a 'b 'c) => (A B C)<br/><br/><b>See Also:</b> 
+<a href="#cons">cons</a><hr/>
+<a name="listp"></a>
+<i>Special Operator</i><b> listp</b><br/><br/>
+<b>Syntax:</b> (listp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> listp returns T if 'form' evaluates to a list and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(listp '(1 2 3)) => T<br/><br/>(listp '()) => T<br/><br/>(listp 'a) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="load-file"></a>
+<i>Special Operator</i><b> load-file</b><br/><br/>
+<b>Syntax:</b> (load-file str) => NIL<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string<br/><br/>
+<b>Description:</b> load-file loads the file named 'str' and evaluates the expressions defined in the file<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. Exceptions of type FILE-OPEN-ERROR and FILE-READ-ERROR are thrown if the file cannot be opened or read respectively<br/><br/>
+<b>Examples:</b><br/><br/>
+(load-file "1.lisp") => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="load-foreign-library"></a>
+<i>Special Operator</i><b> load-foreign-library</b><br/><br/>
+<b>Syntax:</b> (load-foreign-library str) => NIL<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string<br/><br/>
+<b>Description:</b> load-foreign-library loads the shared library file named 'str'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the maximum number of foreign libraries that can be loaded is exceeded. An OUT-OF-MEMOY exception is thrown if there is no memory to allocate for the structures internally needed to load the foreign library. An exception of type EXCEPTION is thrown if the shared library is an invalid file<br/><br/>
+<b>Examples:</b><br/><br/>
+(load-foreign-library "somelib.so") => NIL<br/><br/><b>See Also:</b> 
+<a href="#call-foreign-function">call-foreign-function</a><hr/>
+<a name="load-object"></a>
+<i>Special Operator</i><b> load-object</b><br/><br/>
+<b>Syntax:</b> (load-object str) => result<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string; result: an object<br/><br/>
+<b>Description:</b> load-object loads the object serialized in the file named 'str'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the file is not a valid file (created using save-object)<br/><br/>
+<b>Examples:</b><br/><br/>
+(load-object "object.lisp") => <an object><br/><br/><b>See Also:</b> 
+<a href="#save-object">save-object</a><hr/>
+<a name="macro"></a>
+<i>Special Operator</i><b> macro</b><br/><br/>
+<b>Syntax:</b> (macro params &rest body) => result<br/><br/>
+<b>Arguments:</b> params: a list; body: the rest of the arguments converted into a list; result: a macro object<br/><br/>
+<b>Description:</b> macro creates a macro object with params 'params' and body 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied or if the first argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(macro (x) `(car ,x)) => <macro><br/><br/><b>See Also:</b> 
+<a href="#defmacro">defmacro</a><hr/>
+<a name="macrop"></a>
+<i>Special Operator</i><b> macrop</b><br/><br/>
+<b>Syntax:</b> (macrop form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> macrop returns T if 'form' evaluates to a macro object and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(macrop defun) => T<br/><br/>(macrop 10) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="make-array"></a>
+<i>Special Operator</i><b> make-array</b><br/><br/>
+<b>Syntax:</b> (make-array size val) => result<br/><br/>
+<b>Arguments:</b> size: an integer; val: an object; result: an array object<br/><br/>
+<b>Description:</b> make-array creates an array of size 'size'  with all the array elements initialized to 'val'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an integer<br/><br/>
+<b>Examples:</b><br/><br/>
+(make-array 5 1) => [1 1 1 1 1]<br/><br/>(make-array 3 nil) => [NIL NIL NIL]<br/><br/><b>See Also:</b> 
+<a href="#make-string">make-string</a><hr/>
+<a name="make-string"></a>
+<i>Macro</i><b> make-string</b><br/><br/>
+<b>Syntax:</b> (make-string size val) => result<br/><br/>
+<b>Arguments:</b> size: an integer; val: a character; result: a string object<br/><br/>
+<b>Description:</b> make-string creates a string of length 'size', with all the string positions initialized to 'val'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an integer<br/><br/>
+<b>Examples:</b><br/><br/>
+(make-string 5 #\\a) => "aaaaa"<br/><br/><b>See Also:</b> 
+<a href="#make-array">make-array</a><hr/>
+<a name="map"></a>
+<i>Macro</i><b> map</b><br/><br/>
+<b>Syntax:</b> (map fn lst) => result<br/><br/>
+<b>Arguments:</b> fn: a function object; lst: a list; result: a list<br/><br/>
+<b>Description:</b> map applies the function 'fn' to each element in 'lst' and returns a newly-constructed list comprising the result of the function applications<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type NOT-A-CONS if 'lst' is not a list. An exception of type EXCEPTION is thrown if 'fn' is not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(map (lambda (x) (* 2 x)) '(1 2 3 4 5)) => (2 4 6 8 10)<br/><br/><b>See Also:</b> 
+<a href="#mapcan">mapcan</a>, <a href="#mapcar">mapcar</a><hr/>
+<a name="mapcan"></a>
+<i>Macro</i><b> mapcan</b><br/><br/>
+<b>Syntax:</b> (mapcan fn &rest lsts) => result<br/><br/>
+<b>Arguments:</b> fn: a function object; lsts: the rest of the arguments converted into a list<br/><br/>
+<b>Description:</b> For i ranging from zero to 'min', where 'min' is the minimum of the lengths of the lists 'lsts', mapcan takes the ith element of each of the lists in 'lsts' and applies 'fn' to the list of arguments thus formed. It collects the results of these function applications in a list and returns the flattened list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type NOT-A-CONS if 'lst' is not a list. An exception of type INVALID-ARGUMENT is thrown if 'fn' is not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(mapcan (lambda (x y) (list x y)) '(1 2) '(3 4)) => (1 3 2 4)<br/><br/><b>See Also:</b> 
+<a href="#map">map</a>, <a href="#mapcar">mapcar</a><hr/>
+<a name="mapcar"></a>
+<i>Function</i><b> mapcar</b><br/><br/>
+<b>Syntax:</b> (mapcar fn &rest lsts) => result<br/><br/>
+<b>Arguments:</b> fn: a function object; lsts: the rest of the arguments converted into a list<br/><br/>
+<b>Description:</b> For i ranging from zero to 'min', where 'min' is the minimum of the lengths of the lists lsts, mapcan takes the ith element of each of the lists in 'lsts' and applies 'fn' to the list of arguments thus formed. It collects the results of these function applications in a list and returns this list.<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type NOT-A-CONS if 'lst' is not a list. An exception of type INVALID-ARGUMENT is thrown if 'fn' is not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(mapcar (lambda (x y) (list x y)) '(1 2) '(3 4)) => ((1 3) (2 4))<br/><br/><b>See Also:</b> 
+<a href="#map">map</a>, <a href="#mapcan">mapcan</a><hr/>
+<a name="max"></a>
+<i>Function</i><b> max</b><br/><br/>
+<b>Syntax:</b> (max lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> max returns the largest element in 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(max '(2 3 7 8 10 9)) => 10<br/><br/><b>See Also:</b> 
+<a href="#min">min</a><hr/>
+<a name="min"></a>
+<i>Function</i><b> min</b><br/><br/>
+<b>Syntax:</b> (min lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> min returns the smallest element in 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(min '(2 3 7 8 10 9)) => 2<br/><br/><b>See Also:</b> 
+<a href="#max">max</a><hr/>
+<a name="multiple-value-bind"></a>
+<i>Macro</i><b> multiple-value-bind</b><br/><br/>
+<b>Syntax:</b> (multiple-value-bind vars var-form &rest body) => result<br/><br/>
+<b>Arguments:</b> vars: a list of symbols; var-form: a list; body: the rest of the arguments converted into a list; result: an object<br/><br/>
+<b>Description:</b> multiple-value-bind binds 'vars' to the values specified in 'var-form' and evaluates the expressions in 'body'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied or if the first parameter is not a list of symbols. An exception of type INVALID-ARGUMENT is thrown if the second parameter is not a list. An exception of type EXCEPTION is thrown if there is a mismatch/inconsistency in the number/binding of variables among 'vars', 'var-form' and 'body'.<br/><br/>
+<b>Examples:</b><br/><br/>
+(multiple-value-bind (x y) '(3 4) (+ x y)) => 7<br/><br/><b>See Also:</b> 
+<a href="#values">values</a><hr/>
+<a name="nconc"></a>
+<i>Macro</i><b> nconc</b><br/><br/>
+<b>Syntax:</b> (nconc sym &rest lsts) => result<br/><br/>
+<b>Arguments:</b> sym: a symbol; lsts: the rest of the arguments (which are themselves lists) converted into a list; result: a list<br/><br/>
+<b>Description:</b> nconc appends 'lsts' to 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type EXCEPTION is thrown if 'sym' is undefined. An exception of type INVALID-ARGUMENT is thrown if 'sym' is not bound to a list object or if any of the elements of 'lsts' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x '(1 2 3)) => (1 2 3)<br/><br/>x => (1 2 3)<br/><br/>(nconc x '(4 5 6) '(7 8 9)) => (1 2 3 4 5 6 7 8 9)<br/><br/>x => (1 2 3 4 5 6 7 8 9)<br/><br/><b>See Also:</b> 
+<a href="#append">append</a>, <a href="#concat">concat</a><hr/>
+<a name="neq"></a>
+<i>Macro</i><b> neq</b><br/><br/>
+<b>Syntax:</b> (neq form1 form2) => result<br/><br/>
+<b>Arguments:</b> form1, form2: forms; result: T or NIL<br/><br/>
+<b>Description:</b> neq returns T if 'form1' and 'form2' are not structurally equivalent and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws en exception of type COMPILE-ERROR if two arguments are not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(neq 1 1) => NIL<br/><br/>(neq '(1 2) '(1 2)) => NIL<br/><br/>(define x "abc") => "abc"<br/><br/>(neq x "abc") => NIL<br/><br/>(neq 1 'a) => T<br/><br/><b>See Also:</b> 
+<a href="#eq">eq</a><hr/>
+<a name="newline"></a>
+<i>Special Operator</i><b> newline</b><br/><br/>
+<b>Syntax:</b> (newline fd) => NIL<br/><br/>
+<b>Arguments:</b> fd: an integer or NIL<br/><br/>
+<b>Description:</b> newline prints a newline to the file specified by the file descriptor 'fd' if 'fd' is not NIL, and to the Transcript window or the shell if 'fd' is NIL<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if 'fd' is not a valid file descriptor<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#println">println</a><hr/>
+<a name="not"></a>
+<i>Special Operator</i><b> not</b><br/><br/>
+<b>Syntax:</b> (not form) => result<br/><br/>
+<b>Arguments:</b> form: a form; result: T or NIL<br/><br/>
+<b>Description:</b> not returns T if 'form' evaluates to NIL and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(not (eq 1 1)) => NIL<br/><br/>(not (eq 1 #\\a)) => T<br/><br/><b>See Also:</b> 
+<a href="#null">null</a><hr/>
+<a name="nth"></a>
+<i>Function</i><b> nth</b><br/><br/>
+<b>Syntax:</b> (nth lst n) => result<br/><br/>
+<b>Arguments:</b> lst: a list; n: an integer; result: an object<br/><br/>
+<b>Description:</b> nth returns the nth element in 'lst'. Note that list indices start from zero<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type EXCEPTION is thrown if 'lst' is not a list. Throws an exception of type INVALID-ARGUMENT if 'n' is not an integer<br/><br/>
+<b>Examples:</b><br/><br/>
+(nth 3 '(2 3 7 8 10 9)) => 8<br/><br/><b>See Also:</b> 
+<a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="null"></a>
+<i>Function</i><b> null</b><br/><br/>
+<b>Syntax:</b> (null form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> null returns T if 'form' evaluates to NIL and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied.<br/><br/>
+<b>Examples:</b><br/><br/>
+(null 1) => NIL<br/><br/>(null '()) => T<br/><br/><b>See Also:</b> 
+<a href="#not">not</a><hr/>
+<a name="numberp"></a>
+<i>Function</i><b> numberp</b><br/><br/>
+<b>Syntax:</b> (numberp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> numberp returns T if 'form' evaluates to an integer or a float and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied.<br/><br/>
+<b>Examples:</b><br/><br/>
+(numberp 1) => T<br/><br/>(numberp 3.14) => T<br/><br/>(numberp 'a) => NIL<br/><br/><b>See Also:</b> 
+<a href="#integerp">integerp</a>, <a href="#floatp">floatp</a><hr/>
+<a name="or"></a>
+<i>Macro</i><b> or</b><br/><br/>
+<b>Syntax:</b> (or form*) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> or performs a logical disjunction of its operands. Returns T if any of the operands evaluates to non-NIL and NIL otherwise. Returns T if no arguments are passed<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+(or (eq 1 1) (eq 2 3)) => T<br/><br/>(or (eq 2 3) (eq 1 2)) => NIL<br/><br/><b>See Also:</b> 
+<a href="#and">and</a><hr/>
+<a name="pair"></a>
+<i>Function</i><b> pair</b><br/><br/>
+<b>Syntax:</b> (pair lst1 lst2) => result<br/><br/>
+<b>Arguments:</b> lst1, lst2: lists; result: a list<br/><br/>
+<b>Description:</b> pair creates pairs by forming a list from objects in 'lst1' and 'lst2' that share the same ordinal position. If the lengths of 'lst1' and 'lst2' are not the same, the lists are created by substituting with NILs<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type NOT-A-CONS is thrown if either of the arguments is neither a list nor NIL<br/><br/>
+<b>Examples:</b><br/><br/>
+(pair '(1 2 3) '(4 5 6 7)) => ((1 4) (2 5) (3 6) (NIL 7))<br/><br/><b>See Also:</b> 
+<a href="#cons-pair">cons-pair</a><hr/>
+<a name="print"></a>
+<i>Special Operator</i><b> print</b><br/><br/>
+<b>Syntax:</b> (print obj) => NIL<br/><br/>
+<b>Arguments:</b> obj: an object<br/><br/>
+<b>Description:</b> print prints the object 'obj' to the shell if pLisp is invoked with '-c' and to the Transcript if otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(print "Hello world") =><br/><br/>"Hello world"<br/><br/>"Hello world"<br/><br/>(print (make-array 5 nil)) =><br/><br/>[NIL NIL NIL NIL NIL]<br/><br/>[NIL NIL NIL NIL NIL]<br/><br/><b>See Also:</b> 
+<a href="#print-string">print-string</a><hr/>
+<a name="print-string"></a>
+<i>Special Operator</i><b> print-string</b><br/><br/>
+<b>Syntax:</b> (print-string str) => NIL<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string object<br/><br/>
+<b>Description:</b> print-string prints the string object 'str' to the shell if pLisp is invoked with '-c' and to the Transcript if otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied, and an exception of type INVALID-ARGUMENT if 'str' is not a string<br/><br/>
+<b>Examples:</b><br/><br/>
+(print-string "Hello world") =><br/><br/>"Hello world"NIL<br/><br/>(define x "abc") => "abc"<br/><br/>(print-string x) =><br/><br/>"abc"NIL<br/><br/><b>See Also:</b> 
+<a href="#print">print</a><hr/>
+<a name="println"></a>
+<i>Macro</i><b> println</b><br/><br/>
+<b>Syntax:</b> (println) => NIL<br/><br/>
+<b>Arguments:</b> None<br/><br/>
+<b>Description:</b> println prints a newline to the shell<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#newline">newline</a><hr/>
+<a name="profile"></a>
+<i>Special Operator</i><b> profile</b><br/><br/>
+<b>Syntax:</b> (profile exp) => NIL<br/><br/>
+<b>Arguments:</b> exp: a quoted form<br/><br/>
+<b>Description:</b> profile evaluates 'exp' and displays the resource usage information for the evaluation<br/><br/>
+<b>Exceptions:</b> Propagates exceptions thrown (if any) by the evaluation of the form<br/><br/>
+<b>Examples:</b><br/><br/>
+(profile '(+ 1 1)) =><br/><br/>Expression took 0.000115 seconds (elapsed), 0.000000 seconds (CPU), 21 words allocated<br/><br/><b>See Also:</b> 
+<a href="#time">time</a><hr/>
+<a name="progn"></a>
+<i>Macro</i><b> progn</b><br/><br/>
+<b>Syntax:</b> (progn form*) => result<br/><br/>
+<b>Arguments:</b> form: a form; result: an object<br/><br/>
+<b>Description:</b> progn evaluates each of the forms supplied to it as arguments and returns the result of the evaluation of the last form<br/><br/>
+<b>Exceptions:</b> Propagates exceptions thrown (if any) by the evaluation of any of the forms<br/><br/>
+<b>Examples:</b><br/><br/>
+(progn (print "hello") (+ 1 1)) =><br/><br/>"hello"<br/><br/>2<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="range"></a>
+<i>Function</i><b> range</b><br/><br/>
+<b>Syntax:</b> (range start end inc) => result<br/><br/>
+<b>Arguments:</b> start, end, inc: integers or floats; result: a list<br/><br/>
+<b>Description:</b> range creates a list with 'start' as the first element and 'end' as the last element, with the middle elements obtained by successively incrementing 'start' with 'inc'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type INVALID-EXCEPTION is thrown if any of the arguments is neither an integer nor a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(range 1 10 1) => (1 2 3 4 5 6 7 8 9 10)<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="read"></a>
+<i>Function</i><b> read</b><br/><br/>
+<b>Syntax:</b> (read) => result<br/><br/>
+<b>Arguments:</b> result: an integer, float or string object<br/><br/>
+<b>Description:</b> read reads a value from the standard input and returns an integer, float or string object after suitably converting the value<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if any arguments are supplied, and an exception of type EXCEPTION if the read was unsuccessful<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#read-character">read-character</a>, <a href="#read-float">read-float</a>, <a href="#read-integer">read-integer</a>, <a href="#read-string">read-string</a><hr/>
+<a name="read-character"></a>
+<i>Function</i><b> read-character</b><br/><br/>
+<b>Syntax:</b> (read-character) => result<br/><br/>
+<b>Arguments:</b> result: a character object<br/><br/>
+<b>Description:</b> read-character reads a character from the standard input<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if any arguments are supplied, and an exception of type NOT-A-STRING if an integer or a float is entered<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#read">read</a>, <a href="#read-float">read-float</a>, <a href="#read-integer">read-integer</a>, <a href="#read-string">read-string</a><hr/>
+<a name="read-float"></a>
+<i>Function</i><b> read-float</b><br/><br/>
+<b>Syntax:</b> (read-float) => result<br/><br/>
+<b>Arguments:</b> result: a float object<br/><br/>
+<b>Description:</b> read-float reads a float from the standard input<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if any arguments are supplied, and an exception of type NOT-A-FLOAT if a character or string is entered<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#read">read</a>, <a href="#read-character">read-character</a>, <a href="#read-integer">read-integer</a>, <a href="#read-string">read-string</a><hr/>
+<a name="read-integer"></a>
+<i>Function</i><b> read-integer</b><br/><br/>
+<b>Syntax:</b> (read-integer) => result<br/><br/>
+<b>Arguments:</b> result: an integer object<br/><br/>
+<b>Description:</b> read-integer reads an integer from the standard input<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if any arguments are supplied, and an exception of type NOT-AN-INTEGER if a character or string is entered<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#read">read</a>, <a href="#read-character">read-character</a>, <a href="#read-float">read-float</a>, <a href="#read-string">read-string</a><hr/>
+<a name="read-string"></a>
+<i>Function</i><b> read-string</b><br/><br/>
+<b>Syntax:</b> (read-string) => result<br/><br/>
+<b>Arguments:</b> result: a string object<br/><br/>
+<b>Description:</b> read-string reads a string from the standard input<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if any arguments are supplied, and an exception of type NOT-A-STRING if an integer or a float is entered<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#read">read</a>, <a href="#read-character">read-character</a>, <a href="#read-float">read-float</a>, <a href="#read-integer">read-integer</a><hr/>
+<a name="remove"></a>
+<i>Function</i><b> remove</b><br/><br/>
+<b>Syntax:</b> (remove e lst n) => result<br/><br/>
+<b>Arguments:</b> e: an object; lst: a list; result: a list<br/><br/>
+<b>Description:</b> remove removes the first 'n' occurrences of 'e' from 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(remove 1 '(1 1 2 1 3 4) 2) => (2 1 3 4)<br/><br/><b>See Also:</b> 
+<a href="#remove-duplicates">remove-duplicates</a>, <a href="#remove-if">remove-if</a>, <a href="#remove-if-not">remove-if-not</a>, <a href="#remove-last">remove-last</a><hr/>
+<a name="remove-duplicates"></a>
+<i>Macro</i><b> remove-duplicates</b><br/><br/>
+<b>Syntax:</b> (remove-duplicates lst test) => result<br/><br/>
+<b>Arguments:</b> lst: a list; test: a function object; result: a list<br/><br/>
+<b>Description:</b> remove-duplicates removes duplicates from 'lst', using 'test' to test for equality<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list. An exception of type EXCEPTION is thrown if 'test' is not a function<br/><br/>
+<b>Examples:</b><br/><br/>
+(remove-duplicates '(1 1 2 1 3 4) (lambda (x y) (eq x y))) => (1 2 3 4)<br/><br/><b>See Also:</b> 
+<a href="#remove">remove</a>, <a href="#remove-if">remove-if</a>, <a href="#remove-if-not">remove-if-not</a>, <a href="#remove-last">remove-last</a><hr/>
+<a name="remove-if"></a>
+<i>Function</i><b> remove-if</b><br/><br/>
+<b>Syntax:</b> (remove-if pred lst) => result<br/><br/>
+<b>Arguments:</b> pred: a function object; lst: a list; result: a list<br/><br/>
+<b>Description:</b> remove-if removes those elements in 'lst' for which 'pred' returns a non-NIL value<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list. An exception of type EXCEPTION is thrown if 'pred' is not a function<br/><br/>
+<b>Examples:</b><br/><br/>
+(remove-if (lambda (x) (>= x 3)) '(1 1 2 1 3 4)) => (1 1 2 1)<br/><br/><b>See Also:</b> 
+<a href="#remove">remove</a>, <a href="#remove-duplicates">remove-duplicates</a>, <a href="#remove-if-not">remove-if-not</a>, <a href="#remove-last">remove-last</a><hr/>
+<a name="remove-if-not"></a>
+<i>Macro</i><b> remove-if-not</b><br/><br/>
+<b>Syntax:</b> (remove-if-not pred lst) => result<br/><br/>
+<b>Arguments:</b> pred: a function; lst: a list; result: a list<br/><br/>
+<b>Description:</b> remove-if-not removes those elements in 'lst' for which 'pred' returns NIL<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if 'lst' is not a list. An exception of type EXCEPTION is thrown if 'pred' is not a function<br/><br/>
+<b>Examples:</b><br/><br/>
+(remove-if-not (lambda (x) (>= x 3)) '(1 1 2 1 3 4)) => (3 4)<br/><br/><b>See Also:</b> 
+<a href="#remove">remove</a>, <a href="#remove-duplicates">remove-duplicates</a>, <a href="#remove-if">remove-if</a>, <a href="#remove-last">remove-last</a><hr/>
+<a name="remove-last"></a>
+<i>Function</i><b> remove-last</b><br/><br/>
+<b>Syntax:</b> (remove-last lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: a list<br/><br/>
+<b>Description:</b> remove-last removes the last element in 'lst'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type EXCEPTION is thrown if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(remove-last '(1 1 2 1 3 4)) => (1 1 2 1 3)<br/><br/><b>See Also:</b> 
+<a href="#remove">remove</a>, <a href="#remove-duplicates">remove-duplicates</a>, <a href="#remove-if">remove-if</a>, <a href="#remove-if-not">remove-if-not</a><hr/>
+<a name="rest"></a>
+<i>Macro</i><b> rest</b><br/><br/>
+<b>Syntax:</b> (rest lst) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
+<b>Description:</b> rest retuns the list comprising all the elements of 'lst' except the first one<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied, and an exception of type NOT-A-CONS if lst is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(rest '(1 2 3 4)) => (2 3 4)<br/><br/><b>See Also:</b> 
+<a href="#cdr">cdr</a><hr/>
+<a name="resume"></a>
+<i>Special Operator</i><b> resume</b><br/><br/>
+<b>Syntax:</b> (resume) => NIL<br/><br/>
+<b>Arguments:</b> None<br/><br/>
+<b>Description:</b> resume resumes the evaluation of the expression after a BREAK<br/><br/>
+<b>Exceptions:</b> None; an error is raised if abort is invoked when not in debug mode (entered via a 'break')<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#abort">abort</a>, <a href="#break">break</a><hr/>
+<a name="return-from"></a>
+<i>Special Operator</i><b> return-from</b><br/><br/>
+<b>Syntax:</b> (return-from fn ret) => result<br/><br/>
+<b>Arguments:</b> fn: a function or a macro object; ret: an object; result: an object<br/><br/>
+<b>Description:</b> return-from returns control from the execution of 'fn' to its calling frame with 'fn' returning the value 'ret'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type EXCEPTION if the required number of arguments is not supplied, if the first parameter is not a function object or if it is invoked in an invalid context (e.g. from the REPL or the workspace)<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<hr/>
+<a name="reverse"></a>
+<i>Function</i><b> reverse</b><br/><br/>
+<b>Syntax:</b> (reverse lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: a list<br/><br/>
+<b>Description:</b> reverse creates a new list that contains the contents of 'lst' in reverse order<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied, and an exception of type NOT-A-CONS if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(reverse '(1 1 2 1 3 4)) => (4 3 1 2 1 1)<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="save-object"></a>
+<i>Special Operator</i><b> save-object</b><br/><br/>
+<b>Syntax:</b> (save-object obj str) => NIL<br/><br/>
+<b>Arguments:</b> obj: an object; str: a form that evaluates to a string<br/><br/>
+<b>Description:</b> save-object serializes the object 'obj' to the file named 'str'. All objects referred to by 'obj' are included in this serialization<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type INVALID-ARGUMENT if the second argument is not a string. An exception of type EXCEPTION is thrown if the file cannot be created<br/><br/>
+<b>Examples:</b><br/><br/>
+(save-object some-obj "object.lisp") => NIL<br/><br/><b>See Also:</b> 
+<a href="#load-object">load-object</a><hr/>
+<a name="second"></a>
+<i>Macro</i><b> second</b><br/><br/>
+<b>Syntax:</b> (second lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> second returns the second element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied, and an exception of type NOT-A-CONS if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(second '(1 2 3)) => 2<br/><br/>(second ()) => NIL<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#third">third</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="select"></a>
+<i>Function</i><b> select</b><br/><br/>
+<b>Syntax:</b> (select pred lst) => result<br/><br/>
+<b>Arguments:</b> pred: a function; lst: a list; result: a list<br/><br/>
+<b>Description:</b> select builds a new list containing the elements in 'lst' for which 'pred' evaluates to a non-NIL value<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are passed. An exception of type NOT-A-CONS is thrown if 'lst' is not a list. Throws an exception of type EXCEPTION if 'pred' is not a function object<br/><br/>
+<b>Examples:</b><br/><br/>
+(select (lambda (x) (numberp x)) '(1 2 #\\a "abc" 'x)) => (1 2)<br/><br/><b>See Also:</b> 
+<a href="#find">find</a>, <a href="#find-if">find-if</a><hr/>
+<a name="set-ext-mem"></a>
+<i>Function</i><b> set-ext-mem</b><br/><br/>
+<b>Syntax:</b> (set-ext-mem blk arr) => NIL<br/><br/>
+<b>Arguments:</b> blk: a list; arr: an array<br/><br/>
+<b>Description:</b> set-ext-mem populates 'blk', that was allocated by one of the alloc-ext-mem-* functions, with the values in 'arr'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type INVALID-ARGUMENT if the second argument is not an array, if the length of 'arr' does not match the size of 'blk', if 'blk' is not a valid object created from an earlier call to alloc-ext-mem* or if the contents of the array do not match the definition of 'blk'. An exception of type NOT-A-CONS is thrown if 'blk' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
+<a name="set-ext-mem-cell"></a>
+<i>Function</i><b> set-ext-mem-cell</b><br/><br/>
+<b>Syntax:</b> (set-ext-mem-cell blk pos val) => NIL<br/><br/>
+<b>Arguments:</b> blk: a list; pos: an integer; val: an integer, float or a character<br/><br/>
+<b>Description:</b> set-ext-mem-cell populates position 'pos' in 'blk', that was allocated by one of the alloc-ext-mem-* functions, with the value 'val'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if 'blk' is not a list. Throws an exception of type INVALID-INDEX if 'pos' does not fall within the bounds of 'blk', and an exception of type INVALID-ARGUMENT if the type of blk does not match that of 'val'<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a><hr/>
+<a name="setcar"></a>
+<i>Special Operator</i><b> setcar</b><br/><br/>
+<b>Syntax:</b> (setcar lst obj) => obj<br/><br/>
+<b>Arguments:</b> lst: a list; obj: an object<br/><br/>
+<b>Description:</b> setcar updates the CAR of 'lst' to 'obj'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied and an exception of type NOT-A-CONS if the first argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x '(1 2)) => (1 2)<br/><br/>x => (1 2)<br/><br/>(setcar x 100) => 100<br/><br/>x => (100 2)<br/><br/><b>See Also:</b> 
+<a href="#setcdr">setcdr</a><hr/>
+<a name="setcdr"></a>
+<i>Special Operator</i><b> setcdr</b><br/><br/>
+<b>Syntax:</b> (setcdr lst obj) => obj<br/><br/>
+<b>Arguments:</b> lst: a list; obj: an object<br/><br/>
+<b>Description:</b> setcar updates the CDR of 'lst' to 'obj'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied and an exception of type NOT-A-CONS if the first argument is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x '(1 2)) => (1 2)<br/><br/>x => (1 2)<br/><br/>(setcdr x 100) => 100<br/><br/>x => (1 . 100)<br/><br/><b>See Also:</b> 
+<a href="#setcar">setcar</a><hr/>
+<a name="set"></a>
+<i>Special Operator</i><b> set</b><br/><br/>
+<b>Syntax:</b> (set var obj) => obj<br/><br/>
+<b>Arguments:</b> var: a symbol; obj: an object<br/><br/>
+<b>Description:</b> set binds 'var' to 'obj'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-ARGUMENT if the required number of arguments are not supplied or if the first argument is not a symbol. Throws exception EXCEPTION if 'var' has not been defined<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x) => NIL<br/><br/>(set x 100) => 100<br/><br/>x => 100<br/><br/><b>See Also:</b> 
+<a href="#setq">setq</a><hr/>
+<a name="setq"></a>
+<i>Macro</i><b> setq</b><br/><br/>
+<b>Syntax:</b> (setq var obj) => obj<br/><br/>
+<b>Arguments:</b> var: a symbol; obj: an object<br/><br/>
+<b>Description:</b> setq binds 'var' to 'obj'; it is identical to 'set' and is defined to provide limited compatibility to Common Lisp<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-ARGUMENT if the required number of arguments are not supplied or if the first argument is not a symbol. Throws exception EXCEPTION if 'var' has not been defined<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x) => NIL<br/><br/>(setq x 100) => 100<br/><br/>x => 100<br/><br/><b>See Also:</b> 
+<a href="#set">set</a><hr/>
+<a name="string"></a>
+<i>Special Operator</i><b> string</b><br/><br/>
+<b>Syntax:</b> (string str) => str<br/><br/>
+<b>Arguments:</b> str: a string literal<br/><br/>
+<b>Description:</b> string creates a string object from 'str'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the argument is not a string literal<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x) => NIL<br/><br/>(set x (string "abc")) => X<br/><br/>x => "abc"<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="string-get"></a>
+<i>Macro</i><b> string-get</b><br/><br/>
+<b>Syntax:</b> (string-get str pos) => result<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string; pos: an integer; result: a character<br/><br/>
+<b>Description:</b> string-get returns the character at position 'pos' of 'str'. Note that string indices start at zero<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INDEX-OUT-OF-BOUNDS if 'pos' is not greater than or equal to zero or less than the size of 'str'. An exception of type INVALID-ARGUMENT is thrown if 'str' is not a string object or a string literal<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x "abc") => "abc"<br/><br/>(string-get x 0) => #\\a<br/><br/>(string-get x 2) => #\\c<br/><br/><b>See Also:</b> 
+<a href="#array-get">array-get</a>, <a href="#array-set">array-set</a>, <a href="#string-set">string-set</a><hr/>
+<a name="string-set"></a>
+<i>Macro</i><b> string-set</b><br/><br/>
+<b>Syntax:</b> (string-set str pos val) => val<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string; pos: an integer; val: a character<br/><br/>
+<b>Description:</b> string-set sets the character at position 'pos' of 'str' to 'val'. Note that string indices start at zero<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INDEX-OUT-OF-BOUNDS if 'pos' is not greater than or equal to zero or less than the size of 'str'. An exception of type INVALID-ARGUMENT is thrown if 'str' is not a string object or a string literal<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x (string "abc")) => "abc"<br/><br/>(string-set x 0 #\\d) => #\\d<br/><br/>x => "dbc"<br/><br/><b>See Also:</b> 
+<a href="#array-get">array-get</a>, <a href="#array-set">array-set</a>, <a href="#string-get">string-get</a><hr/>
+<a name="stringp"></a>
+<i>Special Operator</i><b> stringp</b><br/><br/>
+<b>Syntax:</b> (stringp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> stringp returns T if 'form' evaluates to a string object or a string literal and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(stringp "abc") => T<br/><br/>(stringp #\\a) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="sub-array"></a>
+<i>Special Operator</i><b> sub-array</b><br/><br/>
+<b>Syntax:</b> (sub-array arr start len) => result<br/><br/>
+<b>Arguments:</b> arr: a form that evaluates to an array; start, end: integers; result: an array<br/><br/>
+<b>Description:</b> sub-array creates a new array comprising the elements starting from position 'start' in 'arr' till the position (start + len -1)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of  arguments is not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not an array or if the second and third arguments are not non-negative integers. Throws an exception of type INDEX-OUT-OF-BOUNDS if 'start' and 'len' specify a range outside the array size<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x (make-array 5 nil)) => [NIL NIL NIL NIL NIL]<br/><br/>(dolist (i '(0 1 2 3 4)) (array-set x i (+ i 1))) => NIL<br/><br/>x => [1 2 3 4 5]<br/><br/>(sub-array x 0 3) => [1 2 3]<br/><br/><b>See Also:</b> 
+<a href="#substring">substring</a>, <a href="#sub-list">sub-list</a><hr/>
+<a name="sub-list"></a>
+<i>Function</i><b> sub-list</b><br/><br/>
+<b>Syntax:</b> (sub-list lst start len) => result<br/><br/>
+<b>Arguments:</b> lst: a form that evaluates to a list; start, end: integers; result: a list<br/><br/>
+<b>Description:</b> sub-list creates a new list comprising the elements starting from position 'start' in 'lst' till the position (start + len -1)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a list or if the second and third arguments are not non-negative integers. Throws an exception of type INDEX-OUT-OF-BOUNDS if 'start' and 'len' specify a range outside the list size<br/><br/>
+<b>Examples:</b><br/><br/>
+(sub-list '(1 2 3 4 5) 0 3) => (1 2 3)<br/><br/><b>See Also:</b> 
+<a href="#substring">substring</a>, <a href="#sub-array">sub-array</a><hr/>
+<a name="substring"></a>
+<i>Macro</i><b> substring</b><br/><br/>
+<b>Syntax:</b> (substring str start len) => result<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string; start, end: integers; result: a string<br/><br/>
+<b>Description:</b> substring creates a new string comprising the elements starting from position 'start' in 'str' till the position (start + len -1)<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not an array (strings are internally stored as arrays in pLisp) or if the second and third arguments are not non-negative integers. Throws an exception of type INDEX-OUT-OF-BOUNDS if 'start' and 'len' specify a range outside the string size<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x (make-string 3 #\\a)) => "aaa"<br/><br/>x => "aaa"<br/><br/>(substring x 0 2) => "aa"<br/><br/><b>See Also:</b> 
+<a href="#sub-array">sub-array</a>, <a href="#sub-list">sub-list</a><hr/>
+<a name="symbol"></a>
+<i>Special Operator</i><b> symbol</b><br/><br/>
+<b>Syntax:</b> (symbol str) => result<br/><br/>
+<b>Arguments:</b> str: a form that evaluates to a string; result: a symbol<br/><br/>
+<b>Description:</b> symbol returns the symbol object represented by 'str'. Note that this operator is case-insensitive<br/><br/>
+<b>Exceptions:</b> Throws an exception of type INVALID-ARGUMENT if no arguments are supplied or if the first argument is not a string<br/><br/>
+<b>Examples:</b><br/><br/>
+(symbol "abc") => ABC<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="symbol-name"></a>
+<i>Special Operator</i><b> symbol-name</b><br/><br/>
+<b>Syntax:</b> (symbol-name sym) => result<br/><br/>
+<b>Arguments:</b> sym: a form that evaluates to a symbol; result: a string<br/><br/>
+<b>Description:</b> symbol returns the string representation of 'sym'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol<br/><br/>
+<b>Examples:</b><br/><br/>
+(symbol-name 'abc) => "ABC"<br/><br/><b>See Also:</b> 
+<a href="#symbol-value">symbol-value</a><hr/>
+<a name="symbol-value"></a>
+<i>Special Operator</i><b> symbol-value</b><br/><br/>
+<b>Syntax:</b> (symbol-value sym) => result<br/><br/>
+<b>Arguments:</b> sym: a form that evaluates to a symbol; result: an object<br/><br/>
+<b>Description:</b> symbol returns the object bound to 'sym' in the current environment<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol. Throws SYMBOL-NOT-BOUND if 'sym' is not bound to a value in the top-level environment<br/><br/>
+<b>Examples:</b><br/><br/>
+(define x 100) => 100<br/><br/>(symbol-value 'x) => 100<br/><br/><b>See Also:</b> 
+<a href="#symbol-name">symbol-name</a><hr/>
+<a name="symbolp"></a>
+<i>Special Operator</i><b> symbolp</b><br/><br/>
+<b>Syntax:</b> (symbolp form) => result<br/><br/>
+<b>Arguments:</b> form: an object; result: T or NIL<br/><br/>
+<b>Description:</b> symbolp returns T if 'form' evaluates to a symbol and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(symbolp 'x) => T<br/><br/>(symbolp #\\a) => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="third"></a>
+<i>Macro</i><b> third</b><br/><br/>
+<b>Syntax:</b> (third lst) => result<br/><br/>
+<b>Arguments:</b> lst: a list; result: an object<br/><br/>
+<b>Description:</b> third returns the third element of a list<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied, and an exception of type NOT-A-CONS if 'lst' is not a list<br/><br/>
+<b>Examples:</b><br/><br/>
+(third '(1 2 3)) => 3<br/><br/>(third ()) => NIL<br/><br/><b>See Also:</b> 
+<a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#fourth">fourth</a>, <a href="#fifth">fifth</a><hr/>
+<a name="throw"></a>
+<i>Special Operator</i><b> throw</b><br/><br/>
+<b>Syntax:</b> (throw ex) => NIL<br/><br/>
+<b>Arguments:</b> ex: an exception object<br/><br/>
+<b>Description:</b> throw throws the exception object specified by 'ex'<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied, and an exception of type INVALID-ARGUMENT if 'excp' is not a valid exception object<br/><br/>
+<b>Examples:</b><br/><br/>
+<b>See Also:</b> 
+<a href="#error">error</a><hr/>
+<a name="time"></a>
+<i>Special Operator</i><b> time</b><br/><br/>
+<b>Syntax:</b> (time exp) => NIL<br/><br/>
+<b>Arguments:</b> exp: a quoted form<br/><br/>
+<b>Description:</b> time evaluates 'exp' and prints the time taken for the evaluation. The result is printed to the shell if pLisp was invoked with the '-c' option and to the Transcript if otherwise<br/><br/>
+<b>Exceptions:</b> Throws an EXCEPTION of type COMPILE-ERROR if no arguments are supplied. Propagates exceptions thrown (if any) by the compilation and evaluation of 'exp'<br/><br/>
+<b>Examples:</b><br/><br/>
+(time '(+ 1 1)) =><br/><br/>(+ 1 1) took 0 seconds 20 milliseconds<br/><br/>2<br/><br/><b>See Also:</b> 
+<a href="#profile">profile</a><hr/>
+<a name="try"></a>
+<i>Macro</i><b> try</b><br/><br/>
+<b>Syntax:</b> (try body exception-clause finally-clause) => result<br/><br/>
+<b>Arguments:</b> body, exception-clause, finally-clause: forms; result: an object<br/><br/>
+<b>Description:</b> try evaluates 'body', and if any exceptions are thrown during this evaluation, evaluates 'exception-clause'. 'finally-clause' is evaluated irrespective of whether an exception is thrown<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied or if 'exception-clause' is not of the form '(catch (ex) form)'. If the exception clause rethrows the exception (or throws a fresh exception), this exception is rethrown by the try<br/><br/>
+<b>Examples:</b><br/><br/>
+(try (car 1) (catch (e) "Error!") (print "Done")) =><br/><br/>"Done"<br/><br/>"Error!"<br/><br/><b>See Also:</b> 
+<a href="#unwind-protect">unwind-protect</a><hr/>
+<a name="unbind"></a>
+<i>Special Operator</i><b> unbind</b><br/><br/>
+<b>Syntax:</b> (unbind sym) => NIL<br/><br/>
+<b>Arguments:</b> sym: a symbol<br/><br/>
+<b>Description:</b> unbind unbinds 'sym' from the top level enviroment<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the argument is not a symbol. Throws an exception of type SYMBOL-NOT-BOUND if the symbol was not bound already<br/><br/>
+<b>Examples:</b><br/><br/>
+(unbind 'x) => NIL<br/><br/><b>See Also:</b> 
+<a href="#define">define</a>, <a href="#set">set</a>, <a href="#setq">setq</a><hr/>
+<a name="unwind-protect"></a>
+<i>Macro</i><b> unwind-protect</b><br/><br/>
+<b>Syntax:</b> (unwind-protect body finally-clause) => result<br/><br/>
+<b>Arguments:</b> body, finally-clause: forms; result: an object<br/><br/>
+<b>Description:</b> unwind-protect evaluates 'body', and if any exceptions are thrown during this evaluation, throws the exception. 'finally-clause' is evaluated before the exception is thrown<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Rethrows any exception thrown during the evaluation of 'body'<br/><br/>
+<b>Examples:</b><br/><br/>
+(unwind-protect (car 1) (print "Done"))<br/><br/><b>See Also:</b> 
+<a href="#try">try</a><hr/>
+<a name="values"></a>
+<i>Macro</i><b> values</b><br/><br/>
+<b>Syntax:</b> (values &rest body) => result<br/><br/>
+<b>Arguments:</b> body: the arguments converted to a list; result: a list<br/><br/>
+<b>Description:</b> values bundles the arguments into a list. It is used to return multiple values from an expression<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+(values 1 2 3) => (1 2 3)<br/><br/><b>See Also:</b> 
+<a href="#multiple-value-bind">multiple-value-bind</a><hr/>
+<a name="while"></a>
+<i>Macro</i><b> while</b><br/><br/>
+<b>Syntax:</b> (while cond &rest body) => result<br/><br/>
+<b>Arguments:</b> cond: a form; body: the rest of the arguments converted to a list; result: an object<br/><br/>
+<b>Description:</b> while evaluates 'body' while 'cond' evaluates to a non-NIL value. The result of evaluating 'body' for the last time is returned<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Propagates exceptions (if any) thrown by its constituent forms<br/><br/>
+<b>Examples:</b><br/><br/>
+(let ((x 0)) (while (< x 5) (print x) (incf x))) =><br/><br/>0<br/><br/>1<br/><br/>2<br/><br/>3<br/><br/>4<br/><br/>NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="-"></a>
+<i>Special Operator</i><b> -</b><br/><br/>
+<b>Syntax:</b> (- form*) => result<br/><br/>
+<b>Arguments:</b> form: a form that evaluates to an integer or a float; result: an integer or a float<br/><br/>
+<b>Description:</b> - subtracts the sum of the remaining arguments from the first argument<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(- 2 1) => 1<br/><br/>(- 10 2 3.14) => 4.860000<br/><br/><b>See Also:</b> 
+<hr/>
+<a name=","></a>
+<i>Special Operator</i><b> ,</b><br/><br/>
+<b>Syntax:</b> ,form => result<br/><br/>
+<b>Arguments:</b> form: a form; result: an object<br/><br/>
+<b>Description:</b> , is used in macro bodies to represent forms whose values should be substituted in the compiled form<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if invoked outside the context of function/macro definitions<br/><br/>
+<b>Examples:</b><br/><br/>
+(defmacro first (lst) `(car ,lst)) => <macro><br/><br/><b>See Also:</b> 
+<hr/>
+<a name=",@"></a>
+<i>Special Operator</i><b> ,@</b><br/><br/>
+<b>Syntax:</b> ,@form => result<br/><br/>
+<b>Arguments:</b> form: a form; result: an object<br/><br/>
+<b>Description:</b> ,@ is used in macro bodies to splice the forms (whose values are lists) into a list in the compiled form<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if invoked outside the context of function/macro definitions<br/><br/>
+<b>Examples:</b><br/><br/>
+(defmacro values (&rest body) `(list ,@body))<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="*"></a>
+<i>Special Operator</i><b> *</b><br/><br/>
+<b>Syntax:</b> (* form*) => result<br/><br/>
+<b>Arguments:</b> form: a form that evaluates to an integer or a float; result: an integer or a float<br/><br/>
+<b>Description:</b> * multiplies all its arguments<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(* 2 1) => 2<br/><br/>(* 1 2 3) => 6<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="/"></a>
+<i>Special Operator</i><b> /</b><br/><br/>
+<b>Syntax:</b> (/ form*) => result<br/><br/>
+<b>Arguments:</b> form: a form that evaluates to an integer or a float; result: an integer or a float<br/><br/>
+<b>Description:</b> / divides the first argument by the product of the remaining arguments. If all the arguments are integers, integer division is performed, otherwise floating point division is performed<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float. An exception DIV-BY-ZERO-EXCEPTION is thrown if a division by zero is attempted<br/><br/>
+<b>Examples:</b><br/><br/>
+(/ 2 1) => 2<br/><br/>(/ 1.0 2 3) => 0.166667<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="`"></a>
+<i>Special Operator</i><b> `</b><br/><br/>
+<b>Syntax:</b> `form => result<br/><br/>
+<b>Arguments:</b> form: a form; result: an object<br/><br/>
+<b>Description:</b> ` is used in macro bodies to represent forms that should be carried over as-is to the compiled form<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+(defmacro first (lst) `(car ,lst)) => <macro><br/><br/><b>See Also:</b> 
+<a href="#'">'</a><hr/>
+<a name="'"></a>
+<i>Special Operator</i><b> '</b><br/><br/>
+<b>Syntax:</b> 'form => result<br/><br/>
+<b>Arguments:</b> form: a form; result: an object<br/><br/>
+<b>Description:</b> ' is used to quote a form, i.e. prevent pLisp from evaluating the form and instead return it as-is<br/><br/>
+<b>Exceptions:</b> None<br/><br/>
+<b>Examples:</b><br/><br/>
+'(a b c) => (a b c)<br/><br/><b>See Also:</b> 
+<a href="#`">`</a><hr/>
+<a name="+"></a>
+<i>Special Operator</i><b> +</b><br/><br/>
+<b>Syntax:</b> (+ form*) => result<br/><br/>
+<b>Arguments:</b> form: a form that evaluates to an integer or a float; result: an integer or a float<br/><br/>
+<b>Description:</b> + computes the sum of its arguments<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if any of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(+ 1 2) => 3<br/><br/>(+ 1 3.14) => 4.140000<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="<"></a>
+<i>Special Operator</i><b> <</b><br/><br/>
+<b>Syntax:</b> (< form1 form2) => result<br/><br/>
+<b>Arguments:</b> form1, form2: forms that evaluates to integers or floats; result: T or NIL<br/><br/>
+<b>Description:</b> < returns T if 'form1' is less than 'form2' and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(< 1 2) => T<br/><br/>(< 2 1) => NIL<br/><br/><b>See Also:</b> 
+<a href="#<="><=</a><hr/>
+<a name="<="></a>
+<i>Special Operator</i><b> <=</b><br/><br/>
+<b>Syntax:</b> (<= form1 form2) => result<br/><br/>
+<b>Arguments:</b> form1, form2: forms that evaluates to integers or floats; result: T or NIL<br/><br/>
+<b>Description:</b> <= returns T if 'form1' is less than or equal to 'form2' and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(<= 1 2) => T<br/><br/>(<= 2 2) => T<br/><br/>(<= 4 3) => NIL<br/><br/><b>See Also:</b> 
+<a href="#<"><</a><hr/>
+<a name=">"></a>
+<i>Special Operator</i><b> ></b><br/><br/>
+<b>Syntax:</b> (> form1 form2) => result<br/><br/>
+<b>Arguments:</b> form1, form2: forms that evaluates to integers or floats; result: T or NIL<br/><br/>
+<b>Description:</b> > returns T if 'form1' is greater than 'form2' and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(> 2 1) => T<br/><br/>(> 2 7) => NIL<br/><br/><b>See Also:</b> 
+<a href="#>=">>=</a><hr/>
+<a name=">="></a>
+<i>Special Operator</i><b> >=</b><br/><br/>
+<b>Syntax:</b> (>= form1 form2) => result<br/><br/>
+<b>Arguments:</b> form1, form2: forms that evaluates to integers or floats; result: T or NIL<br/><br/>
+<b>Description:</b> >= returns T if 'form1' is greater than or equal to 'form2' and NIL otherwise<br/><br/>
+<b>Exceptions:</b> Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float<br/><br/>
+<b>Examples:</b><br/><br/>
+(>= 7 2) => T<br/><br/>(>= 1 2) => NIL<br/><br/>(>= 1 1) => T<br/><br/><b>See Also:</b> 
+<a href="#>">></a><hr/>
+</body>
+</html>
