@@ -216,12 +216,19 @@ int main(int argc, char **argv)
 
   fprintf(out, "<br/><br/>");
 
+  prev_entry_start = ' ';
+
   for(i=0; i<nof_help_entries; i++)
   {
     if(help_entries[i].name[0] >= 97 && help_entries[i].name[0] <= 122)
     {
       if(help_entries[i].name[0] != prev_entry_start)
-        fprintf(out, "<br/><b><a name=\"%c\">%c</a></b><br/><br/>\n", help_entries[i].name[0] - 32, help_entries[i].name[0] - 32);
+      {
+        if(prev_entry_start != ' ')
+          fprintf(out, "</ul>\n");
+        fprintf(out, "<br/><b><a name=\"%c\">%c</a></b><br/>\n", help_entries[i].name[0] - 32, help_entries[i].name[0] - 32);
+        fprintf(out, "<ul style=\"padding-left:40px\">\n");
+      }
 
       fprintf(out, "<li><a href=\"#%s\">%s</a></li><br/>\n", help_entries[i].name, help_entries[i].name);
 
@@ -229,13 +236,19 @@ int main(int argc, char **argv)
     }
   }
 
-  fprintf(out, "<br/><b><a name=\"Non-Alphabetic\">Non-Alphabetic</a></b><br/><br/>\n");
+  fprintf(out, "</ul>\n");
+
+  fprintf(out, "<br/><b><a name=\"Non-Alphabetic\">Non-Alphabetic</a></b><br/>\n");
+
+  fprintf(out, "<ul style=\"padding-left:40px\">\n");
 
   for(i=0; i<nof_help_entries; i++)
   {
     if(help_entries[i].name[0] < 97 || help_entries[i].name[0] > 122)
       fprintf(out, "<li><a href=\"#%s\">%s</a></li><br/>\n", help_entries[i].name, help_entries[i].name);
   }
+
+  fprintf(out, "</ul>\n");
 
   fprintf(out, "<hr/>\n");
 
@@ -254,8 +267,55 @@ int main(int argc, char **argv)
 
     fprintf(out, "<b>Syntax:</b> %s<br/><br/>\n", help_entries[i].syntax);
     fprintf(out, "<b>Arguments:</b> %s<br/><br/>\n", help_entries[i].args);
-    fprintf(out, "<b>Description:</b> %s<br/><br/>\n", help_entries[i].desc);
-    fprintf(out, "<b>Exceptions:</b> %s<br/><br/>\n", help_entries[i].exceptions);
+
+    fprintf(out, "<b>Description: ");
+
+    for(j=0; help_entries[i].desc[j] != ' '; j++)
+      fprintf(out, "%c", help_entries[i].desc[j]);
+
+    fprintf(out, "</b>");
+
+    int first_space = j;
+
+    int toggle = 0;
+
+    for(j=first_space; j<strlen(help_entries[i].desc); j++)
+    {
+      char c = help_entries[i].desc[j];
+      if(c == '\'')
+      {
+        if(toggle == 0)
+          fprintf(out, "<i>");
+        else
+          fprintf(out, "</i>");
+        toggle = !toggle;
+      }
+      else
+        fprintf(out, "%c", help_entries[i].desc[j]);
+    }
+
+    fprintf(out, "<br/><br/>\n");
+
+    fprintf(out, "<b>Exceptions: </b>");
+
+    toggle = 0;
+
+    for(j=0; j<strlen(help_entries[i].exceptions); j++)
+    {
+      char c = help_entries[i].exceptions[j];
+      if(c == '\'')
+      {
+        if(toggle == 0)
+          fprintf(out, "<i>");
+        else
+          fprintf(out, "</i>");
+        toggle = !toggle;
+      }
+      else
+        fprintf(out, "%c", help_entries[i].exceptions[j]);
+    }
+
+    fprintf(out, "<br/><br/>\n");
 
     fprintf(out, "<b>Examples:</b><br/><br/>\n");
 
@@ -266,7 +326,7 @@ int main(int argc, char **argv)
 
       for(k=0; k<strlen(help_entries[i].examples[j])-1; k++)
       {
-        if(help_entries[i].examples[j][k] == '\\' && help_entries[i].examples[j][k+1] == '"')
+        if(help_entries[i].examples[j][k] == '\\' && (help_entries[i].examples[j][k+1] == '"' || help_entries[i].examples[j][k+1] == '\\'))
           continue;
         else
           fprintf(out, "%c", help_entries[i].examples[j][k]);
