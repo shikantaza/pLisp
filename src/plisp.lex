@@ -82,6 +82,7 @@ void pop_yyin()
   if(!YY_CURRENT_BUFFER)
     yyin = stdin;
   */
+  include_stack_ptr--;
 
   if(include_stack_ptr == 0)
   {
@@ -93,7 +94,7 @@ void pop_yyin()
   }
   else
   {
-    include_stack_ptr--;
+    //include_stack_ptr--;
     yy_delete_buffer(YY_CURRENT_BUFFER);
     yy_switch_to_buffer(include_stack[include_stack_ptr]);
   }

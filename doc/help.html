@@ -260,7 +260,7 @@
 <b>Syntax:</b> (alias var1 var2) => NIL<br/><br/>
 <b>Arguments:</b> var1, var2: symbols<br/><br/>
 <b>Description: alias</b> creates a new binding between <i>var2</i> and the object bound to <i>var1</i><br/><br/>
-<b>Exceptions: </b>An error is raised <i>var2</i> is not bound to a value<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if <i>var1</i> is not a symbol<br/><br/>
 <b>Examples:</b><br/><br/>
 (define x 100)<br/><br/>(alias y x)<br/><br/>y=>100<br/><br/><b>See Also:</b> 
 <a href="#define">define</a><hr/>
@@ -269,7 +269,7 @@
 <b>Syntax:</b> (alloc-ext-mem-char n) => (ptr, len, type)<br/><br/>
 <b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
 <b>Description: alloc-ext-mem-char</b> allocates raw memory corresponding to <i>n</i> characters. Equivalent to malloc(n*sizeof(char)). Returns the pointer to the allocated memory via a list that also contains the number of characters allocated (i.e. <i>n</i>) and the type of the memory block (integer 3 signifying a character array)<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above<br/><br/>
+<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above<br/><br/>
 <b>Examples:</b><br/><br/>
 <b>See Also:</b> 
 <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
@@ -278,7 +278,7 @@
 <b>Syntax:</b> (alloc-ext-mem-float n) => (ptr, len, type)<br/><br/>
 <b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
 <b>Description: alloc-ext-mem-float</b> allocates raw memory corresponding to <i>n</i> floats. Equivalent to malloc(n*sizeof(float)). Returns the pointer to the allocated memory via a list that also contains the number of floats allocated (i.e. <i>n</i>) and the type of the memory block (integer 2 signifying a float array)<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above<br/><br/>
+<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above<br/><br/>
 <b>Examples:</b><br/><br/>
 <b>See Also:</b> 
 <a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
@@ -287,7 +287,7 @@
 <b>Syntax:</b> (alloc-ext-mem-int n) => (ptr, len, type)<br/><br/>
 <b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
 <b>Description: alloc-ext-mem-int</b> allocates raw memory corresponding to <i>n</i> integers. Equivalent to malloc(n*sizeof(int)). Returns the pointer to the allocated memory via a list that also contains the number of integers allocated (i.e. <i>n</i>) and the type of the memory block (integer 1 signifying an integer array)<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above<br/><br/>
+<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above<br/><br/>
 <b>Examples:</b><br/><br/>
 <b>See Also:</b> 
 <a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
@@ -305,7 +305,7 @@
 <b>Syntax:</b> (append list1 list2) => result<br/><br/>
 <b>Arguments:</b> list1, list2: forms that evaluate to lists; result: a list<br/><br/>
 <b>Description: append</b> creates a new list by appending the two lists passed as arguments<br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and EXCEPTION if either of the arguments is not a list<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and an exception of type EXCEPTION if either of the arguments is not a list<br/><br/>
 <b>Examples:</b><br/><br/>
 (append '(a b) '(c d)) => (A B C D)<br/><br/>(append () '(1 2)) => (1 2)<br/><br/><b>See Also:</b> 
 <a href="#concat">concat</a>, <a href="#nconc">nconc</a><hr/>
@@ -314,7 +314,7 @@
 <b>Syntax:</b> (apply function args) => result<br/><br/>
 <b>Arguments:</b> function: a form that evaluates to a function or a continuation; args: a form that evaluates to a list; result: an object<br/><br/>
 <b>Description: apply</b> applies the function or continuation passed as its first parameter to the arguments passed as its second parameter<br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if two argments are not passed; throws an exception of type INVALID-ARGUMENT if the first argument is not a function or a continuation or if the second argument is not a list<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if two arguments are not passed; throws an exception of type INVALID-ARGUMENT if the first argument is not a function or a continuation or if the second argument is not a list<br/><br/>
 <b>Examples:</b><br/><br/>
 (apply (lambda (a b) (+ a b)) '(1 2)) => 3<br/><br/><b>See Also:</b> 
 <a href="#funcall">funcall</a><hr/>
@@ -341,7 +341,7 @@ a1 => [1, 2]<br/><br/>a2 => [1, 2]<br/><br/>a3 => ['a 'b]<br/><br/>(array-eq a1 
 <b>Syntax:</b> (array-get arr index) => result<br/><br/>
 <b>Arguments:</b> arr: a form that evaluates to an array object; index: a form that evaluates to an integer; result: an object<br/><br/>
 <b>Description: array-get</b> returns the object at the position <i>index</i> of array <i>arr</i>. Note that array indices start from zero<br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than <i>(len-1)</i>, where <i>len</i> is the length of the array<br/><br/>
 <b>Examples:</b><br/><br/>
 a1 => [1, 2]<br/><br/>(array-get a1 0) => 1<br/><br/><b>See Also:</b> 
 <a href="#array-set">array-set</a>, <a href="#string-get">string-get</a>, <a href="#string-set">string-set</a><hr/>
@@ -359,7 +359,7 @@ a1 => [40, 50]<br/><br/>(array-length a1) => 2<br/><br/><b>See Also:</b>
 <b>Syntax:</b> (array-set arr index form) => form<br/><br/>
 <b>Arguments:</b> arr: a form that evaluates to an array object; index: an integer; form: an object<br/><br/>
 <b>Description: array-set</b> binds the position <i>index</i> of array <i>arr</i> to <i>form</i><br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than <i>(len-1)</i>, where <i>len</i> is the length of the array<br/><br/>
 <b>Examples:</b><br/><br/>
 a1 => [40, 50]<br/><br/>(array-set a1 0 30) => 30<br/><br/>a1 => [30, 50]<br/><br/><b>See Also:</b> 
 <a href="#array-get">array-get</a>, <a href="#string-get">string-get</a>, <a href="#string-set">string-set</a><hr/>
@@ -520,7 +520,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <i>Special Operator</i><b> cdr</b><br/><br/>
 <b>Syntax:</b> (cdr lst) => result<br/><br/>
 <b>Arguments:</b> lst: a form that evaluates to a list; result: an object<br/><br/>
-<b>Description: cdr</b> retuns the list comprising the all the elements of <i>lst</i> except the first one<br/><br/>
+<b>Description: cdr</b> returns the list comprising the all the elements of <i>lst</i> except the first one<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if lst is not a list<br/><br/>
 <b>Examples:</b><br/><br/>
 (cdr '(1 2 3 4)) => (2 3 4)<br/><br/><b>See Also:</b> 
@@ -1007,7 +1007,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Syntax:</b> (load-foreign-library str) => NIL<br/><br/>
 <b>Arguments:</b> str: a form that evaluates to a string<br/><br/>
 <b>Description: load-foreign-library</b> loads the shared library file named <i>str</i><br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the maximum number of foreign libraries that can be loaded is exceeded. An OUT-OF-MEMOY exception is thrown if there is no memory to allocate for the structures internally needed to load the foreign library. An exception of type EXCEPTION is thrown if the shared library is an invalid file<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the maximum number of foreign libraries that can be loaded is exceeded. An OUT-OF-MEMORY exception is thrown if there is no memory to allocate for the structures internally needed to load the foreign library. An exception of type EXCEPTION is thrown if the shared library is an invalid file<br/><br/>
 <b>Examples:</b><br/><br/>
 (load-foreign-library "somelib.so") => NIL<br/><br/><b>See Also:</b> 
 <a href="#call-foreign-function">call-foreign-function</a><hr/>
@@ -1225,7 +1225,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Description: profile</b> evaluates <i>exp</i> and displays the resource usage information for the evaluation<br/><br/>
 <b>Exceptions: </b>Propagates exceptions thrown (if any) by the evaluation of the form<br/><br/>
 <b>Examples:</b><br/><br/>
-(profile '(+ 1 1)) =><br/><br/>Expression took 0.000115 seconds (elapsed), 0.000000 seconds (CPU), 21 words allocated<br/><br/><b>See Also:</b> 
+(profile '(+ 1 1)) =><br/><br/>Expression took 0.000115 seconds (elapsed), 0.000000 seconds (CPU), 21 words allocated<br/><br/>2<br/><br/><b>See Also:</b> 
 <a href="#time">time</a><hr/>
 <a name="progn"></a>
 <i>Macro</i><b> progn</b><br/><br/>
@@ -1591,7 +1591,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <i>Special Operator</i><b> unbind</b><br/><br/>
 <b>Syntax:</b> (unbind sym) => NIL<br/><br/>
 <b>Arguments:</b> sym: a symbol<br/><br/>
-<b>Description: unbind</b> unbinds <i>sym</i> from the top level enviroment<br/><br/>
+<b>Description: unbind</b> unbinds <i>sym</i> from the top level environment<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the argument is not a symbol. Throws an exception of type SYMBOL-NOT-BOUND if the symbol was not bound already<br/><br/>
 <b>Examples:</b><br/><br/>
 (unbind 'x) => NIL<br/><br/><b>See Also:</b> 

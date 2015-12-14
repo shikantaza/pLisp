@@ -555,6 +555,7 @@ int main(int argc, char **argv)
 #else
     repl2();
 #endif
+    printf("\n");
     cleanup();
 
     exit(0);    

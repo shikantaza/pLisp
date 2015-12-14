@@ -714,7 +714,7 @@ void cleanup_memory()
 
   //note: there will be a discrepancy between the allocated memory and deallocated memory
   //if calls are made to any foreign function calls that modify pLisp strings
-  printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
+  //printf("%d words allocated, %d words deallocated\n", memory_allocated(), memory_deallocated());
 }
 
 void recreate_black()

@@ -1556,6 +1556,54 @@ OBJECT_PTR primitive_env(OBJECT_PTR dummy)
   return ret;
 }
 
+OBJECT_PTR primitive_profile(OBJECT_PTR exp)
+{
+  double initial_wall_time, final_wall_time;
+  clock_t initial_cpu_time, final_cpu_time;;
+  unsigned int initial_mem_alloc, final_mem_alloc;
+
+  char buf[100];
+
+  char form[500];
+
+  memset(form, '\0', 500);
+  print_object_to_string(exp, form, 0);
+
+  initial_wall_time = get_wall_time();
+  initial_cpu_time = clock();
+  initial_mem_alloc = memory_allocated();
+
+  OBJECT_PTR res = full_monty_eval(exp);
+
+  if(in_error)
+  {
+    throw_exception1("EXCEPTION", "TIME failed");
+    return NIL;
+  }
+
+  final_wall_time = get_wall_time();
+  final_cpu_time = clock();
+  final_mem_alloc = memory_allocated();
+
+  if(!console_mode && !single_expression_mode && !pipe_mode)
+  {
+    memset(buf, '\0', 100);
+    sprintf(buf,
+	    "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+	    final_wall_time - initial_wall_time,
+	    (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
+	    final_mem_alloc - initial_mem_alloc);
+    print_to_transcript(buf);
+  }
+  else
+    printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+           final_wall_time - initial_wall_time,
+           (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
+           final_mem_alloc - initial_mem_alloc);
+
+  return res;
+}
+
 OBJECT_PTR primitive_time(OBJECT_PTR exp)
 {
   clock_t start, diff;
@@ -1567,7 +1615,6 @@ OBJECT_PTR primitive_time(OBJECT_PTR exp)
 
   memset(form, '\0', 500);
   print_object_to_string(exp, form, 0);
-
 
   start = clock();
 

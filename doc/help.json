@@ -15,7 +15,7 @@
    "syntax" : "(alias var1 var2) => NIL",
    "args" : "var1, var2: symbols",
    "desc" : "alias creates a new binding between 'var2' and the object bound to 'var1'",
-   "exceptions" : "An error is raised 'var2' is not bound to a value",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if 'var1' is not a symbol",
    "examples"   : [ "(define x 100)", "(alias y x)", "y=>100" ],
    "see-also" : [ "define" ]
   },
@@ -25,7 +25,7 @@
    "syntax" : "(alloc-ext-mem-char n) => (ptr, len, type)",
    "args" : "n: integer, ptr: integer, len: integer, type: integer",
    "desc" : "alloc-ext-mem-char allocates raw memory corresponding to 'n' characters. Equivalent to malloc(n*sizeof(char)). Returns the pointer to the allocated memory via a list that also contains the number of characters allocated (i.e. 'n') and the type of the memory block (integer 3 signifying a character array)",
-   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above",
    "examples" : [],
    "see-also" : [ "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
   },
@@ -35,7 +35,7 @@
    "syntax" : "(alloc-ext-mem-float n) => (ptr, len, type)",
    "args" : "n: integer, ptr: integer, len: integer, type: integer",
    "desc" : "alloc-ext-mem-float allocates raw memory corresponding to 'n' floats. Equivalent to malloc(n*sizeof(float)). Returns the pointer to the allocated memory via a list that also contains the number of floats allocated (i.e. 'n') and the type of the memory block (integer 2 signifying a float array)",
-   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above",
    "examples" : [],
    "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
   },
@@ -45,7 +45,7 @@
    "syntax" : "(alloc-ext-mem-int n) => (ptr, len, type)",
    "args" : "n: integer, ptr: integer, len: integer, type: integer",
    "desc" : "alloc-ext-mem-int allocates raw memory corresponding to 'n' integers. Equivalent to malloc(n*sizeof(int)). Returns the pointer to the allocated memory via a list that also contains the number of integers allocated (i.e. 'n') and the type of the memory block (integer 1 signifying an integer array)",
-   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types(s) are not as indicated above",
+   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above",
    "examples" : [],
    "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
   },
@@ -65,7 +65,7 @@
    "syntax" : "(append list1 list2) => result",
    "args" : "list1, list2: forms that evaluate to lists; result: a list",
    "desc" : "append creates a new list by appending the two lists passed as arguments",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and EXCEPTION if either of the arguments is not a list",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of argument are not supplied, and an exception of type EXCEPTION if either of the arguments is not a list",
    "examples" : [ "(append '(a b) '(c d)) => (A B C D)", "(append () '(1 2)) => (1 2)" ],
    "see-also" : [ "concat", "nconc" ]
   },
@@ -75,7 +75,7 @@
    "syntax" : "(apply function args) => result",
    "args" : "function: a form that evaluates to a function or a continuation; args: a form that evaluates to a list; result: an object",
    "desc" : "apply applies the function or continuation passed as its first parameter to the arguments passed as its second parameter",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if two argments are not passed; throws an exception of type INVALID-ARGUMENT if the first argument is not a function or a continuation or if the second argument is not a list",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if two arguments are not passed; throws an exception of type INVALID-ARGUMENT if the first argument is not a function or a continuation or if the second argument is not a list",
    "examples" : [ "(apply (lambda (a b) (+ a b)) '(1 2)) => 3" ],
    "see-also" : [ "funcall" ]
   },
@@ -105,7 +105,7 @@
    "syntax" : "(array-get arr index) => result",
    "args" : "arr: a form that evaluates to an array object; index: a form that evaluates to an integer; result: an object",
    "desc" : "array-get returns the object at the position 'index' of array 'arr'. Note that array indices start from zero",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than '(len-1)', where 'len' is the length of the array",
    "examples" : [ "a1 => [1, 2]", "(array-get a1 0) => 1" ],
    "see-also" : [ "array-set", "string-get", "string-set" ]
   },
@@ -125,7 +125,7 @@
    "syntax" : "(array-set arr index form) => form",
    "args" : "arr: a form that evaluates to an array object; index: an integer; form: an object",
    "desc" : "array-set binds the position 'index' of array 'arr' to 'form'",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than (len-1), where len is the length of the array",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of arguments are not supplied. Throws an exception of type INVALID-ARGUMENT if the first argument is not an array, and an exception of type INDEX-OUT-OF-BOUNDS if the index is less than zero or greater than '(len-1)', where 'len' is the length of the array",
    "examples" : [ "a1 => [40, 50]", "(array-set a1 0 30) => 30", "a1 => [30, 50]" ],
    "see-also" : [ "array-get", "string-get", "string-set" ]
   },
@@ -304,7 +304,7 @@
    "name" : "cdr", 
    "syntax" : "(cdr lst) => result",
    "args" : "lst: a form that evaluates to a list; result: an object",
-   "desc" : "cdr retuns the list comprising the all the elements of 'lst' except the first one",
+   "desc" : "cdr returns the list comprising the all the elements of 'lst' except the first one",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type EXCEPTION if lst is not a list",
    "examples" : [ "(cdr '(1 2 3 4)) => (2 3 4)" ],
    "see-also" : [ "caar", "cadar", "cadddr", "caddr", "cadr", "car", "cdar", "cddr", "first", "second", "third", "fourth", "fifth" ]
@@ -845,7 +845,7 @@
    "syntax" : "(load-foreign-library str) => NIL",
    "args" : "str: a form that evaluates to a string",
    "desc" : "load-foreign-library loads the shared library file named 'str'",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the maximum number of foreign libraries that can be loaded is exceeded. An OUT-OF-MEMOY exception is thrown if there is no memory to allocate for the structures internally needed to load the foreign library. An exception of type EXCEPTION is thrown if the shared library is an invalid file",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. Throws an exception of type INVALID-ARGUMENT if the argument is not a string. An exception of type EXCEPTION is thrown if the maximum number of foreign libraries that can be loaded is exceeded. An OUT-OF-MEMORY exception is thrown if there is no memory to allocate for the structures internally needed to load the foreign library. An exception of type EXCEPTION is thrown if the shared library is an invalid file",
    "examples" : [ "(load-foreign-library \"somelib.so\") => NIL" ],
    "see-also" : [ "call-foreign-function" ]
   },
@@ -1086,7 +1086,7 @@
    "args" : "exp: a quoted form",
    "desc" : "profile evaluates 'exp' and displays the resource usage information for the evaluation",
    "exceptions" : "Propagates exceptions thrown (if any) by the evaluation of the form",
-   "examples" : [ "(profile '(+ 1 1)) =>", "Expression took 0.000115 seconds (elapsed), 0.000000 seconds (CPU), 21 words allocated" ],
+   "examples" : [ "(profile '(+ 1 1)) =>", "Expression took 0.000115 seconds (elapsed), 0.000000 seconds (CPU), 21 words allocated", "2" ],
    "see-also" : [ "time" ]
   },
 
@@ -1494,7 +1494,7 @@
    "name" : "unbind", 
    "syntax" : "(unbind sym) => NIL",
    "args" : "sym: a symbol",
-   "desc" : "unbind unbinds 'sym' from the top level enviroment",
+   "desc" : "unbind unbinds 'sym' from the top level environment",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the argument is not a symbol. Throws an exception of type SYMBOL-NOT-BOUND if the symbol was not bound already",
    "examples" : [ "(unbind 'x) => NIL" ],
    "see-also" : [ "define", "set", "setq" ]

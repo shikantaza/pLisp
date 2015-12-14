@@ -288,6 +288,7 @@ extern OBJECT_PTR prim_deserialize(OBJECT_PTR);
 extern OBJECT_PTR prim_load_file(OBJECT_PTR);
 
 extern OBJECT_PTR primitive_time(OBJECT_PTR);
+extern OBJECT_PTR primitive_profile(OBJECT_PTR);
 
 extern OBJECT_PTR primitive_env(OBJECT_PTR);
 extern OBJECT_PTR prim_expand_macro(OBJECT_PTR);
@@ -2010,12 +2011,18 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   res = process_backquote(res);
 //print_object(res);printf("\n");getchar();
 
-  if(exp_contains_comma_comma_at(res))
+  if(in_error)
   {
-    throw_exception1("COMPILE-ERROR", "Occurrence of ',' or ',@' outside the context of a function/macro definition");
     handle_exception();
     return NIL;
   }
+
+  /* if(exp_contains_comma_comma_at(res)) */
+  /* { */
+  /*   throw_exception1("COMPILE-ERROR", "Occurrence of ',' or ',@' outside the context of a function/macro definition"); */
+  /*   handle_exception(); */
+  /*   return NIL; */
+  /* } */
 
   res = assignment_conversion(res, concat(2, 
                                           get_top_level_symbols(),
@@ -2413,10 +2420,37 @@ OBJECT_PTR process_backquote(OBJECT_PTR exp)
   if(is_atom(exp))
     return exp;
   else if(car(exp) == BACKQUOTE)
-    return backquote2(CADR(exp));
+  {
+    if(is_atom(CADR(exp)))
+      return list(2, QUOTE, CADR(exp));
+    else if(first(second(exp)) == COMMA)
+      return second(second(exp));
+    else if(first(second(exp)) == COMMA_AT)
+    {
+      if(!IS_CONS_OBJECT(second(second(exp))))
+      {
+        throw_exception1("COMPILE-ERROR", "',@' applied to a non-list");
+        return NIL;
+      }
+      return backquote2(second(exp));
+    }
+    else
+      return backquote2(CADR(exp));
+  }
   else
-    return cons(process_backquote(car(exp)),
-                process_backquote(cdr(exp)));
+  {
+    OBJECT_PTR obj1 = process_backquote(car(exp));
+
+    if(in_error)
+      return NIL;
+                                        
+    OBJECT_PTR obj2 = process_backquote(cdr(exp));
+
+    if(in_error)
+      return NIL;
+
+    return cons(obj1, obj2);
+  }
 }
 
 OBJECT_PTR butlast(OBJECT_PTR lst)
@@ -2726,6 +2760,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "prim_load_file");
       else if(var == TIME)
         sprintf(s, "primitive_time");
+      else if(var == PROFILE)
+        sprintf(s, "primitive_profile");
       else if(var == ENV)
         sprintf(s, "primitive_env");
       else if(var == EXPAND_MACRO)
@@ -3188,6 +3224,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "prim_load_file",     prim_load_file);
   
   tcc_add_symbol(tcc_state, "primitive_time",     primitive_time);
+
+  tcc_add_symbol(tcc_state, "primitive_profile",  primitive_profile);
 
   tcc_add_symbol(tcc_state, "primitive_env",      primitive_env);
   tcc_add_symbol(tcc_state, "prim_expand_macro",  prim_expand_macro);
@@ -5613,9 +5651,9 @@ BOOLEAN is_valid_lambda_exp(exp)
 {
   unsigned int len = cons_length(exp);
 
-  if(len != 3)
+  if(len < 3)
   {
-    throw_exception1("COMPILE-ERROR", "LAMBDA requires exactly two parameters");
+    throw_exception1("COMPILE-ERROR", "LAMBDA requires at least two parameters");
     return false;
   }
   if(!IS_CONS_OBJECT(second(exp)) && second(exp) != NIL)
@@ -5642,9 +5680,9 @@ BOOLEAN is_valid_macro_exp(exp)
 {
   unsigned int len = cons_length(exp);
 
-  if(len != 3)
+  if(len < 3)
   {
-    throw_exception1("COMPILE-ERROR", "MACRO requires exactly two parameters");
+    throw_exception1("COMPILE-ERROR", "MACRO requires at least two parameters");
     return false;
   }
   if(!IS_CONS_OBJECT(second(exp)) && second(exp) != NIL)
@@ -5671,10 +5709,10 @@ BOOLEAN is_valid_let_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
 {
   unsigned int len = cons_length(exp);
 
-  if(len != 3)
+  if(len < 3)
   {
     if(throw_excp)
-      throw_exception1("COMPILE-ERROR", "LET requires exactly two parameters");
+      throw_exception1("COMPILE-ERROR", "LET requires at least two parameters");
     return false;
   }
 
@@ -5714,10 +5752,10 @@ BOOLEAN is_valid_let1_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
 {
   unsigned int len = cons_length(exp);
 
-  if(len != 3)
+  if(len < 3)
   {
     if(throw_excp)
-      throw_exception1("COMPILE-ERROR", "LET1 requires exactly two parameters");
+      throw_exception1("COMPILE-ERROR", "LET1 requires at least two parameters");
     return false;
   }
 
@@ -5757,10 +5795,10 @@ BOOLEAN is_valid_letrec_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
 {
   unsigned int len = cons_length(exp);
 
-  if(len != 3)
+  if(len < 3)
   {
     if(throw_excp)
-      throw_exception1("COMPILE-ERROR", "LETREC requires exactly two parameters");
+      throw_exception1("COMPILE-ERROR", "LETREC requires at least two parameters");
     return false;
   }
 
