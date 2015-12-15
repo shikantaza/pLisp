@@ -113,6 +113,8 @@ BOOLEAN single_expression_mode = false;
 BOOLEAN interpreter_mode = false;
 BOOLEAN pipe_mode = false;
 
+BOOLEAN raw_mode = false;
+
 extern unsigned int current_package;
 
 extern OBJECT_PTR CONS_APPLY_NIL;
@@ -409,7 +411,7 @@ int main(int argc, char **argv)
   int opt, i;
   char *expression;
 
-  while((opt = getopt(argc, argv, "i:cnl:e:p")) != -1)
+  while((opt = getopt(argc, argv, "i:rcnl:e:p")) != -1)
   {
     switch(opt)
     {
@@ -433,10 +435,22 @@ int main(int argc, char **argv)
       case 'l':
         core_library_file_name = strdup(optarg);
         break;
+      case 'r':
+        raw_mode = true;
+        break;
       default:
-	fprintf(stderr, "Usage: %s [-i imagefile] [-l libfile] -n [-c | -e exp | -p]\n", argv[0]);
+	//fprintf(stderr, "Usage: %s [-i imagefile] [-l libfile] -n [-c | -e exp | -p]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-i imagefile] [-c | -e exp | -p]\n", argv[0]);
 	exit(EXIT_FAILURE);
     }
+  }
+
+  //by default load plisp.image unless
+  //use specifies another image file using -i option
+  if(!image_mode && !raw_mode)
+  {
+    image_mode = true;
+    loaded_image_file_name = strdup("plisp.image");
   }
 
   if(console_mode && single_expression_mode ||
@@ -776,8 +790,11 @@ int load_core_library()
   //  print_to_transcript("Loading core library...");
   //else if(console_mode)
   //{
+  if(!pipe_mode && !single_expression_mode)
+  {
     fprintf(stdout, "Loading core library (this may take a while)...");
     fflush(stdout);
+  }
   //}
 
 #ifdef INTERPRETER_MODE
@@ -855,8 +872,11 @@ int load_core_library()
   //{
     //hack to prevent message being overwritten
     //fprintf(stdout, "Loading core library... done\n");
+  if(!pipe_mode && !single_expression_mode)
+  {
     fprintf(stdout, " done\n");
     fflush(stdout);
+  }
   //}
 
   return 0;  

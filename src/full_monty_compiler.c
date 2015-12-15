@@ -3639,7 +3639,6 @@ int repl2()
       return 1;
     }
 
-
     OBJECT_PTR res = full_monty_eval(exp);
 
     if(in_error)

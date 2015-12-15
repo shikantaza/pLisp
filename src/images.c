@@ -529,6 +529,8 @@ void create_image(char *file_name)
 #endif
 
   fprintf(fp, "\"callers_sym\" : "    );
+  if(!callers_sym)
+    callers_sym = NIL;
   print_json_object(fp, callers_sym,     print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
 
   fprintf(fp, "\"current_package\" : %d ",     current_package);                                                           fprintf(fp, ", ");
