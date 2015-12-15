@@ -15,11 +15,10 @@ What features does pLisp support?
 5. Foreign function interface
 6. Ability to store and load images (both at the system level and at the level of individual objects)
 7. Macros
-8. Debugger (break, resume, inspect variables)
+8. Debugger (break, resume)
 9. A package/namespace system
 10. Continuations
-11. A basic but complete object system that supports inheritance, encapsulation, etc.
-12. Graphical IDE
+11. Graphical IDE with context-sensitive help, syntax colouring and autocomplete
 
 Why do we need yet another Lisp system?
 
