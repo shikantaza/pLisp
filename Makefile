@@ -17,10 +17,12 @@
 
 OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o indent.o full_monty_compiler.o native_primitives.o help.o
 
+DOCGEN_OBJS	= json_lex.o json_parser.o util.o docgen.o json.o
+
 CC	= gcc -fPIC
 CFLAGS	= -g `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` `pkg-config --cflags gtksourceview-3.0`-I/usr/local/include -L/usr/local/lib
 
-all:	plisp libplisp.so libtest.so
+all:	plisp libplisp.so libtest.so docgen
 
 libplisp.so:	plisp_utils_ffi.o
 		$(CC) $(CFLAGS) -shared -Wl,-soname,libplisp.so -o libplisp.so plisp_utils_ffi.o `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0`
@@ -33,6 +35,9 @@ libtest.so:	test_so.o
 
 plisp:	$(OBJS)
 		$(CC) $(CFLAGS) $(OBJS) -ltcc -ldl -o plisp `pkg-config --libs libffi` `pkg-config --libs gtk+-3.0` `pkg-config --libs gtksourceview-3.0`
+
+docgen: $(DOCGEN_OBJS)
+		$(CC) $(CFLAGS) $(DOCGEN_OBJS) -o docgen
 
 lex.o:	src/lex.yy.c
 		$(CC) $(CFLAGS) -c src/lex.yy.c -o lex.o
@@ -124,6 +129,9 @@ help.o:		src/gui/help.c
 test_so.o:	src/test_so.c
 		$(CC) -c src/test_so.c -o test_so.o
 
+docgen.o:	tools/docgen.c
+		$(CC) $(CFLAGS) -c tools/docgen.c -o docgen.o
+
 bison.o		: src/plisp.tab.c src/plisp.h src/util.h
 lex.o		: src/plisp.tab.h src/plisp.h
 main.o		: src/plisp.h src/memory.h
@@ -152,6 +160,8 @@ native_primitives.o	: src/plisp.h
 
 help.o		: src/json.h
 
+docgen.o	: src/json.h
+
 clean:
-	rm -f *.o *~ src/lex.yy.c src/plisp.tab.c src/plisp.tab.h src/json.lex.yy.c src/json_parser.tab.h src/json_parser.tab.c src/plisp.output src/json_parser.output plisp libplisp.so libtest.so *.stackdump
+	rm -f *.o *~ src/lex.yy.c src/plisp.tab.c src/plisp.tab.h src/json.lex.yy.c src/json_parser.tab.h src/json_parser.tab.c src/plisp.output src/json_parser.output plisp libplisp.so libtest.so docgen *.stackdump
 
