@@ -190,7 +190,7 @@ int main(int argc, char **argv)
   fprintf(out, "<body>\n");
   fprintf(out, "<center><h1>pLisp Language Reference</h1></center><br/>");
 
-  if(build_help_entries("doc/help.json"))
+  if(build_help_entries("data/help.json"))
   {
     if(argc > 1)free(s);
     fclose(out);

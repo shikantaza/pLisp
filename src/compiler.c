@@ -449,8 +449,17 @@ int main(int argc, char **argv)
   //use specifies another image file using -i option
   if(!image_mode && !raw_mode)
   {
-    image_mode = true;
-    loaded_image_file_name = strdup("plisp.image");
+    if(access("plisp.image", F_OK) != -1)
+    {
+      image_mode = true;
+      loaded_image_file_name = strdup("plisp.image");
+    }
+    else
+    {
+      fprintf(stdout, "Default image file plisp.image not found\n");
+      image_mode = false;
+      raw_mode = true;
+    }
   }
 
   if(console_mode && single_expression_mode ||
@@ -520,7 +529,7 @@ int main(int argc, char **argv)
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
-    if(build_help_entries("./doc/help.json"))
+    if(build_help_entries( DATADIR "/help.json"))
     {
       fprintf(stderr, "Building help entries failed: %s\n", get_string(cdr(exception_object)));
       cleanup();
@@ -802,7 +811,7 @@ int load_core_library()
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "lib/plisp.lisp"),
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : DATADIR "/plisp.lisp"),
                              NIL));
 
 
@@ -848,7 +857,7 @@ int load_core_library()
   debug_window_dbg_stack = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "lib/plisp_full_monty_compiler.lisp"),
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : DATADIR "/plisp_full_monty_compiler.lisp"),
                              NIL));
 
   OBJECT_PTR res = full_monty_eval(src);
