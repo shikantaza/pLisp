@@ -50,7 +50,7 @@ You will need GCC and the make utility to install pLisp. In addition, the follow
 
   d. The libffi package (libffi6)
 
-All these package can be installed using the package manager that comes with your distro.
+All these packages can be installed using the package manager that comes with your distro.
 
 How do I report bugs and other issues?
 
