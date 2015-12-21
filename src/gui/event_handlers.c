@@ -43,7 +43,10 @@
 char *default_workspace_text =  "; This is the workspace; type pLisp expressions here.\n"
                                 "; To evaluate an expression, enter the expression\n"
                                 "; and press Ctrl+Enter when the expression is complete\n"
-                                "; (indicated by the highlighted matching parens).\n";
+                                "; (indicated by the highlighted matching parens).\n"
+                                "; To display help information about a core symbol or\n" 
+                                "; operator, press F1 when the focus is on that symbol.\n";
+
 
 extern OBJECT_PTR CAAR(OBJECT_PTR);
 

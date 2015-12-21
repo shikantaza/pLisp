@@ -28,7 +28,7 @@ My current objective with pLisp is for it to serve as a) a friendly Lisp environ
 
 What platforms is pLisp available on?
 
-pLisp is right now Linux-only. I may port it to other platforms in the future.
+pLisp should work in any POSIX-compliant system (including Cygwin), however it has been tested mainly on Linux. I may port it to other platforms in the future.
 
 What about the license?
 
@@ -36,13 +36,21 @@ pLisp is licensed under GPL v3.
 
 How do I install pLisp?
 
-pLisp is installed by running 'make' on the provided make file.
+pLisp is installed by the standard './configure', 'make' and 'sudo make install' commands in the directory where you downloaded/extracted the pLisp files.
 
 What do I need to install pLisp?
 
-You will need a) the GTK+3.0 development package (libgtk-3-dev) b) the GtkSourceView (https://wiki.gnome.org/Projects/GtkSourceView) development package c) the Tiny C Compiler development files (libtcc.h and libtcc.a) from http://bellard.org/tcc/ and d) libffi (https://sourceware.org/libffi/)
+You will need GCC and the make utility to install pLisp. In addition, the following dependencies need to be taken care of:
 
-pLisp also uses Emin Martinian's Red Black Tree code (http://web.mit.edu/~emin/www.old/source_code/red_black_tree/index.html) in its GC implementation (this code is shipped along with pLisp, so you don't have to go out and grab it).
+  a. The GTK 3.0 development package (libgtk-3-dev)
+
+  b. The GtkSourceView development package (libgtksourceview-3.0-dev)
+
+  c. The Tiny C Compiler development package (libtcc-dev)
+
+  d. The libffi package (libffi6)
+
+All these package can be installed using the package manager that comes with your distro.
 
 How do I report bugs and other issues?
 
@@ -50,5 +58,5 @@ You can email me at rajesh dot jayaprakash @ gmail dot com
 
 Where is the documentation?
 
-A user manual and a language reference document are available. I have some blog posts (http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html) that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
+Online help is available within pLisp, a user manual and a language reference document are also available. I have some blog posts (http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html) that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
 
