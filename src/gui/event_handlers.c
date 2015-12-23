@@ -1217,7 +1217,12 @@ void fetch_package_symbols()
   GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
   GtkTreeIter  iter;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list)), &model, &iter))
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list));
+
+  if(!selection)
+    return;
+
+  if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gint id;
 
@@ -1285,7 +1290,12 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
   GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (lst));
   GtkTreeIter  iter;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(lst)), &model, &iter))
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(lst));
+
+  if(!selection)
+    return;
+
+  if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
     gint ptr;
@@ -1776,7 +1786,12 @@ void callers(GtkWidget *widget,
   GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list));
   GtkTreeIter  iter;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list)), &model, &iter))
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list));
+
+  if(!selection)
+    return;
+
+  if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
     gint ptr;
@@ -2201,7 +2216,12 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
   GtkTreeModel *model = gtk_tree_view_get_model (GTK_TREE_VIEW (lst));
   GtkTreeIter  iter;
 
-  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(lst)), &model, &iter))
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(lst));
+
+  if(!selection)
+    return;
+
+  if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
     gint ptr;

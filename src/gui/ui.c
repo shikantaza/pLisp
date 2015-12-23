@@ -1599,8 +1599,33 @@ void highlight_text(GtkTextBuffer *buffer, char *text)
                                       GTK_TEXT_SEARCH_VISIBLE_ONLY, 
                                       &start_match, &end_match, NULL))
   {
-    gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
-                                      &start_match, &end_match);
+    gint offset1 = gtk_text_iter_get_offset(&start_match);
+
+    BOOLEAN text_start_is_word_start, text_end_is_word_end;
+
+    if(offset1 > 0)
+    {
+      GtkTextIter st;
+      gtk_text_buffer_get_iter_at_offset(buffer, &st, offset1-1);
+
+      if(gtk_text_iter_get_char(&st) == '(')
+        text_start_is_word_start = true;
+      else
+        text_start_is_word_start = false;
+    }
+    else
+      text_start_is_word_start = true;
+    
+    if(gtk_text_iter_get_char(&end_match) == ' ')
+      text_end_is_word_end = true;
+    else
+      text_end_is_word_end = false;
+
+    //to avoid highlighting partial matches
+    if(text_start_is_word_start && text_end_is_word_end)
+      gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
+                                        &start_match, &end_match);
+
     gint offset = gtk_text_iter_get_offset(&end_match);
     gtk_text_buffer_get_iter_at_offset(buffer, 
                                        &start_find, offset);  
