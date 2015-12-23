@@ -73,6 +73,8 @@ extern GtkTextView *system_browser_textview;
 extern GtkSourceView *workspace_source_view;
 extern GtkSourceBuffer *workspace_source_buffer;
 
+extern GtkTreeView *callers_symbols_list;
+
 extern GtkSourceBuffer *callers_source_buffer;
 extern GtkSourceView *callers_source_view;
 
@@ -96,7 +98,7 @@ extern GtkTreeView *variables_list;
 
 extern GtkStatusbar *system_browser_statusbar;
 extern GtkStatusbar *workspace_statusbar;
-
+extern GtkStatusbar *callers_statusbar;
 extern BOOLEAN debug_mode;
 
 extern OBJECT_PTR build_list(int, ...);
@@ -724,7 +726,15 @@ void handle_cursor_move(GtkWidget *widget,
                         gpointer data)
 {
   GtkTextBuffer *buffer = (GtkTextBuffer *)widget;
-  GtkStatusbar *statusbar = (buffer == workspace_buffer) ? workspace_statusbar : system_browser_statusbar;
+  GtkStatusbar *statusbar;
+
+  if(buffer == workspace_buffer)
+    statusbar = workspace_statusbar;
+  else if(buffer == system_browser_buffer)
+    statusbar = system_browser_statusbar;
+  else
+    statusbar = callers_statusbar;
+
   char *s = get_current_word(buffer);
 
   //TODO: figure out when to clear the status bar
@@ -824,9 +834,10 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     do_auto_complete(widget == (GtkWidget *)workspace_window ? workspace_buffer : system_browser_buffer);
     return TRUE;
   }
-  else if((widget == (GtkWidget *)workspace_window || 
+  else if((widget == (GtkWidget *)workspace_window      || 
            widget == (GtkWidget *)system_browser_window || 
-           widget == (GtkWidget *)help_window) && 
+           widget == (GtkWidget *)callers_window        ||
+           widget == (GtkWidget *)help_window)          && 
 	  event->keyval == GDK_KEY_F1)
   {
     enum {FUNCTION, MACRO, SPECIAL_OPERATOR};
@@ -840,6 +851,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       buffer = workspace_buffer;
     else if(widget == (GtkWidget *)system_browser_window)
       buffer = system_browser_buffer;
+    else if(widget == (GtkWidget *)callers_window)
+      buffer = callers_source_buffer;
     else
       buffer = help_buffer;
 
@@ -1103,6 +1116,11 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   {
     action_triggering_window = system_browser_window;
     system_browser_accept();
+  }
+  else if(widget == (GtkWidget *)callers_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s)
+  {
+    action_triggering_window = callers_window;
+    callers_window_accept();
   }
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_x)
     delete_package_or_symbol();
@@ -2282,4 +2300,75 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
     highlight_text(callers_source_buffer, convert_to_lower_case(text));
     free(text);
   }
+}
+
+void callers_window_accept()
+{
+  GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(callers_symbols_list));
+  GtkTreeModel *model = gtk_tree_view_get_model(callers_symbols_list);
+  GtkTreeIter  iter;
+
+  GtkTreeSelection *selection = gtk_tree_view_get_selection(callers_symbols_list);
+
+  if(!selection)
+    return;
+
+  if(gtk_tree_selection_get_selected(selection, &model, &iter))
+  {
+    gchar *symbol_name;
+    gint ptr;
+
+    gtk_tree_model_get(model, &iter,
+                       0, &symbol_name,
+                       -1);
+
+    gtk_tree_model_get(model, &iter,
+                       1, &ptr,
+                       -1);
+
+    char buf[MAX_STRING_LENGTH];
+    memset(buf, '\0', MAX_STRING_LENGTH);
+
+#ifdef INTERPRETER_MODE
+    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
+#else
+    OBJECT_PTR out;
+    int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
+    assert(retval == 0);
+    OBJECT_PTR obj = car(out);
+#endif
+
+    int current_package_backup = current_package;
+
+    char buf1[MAX_STRING_LENGTH];
+    memset(buf1, '\0', MAX_STRING_LENGTH);
+
+    char *temp = strdup(symbol_name);
+    char *res = strtok(temp, ":");
+
+    sprintf(buf1, "(in-package \"%s\")", res);
+
+    free(temp);    
+
+    if(call_repl(buf1))
+    {
+      show_error_dialog("Unable to set package\n");
+      return;
+    }
+
+    GtkTextIter start, end;
+
+    gtk_text_buffer_get_start_iter(callers_source_buffer, &start);
+    gtk_text_buffer_get_end_iter(callers_source_buffer, &end);
+
+    if(call_repl(gtk_text_buffer_get_text(callers_source_buffer, &start, &end, FALSE)))
+    {
+      show_error_dialog("Evaluation failed\n");
+      current_package = current_package_backup;
+      return;
+    }
+
+    gtk_statusbar_push(callers_statusbar, 0, "Evaluation successful");
+    current_package = current_package_backup;
+  } 
 }

@@ -50,6 +50,7 @@ GtkTreeView *symbols_list;
 GtkTextView *transcript_textview;
 GtkTextView *system_browser_textview;
 
+GtkTreeView *callers_symbols_list;
 GtkSourceView *callers_source_view;
 
 BOOLEAN new_symbol_being_created;
@@ -61,6 +62,7 @@ GtkTreeView *variables_list;
 
 GtkStatusbar *system_browser_statusbar;
 GtkStatusbar *workspace_statusbar;
+GtkStatusbar *callers_statusbar;
 
 GtkTreeView *operators_list;
 
@@ -1534,20 +1536,30 @@ void create_callers_window(int posx, int posy, int width, int height)
   scrolled_win1 = gtk_scrolled_window_new(NULL, NULL);
   scrolled_win2 = gtk_scrolled_window_new(NULL, NULL);
 
-  GtkTreeView *symbols_list = (GtkTreeView *)gtk_tree_view_new();
-  gtk_tree_view_set_headers_visible(symbols_list, TRUE);
-  gtk_widget_override_font(GTK_WIDGET(symbols_list), pango_font_description_from_string(FONT));
+  callers_symbols_list = (GtkTreeView *)gtk_tree_view_new();
+  gtk_tree_view_set_headers_visible(callers_symbols_list, TRUE);
+  gtk_widget_override_font(GTK_WIDGET(callers_symbols_list), pango_font_description_from_string(FONT));
 
-  initialize_callers_symbols_list(symbols_list);
+  initialize_callers_symbols_list(callers_symbols_list);
 
-  gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(symbols_list, 0), 0); 
+  gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(callers_symbols_list, 0), 0); 
 
-  populate_callers_symbols_list(symbols_list);
+  populate_callers_symbols_list(callers_symbols_list);
 
-  g_signal_connect(G_OBJECT(symbols_list), "cursor-changed",
+  g_signal_connect(G_OBJECT(callers_symbols_list), "cursor-changed",
                    G_CALLBACK(fetch_symbol_value_for_caller), NULL);
 
-  gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)symbols_list);
+  g_signal_connect(G_OBJECT(win), 
+                   "key_press_event", 
+                   G_CALLBACK (handle_key_press_events), 
+                   NULL);
+
+  g_signal_connect(G_OBJECT(workspace_buffer), 
+                   "notify::cursor-position", 
+                   G_CALLBACK (handle_cursor_move), 
+                   NULL);
+
+  gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)callers_symbols_list);
 
   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   gtk_box_pack_start(GTK_BOX (hbox), scrolled_win1, TRUE, TRUE, 0);
@@ -1561,7 +1573,7 @@ void create_callers_window(int posx, int posy, int width, int height)
                              "background", "lightgray", NULL); 
 
   gtk_widget_override_font(GTK_WIDGET(callers_source_view), pango_font_description_from_string(FONT));
-  gtk_text_view_set_editable((GtkTextView *)callers_source_view, FALSE);
+  //gtk_text_view_set_editable((GtkTextView *)callers_source_view, FALSE);
 
   g_signal_connect(G_OBJECT(callers_source_buffer), 
                    "notify::cursor-position", 
@@ -1574,6 +1586,9 @@ void create_callers_window(int posx, int posy, int width, int height)
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
+
+  callers_statusbar = (GtkStatusbar *)gtk_statusbar_new();
+  gtk_box_pack_start (GTK_BOX (vbox), (GtkWidget *)callers_statusbar, FALSE, FALSE, 0);  
 
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
