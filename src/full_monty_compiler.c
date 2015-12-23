@@ -4884,8 +4884,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
       return NIL; //exception would have been set in is_valid_macro_exp()
   }
 
-  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  OBJECT_PTR symbol_to_be_used = second(exp);
+  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  //OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR t1 = cons(NIL, NIL);
 
@@ -4960,8 +4960,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   } 
 
-  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  OBJECT_PTR symbol_to_be_used = second(exp);
+  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  //OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR out;
   int retval = get_top_level_sym_value(symbol_to_be_used, &out);
