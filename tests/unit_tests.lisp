@@ -15,853 +15,522 @@
 ;;  You should have received a copy of the GNU General Public License
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-(format nil "Running unit test cases...")
-(newline nil)
+(create-package "unit-tests-core")
+
+(in-package "unit-tests-core")
 
 (define passed-cases 0)
 (define failed-cases 0)
+
+(define test-functions nil)
 
 (defmacro test-condition (id condition)
   `(try (if ,condition 
             (incf passed-cases)
           (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases)))
         (catch (e)
-          (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases)))))
+          (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases))) nil))
 
 (defmacro test-exception (id body excp)
   `(try ,body
         (catch (e)
           (if (eq (car e) ,excp)
               (incf passed-cases)
-            (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases))))))
+            (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases)))) nil))
 
 (defmacro test-happy-case (id body)
   `(progn (try ,body
                (catch (e)
-                 (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases))))
+                 (progn (format nil "Test case #%d failed" ,id) (newline nil) (incf failed-cases))) nil)
           (incf passed-cases)))
 
+(defmacro add-test-function (fn)
+  `(set test-functions (cons ,fn test-functions)))
+
 ;;car
-(test-exception 1 (car 1) 'not-a-cons)
+(defun test-car-1 ()
+  (test-exception 1 (car 1) 'not-a-cons))
+(add-test-function test-car-1)
 
-(let ((x (car '(1 2 3))))
-  (test-condition 2 (eq x 1)))
+(defun test-car-2 ()
+  (let ((x (car '(1 2 3))))
+    (test-condition 2 (eq x 1))))
+(add-test-function test-car-2)
 
-(let ((x (car nil)))
-  (test-condition 3 (null x)))
+(defun test-car-3 ()
+  (let ((x (car nil)))
+    (test-condition 3 (null x))))
+(add-test-function test-car-3)
 ;end car
 
 ;;cdr
-(test-exception 4 (cdr 1) 'not-a-cons)
+(defun test-cdr-4 ()
+  (test-exception 4 (cdr 1) 'not-a-cons))
+(add-test-function test-cdr-4)
 
-(let ((x (cdr '(1 2 3))))
-  (test-condition 5 (eq x '(2 3))))
+(defun test-cdr-5 ()
+  (let ((x (cdr '(1 2 3))))
+    (test-condition 5 (eq x '(2 3)))))
+(add-test-function test-cdr-5)
 
-(let ((x (cdr nil)))
-  (test-condition 6 (null x)))
+(defun test-cdr-6 ()
+  (let ((x (cdr nil)))
+    (test-condition 6 (null x))))
+(add-test-function test-cdr-6)
 ;end cdr
 
 ;eq
-(test-exception 7 (eq 1) 'arg-mismatch)
+(defun test-eq-7 ()
+  (test-condition 7 (eq 1 1.0)))
+(add-test-function test-eq-7)
 
-(test-exception 8 (eq) 'arg-mismatch)
+(defun test-eq-8 ()
+  (test-condition 8 (eq 'a 'a)))
+(add-test-function test-eq-8)
 
-(test-condition 9 (eq 1 1.0))
-
-(test-condition 10 (eq 'a 'a))
-
-(test-condition 11 (not (eq 'a 'b)))
+(defun test-eq-9 ()
+  (test-condition 9 (not (eq 'a 'b))))
+(add-test-function test-eq-9)
 ;end eq
 
 ;cons
-(test-exception 12 (cons 1) 'arg-mismatch)
-
-(test-exception 13 (cons) 'arg-mismatch)
-
-(let ((x (cons 1 2)))
-  (test-condition 14 (and (eq (car x) 1)
-                          (eq (cdr x) 2))))
+(defun test-cons-10 ()
+  (let ((x (cons 1 2)))
+    (test-condition 10 (and (eq (car x) 1)
+                            (eq (cdr x) 2)))))
+(add-test-function test-cons-10)
 ;end cons
 
 ;atom
-(test-condition 15 (atom 1))
+(defun test-atom-11 ()
+  (test-condition 11 (atom 1)))
+(add-test-function test-atom-11)
 
-(test-condition 16 (atom nil))
+(defun test-atom-12 ()
+  (test-condition 12 (atom nil)))
+(add-test-function test-atom-12)
 
-(test-condition 17 (atom 1.0))
+(defun test-atom-13 ()
+  (test-condition 13 (atom 1.0)))
+(add-test-function test-atom-13)
 
-(test-condition 18 (atom "abc"))
+(defun test-atom-14 ()
+  (test-condition 14 (atom "abc")))
+(add-test-function test-atom-14)
 
-(test-condition 19 (atom #\a))
+(defun test-atom-15 ()
+  (test-condition 15 (atom #\a)))
+(add-test-function test-atom-15)
 
-(test-condition 20 (atom 'a))
+(defun test-atom-16 ()
+  (test-condition 16 (atom 'a)))
+(add-test-function test-atom-16)
 
-(test-condition 21 (not (atom '(1 2 3))))
+(defun test-atom-17 ()
+  (test-condition 17 (not (atom '(1 2 3)))))
+(add-test-function test-atom-17)
 
-(test-condition 22 (not (atom (lambda (x) x))))
+(defun test-atom-18 ()
+  (test-condition 18 (not (atom (lambda (x) x)))))
+(add-test-function test-atom-18)
 
-(test-condition 23 (not (atom (make-array 10 nil))))
+(defun test-atom-19 ()
+  (test-condition 19 (not (atom (make-array 10 nil)))))
+(add-test-function test-atom-19)
 
-(test-condition 24 (not (atom (macro (x) x))))
+(defun test-atom-20 ()
+  (test-condition 20 (not (atom (macro (x) x)))))
+(add-test-function test-atom-20)
 
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-condition 25 (not (atom cont))))
+(defun test-atom-21 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-condition 21 (not (atom cont)))))
+(add-test-function test-atom-21)
 ;end atom
 
 ;add
-(test-exception 26 (+) 'arg-mismatch)
+(defun test-add-22 ()
+  (test-exception 22 (+ 1 nil) 'invalid-argument))
+(add-test-function test-add-22)
 
-(test-exception 27 (+ 1) 'arg-mismatch)
+(defun test-add-23 ()
+  (test-exception 23 (+ 1 "abc") 'invalid-argument))
+(add-test-function test-add-23)
 
-(test-exception 28 (+ 1 nil) 'invalid-argument)
+(defun test-add-24 ()
+  (test-exception 24 (+ 1 #\a) 'invalid-argument))
+(add-test-function test-add-24)
 
-(test-exception 29 (+ 1 "abc") 'invalid-argument)
+(defun test-add-25 ()
+  (test-exception 25 (+ 1 '(1 2 3)) 'invalid-argument))
+(add-test-function test-add-25)
 
-(test-exception 30 (+ 1 #\a) 'invalid-argument)
+(defun test-add-26 ()
+  (test-exception 26 (+ 1 (lambda (x) x)) 'invalid-argument))
+(add-test-function test-add-26)
 
-(test-exception 31 (+ 1 '(1 2 3)) 'invalid-argument)
+(defun test-add-27 ()
+  (test-exception 27 (+ 1 (macro (x) x)) 'invalid-argument))
+(add-test-function test-add-27)
 
-(test-exception 32 (+ 1 (lambda (x) x)) 'invalid-argument)
+(defun test-add-28 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-exception 28 (+ 1 cont) 'invalid-argument)))
+(add-test-function test-add-28)
 
-(test-exception 33 (+ 1 (macro (x) x)) 'invalid-argument)
+(defun test-add-29 ()
+  (test-exception 29 (+ 1 (make-array 10 nil)) 'invalid-argument))
+(add-test-function test-add-29)
 
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 34 (+ 1 cont) 'invalid-argument))
+(defun test-add-30 ()
+  (test-condition 30 (eq (+ 1 1) 2)))
+(add-test-function test-add-30)
 
-(test-exception 35 (+ 1 (make-array 10 nil)) 'invalid-argument)
+(defun test-add-31 ()
+  (test-condition 31 (eq (+ 1 1.0) 2)))
+(add-test-function test-add-31)
 
-(test-condition 36 (eq (+ 1 1) 2))
+(defun test-add-32 ()
+  (test-condition 32 (eq (+ 1.0 2.5) 3.5)))
+(add-test-function test-add-32)
 
-(test-condition 37 (eq (+ 1 1.0) 2))
-
-(test-condition 38 (eq (+ 1.0 2.5) 3.5))
-
-(test-condition 39 (eq (apply + (range 1 10 1)) 55))
+;(test-condition 33 (eq (apply + (range 1 10 1)) 55))
 ;end add
 
 ;sub
-(test-exception 40 (-) 'arg-mismatch)
+(defun test-sub-33 ()
+  (test-exception 33 (- 1 nil) 'invalid-argument))
+(add-test-function test-sub-33)
 
-(test-exception 41 (- 1) 'arg-mismatch)
+(defun test-sub-34 ()
+  (test-exception 34 (- 1 "abc") 'invalid-argument))
+(add-test-function test-sub-34)
 
-(test-exception 42 (- 1 nil) 'invalid-argument)
+(defun test-sub-35 ()
+  (test-exception 35 (- 1 #\a) 'invalid-argument))
+(add-test-function test-sub-35)
 
-(test-exception 43 (- 1 "abc") 'invalid-argument)
+(defun test-sub-36 ()
+  (test-exception 36 (- 1 '(1 2 3)) 'invalid-argument))
+(add-test-function test-sub-36)
 
-(test-exception 44 (- 1 #\a) 'invalid-argument)
+(defun test-sub-37 ()
+  (test-exception 37 (- 1 (lambda (x) x)) 'invalid-argument))
+(add-test-function test-sub-37)
 
-(test-exception 45 (- 1 '(1 2 3)) 'invalid-argument)
+(defun test-sub-38 ()
+  (test-exception 38 (- 1 (macro (x) x)) 'invalid-argument))
+(add-test-function test-sub-38)
 
-(test-exception 46 (- 1 (lambda (x) x)) 'invalid-argument)
+(defun test-sub-39 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-exception 39 (- 1 cont) 'invalid-argument)))
+(add-test-function test-sub-39)
 
-(test-exception 47 (- 1 (macro (x) x)) 'invalid-argument)
+(defun test-sub-40 ()
+  (test-exception 40 (- 1 (make-array 10 nil)) 'invalid-argument))
+(add-test-function test-sub-40)
 
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 48 (- 1 cont) 'invalid-argument))
+(defun test-sub-41 ()
+  (test-condition 41 (eq (- 1 1) 0)))
+(add-test-function test-sub-41)
 
-(test-exception 49 (- 1 (make-array 10 nil)) 'invalid-argument)
+(defun test-sub-42 ()
+  (test-condition 42 (eq (- 1 1.0) 0)))
+(add-test-function test-sub-42)
 
-(test-condition 50 (eq (- 1 1) 0))
+(defun test-sub-43 ()
+  (test-condition 43 (eq (- 1.0 2.5) -1.5)))
+(add-test-function test-sub-43)
 
-(test-condition 51 (eq (- 1 1.0) 0))
-
-(test-condition 52 (eq (- 1.0 2.5) -1.5))
-
-(test-condition 53 (eq (apply - (range 1 10 1)) -53))
+;test-condition 44 (eq (apply - (range 1 10 1)) -53))
 ;end sub
 
 ;mult
-(test-exception 54 (*) 'arg-mismatch)
+(defun test-mult-44 ()
+  (test-exception 44 (* 1 nil) 'invalid-argument))
+(add-test-function test-mult-44)
 
-(test-exception 55 (* 1) 'arg-mismatch)
+(defun test-mult-45 ()
+  (test-exception 45 (* 1 "abc") 'invalid-argument))
+(add-test-function test-mult-45)
 
-(test-exception 56 (* 1 nil) 'invalid-argument)
+(defun test-mult-46 ()
+  (test-exception 46 (* 1 #\a) 'invalid-argument))
+(add-test-function test-mult-46)
 
-(test-exception 57 (* 1 "abc") 'invalid-argument)
+(defun test-mult-47 ()
+  (test-exception 47 (* 1 '(1 2 3)) 'invalid-argument))
+(add-test-function test-mult-47)
 
-(test-exception 58 (* 1 #\a) 'invalid-argument)
+(defun test-mult-48 ()
+  (test-exception 48 (* 1 (lambda (x) x)) 'invalid-argument))
+(add-test-function test-mult-48)
 
-(test-exception 59 (* 1 '(1 2 3)) 'invalid-argument)
+(defun test-mult-49 ()
+  (test-exception 49 (* 1 (macro (x) x)) 'invalid-argument))
+(add-test-function test-mult-49)
 
-(test-exception 60 (* 1 (lambda (x) x)) 'invalid-argument)
+(defun test-mult-50 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-exception 50 (* 1 cont) 'invalid-argument)))
+(add-test-function test-mult-50)
 
-(test-exception 61 (* 1 (macro (x) x)) 'invalid-argument)
+(defun test-mult-51 ()
+  (test-exception 51 (* 1 (make-array 10 nil)) 'invalid-argument))
+(add-test-function test-mult-51)
 
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 62 (* 1 cont) 'invalid-argument))
+(defun test-mult-52 ()
+  (test-condition 52 (eq (* 1 1) 1)))
+(add-test-function test-mult-52)
 
-(test-exception 63 (* 1 (make-array 10 nil)) 'invalid-argument)
+(defun test-mult-53 ()
+  (test-condition 53 (eq (* 1 1.0) 1)))
+(add-test-function test-mult-53)
 
-(test-condition 64 (eq (* 1 1) 1))
+(defun test-mult-54 ()
+  (test-condition 54 (eq (* 1.0 2.5) 2.5)))
+(add-test-function test-mult-54)
 
-(test-condition 65 (eq (* 1 1.0) 1))
-
-(test-condition 66 (eq (* 1.0 2.5) 2.5))
-
-(test-condition 67 (eq (apply * (range 1 10 1)) 3628800))
+;test-condition 55 (eq (apply * (range 1 10 1)) 3628800))
 ;end mult
 
 ;div
-(test-exception 68 (/) 'arg-mismatch)
+(defun test-div-55 ()
+  (test-exception 55 (/ 1 nil) 'invalid-argument))
+(add-test-function test-div-55)
 
-(test-exception 69 (/ 1) 'arg-mismatch)
+(defun test-div-56 ()
+  (test-exception 56 (/ 1 "abc") 'invalid-argument))
+(add-test-function test-div-56)
 
-(test-exception 70 (/ 1 nil) 'invalid-argument)
+(defun test-div-57 ()
+  (test-exception 57 (/ 1 #\a) 'invalid-argument))
+(add-test-function test-div-57)
 
-(test-exception 71 (/ 1 "abc") 'invalid-argument)
+(defun test-div-58 ()
+  (test-exception 58 (/ 1 '(1 2 3)) 'invalid-argument))
+(add-test-function test-div-58)
 
-(test-exception 72 (/ 1 #\a) 'invalid-argument)
+(defun test-div-59 ()
+  (test-exception 59 (/ 1 (lambda (x) x)) 'invalid-argument))
+(add-test-function test-div-59)
 
-(test-exception 73 (/ 1 '(1 2 3)) 'invalid-argument)
+(defun test-div-60 ()
+  (test-exception 60 (/ 1 (macro (x) x)) 'invalid-argument))
+(add-test-function test-div-60)
 
-(test-exception 74 (/ 1 (lambda (x) x)) 'invalid-argument)
+(defun test-div-61 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-exception 61 (/ 1 cont) 'invalid-argument)))
+(add-test-function test-div-61)
 
-(test-exception 75 (/ 1 (macro (x) x)) 'invalid-argument)
+(defun test-div-62 ()
+  (test-exception 62 (/ 1 (make-array 10 nil)) 'invalid-argument))
+(add-test-function test-div-62)
 
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 76 (/ 1 cont) 'invalid-argument))
+(defun test-div-63 ()
+  (test-condition 63 (eq (/ 1 1) 1)))
+(add-test-function test-div-63)
 
-(test-exception 77 (/ 1 (make-array 10 nil)) 'invalid-argument)
+(defun test-div-64 ()
+  (test-condition 64 (eq (/ 1 1.0) 1)))
+(add-test-function test-div-64)
 
-(test-condition 78 (eq (/ 1 1) 1))
+(defun test-div-65 ()
+  (test-condition 65 (eq (/ 1.0 2.5) 0.4)))
+(add-test-function test-div-65)
 
-(test-condition 79 (eq (/ 1 1.0) 1))
-
-(test-condition 80 (eq (/ 1.0 2.5) 0.4))
-
-(let ((x (apply / (range 1.0 4 1))))
-  (test-condition 81 (< (math:abs (- x 0.041667)) 0.000001)))
-
-(test-exception 82 (/ 1 0) 'div-by-zero-exception)
+(defun test-div-66 ()
+  (test-exception 66 (/ 1 0) 'div-by-zero-exception))
+(add-test-function test-div-66)
 ;end div
 
 ;list
-(test-condition 83 (eq (list 1 2 3) '(1 2 3)))
+(defun test-list-67 ()
+  (test-condition 67 (eq (list 1 2 3) '(1 2 3))))
+(add-test-function test-list-67)
 
-(test-condition 84 (eq (list) '()))
+(defun test-list-68 ()
+  (test-condition 68 (eq (list) '())))
+(add-test-function test-list-68)
 ;end list
 
 ;listp
-(test-exception 85 (listp) 'arg-mismatch)
+(defun test-listp-69 ()
+  (test-condition 69 (listp nil)))
+(add-test-function test-listp-69)
 
-(test-condition 86 (listp nil))
+(defun test-listp-70 ()
+  (test-condition 70 (listp '(1 2 3))))
+(add-test-function test-listp-70)
 
-(test-condition 87 (listp '(1 2 3)))
+(defun test-listp-71 ()
+  (test-condition 71 (listp (cons 1 2))))
+(add-test-function test-listp-71)
 
-(test-condition 88 (listp (cons 1 2)))
+(defun test-listp-72 ()
+  (test-condition 72 (not (listp 1))))
+(add-test-function test-listp-72)
 
-(test-condition 89 (not (listp 1)))
+(defun test-listp-73 ()
+  (test-condition 73 (not (listp 1.0))))
+(add-test-function test-listp-73)
 
-(test-condition 90 (not (listp 1.0)))
+(defun test-listp-74 ()
+  (test-condition 74 (not (listp 'a))))
+(add-test-function test-listp-74)
 
-(test-condition 91 (not (listp 'a)))
+(defun test-listp-75 ()
+  (test-condition 75 (not (listp "abc"))))
+(add-test-function test-listp-75)
 
-(test-condition 92 (not (listp "abc")))
+(defun test-listp-76 ()
+  (test-condition 76 (not (listp #\a))))
+(add-test-function test-listp-76)
 
-(test-condition 93 (not (listp #\a)))
+(defun test-listp-77 ()
+  (test-condition 77 (not (listp (make-array 10 nil)))))
+(add-test-function test-listp-77)
 
-(test-condition 94 (not (listp (make-array 10 nil))))
+(defun test-listp-78 ()
+  (test-condition 78 (not (listp (lambda (x) x)))))
+(add-test-function test-listp-78)
 
-(test-condition 95 (not (listp (lambda (x) x))))
+(defun test-listp-79 ()
+  (test-condition 79 (not (listp (macro (x) x)))))
+(add-test-function test-listp-79)
 
-(test-condition 96 (not (listp (macro (x) x))))
-
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-condition 97 (not (listp cont))))
+(defun test-listp-80 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-condition 80 (not (listp cont)))))
+(add-test-function test-listp-80)
 ;end listp
 
 ;symbol-value
-(test-exception 98 (symbol-value) 'arg-mismatch)
+(defun test-symbol-value-81 ()
+  (dolist (x (list 1 1.0 "abc" #\a (make-array 10 nil) (lambda (x) x) (macro (x) x) '(1 2 3)))
+    (test-exception 99 (symbol-value x) 'invalid-argument)))
+(add-test-function test-symbol-value-81)
 
-(dolist (x (list 1 1.0 "abc" #\a (make-array 10 nil) (lambda (x) x) (macro (x) x) '(1 2 3)))
-  (test-exception 99 (symbol-value x) 'invalid-argument))
+(defun test-symbol-value-82 ()
+  (let ((cont))
+    (call-cc (lambda (cc) (set cont cc)))
+    (test-exception 82 (symbol-value cont) 'invalid-argument)))
+(add-test-function test-symbol-value-82)
 
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 100 (symbol-value cont) 'invalid-argument))
+(defun test-symbol-value-83 ()
+  (test-exception 83 (symbol-value 'abc) 'symbol-not-bound))
+(add-test-function test-symbol-value-83)
 
-(test-exception 101 (symbol-value 'abc) 'symbol-not-bound)
-
-(let ((x 100))
-  (test-condition 102 (eq (symbol-value 'x) 100)))
+(defun test-symbol-value-84 ()
+  (let ((x 100))
+    (test-condition 84 (eq (symbol-value 'x) 100))))
+(add-test-function test-symbol-value-84)
 ;end symbol-value
 
 ;gt
-(test-exception 103 (>) 'arg-mismatch)
+(defun test-gt-85 ()
+  (test-exception 85 (> 1 '(1 2 3)) 'invalid-argument))
+(add-test-function test-gt-85)
 
-(test-exception 104 (> 1) 'arg-mismatch)
+(defun test-gt-86 ()
+  (test-exception 86 (> "abc" 1.0) 'invalid-argument))
+(add-test-function test-gt-86)
 
-(test-exception 105 (> 1 '(1 2 3)) 'invalid-argument)
+(defun test-gt-87 ()
+  (test-condition 87 (> 3 0)))
+(add-test-function test-gt-87)
 
-(test-exception 106 (> "abc" 1.0) 'invalid-argument)
+(defun test-gt-88 ()
+  (test-condition 88 (> 2.5 0.6)))
+(add-test-function test-gt-88)
 
-(test-condition 107 (> 3 0))
+(defun test-gt-89 ()
+  (test-condition 89 (> 4.0 1)))
+(add-test-function test-gt-89)
 
-(test-condition 108 (> 2.5 0.6))
-
-(test-condition 109 (> 4.0 1))
-
-(test-condition 110 (> 25 0.1))
+(defun test-gt-90 ()
+  (test-condition 90 (> 25 0.1)))
+(add-test-function test-gt-90)
 ;end gt
 
-;gensym
-(test-exception 111 (gensym 'a) 'arg-mismatch)
-;end gensym
-
 ;setcar
-(test-exception 112 (setcar) 'arg-mismatch)
+(defun test-setcar-91 ()
+  (test-exception 91 (setcar 1 2) 'arg-mismatch))
+(add-test-function test-setcar-91)
 
-(test-exception 113 (setcar 1) 'arg-mismatch)
-
-(test-exception 114 (setcar 1 2) 'arg-mismatch)
-
-(let ((x '(1 2 3)))
-  (setcar x 4)
-  (test-condition 115 (eq (car x) 4)))
+(defun test-setcar-92 ()
+  (let ((x '(1 2 3)))
+    (setcar x 4)
+    (test-condition 92 (eq (car x) 4))))
+(add-test-function test-setcar-92)
 ;end setcar
 
 ;setcdr
-(test-exception 116 (setcdr) 'arg-mismatch)
+(defun test-setcdr-93 ()
+  (test-exception 93 (setcdr  1 2) 'arg-mismatch))
+(add-test-function test-setcdr-93)
 
-(test-exception 117 (setcdr 1) 'arg-mismatch)
-
-(test-exception 118 (setcdr  1 2) 'arg-mismatch)
-
-(let ((x (cons 1 2)))
-  (setcdr x 4)
-  (test-condition 119 (eq x (cons 1 4))))
+(defun test-setcdr-94 ()
+  (let ((x (cons 1 2)))
+    (setcdr x 4)
+    (test-condition 94 (eq x (cons 1 4)))))
+(add-test-function test-setcdr-94)
 ;end setcdr
 
 ;create-package
-(test-exception 120 (create-package) 'arg-mismatch)
+(defun test-create-package-95 ()
+  (test-exception 95 (create-package 1) 'invalid-argument))
+(add-test-function test-create-package-95)
 
-(test-exception 121 (create-package 1 2) 'arg-mismatch)
+(defun test-create-package-96 ()
+  (test-exception 96 (create-package "CORE") 'package-already-exists))
+(add-test-function test-create-package-96)
 
-(test-exception 122 (create-package 1) 'invalid-argument)
-
-(test-exception 123 (create-package "CORE") 'package-already-exists)
-
-(let ((x (symbol-name (gensym))))
-  (create-package x)
-  (test-exception 124 (create-package x) 'package-already-exists))
+(defun test-create-package-97 ()
+  (let ((x (symbol-name (gensym))))
+    (create-package x)
+    (test-exception 97 (create-package x) 'package-already-exists)))
+(add-test-function test-create-package-97)
 ;end create-package
 
 ;in-package
-(test-exception 125 (in-package) 'arg-mismatch)
+(defun test-in-package-98 ()
+  (test-exception 98 (in-package 1) 'invalid-argument))
+(add-test-function test-in-package-98)
 
-(test-exception 126 (in-package 1 2) 'arg-mismatch)
+(defun test-in-package-99 ()
+  (test-exception 99 (in-package "core") 'access-violation))
+(add-test-function test-in-package-99)
 
-(test-exception 127 (in-package 1) 'invalid-argument)
+(defun test-in-package-100 ()
+  (test-exception 100 (in-package (symbol-name (gensym))) 'package-not-found))
+(add-test-function test-in-package-100)
 
-(test-exception 128 (in-package "core") 'access-violation)
-
-(test-exception 129 (in-package (symbol-name (gensym))) 'package-not-found)
-
-(test-happy-case 130 (let ((x (symbol-name (gensym))))
-                       (create-package x)
-                       (in-package x)
-                       (in-package "user")))
-
+(defun test-in-package-101 ()
+  (test-happy-case 101 (let ((x (symbol-name (gensym))))
+                         (create-package x)
+                         (in-package x)
+                         (in-package "user"))))
+(add-test-function test-in-package-101)
 ;end in-package
 
-;expand-macro
-(test-exception 131 (expand-macro) 'arg-mismatch)
-
-(test-exception 132 (expand-macro 1 2) 'arg-mismatch)
-
-(test-exception 133 (expand-macro 1) 'invalid-argument)
-
-(test-exception 134 (expand-macro '(QQQQ 1 2 3)) 'macro-undefined)
-
-(let1 ((first (macro (lst) `(car ,lst)))
-       (x (expand-macro '(first a))))
-  (test-condition 135 (eq x '(car a))))
-;end expand-macro
-
-;apply
-(test-exception 136 (apply) 'arg-mismatch)
-
-(test-exception 137 (apply 1) 'arg-mismatch)
-
-(test-exception 138 (apply 1 2 3) 'arg-mismatch)
-
-(test-exception 139 (apply 1 2) 'invalid-argument)
-
-(test-exception 140 (apply car 2) 'invalid-argument)
-
-(test-condition 141 (eq (apply car '((1 2 3))) 1))
-;end apply
-
-;string
-(test-exception 142 (string) 'arg-mismatch)
-
-(test-exception 143 (string 1 2) 'arg-mismatch)
-
-(test-exception 144 (string 1) 'invalid-argument)
-
-(let ((x (make-array 3)))
-  (array-set x 0 #\a)
-  (array-set x 1 #\b)
-  (array-set x 2 #\c)
-  (test-condition 145 (array-eq (string "abc") x)))
-;end string
-
-;make-array
-(test-exception 146 (make-array) 'arg-mismatch)
-
-(test-exception 147 (make-array 1 1 1) 'arg-mismatch)
-
-(test-exception 148 (make-array 1.0) 'invalid-argument)
-
-(let ((a (make-array 5)))
-  (array-set a 0 10)
-  (array-set a 4 "abc")
-  (test-condition 149 (and (eq (array-get a 0) 10)
-                           (null (array-get a 1))
-                           (null (array-get a 2))
-                           (null (array-get a 3))
-                           (eq (array-get a 4) "abc"))))
-;end make-array
-
-;array-set
-(test-exception 150 (array-set) 'arg-mismatch)
-
-(test-exception 151 (array-set 1) 'arg-mismatch)
-
-(test-exception 152 (array-set 1 2) 'arg-mismatch)
-
-(test-exception 153 (array-set 1 2 3) 'invalid-argument)
-
-(test-exception 154 (array-set (make-array 3) "abc" 100) 'invalid-argument)
-
-(test-exception 155 (array-set (make-array 3) -1 100) 'index-out-of-bounds)
-
-(test-exception 156 (array-set (make-array 3) 3 100) 'index-out-of-bounds)
-
-(let ((a (make-array 3)))
-  (array-set a 0 100)
-  (array-set a 2 300)
-  (test-condition 157 (and (eq (array-get a 0) 100)
-                           (null (array-get a 1))
-                           (eq (array-get a 2) 300))))
-;end array-set
-
-;array-get
-(test-exception 158 (array-get) 'arg-mismatch)
-
-(test-exception 159 (array-get 1) 'arg-mismatch)
-
-(test-exception 160 (array-get 1 2 ) 'invalid-argument)
-
-(test-exception 161 (array-get (make-array 3) "abc") 'invalid-argument)
-
-(test-exception 162 (array-get (make-array 3) -1) 'index-out-of-bounds)
-
-(test-exception 163 (array-get (make-array 3) 3) 'index-out-of-bounds)
-
-(test-exception 164 (array-get "abc" 3) 'index-out-of-bounds)
-
-(test-condition 165 (eq (array-get "abc" 0) #\a))
-
-;second positive test case covered in array-set's test cases (last one)
-;end array-get
-
-;sub-array
-(test-exception 166 (sub-array) 'arg-mismatch)
-
-(test-exception 167 (sub-array 1) 'arg-mismatch)
-
-(test-exception 168 (sub-array 1 2) 'arg-mismatch)
-
-(test-exception 169 (sub-array 1 2 3 4) 'arg-mismatch)
-
-(test-exception 170 (sub-array 1 2 3) 'invalid-argument)
-
-(test-exception 171 (sub-array (make-array 3) "abc" 3) 'invalid-argument)
-
-(test-exception 172 (sub-array (make-array 3) -1 3) 'invalid-argument)
-
-(test-exception 173 (sub-array (make-array 3) 0 "abc") 'invalid-argument)
-
-(test-exception 174 (sub-array (make-array 3) 2 5) 'index-out-of-bounds)
-
-(let ((a (make-array 5)))
-  (dotimes (i 5)
-    (array-set a i i))
-  (let ((s (sub-array a 0 3)))
-    (test-condition 175 (and (eq (array-get s 0) 0)
-                             (eq (array-get s 1) 1)
-                             (eq (array-get s 2) 2)
-                             (eq (array-length s) 3)))))
-
-;end sub-array
-
-;array-length
-(test-exception 176 (array-length) 'arg-mismatch)
-
-(test-exception 177 (array-length 1 2) 'arg-mismatch)
-
-(test-exception 178 (array-length 1) 'invalid-argument)
-
-(test-condition 179 (eq (array-length (make-array 3)) 3))
-;end array-length
-
-;print-string
-(test-exception 180 (print-string) 'arg-mismatch)
-
-(test-exception 181 (print-string 1 2) 'arg-mismatch)
-
-(test-exception 182 (print-string 1) 'invalid-argument)
-
-(test-happy-case 183 (print-string "Diagnostic from test case #183"))
-
-(test-happy-case 184 (print-string (string "Diagnostic from test case #184")))
-;end print-string
-
-;create-image
-(test-exception 185 (create-image) 'arg-mismatch)
-
-(test-exception 186 (create-image 1 2) 'arg-mismatch)
-
-(test-exception 187 (create-image 1) 'invalid-argument)
-
-(test-happy-case 188 (progn (create-image "test1.image")
-                            (utils:system "ls -l test1.image")
-                            (utils:system "rm test1.image")))
-
-(test-happy-case 189 (progn (create-image (string "test2.image"))
-                            (utils:system "ls -l test2.image")
-                            (utils:system "rm test2.image")))
-;end create-image
-
-;load-foreign-library
-(test-exception 190 (load-foreign-library) 'arg-mismatch)
-
-(test-exception 191 (load-foreign-library 1 2) 'arg-mismatch)
-
-(test-exception 192 (load-foreign-library 1) 'invalid-argument)
-
-(test-happy-case 193 (load-foreign-library "./libtest.so"))
-
-(test-happy-case 194 (load-foreign-library (string "./libtest.so")))
-;end load-foreign-library
-
-;call-foreign-function
-(test-exception 195 (call-foreign-function) 'arg-mismatch)
-
-(test-exception 196 (call-foreign-function 1) 'arg-mismatch)
-
-(test-exception 197 (call-foreign-function 1 2) 'arg-mismatch)
-
-(test-exception 198 (call-foreign-function 1 2 3 4) 'arg-mismatch)
-
-(test-exception 199 (call-foreign-function 1 2 3) 'invalid-argument)
-
-(test-exception 200 (call-foreign-function "abc" 1 2) 'invalid-argument)
-
-(test-exception 201 (call-foreign-function (string "abc") 1 2) 'invalid-argument)
-
-(test-exception 202 (call-foreign-function "abc" 'integer 1) 'invalid-argument)
-
-(test-exception 203 (call-foreign-function "abc" 'integer '(1 2 3)) 'invalid-argument)
-
-(test-exception 204 (call-foreign-function "abc" 'integer '((1) (2) (3))) 'invalid-argument)
-
-(test-exception 205 (call-foreign-function "abc" 'integer '((1 2 3) (4 5 6) (7 8 9))) 'invalid-argument)
-
-(test-exception 206 (call-foreign-function "abc" 'integer '((1 2) (3 4) (5 6))) 'invalid-argument)
-
-(test-exception 207 (call-foreign-function "abc" 'integer '((x 2) (3 4) (5 6))) 'symbol-not-bound)
-
-(test-exception 208 (call-foreign-function "abc" 'integer '(("abc" integer))) 'arg-mismatch)
-
-(test-exception 209 (call-foreign-function "abc" 'integer '(("abc" float))) 'arg-mismatch)
-
-(test-exception 210 (call-foreign-function "abc" 'integer '(("abc" character))) 'arg-mismatch)
-
-(test-exception 211 (call-foreign-function "abc" 'integer '((1 character-pointer))) 'arg-mismatch)
-
-(test-exception 212 (call-foreign-function "abc" 'integer '(("abc" integer-pointer))) 'arg-mismatch)
-
-(test-exception 213 (call-foreign-function "abc" 'integer '(("abc" float-pointer))) 'arg-mismatch)
-
-(test-exception 214 (call-foreign-function "abc" 'integer '(("abc" some-other-type))) 'invalid-argument)
-
-(let ((i 10)
-      (x (string "abc"))
-      (f 19.56))
-
-  (load-foreign-library "./libtest.so")
-
-
-  (test-condition 215 (eq (call-foreign-function "fn_ret_int" 'integer
-                                             '((i integer)
-                                               (6.5 float)
-                                               (#\a character)
-                                               (x character-pointer)))
-                      100))
-
-
-  (test-condition 216 (eq (call-foreign-function "fn_ret_float" 'float
-                                                 '((10 integer)
-                                                   (6.5 float)
-                                                   (#\a character)
-                                                   ("abc" character-pointer)))
-                          13))
-
-  (test-condition 217 (eq (call-foreign-function "fn_ret_char" 'character
-                                                 '((10 integer)
-                                                   (6.5 float)
-                                                   (#\a character)
-                                                   ("abc" character-pointer)))
-                          #\a))
-
-  (test-condition 218 (eq (call-foreign-function "fn_ret_char_ptr" 'character-pointer
-                                                 '((10 integer)
-                                                   (6.5 float)
-                                                   (#\a character)
-                                                   ("abc" character-pointer)))
-                          "aaaaaaaaaa"))
-
-  (call-foreign-function "fn_arg_int_ptr" 
-                         'integer
-                         '((i integer-pointer)))
-
-  (test-condition 219 (eq i 100))
-
-  (call-foreign-function "fn_arg_float_ptr" 
-                         'integer
-                         '((f float-pointer)))
-
-  (test-condition 220 (eq f 100.97))
-
-  (call-foreign-function "fn_arg_char_ptr" 
-                         'integer
-                         '((x character-pointer)))
-
-  (test-condition 221 (eq x "ABC"))
-
-  (test-happy-case 222 (call-foreign-function "function_ret_void" 'void
-                                              '((10 integer)
-                                                (6.5 float)
-                                                (#\a character)
-                                                ("abc" character-pointer))))
-
-  )
-;end call-foreign-library
-
-;load-file
-(test-exception 223 (load-file) 'arg-mismatch)
-
-(test-exception 224 (load-file 1 2) 'arg-mismatch)
-
-(test-exception 225 (load-file 1) 'invalid-argument)
-
-(test-exception 226 (load-file (concat-strings (symbol-name (gensym)) ".lisp")) 'file-open-error)
-
-;happy case not tested since LOAD-FILE is tested in running this file (unit_tests.lisp) itself
-;end load-file
-
-;predicate functions that test for object type
-(test-exception 227 (consp) 'arg-mismatch)
-(test-exception 228 (consp 1 2) 'arg-mismatch)
-(test-condition 229 (null (consp 1)))
-(test-condition 230 (consp '(1 2)))
-
-(test-exception 231 (integerp) 'arg-mismatch)
-(test-exception 232 (integerp 1 2) 'arg-mismatch)
-(test-condition 233 (null (integerp 1.0)))
-(test-condition 234 (integerp 1))
-
-(test-exception 235 (floatp) 'arg-mismatch)
-(test-exception 236 (floatp 1 2) 'arg-mismatch)
-(test-condition 237 (null (floatp 1)))
-(test-condition 238 (floatp 1.0))
-
-(test-exception 239 (characterp) 'arg-mismatch)
-(test-exception 240 (characterp 1 2) 'arg-mismatch)
-(test-condition 241 (null (characterp 1)))
-(test-condition 242 (characterp #\a))
-
-(test-exception 243 (stringp) 'arg-mismatch)
-(test-exception 244 (stringp 1 2) 'arg-mismatch)
-(test-condition 245 (null (stringp 1)))
-(test-condition 246 (stringp "abc"))
-(test-condition 247 (stringp (string "abc")))
-
-(test-exception 248 (symbolp) 'arg-mismatch)
-(test-exception 249 (symbolp 1 2) 'arg-mismatch)
-(test-condition 250 (null (symbolp 1)))
-(test-condition 251 (symbolp 'a))
-(test-condition 252 (symbolp (gensym)))
-(test-condition 253 (symbolp (symbol "abc")))
-
-(test-exception 254 (arrayp) 'arg-mismatch)
-(test-exception 255 (arrayp 1 2) 'arg-mismatch)
-(test-condition 256 (null (arrayp 1)))
-(test-condition 257 (arrayp (make-array 3)))
-(test-condition 258 (arrayp (string "abc")))
-
-(test-exception 259 (closurep) 'arg-mismatch)
-(test-exception 260 (closurep 1 2) 'arg-mismatch)
-(test-condition 261 (null (closurep 1)))
-(test-condition 262 (closurep (lambda (x) x)))
-(test-condition 263 (closurep cadr))
-
-(test-exception 264 (macrop) 'arg-mismatch)
-(test-exception 265 (macrop 1 2) 'arg-mismatch)
-(test-condition 266 (null (macrop 1)))
-(test-condition 267 (macrop (macro (x) x)))
-(test-condition 268 (macrop defun))
-
-(test-exception 269 (continuationp) 'arg-mismatch)
-(test-exception 270 (continuationp 1 2) 'arg-mismatch)
-(test-condition 271 (null (continuationp 1)))
-
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-condition 272 (continuationp cont)))
-;end predicate functions that test for object type
-
-;lambda-expression
-(test-exception 273 (lambda-expression) 'arg-mismatch)
-
-(test-exception 274 (lambda-expression 1 2) 'arg-mismatch)
-
-(test-exception 275 (lambda-expression 1) 'invalid-argument)
-
-(let ((val (lambda-expression (lambda (x) x))))
-  (test-condition 276 (and (eq (car val) '(x))
-                           (eq (car (cadr val)) 'refer)
-                           (eq (cadr (cadr val)) 'x))))
-
-(let ((val (lambda-expression (macro (x) x))))
-  (test-condition 277 (and (eq (car val) '(x))
-                           (eq (car (cadr val)) 'refer)
-                           (eq (cadr (cadr val)) 'x))))
-;end lambda-expression
-
-;format
-(test-exception 278 (format) 'arg-mismatch)
-
-(test-exception 279 (format 1) 'arg-mismatch)
-
-(test-exception 2791 (format 1 2) 'invalid-argument)
-
-(test-exception 280 (format nil "%d" 'a) 'invalid-argument)
-
-(test-exception 281 (format nil "%d" (make-array 3)) 'invalid-argument)
-
-(test-exception 282 (format nil "%d" (lambda (x) x)) 'invalid-argument)
-
-(test-exception 283 (format nil "%d" (macro (x) x)) 'invalid-argument)
-
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-exception 284(format nil "%d" cont) 'invalid-argument))
-
-(test-happy-case 285 (progn (format nil "Diagnostic from test case #285") (newline nil)))
-
-(test-happy-case 286 (progn (format nil "Diagnostic from test case #%d %d" 286 10) (newline nil)))
-
-(test-happy-case 287 (progn (format nil "Diagnostic from test case #%d %0.2f" 287 3.1415) (newline nil)))
-
-(test-happy-case 288 (progn (format nil "Diagnostic from test case #%d %c" 288 #\a) (newline nil)))
-
-(test-happy-case 289 (progn (format nil "Diagnostic from test case #%d %s" 289 "abc") (newline nil)))
-;end-format
-
-;clone
-(test-exception 290 (clone) 'arg-mismatch)
-
-(test-exception 291 (clone 1 2) 'arg-mismatch)
-
-(dolist (x (list 1 1.0 #\a "abc" 'a '(1 2 3)))
-  (test-condition 292 (eq x (clone x))))
-
-(let ((val (make-array 3)))
-  (array-set val 0 0)
-  (array-set val 1 1)
-  (array-set val 2 2)
-  (test-condition 293 (array-eq val (clone val))))
-
-(let ((cont))
-  (call-cc (lambda (cc) (set cont cc)))
-  (test-condition 294 (eq cont (clone cont))))
-;end clone
-
-;return-from
-(test-exception 295 (return-from) 'arg-mismatch)
-
-(test-exception 296 (return-from 1) 'arg-mismatch)
-
-(test-exception 297 (return-from 1 2 3) 'arg-mismatch)
-
-(define x 0)
-
-(defun f (n)
-  (if (> n 0)
-      (progn (set x 10) 
-	     (return-from f 20)))
-  (set x 30)
-  40)
-
-(let ((val))
-  (set val (f 10))
-  (test-condition 298 (and (eq x 10) (eq val 20)))
-
-  (set val (f -10))
-  (test-condition 299 (and (eq x 30) (eq val 40))))
-
-;end return-from
-
-;compile
-(test-exception 300 (compile1) 'arg-mismatch)
-
-(test-exception 301 (compile1 1) 'arg-mismatch)
-
-(test-exception 302 (compile1 1 2 3) 'arg-mismatch)
-;end compile
-
-;symbol
-(test-exception 303 (symbol) 'arg-mismatch)
-
-(test-exception 304 (symbol 1 2) 'arg-mismatch)
-
-(test-exception 305 (symbol 1) 'invalid-argument)
-
-(test-condition 306 (eq (symbol "abc") 'abc))
-
-(test-condition 307 (eq (symbol (string "abc")) 'abc))
-;end symbol
-
-;symbol-name
-(test-exception 308 (symbol-name) 'arg-mismatch)
-
-(test-exception 309 (symbol-name 1 2) 'arg-mismatch)
-
-(test-exception 310 (symbol-name 1) 'invalid-argument)
-
-(test-condition 311 (eq (symbol-name 'abc) "ABC"))
-;end symbol-name
-
-;symbol not bound
-(test-exception 312 an-undefined-symbol 'symbol-not-bound)
-;end symbol not bound
-
-(format nil 
-        "%d of %d test cases passed (%.2f%%)" 
-        passed-cases 
-        (+ passed-cases failed-cases) 
-        (/ (* 100.0 passed-cases) (* 1.0 (+ passed-cases failed-cases))))
-
-(if (not (eq failed-cases 0))
-    (format nil "ATTENTION! Some unit test cases have failed."))
-
-(newline nil)
+(defun run-all-tests ()
+  (format nil "Running unit test cases...")
+  (newline nil)
+  (dolist (fn (reverse test-functions))
+    (fn))
+  (format nil 
+          "%d of %d test cases passed (%.2f%%)" 
+          passed-cases 
+          (+ passed-cases failed-cases) 
+          (/ (* 100.0 passed-cases) (* 1.0 (+ passed-cases failed-cases))))
+  (if (not (eq failed-cases 0))
+      (format nil "ATTENTION! Some unit test cases have failed.")))
