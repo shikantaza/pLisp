@@ -1905,7 +1905,7 @@ OBJECT_PTR get_top_level_symbols()
 
   for(i=0; i < nof_global_vars; i++)
   {
-    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i]))
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
       continue;
 
     OBJECT_PTR val = top_level_symbols[i].sym;
@@ -5421,12 +5421,10 @@ OBJECT_PTR abort_evaluation()
 
 BOOLEAN is_continuation_object(OBJECT_PTR obj)
 {
-  OBJECT_PTR cons_equiv = cons_equivalent(obj);
-
-  if(IS_CONS_OBJECT(last_cell(cons_equiv)) && IS_FUNCTION2_OBJECT(car(last_cell(cons_equiv))))
-    return true;
-  else
-    return false;
+  //hack; we don't have any foolproof way
+  //of distinguishing function objects 
+  //from continuation objects
+  return IS_FUNCTION2_OBJECT(obj);
 }
 
 BOOLEAN is_core_symbol(char *s)

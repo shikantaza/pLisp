@@ -321,6 +321,15 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;        
       }
 
+      if(!IS_ARRAY_OBJECT(sym))
+      {
+        throw_exception1("EXCEPTION", "Argument indicated as CHAR-POINTER is not a string");
+        free_arg_values(arg_types, arg_values, args, nof_args);
+        free(arg_values);
+        free(arg_types);
+        return NIL;        
+      }
+
       uintptr_t ptr = sym & POINTER_MASK;
 
       int orig_len = *((unsigned int *)ptr);

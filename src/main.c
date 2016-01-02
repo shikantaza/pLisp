@@ -1682,7 +1682,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
   fprintf(stdout, "\n");
 #endif
   
-  if(is_atom(obj) || IS_CONTINUATION_OBJECT(obj))
+  if(is_atom(obj) || IS_CONTINUATION_OBJECT(obj) || is_continuation_object(obj))
     ret = obj; //atoms are immutable and are reused; continuation objects are also not cloned
   else
   {

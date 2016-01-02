@@ -1060,7 +1060,7 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
 
   if(index < 0 || (index >= array_len))
   {
-    throw_exception("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
+    throw_exception1("INDEX-OUT-OF-BOUNDS", "Array index out of bounds");
     return NIL;
   }        
  
