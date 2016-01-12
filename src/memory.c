@@ -77,6 +77,8 @@ extern OBJECT_PTR debug_window_dbg_stack;
 
 extern OBJECT_PTR continuation_to_resume;
 
+extern OBJECT_PTR exception_handlers;
+
 //forward declarations
 
 void dealloc(OBJECT_PTR);
@@ -106,6 +108,8 @@ inline unsigned int memory_deallocated() { return words_deallocated; }
 //the pointer created by posix_memalign.
 //const unsigned int POINTER_MASK = 4294967280;
 unsigned int POINTER_MASK;
+
+BOOLEAN can_do_gc;
 
 void free_white_set_objects()
 {
@@ -190,9 +194,18 @@ void free_all_objects()
 
 void gc(BOOLEAN force, BOOLEAN clear_black)
 {
+  static unsigned long count = 0;
+
+  if(!can_do_gc)
+    return;
+
   //no new objects were created since the
   //last GC cycle, so nothing to do.
   if(is_set_empty(WHITE))
+    return;
+
+  //do GC every GC_FREQUENCYth time called
+  if((count % GC_FREQUENCY) != 0)
     return;
 
   //printf("Entering GC cycle... ");
@@ -330,6 +343,10 @@ void pin_globals()
 
   if(is_dynamic_memory_object(continuation_to_resume))
     insert_node(GREY, continuation_to_resume);
+
+  if(is_dynamic_memory_object(exception_handlers))
+    insert_node(GREY, exception_handlers);
+
 }
 
 void build_grey_set()
@@ -690,6 +707,8 @@ int initialize_memory()
   words_deallocated = 0;
 
   POINTER_MASK = ((unsigned int)(pow(2, 8 * sizeof(uintptr_t))) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+
+  can_do_gc = true;
 
   return 0;
 }

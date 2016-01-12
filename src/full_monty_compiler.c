@@ -216,6 +216,8 @@ extern BOOLEAN system_changed;
 extern OBJECT_PTR debug_window_dbg_stack;
 
 extern BOOLEAN debug_mode;
+
+extern BOOLEAN can_do_gc;
 //end of external variables
 
 //external functions
@@ -297,6 +299,11 @@ extern OBJECT_PTR primitive_throw(OBJECT_PTR);
 extern add_to_autocomplete_list(char *);
 
 extern close_debugger_window();
+
+extern void insert_node(unsigned int, OBJECT_PTR);
+extern gc(BOOLEAN, BOOLEAN);
+extern BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
+
 //end of external functions
 
 //forward declarations
@@ -2132,7 +2139,14 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   if(!tt)
     return NIL;
 
+  //to protect from GC (which will be triggered
+  //during the native function call below)
+
+  can_do_gc = false;
+
   OBJECT_PTR ret1 = tt(ret, idclo);
+
+  can_do_gc = true;
 
   if(macro_flag)
     ret1 = ((ret1 >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
@@ -2868,6 +2882,23 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   len += sprintf(buf+len, ")\n{\n");
 
+  //GC enhancement code begin
+  rest = params;
+
+  while(rest != NIL)
+  {
+    char *pname = extract_variable_string(car(rest), serialize_flag);
+
+    len += sprintf(buf+len, "if(is_dynamic_memory_object(%s))insert_node(1, %s);\n", pname, pname);
+
+    rest = cdr(rest);
+
+    free(pname);
+  }
+
+  len += sprintf(buf+len, "gc(0,1);\n");
+  //GC enhancement code end
+
   //debug information
   len += sprintf(buf+len, "push_into_debug_stack(primitive_list(convert_int_to_object(%d), ", cons_length(params)-1);
 
@@ -3246,6 +3277,10 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "push_into_debug_stack",    push_into_debug_stack);
 
   tcc_add_symbol(tcc_state, "save_cont_to_resume",      save_continuation_to_resume);
+
+  tcc_add_symbol(tcc_state, "insert_node",              insert_node);
+  tcc_add_symbol(tcc_state, "gc",                       gc);
+  tcc_add_symbol(tcc_state, "is_dynamic_memory_object", is_dynamic_memory_object);
 
   return tcc_state;
 }
@@ -3732,10 +3767,14 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp, BOOLEAN full)
 
       OBJECT_PTR temp2 = expand_bodies(handle_and_rest_applications_for_macros(temp1));
 
+      can_do_gc = false;
+
       if(full)
         ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(temp2)), true);
       else
         ret = apply_macro_or_fn(car(out), cdr(temp2));
+
+      can_do_gc = true;
     }
     else
     {
@@ -5032,6 +5071,9 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
     else if(car(exp) == DEFUN)
       source = concat(2, list(2, LAMBDA, third(exp)), CDDDR(exp));
   }
+
+  if(is_dynamic_memory_object(source))
+    insert_node(GREY, source);
 
   if(IS_CONS_OBJECT(exp) && car(exp) == DEFINE)
   {

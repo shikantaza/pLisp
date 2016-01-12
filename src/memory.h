@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-#define GC_FREQUENCY 1000
+#define GC_FREQUENCY 10
 
 int initialize_memory();
 
