@@ -1561,8 +1561,9 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
   double initial_wall_time, final_wall_time;
   clock_t initial_cpu_time, final_cpu_time;;
   unsigned int initial_mem_alloc, final_mem_alloc;
+  unsigned int initial_mem_dealloc, final_mem_dealloc;
 
-  char buf[100];
+  char buf[500];
 
   char form[500];
 
@@ -1572,34 +1573,40 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
   initial_wall_time = get_wall_time();
   initial_cpu_time = clock();
   initial_mem_alloc = memory_allocated();
+  initial_mem_dealloc = memory_deallocated();
 
   OBJECT_PTR res = full_monty_eval(exp);
 
+  gc(false, false);
+
   if(in_error)
   {
-    throw_exception1("EXCEPTION", "TIME failed");
+    throw_exception1("EXCEPTION", "PROFILE failed");
     return NIL;
   }
 
   final_wall_time = get_wall_time();
   final_cpu_time = clock();
   final_mem_alloc = memory_allocated();
+  final_mem_dealloc = memory_deallocated();
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
-    memset(buf, '\0', 100);
+    memset(buf, '\0', 500);
     sprintf(buf,
-	    "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+	    "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated, %d words deallocated\n",
 	    final_wall_time - initial_wall_time,
 	    (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-	    final_mem_alloc - initial_mem_alloc);
+	    final_mem_alloc - initial_mem_alloc,
+            final_mem_dealloc - initial_mem_dealloc);
     print_to_transcript(buf);
   }
   else
-    printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
+    printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated, %d words deallocated\n",
            final_wall_time - initial_wall_time,
            (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-           final_mem_alloc - initial_mem_alloc);
+           final_mem_alloc - initial_mem_alloc,
+           final_mem_dealloc - initial_mem_dealloc);
 
   return res;
 }

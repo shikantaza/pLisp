@@ -5072,8 +5072,8 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
       source = concat(2, list(2, LAMBDA, third(exp)), CDDDR(exp));
   }
 
-  if(is_dynamic_memory_object(source))
-    insert_node(GREY, source);
+  //if(is_dynamic_memory_object(source))
+  //  insert_node(GREY, source);
 
   if(IS_CONS_OBJECT(exp) && car(exp) == DEFINE)
   {

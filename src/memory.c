@@ -715,6 +715,7 @@ int initialize_memory()
 
 void cleanup_memory()
 {
+  can_do_gc = true;
   free_all_objects();
 
 #ifdef GC_USES_HASHTABLE
