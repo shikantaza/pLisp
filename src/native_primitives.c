@@ -1577,6 +1577,9 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
 
   OBJECT_PTR res = full_monty_eval(exp);
 
+  if(is_dynamic_memory_object(res))
+    insert_node(GREY, res);
+
   gc(false, false);
 
   if(in_error)
