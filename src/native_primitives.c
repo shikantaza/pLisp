@@ -246,8 +246,8 @@ OBJECT_PTR primitive_setcar(OBJECT_PTR obj, OBJECT_PTR val)
     return NIL;
   }
 
-  if(is_dynamic_memory_object(val))
-    insert_node(GREY, val);
+  //if(is_dynamic_memory_object(val))
+  //  insert_node(GREY, val);
 
   set_heap(obj & POINTER_MASK, 0, val);
 
@@ -262,8 +262,8 @@ OBJECT_PTR primitive_setcdr(OBJECT_PTR obj, OBJECT_PTR val)
     return NIL;
   }
 
-  if(is_dynamic_memory_object(val))
-    insert_node(GREY, val);
+  //if(is_dynamic_memory_object(val))
+  //  insert_node(GREY, val);
 
   set_heap(obj & POINTER_MASK, 1, val);
 
@@ -1064,8 +1064,8 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
     return NIL;
   }        
  
-  if(is_dynamic_memory_object(val))
-    insert_node(GREY, val);
+  //if(is_dynamic_memory_object(val))
+  //  insert_node(GREY, val);
 
   set_heap(ptr, index + 1, val);
 
