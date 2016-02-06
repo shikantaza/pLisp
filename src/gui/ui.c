@@ -1499,7 +1499,8 @@ void populate_callers_symbols_list(GtkTreeView *symbols_list)
     OBJECT_PTR val = top_level_symbols[i].val;
 
     if(IS_CONS_OBJECT(val) &&
-       (IS_FUNCTION2_OBJECT(car(val)) && !is_continuation_object(car(val))) || IS_MACRO2_OBJECT(car(val)))
+      //(IS_FUNCTION2_OBJECT(car(val)) && !is_continuation_object(car(val))) || IS_MACRO2_OBJECT(car(val)))
+       (IS_FUNCTION2_OBJECT(car(val)) || IS_MACRO2_OBJECT(car(val))))
     {
       if(symbol_exists_in_list(callers_sym, car(get_source_object(car(val)))))
       {
@@ -1631,7 +1632,7 @@ void highlight_text(GtkTextBuffer *buffer, char *text)
     else
       text_start_is_word_start = true;
     
-    if(gtk_text_iter_get_char(&end_match) == ' ')
+    if(gtk_text_iter_get_char(&end_match) == ' ' || gtk_text_iter_get_char(&end_match) == ')')
       text_end_is_word_end = true;
     else
       text_end_is_word_end = false;
