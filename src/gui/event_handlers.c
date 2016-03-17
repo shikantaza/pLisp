@@ -61,6 +61,10 @@ extern GtkWindow *profiler_window;
 
 extern GtkWindow *callers_window;
 
+extern GtkWindow *file_browser_window;
+extern GtkTextBuffer *curr_file_browser_buffer;
+extern GtkTextView *curr_file_browser_text_view;
+
 extern GtkTextBuffer *help_buffer;
 extern GtkWindow *help_window;
 
@@ -99,6 +103,8 @@ extern GtkTreeView *variables_list;
 extern GtkStatusbar *system_browser_statusbar;
 extern GtkStatusbar *workspace_statusbar;
 extern GtkStatusbar *callers_statusbar;
+extern GtkStatusbar *file_browser_statusbar;
+
 extern BOOLEAN debug_mode;
 
 extern OBJECT_PTR build_list(int, ...);
@@ -623,6 +629,8 @@ void close_window(GtkWidget *widget,
     close_application_window((GtkWidget **)&workspace_window);
   else if((GtkWidget *)data == (GtkWidget *)system_browser_window)
     close_application_window((GtkWidget **)&system_browser_window);
+  else if((GtkWidget *)data == (GtkWidget *)file_browser_window)
+    close_application_window((GtkWidget **)&file_browser_window);
 }
 
 void evaluate()
@@ -732,6 +740,8 @@ void handle_cursor_move(GtkWidget *widget,
     statusbar = workspace_statusbar;
   else if(buffer == system_browser_buffer)
     statusbar = system_browser_statusbar;
+  else if(buffer == curr_file_browser_buffer)
+    statusbar = file_browser_statusbar;
   else
     statusbar = callers_statusbar;
 
@@ -827,6 +837,21 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       return TRUE;
     }
   }
+  else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
+  {
+    if(event->state & GDK_CONTROL_MASK)
+    {
+      build_form_for_eval(curr_file_browser_buffer);
+      action_triggering_window = file_browser_window;
+      evaluate();
+      gtk_window_present(transcript_window);
+      /* GtkTextIter start_sel, end_sel; */
+      /* if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel)) */
+      /* 	gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1); */
+      //return FALSE;
+      return TRUE;
+    }
+  }
   else if((widget == (GtkWidget *)workspace_window || widget == (GtkWidget *)system_browser_window) && 
 	  event->keyval == GDK_KEY_Tab)
   {
@@ -837,7 +862,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   else if((widget == (GtkWidget *)workspace_window      || 
            widget == (GtkWidget *)system_browser_window || 
            widget == (GtkWidget *)callers_window        ||
-           widget == (GtkWidget *)help_window)          && 
+           widget == (GtkWidget *)help_window           ||
+           widget == (GtkWidget *)file_browser_window)  && 
 	  event->keyval == GDK_KEY_F1)
   {
     enum {FUNCTION, MACRO, SPECIAL_OPERATOR};
@@ -853,6 +879,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       buffer = system_browser_buffer;
     else if(widget == (GtkWidget *)callers_window)
       buffer = callers_source_buffer;
+    else if(widget == (GtkWidget *)file_browser_window)
+      buffer = curr_file_browser_buffer;
     else
       buffer = help_buffer;
 
@@ -1166,10 +1194,30 @@ void show_workspace_window()
   }
 }
 
+void show_file_browser_window()
+{
+  if(file_browser_window == NULL)
+    create_file_browser_window(DEFAULT_WORKSPACE_POSX,
+                               DEFAULT_WORKSPACE_POSY,
+                               DEFAULT_WORKSPACE_WIDTH,
+                               DEFAULT_WORKSPACE_HEIGHT,
+                               default_workspace_text);
+  else
+  {
+    gtk_window_present(file_browser_window);
+  }
+}
+
 void show_workspace_win(GtkWidget *widget,
                            gpointer  data)
 {
   show_workspace_window();
+}
+
+void show_file_browser_win(GtkWidget *widget,
+                           gpointer  data)
+{
+  show_file_browser_window();
 }
 
 void load_image()
@@ -2150,7 +2198,19 @@ void do_auto_complete(GtkTextBuffer *buffer)
   else
     return;
 
-  GtkTextView *view = (buffer == (GtkTextBuffer *)workspace_source_buffer) ? (GtkTextView *)workspace_source_view : system_browser_textview;
+  //GtkTextView *view = (buffer == (GtkTextBuffer *)workspace_source_buffer) ? (GtkTextView *)workspace_source_view : system_browser_textview;
+
+  GtkTextView *view;
+
+  if(buffer == (GtkTextBuffer *)workspace_source_buffer)
+    view = (GtkTextView *)workspace_source_view;
+  else if(buffer == (GtkTextBuffer *)system_browser_buffer)
+    view = system_browser_textview;
+  else if(buffer == curr_file_browser_buffer)
+    view = curr_file_browser_text_view;
+  else
+    assert(false);
+
 
   //going into overwrite mode
   //to handle the case when autocomplete

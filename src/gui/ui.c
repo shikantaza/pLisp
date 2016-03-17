@@ -104,6 +104,8 @@ extern void fetch_symbol_value(GtkWidget *, gpointer);
 extern void eval_expression(GtkWidget *, gpointer);
 extern void fetch_variables(GtkWidget *, gpointer);
 
+extern void show_file_browser_win(GtkWidget *, gpointer);
+
 extern resume_from_debugger(GtkWidget *, gpointer);
 extern abort_debugger(GtkWidget *, gpointer);
 
@@ -218,6 +220,7 @@ GtkToolbar *create_workspace_toolbar()
   GtkWidget *toolbar;
 
   GtkWidget *load_icon = gtk_image_new_from_file (DATADIR "/icons/load_file.png");
+  GtkWidget *fb_icon = gtk_image_new_from_file (DATADIR "/icons/file_browser.png");
   GtkWidget *eval_icon = gtk_image_new_from_file (DATADIR "/icons/evaluate.png");
   GtkWidget *clear_icon = gtk_image_new_from_file (DATADIR "/icons/clear32x32.png");
   GtkWidget *exit_icon = gtk_image_new_from_file (DATADIR "/icons/exit32x32.png");
@@ -248,15 +251,20 @@ GtkToolbar *create_workspace_toolbar()
   /*                          GTK_SIGNAL_FUNC(eval_expression),       /\* a signal *\/ */
   /*                          (GtkWidget *)workspace_window); */
 
+  GtkToolItem *fb_button = gtk_tool_button_new(fb_icon, NULL);
+  gtk_tool_item_set_tooltip_text(fb_button, "File Browser");
+  g_signal_connect (fb_button, "clicked", G_CALLBACK (show_file_browser_win), workspace_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, fb_button, 1);
+
   GtkToolItem *eval_button = gtk_tool_button_new(eval_icon, NULL);
   gtk_tool_item_set_tooltip_text(eval_button, "Evaluate (Ctrl+Enter)");
   g_signal_connect (eval_button, "clicked", G_CALLBACK (eval_expression), workspace_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, eval_button, 1);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, eval_button, 2);
 
   GtkToolItem *clear_button = gtk_tool_button_new(clear_icon, NULL);
   gtk_tool_item_set_tooltip_text(clear_button, "Clear Workspace");
   g_signal_connect (clear_button, "clicked", G_CALLBACK (clear_workspace), workspace_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, clear_button, 2);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, clear_button, 3);
 
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
   /*                          NULL,                                   /\* button label *\/ */
@@ -269,7 +277,7 @@ GtkToolbar *create_workspace_toolbar()
   GtkToolItem *close_button = gtk_tool_button_new(exit_icon, NULL);
   gtk_tool_item_set_tooltip_text(close_button, "Close (Ctrl-W)");
   g_signal_connect (close_button, "clicked", G_CALLBACK (close_window), workspace_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 3);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 4);
 
   return (GtkToolbar *)toolbar;
 }

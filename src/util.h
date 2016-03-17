@@ -34,4 +34,6 @@ double get_wall_time();
 
 char *conv_to_lower_case_preserve_strings(char *);
 
+char *get_file_contents(char *);
+
 #endif
