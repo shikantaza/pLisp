@@ -25,6 +25,7 @@
 #include <gtksourceview/gtksource.h>
 
 #include "../util.h"
+#include "../json.h"
 
 #define FONT "Monospace Bold 9"
 
@@ -127,6 +128,7 @@ gboolean fb_handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpoin
     do_auto_complete(buffer);
     return TRUE;  
   }
+
   return FALSE;
 }
 
@@ -337,6 +339,9 @@ void fb_save_source_file(GtkWidget *widget, gpointer data)
 
 void close_file()
 {
+  if(gtk_notebook_get_n_pages(fb_notebook) == 0)
+    return;
+
   if(gtk_text_buffer_get_modified(curr_file_browser_buffer) == TRUE)
   {
       GtkWidget *dialog1 = gtk_message_dialog_new ((GtkWindow *)file_browser_window,
@@ -354,6 +359,9 @@ void close_file()
   }
 
   gtk_container_remove(fb_notebook, current_scrolled_win);
+
+  if(gtk_notebook_get_n_pages(fb_notebook) > 0)
+    current_scrolled_win = gtk_notebook_get_nth_page(fb_notebook, gtk_notebook_get_current_page(fb_notebook));
 }
 
 void fb_close_source_file(GtkWidget *widget, gpointer data)
@@ -461,7 +469,7 @@ GtkToolbar *create_file_browser_toolbar()
   return (GtkToolbar *)toolbar;
 }
 
-void create_file_browser_window(int posx, int posy, int width, int height, char *text)
+void create_file_browser_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -503,4 +511,123 @@ void create_file_browser_window(int posx, int posy, int width, int height, char 
   fnws = NULL;
 
   gtk_widget_show_all(win);
+}
+
+void serialize_file_browser_window(FILE *fp)
+{
+  if(!file_browser_window)
+    return;
+
+  int posx, posy, width, height;
+
+  gtk_window_get_position(file_browser_window, &posx, &posy);
+  gtk_window_get_size(file_browser_window, &width, &height);
+
+  fprintf(fp, 
+          ", \"file-browser\" : [ %d, %d, %d, %d, [", 
+          posx, posy, width, height);
+  
+  gint nof_pages = gtk_notebook_get_n_pages(fb_notebook);
+
+  int i=0;
+
+  for(i=0; i<nof_pages; i++)
+  {
+    GtkWidget *page = gtk_notebook_get_nth_page(fb_notebook, i);
+
+    if(i != 0)
+      fprintf(fp, ", ");
+
+    fprintf(fp, "\"%s\"", gtk_notebook_get_tab_label_text(fb_notebook, page));
+  }
+
+  fprintf(fp, "]]");
+}
+
+void add_file_to_file_browser(char *file_name)
+{
+  GtkWidget *scrolled_win = gtk_scrolled_window_new (NULL, NULL);
+  GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
+  GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
+
+  g_signal_connect(G_OBJECT(buffer), 
+                   "notify::cursor-position", 
+                   G_CALLBACK (handle_cursor_move), 
+                   NULL);
+
+  g_signal_connect(G_OBJECT(view), 
+                   "key_press_event", 
+                   G_CALLBACK (fb_handle_key_press_events), 
+                   NULL);
+
+  gtk_container_add (GTK_CONTAINER (scrolled_win), view);
+
+  gtk_widget_override_font(GTK_WIDGET(view), pango_font_description_from_string(FONT));
+
+  GtkWidget *label = gtk_label_new(file_name);
+
+  file_name_and_widget_t *fnw = (file_name_and_widget_t *)malloc(sizeof(file_name_and_widget_t));
+  fnw->widget = scrolled_win;
+  fnw->file_name = file_name;
+  fnw->buffer = buffer;
+  fnw->view = view;
+
+  add_file_name_and_widget(fnw);
+
+  //to work around focus not being set to the newly-created view/scrolled window
+  free(current_file_name);
+  current_file_name = (char *)malloc(strlen(fnw->file_name) + 1);
+  memset(current_file_name, '\0', strlen(current_file_name) + 1);
+  strcpy(current_file_name, fnw->file_name);
+  current_scrolled_win = fnw->widget;    
+  curr_file_browser_buffer = fnw->buffer;
+  curr_file_browser_text_view = view;
+
+  g_signal_connect(view, "grab-focus", G_CALLBACK(fb_select_file), (void *)fnw);
+
+  char *file_contents = get_file_contents(file_name);
+
+  if(!file_contents)
+  {
+    char buf[200];
+    memset(buf, 200, '\0');
+    sprintf(buf, "Unable to open file %s", file_name);
+    show_error_dialog(buf);
+    return;
+  }
+
+  gtk_text_buffer_set_text(buffer, file_contents == -1 ? "" : file_contents, -1);
+  if(file_contents && file_contents != -1)
+    free(file_contents);
+
+  gtk_notebook_append_page(fb_notebook, scrolled_win, label);
+  gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);  
+}
+
+void deserialize_file_browser_window(struct JSONObject *root)
+{
+  struct JSONObject *file_browser = JSON_get_object_item(root, "file-browser");
+
+  if(file_browser_window)
+    close_application_window(&file_browser_window);
+
+  if(file_browser)
+  {
+    create_file_browser_window(JSON_get_array_item(file_browser, 0)->ivalue,
+                               JSON_get_array_item(file_browser, 1)->ivalue,
+                               JSON_get_array_item(file_browser, 2)->ivalue,
+                               JSON_get_array_item(file_browser, 3)->ivalue);
+
+    
+    struct JSONObject *file_names = JSON_get_array_item(file_browser, 4);
+
+    unsigned int nof_files = JSON_get_array_size(file_names);
+
+    int i=0;
+
+    for(i=0; i < nof_files; i++)
+      add_file_to_file_browser(JSON_get_array_item(file_names, i)->strvalue);
+
+    gtk_widget_show_all(file_browser_window);
+  }
 }

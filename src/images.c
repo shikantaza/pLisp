@@ -140,6 +140,9 @@ char *get_json_native_fn_source(unsigned int);
 void recreate_native_fn_objects();
 //end of forward declarations
 
+extern void serialize_file_browser_window(FILE *);
+extern void deserialize_file_browser_window(struct JSONObject *);
+
 struct slot
 {
   unsigned int ref;
@@ -803,6 +806,8 @@ void create_image(char *file_name)
 
   }
 
+  serialize_file_browser_window(fp);
+
   fprintf(fp, "}");
 
   fclose(fp);
@@ -1461,6 +1466,8 @@ int load_from_image(char *file_name)
                           JSON_get_array_item(callers, 1)->ivalue,
                           JSON_get_array_item(callers, 2)->ivalue,
                           JSON_get_array_item(callers, 3)->ivalue);
+
+  deserialize_file_browser_window(root);
 
   JSON_delete_object(root);
 

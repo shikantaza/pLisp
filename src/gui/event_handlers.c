@@ -105,6 +105,8 @@ extern GtkStatusbar *workspace_statusbar;
 extern GtkStatusbar *callers_statusbar;
 extern GtkStatusbar *file_browser_statusbar;
 
+extern GtkNotebook *fb_notebook;
+
 extern BOOLEAN debug_mode;
 
 extern OBJECT_PTR build_list(int, ...);
@@ -819,7 +821,25 @@ void handle_cursor_move(GtkWidget *widget,
 
 gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
-  if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
+  if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_n)
+  {
+    new_source_file();
+    return TRUE;
+  }
+  else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_o)
+  {
+    fb_load_source_file();
+    return TRUE;
+  }
+  else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_s)
+    save_file();
+  else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)
+    close_file();
+  else if(widget == (GtkWidget *)file_browser_window && event->keyval == GDK_KEY_F5)
+    reload_file();
+  else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_q)
+    close_application_window(&file_browser_window);
+  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
     load_source();
   //else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
@@ -839,6 +859,9 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   }
   else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
   {
+    if(gtk_notebook_get_n_pages(fb_notebook) == 0)
+      return TRUE;
+
     if(event->state & GDK_CONTROL_MASK)
     {
       build_form_for_eval(curr_file_browser_buffer);
@@ -1200,8 +1223,7 @@ void show_file_browser_window()
     create_file_browser_window(DEFAULT_WORKSPACE_POSX,
                                DEFAULT_WORKSPACE_POSY,
                                DEFAULT_WORKSPACE_WIDTH,
-                               DEFAULT_WORKSPACE_HEIGHT,
-                               default_workspace_text);
+                               DEFAULT_WORKSPACE_HEIGHT);
   else
   {
     gtk_window_present(file_browser_window);
