@@ -46,7 +46,9 @@ iconsdir = $(pkgdatadir)/icons
 icons_DATA  = icons/abort.png icons/clear.png icons/export_package.png icons/refresh.png icons/accept.png  \
 	      icons/delete.png icons/load_file.png icons/resume.png icons/browser.png icons/evaluate.png icons/load_image.png \
               icons/save_image.png icons/callers.png icons/exit32x32.png icons/new_package.png icons/workspace.png \
-              icons/clear32x32.png icons/exit.png icons/new_symbol.png
+              icons/clear32x32.png icons/exit.png icons/new_symbol.png icons/close_file.png icons/file_browser.png \
+              icons/new_file.png icons/open_file.png icons/save_file.png
+
 
 src/json.c:	src/json.l
 	$(LEX) --prefix=json -o src/json.c src/json.l
