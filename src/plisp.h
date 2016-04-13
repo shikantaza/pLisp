@@ -90,7 +90,11 @@
 
 typedef unsigned int OBJECT_PTR;
 
+#ifndef WIN32
 typedef int BOOLEAN;
+#else
+#define BOOLEAN int
+#endif
 
 typedef struct package
 {

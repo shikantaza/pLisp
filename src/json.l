@@ -20,7 +20,7 @@
 %option noyywrap
 
 %{
-#include "json_parser.tab.h"
+#include "json_parser.h"
 
 %}
 

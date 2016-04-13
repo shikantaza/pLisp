@@ -22,7 +22,7 @@
 %{
 #include "plisp.h"
 #include "util.h"
-#include "plisp.tab.h"
+#include "plisp_parser.h"
 int yyerror(char *s);
 
 #define MAX_INCLUDE_DEPTH 10

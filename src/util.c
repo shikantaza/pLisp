@@ -60,6 +60,19 @@ void log_function_exit(char *fn)
 #endif
 }
 
+#ifdef WIN32
+char *strndup(const char *s, size_t n)
+{
+    char *result;
+    size_t len = strlen (s);
+    if (n < len) len = n;
+    result = (char *) malloc (len + 1);
+    if (!result) return 0;
+    result[len] = '\0';
+    return (char *) strncpy (result, s, len);
+}
+#endif
+
 char* substring(const char* str, size_t begin, size_t len) 
 { 
   if (str == 0 || strlen(str) == 0 || strlen(str) < begin || strlen(str) < (begin+len)) 

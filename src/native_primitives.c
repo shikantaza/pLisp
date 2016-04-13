@@ -21,12 +21,23 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <stdint.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
 #include <time.h>
 
 #include <unistd.h>
 #include <fcntl.h>
+
+#ifdef WIN32
+#include <errno.h>
+#else
 #include <sys/errno.h>
+#endif
 
 #include "plisp.h"
 #include "util.h"
@@ -34,7 +45,12 @@
 enum {WHITE, GREY, BLACK};
 
 extern OBJECT_PTR NIL;
+
+#ifdef WIN32
+#define TRUE SYMBOL_TAG
+#else
 extern OBJECT_PTR TRUE;
+#endif
 
 extern char **strings;
 
@@ -43,13 +59,26 @@ extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 extern unsigned int POINTER_MASK;
 
 extern int nof_dl_handles;
+
+#ifdef WIN32
+extern HMODULE *dl_handles;
+#else
 extern void **dl_handles;
+#endif
+
 extern char *foreign_library_names[];
 
 extern OBJECT_PTR INTEGR;
 extern OBJECT_PTR FLOT;
+
+#ifdef WIN32
+extern OBJECT_PTR CHAR1;
+extern OBJECT_PTR VOID1;
+#else
 extern OBJECT_PTR CHAR;
 extern OBJECT_PTR VOID;
+#endif
+
 extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
@@ -808,13 +837,24 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
   {
     int fd1 = get_int_value(fd);
 
+#ifdef WIN32
+    BY_HANDLE_FILE_INFORMATION info;
+
+    if(!GetFileInformationByHandle(fd1, &info))
+    {
+      throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
+      return;
+    }
+#else
     fcntl(fd1, F_GETFD);
 
     if(errno != 0 && errno != EAGAIN)
     {
       throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
       return;
-    }  
+    }
+#endif
+  
   }
 
   if(!IS_STRING_LITERAL_OBJECT(spec) && !is_string_object(spec))
@@ -926,6 +966,15 @@ OBJECT_PTR primitive_newline(OBJECT_PTR obj)
   {
     int fd = get_int_value(obj);
 
+#ifdef WIN32
+    BY_HANDLE_FILE_INFORMATION info;
+
+    if(!GetFileInformationByHandle(fd, &info))
+    {
+      throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
+      return;
+    }
+#else
     fcntl(fd, F_GETFD);
 
     if(errno != 0 && errno != EAGAIN)
@@ -933,6 +982,7 @@ OBJECT_PTR primitive_newline(OBJECT_PTR obj)
       throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
       return;
     }  
+#endif
 
     write(fd, "\n", 1);
   }
@@ -1202,7 +1252,12 @@ OBJECT_PTR prim_print_string(OBJECT_PTR str)
 
 OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 {
+#ifdef WIN32
+  HMODULE *temp;
+#else
   void **temp;
+#endif
+
   char *fname;
   void *ret;
 
@@ -1219,8 +1274,12 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
   }
 
   nof_dl_handles++;
-  
+
+#ifdef WIN32
+  temp = (HMODULE *)realloc(dl_handles, nof_dl_handles * sizeof(HMODULE));
+#else  
   temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
+#endif
 
   if(temp == NULL)
   {
@@ -1232,7 +1291,11 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 
   fname = IS_STRING_LITERAL_OBJECT(file_name) ? strings[(int)file_name >> OBJECT_SHIFT] : get_string(file_name);
 
+#ifdef WIN32
+  ret = LoadLibrary(fname);
+#else
   ret = dlopen(fname, RTLD_LAZY);
+#endif
 
   if(!ret)
   {
@@ -1259,8 +1322,13 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 
   if(!(ret_type == INTEGR        ||
        ret_type == FLOT          ||
+#ifdef WIN32
+       ret_type == CHAR1         ||
+       ret_type == VOID1         ||
+#else
        ret_type == CHAR          ||
        ret_type == VOID          ||
+#endif
        /* ret_type == INT_POINTER   || */ //not handling int and float pointer return values
        /* ret_type == FLOAT_POINTER || */
        ret_type == CHAR_POINTER))
@@ -1325,7 +1393,11 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	return NIL;
       }
     }
+#ifdef WIN32
+    else if(type == CHAR1)
+#else
     else if(type == CHAR)
+#endif
     {
       if(!IS_CHAR_OBJECT(val))
       {

@@ -19,7 +19,13 @@
 
 #include <stdio.h>
 #include <assert.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
 #include <gtk/gtk.h>
 #include <time.h>
 
@@ -67,7 +73,12 @@ extern OBJECT_PTR NIL;
 
 extern int nof_dl_handles;
 extern char *foreign_library_names[];
+
+#ifdef WIN32
+extern HMODULE *dl_handles;
+#else
 extern void **dl_handles;
+#endif
 
 extern unsigned int POINTER_MASK;
 
@@ -1071,13 +1082,23 @@ int load_from_image(char *file_name)
   temp = JSON_get_object_item(root, "foreign_libraries");
   nof_dl_handles = JSON_get_array_size(temp);
 
+#ifdef WIN32
+  dl_handles = (HMODULE *)malloc(nof_dl_handles * sizeof(HMODULE));
+#else
   dl_handles = (void **)malloc(nof_dl_handles * sizeof(void *));
+#endif
 
   for(i=0; i<nof_dl_handles; i++)
   {
     struct JSONObject *strobj = JSON_get_array_item(temp, i);
     foreign_library_names[i] = strdup(strobj->strvalue);
+
+#ifdef WIN32
+    dl_handles[i] = LoadLibrary(strobj->strvalue);
+#else
     dl_handles[i] = dlopen(strobj->strvalue, RTLD_LAZY);
+#endif
+
   }
 
   temp = JSON_get_object_item(root, "packages");

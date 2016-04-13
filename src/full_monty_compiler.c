@@ -84,7 +84,13 @@ extern OBJECT_PTR CADR(OBJECT_PTR);
 extern BOOLEAN is_atom(OBJECT_PTR);
 
 extern OBJECT_PTR NIL;
+
+#ifdef WIN32
+extern OBJECT_PTR ERROR1;
+#else
 extern OBJECT_PTR ERROR;
+#endif
+
 extern OBJECT_PTR IF;
 extern OBJECT_PTR SET;
 extern OBJECT_PTR LAMBDA;
@@ -109,7 +115,13 @@ extern OBJECT_PTR GT;
 extern OBJECT_PTR LT;
 extern OBJECT_PTR LEQ;
 extern OBJECT_PTR GEQ;
+
+#ifdef WIN32
+extern OBJECT_PTR ATOM1;
+#else
 extern OBJECT_PTR ATOM;
+#endif
+
 extern OBJECT_PTR EQ;
 extern OBJECT_PTR CDR;
 extern OBJECT_PTR PRINT;
@@ -737,7 +749,11 @@ OBJECT_PTR subexps(OBJECT_PTR exp)
   if(IS_CONS_OBJECT(exp))
     car_exp = car(exp);
 
+#ifdef WIN32
+  if(is_atom(exp) || car_exp == ERROR1)
+#else
   if(is_atom(exp) || car_exp == ERROR)
+#endif
     return NIL;
   else if(car_exp == IF)
     return list(3, second(exp), third(exp), fourth(exp));
@@ -769,7 +785,11 @@ OBJECT_PTR mutating_ids(OBJECT_PTR exp)
   if(IS_CONS_OBJECT(exp))
     car_exp = car(exp);
 
+#ifdef WIN32
+  if(is_atom(exp) || car_exp == ERROR1)
+#else
   if(is_atom(exp) || car_exp == ERROR)
+#endif
     return NIL;
   else if(car_exp == SET)
     return union1(2,
@@ -923,7 +943,11 @@ OBJECT_PTR mapsub1(OBJECT_PTR exp,
   if(IS_CONS_OBJECT(exp))
     car_exp = car(exp);
 
+#ifdef WIN32
+  if(is_atom(exp) || car_exp == ERROR1)
+#else
   if(is_atom(exp) || car_exp == ERROR)
+#endif
     return exp;
   else if(car_exp == IF)
     return list(4, IF, tf(second(exp),v,NIL), tf(third(exp),v,NIL), tf(fourth(exp),v,NIL));
@@ -1051,7 +1075,11 @@ OBJECT_PTR mapsub(OBJECT_PTR exp,
   if(IS_CONS_OBJECT(exp))
     car_exp = car(exp);
 
+#ifdef WIN32
+  if(is_atom(exp) || car_exp == ERROR1)
+#else
   if(is_atom(exp) || car_exp == ERROR)
+#endif
     return exp;
   else if(car_exp == IF)
     return list(4, IF, tf(second(exp)), tf(third(exp)), tf(fourth(exp)));
@@ -1408,7 +1436,11 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
                                          map(CADR, second(exp)))),
                              free_ids_il(third(exp))),
                       map(car, second(exp)));
+#ifdef WIN32
+  else if(car_exp == ERROR1 || car_exp == CALL_CC)
+#else
   else if(car_exp == ERROR || car_exp == CALL_CC)
+#endif
     return free_ids_il(second(exp));
   else
     return flatten(cons(free_ids_il(car(exp)),
@@ -1510,7 +1542,11 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
     return cps_transform_if(second(exp),
                             third(exp),
                             fourth(exp));
+#ifdef WIN32
+  else if(car_exp == ERROR1)
+#else
   else if(car_exp == ERROR)
+#endif
     return cps_transform_error(second(exp));
   else
     return cps_transform_application(exp);
@@ -1785,7 +1821,11 @@ OBJECT_PTR cps_transform_error(OBJECT_PTR exp)
                    list(3,
                         LAMBDA,
                         list(1, ians),
+#ifdef WIN32
+                        list(2, ERROR1, ians))));
+#else
                         list(2, ERROR, ians))));
+#endif
 }
 
 OBJECT_PTR closure_conv_transform_let(OBJECT_PTR exp)
@@ -1851,7 +1891,11 @@ OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
   }
   else if(primop(car_exp) ||
           car_exp == IF   ||
+#ifdef WIN32
+          car_exp == ERROR1)
+#else
           car_exp == ERROR)
+#endif
     return mapsub(exp, closure_conv_transform);
   else
     return closure_conv_transform_app(exp);
@@ -2202,7 +2246,12 @@ BOOLEAN arithop(OBJECT_PTR sym)
 
 BOOLEAN core_op(OBJECT_PTR sym)
 {
+
+#ifdef WIN32
+  return sym == ATOM1   ||
+#else
   return sym == ATOM    ||
+#endif
     sym == CONCAT       ||
     sym == DEFINE       ||
     sym == QUOTE        ||
@@ -2210,7 +2259,11 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == CALL_CC      ||
     sym == SAVE_CONTINUATION ||
     sym == SET          ||
+#ifdef WIN32
+    sym == ERROR1       ||
+#else
     sym == ERROR        ||
+#endif
     sym == LST          ||
     sym == CONS         ||
     sym == CAR          ||
@@ -2670,7 +2723,11 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "primitive_leq");
       else if(var == GEQ)
         sprintf(s, "primitive_geq");
+#ifdef WIN32
+      else if(var == ERROR1)
+#else
       else if(var == ERROR)
+#endif
         sprintf(s,"primitive_error");
       else if(var == IF)
         sprintf(s, "primitive_if");
@@ -2700,7 +2757,11 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "primitive_not");
       else if(var == GENSYM)
         sprintf(s, "gensym");
+#ifdef WIN32
+      else if(var == ATOM1)
+#else
       else if(var == ATOM)
+#endif
         sprintf(s, "primitive_atom");
       else if(var == SYMBOL_VALUE)
         sprintf(s, "prim_symbol_value");
@@ -4131,7 +4192,11 @@ int and_rest_closure_pos(OBJECT_PTR sym)
 OBJECT_PTR get_free_variables(OBJECT_PTR exp)
 {
   return difference(free_ids_il(exp),
+#ifdef WIN32
+                    list(11, LET, LETREC, IF, SET, LAMBDA, MACRO, ERROR1, CALL_CC, DEFINE, TRUE, NIL));
+#else
                     list(11, LET, LETREC, IF, SET, LAMBDA, MACRO, ERROR, CALL_CC, DEFINE, TRUE, NIL));
+#endif
 }
 
 OBJECT_PTR temp15(OBJECT_PTR x)
@@ -4500,7 +4565,11 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     throw_exception1("COMPILE-ERROR", "IF requires at least a test and a then clause");
     return false;
   }
+#ifdef WIN32
+  else if(car_exp == ERROR1 && len != 2)
+#else
   else if(car_exp == ERROR && len != 2)
+#endif
   {
     throw_exception1("COMPILE-ERROR", "ERROR requires a single parameter");
     return false;
@@ -4575,7 +4644,11 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     throw_exception1("COMPILE-ERROR", "Operator '<=' requires two parameters");
     return false;
   }
+#ifdef WIN32
+  else if(car_exp == ATOM1 && len != 2)
+#else
   else if(car_exp == ATOM && len != 2)
+#endif
   {
     throw_exception1("COMPILE-ERROR", "ATOM requires a single parameter");
     return false;

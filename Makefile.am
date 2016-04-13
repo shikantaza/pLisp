@@ -21,7 +21,7 @@ all:	${bin_PROGRAMS} ${lib_LTLIBRARIES} help.html
 
 bin_PROGRAMS = plisp
 
-plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/test_so.c src/queue.c src/main.c src/memory.c src/native_compiler.c src/full_monty_compiler.c src/vm.c  src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/rb/misc.h src/rb/misc.c src/rb/stack.h src/rb/red_black_tree.h src/rb/stack.c src/rb/red_black_tree.c src/util.h src/queue.h src/plisp.l src/plisp_parser.y src/jsonlib.c src/json.l src/json_parser.y src/gui/file_browser.c
+plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/test_so.c src/queue.c src/main.c src/memory.c src/native_compiler.c src/full_monty_compiler.c src/vm.c  src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/rb/misc.h src/rb/misc.c src/rb/stack.h src/rb/red_black_tree.h src/rb/stack.c src/rb/red_black_tree.c src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c
 
 noinst_PROGRAMS = docgen
 
@@ -32,7 +32,7 @@ AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
-plisp_LDADD = ${AM_LIBS} -ltcc
+plisp_LDADD = ${AM_LIBS} /cygdrive/c/temp/tcc-0.9.26/libtcc.a
 
 lib_LTLIBRARIES = libplisp.la
 libplisp_la_SOURCES = src/plisp_utils_ffi.c

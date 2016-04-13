@@ -19,7 +19,13 @@
 
 #include <stdio.h>
 #include <assert.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
 #include <string.h>
 #include <time.h>
 
@@ -52,12 +58,23 @@ extern OBJECT_PTR reg_current_env;
 extern OBJECT_PTR reg_current_value_rib;
 extern OBJECT_PTR reg_current_stack;
 
+#ifdef WIN32
+#define TRUE SYMBOL_TAG
+#else
 extern OBJECT_PTR TRUE;
+#endif
+
 extern OBJECT_PTR NIL;
 
 extern OBJECT_PTR CONS;
 extern OBJECT_PTR EQ;
+
+#ifdef WIN32
+extern OBJECT_PTR ATOM1;
+#else
 extern OBJECT_PTR ATOM;
+#endif
+
 extern OBJECT_PTR CAR;
 extern OBJECT_PTR CDR;
 
@@ -77,7 +94,13 @@ extern OBJECT_PTR GT;
 extern OBJECT_PTR GENSYM;
 extern OBJECT_PTR SETCAR;
 extern OBJECT_PTR SETCDR;
+
+#ifdef WIN32
+extern OBJECT_PTR ERROR1;
+#else
 extern OBJECT_PTR ERROR;
+#endif
+
 extern OBJECT_PTR CREATE_PACKAGE;
 extern OBJECT_PTR IN_PACKAGE;
 extern OBJECT_PTR COMMA;
@@ -124,8 +147,15 @@ extern OBJECT_PTR BACKQUOTE;
 
 extern OBJECT_PTR INTEGR;
 extern OBJECT_PTR FLOT;
+
+#ifdef WIN32
+extern OBJECT_PTR CHAR1;
+extern OBJECT_PTR VOID1;
+#else
 extern OBJECT_PTR CHAR;
 extern OBJECT_PTR VOID;
+#endif
+
 extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
@@ -179,7 +209,12 @@ extern unsigned int current_package;
 extern package_t *packages;
 
 extern int nof_dl_handles;
+
+#ifdef WIN32
+extern HMODULE *dl_handles;
+#else
 extern void **dl_handles;
+#endif
 
 extern char err_buf[500];
 
@@ -595,7 +630,11 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
     {
       OBJECT_PTR temp = compile(CADR(form), NIL);
 
+#ifdef WIN32
+      if(temp == ERROR1)
+#else
       if(temp == ERROR)
+#endif
       {
         throw_generic_exception("Backquote evaluation(1): compile failed");
         return NIL;
@@ -652,7 +691,11 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	if(CAAR(rest) == COMMA_AT)
         {
           OBJECT_PTR temp = compile(CADAR(rest), NIL);
+#ifdef WIN32
+          if(temp == ERROR1)
+#else
           if(temp == ERROR)
+#endif
           {
             throw_generic_exception("Backquote evaluation(2): compile failed");
             return NIL;

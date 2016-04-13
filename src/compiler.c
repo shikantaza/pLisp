@@ -81,7 +81,11 @@ extern OBJECT_PTR RETURN;
 extern OBJECT_PTR BACKQUOTE;
 extern OBJECT_PTR WHILE;
 
+#ifdef WIN32
+extern OBJECT_PTR ERROR1;
+#else
 extern OBJECT_PTR ERROR;
+#endif
 
 extern expression_t *g_expr;
 
@@ -156,10 +160,18 @@ OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
                                         cons(c, NIL)),
                                    cdr(c)));
 
+#ifdef WIN32
+    if(temp == ERROR1)
+#else
     if(temp == ERROR)
+#endif
     {
       printf("compile_loop() failed\n");
+#ifdef WIN32
+      return ERROR1;
+#else
       return ERROR;
+#endif
     }
     else
       return compile_loop(cdr(args), temp, next);
@@ -200,10 +212,18 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     {
       OBJECT_PTR temp = compile(cons(PROGN, CDDR(exp)), cons(cons(RETURN, NIL), exp));
 
+#ifdef WIN32
+      if(temp == ERROR1)
+#else
       if(temp == ERROR)
+#endif
       {
         printf("Compiling lambda expression failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
       else
         /* return cons(cons(CLOSE, cons(CADR(exp), cons(temp, cons(next, NIL)))), */
@@ -219,10 +239,18 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     {
       OBJECT_PTR temp = compile(cons(PROGN, CDDR(exp)), cons(cons(RETURN, NIL), exp));
 
+#ifdef WIN32
+      if(temp == ERROR1)
+#else
       if(temp == ERROR)
+#endif
       {
         printf("Compiling macro expression failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
       else
         /* return cons(cons(MACRO, cons(CADR(exp), cons(temp, cons(next, NIL)))), */
@@ -236,17 +264,33 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     if(car_obj == IF)
     {
       OBJECT_PTR thenc = compile(CADDR(exp), next);
+#ifdef WIN32
+      if(thenc == ERROR1)
+#else
       if(thenc == ERROR)
+#endif
       {
         printf("Compiling then clause of IF expression failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
 
       OBJECT_PTR elsec = compile(CADDDR(exp), next);
+#ifdef WIN32
+      if(elsec == ERROR1)
+#else
       if(elsec == ERROR)
+#endif
       {
         printf("Compiling else clause of IF expression failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
 
       return compile(CADR(exp), cons(cons(TEST, cons(thenc, cons(elsec, NIL))), exp));
@@ -255,18 +299,34 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     if(car_obj == WHILE)
     {
       OBJECT_PTR cond = compile(CADR(exp), cons(CONS_HALT_NIL, exp));
+#ifdef WIN32
+      if(cond == ERROR1)
+#else
       if(cond == ERROR)
+#endif
       {
         printf("Compiling condition in WHILE failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
 
       OBJECT_PTR body = compile(cons(PROGN, CDDR(exp)), 
                                 cons(CONS_HALT_NIL, exp));
+#ifdef WIN32
+      if(body == ERROR1)
+#else
       if(body == ERROR)
+#endif
       {
         printf("Compiling body of WHILE failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
 
       return cons(cons(WHILE, cons(cond, cons(body, cons(next, NIL)))),
@@ -282,10 +342,18 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
     if(car_obj == CALL_CC)
     {
       OBJECT_PTR temp = compile(CADR(exp), cons(CONS_APPLY_NIL, exp));
+#ifdef WIN32
+      if(temp == ERROR1)
+#else
       if(temp == ERROR)
+#endif
       {
         printf("Compiling CALL-CC failed\n");
+#ifdef WIN32
+        return ERROR1;
+#else
         return ERROR;
+#endif
       }
 
       OBJECT_PTR c = cons(CONTI,
@@ -333,7 +401,11 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
           if(in_error)
           {
             printf("Compiling macro failed(1)\n");
+#ifdef WIN32
+            return ERROR1;
+#else
             return ERROR;
+#endif
           }
 
           reg_current_value_rib = NIL;
@@ -374,7 +446,11 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
             if(in_error)
             {
               printf("Compiling macro failed (2)\n");
+#ifdef WIN32
+              return ERROR1;
+#else
               return ERROR;
+#endif
             }
           }
 
@@ -405,6 +481,61 @@ OBJECT_PTR compile_progn(OBJECT_PTR exps, OBJECT_PTR next)
   else
     return compile(car(exps), compile_progn(cdr(exps), next));
 }
+
+#ifdef WIN32
+//from http://stackoverflow.com/questions/735126/are-there-alternate-implementations-of-gnu-getline-interface/735472#735472
+size_t getline(char **lineptr, size_t *n, FILE *stream) {
+    char *bufptr = NULL;
+    char *p = bufptr;
+    size_t size;
+    int c;
+
+    if (lineptr == NULL) {
+    	return -1;
+    }
+    if (stream == NULL) {
+    	return -1;
+    }
+    if (n == NULL) {
+    	return -1;
+    }
+    bufptr = *lineptr;
+    size = *n;
+
+    c = fgetc(stream);
+    if (c == EOF) {
+    	return -1;
+    }
+    if (bufptr == NULL) {
+    	bufptr = malloc(128);
+    	if (bufptr == NULL) {
+    		return -1;
+    	}
+    	size = 128;
+    }
+    p = bufptr;
+    while(c != EOF) {
+    	if ((p - bufptr) > (size - 1)) {
+    		size = size + 128;
+    		bufptr = realloc(bufptr, size);
+    		if (bufptr == NULL) {
+    			return -1;
+    		}
+    	}
+    	*p++ = c;
+    	if (c == '\n') {
+    		break;
+    	}
+    	c = fgetc(stream);
+    }
+
+    *p++ = '\0';
+    *lineptr = bufptr;
+    *n = size;
+
+    return p - bufptr - 1;
+}
+#endif
 
 int main(int argc, char **argv)
 {
@@ -529,7 +660,11 @@ int main(int argc, char **argv)
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
+#ifdef WIN32
+    if(build_help_entries("../share/help.json"))
+#else
     if(build_help_entries( DATADIR "/help.json"))
+#endif
     {
       fprintf(stderr, "Building help entries failed: %s\n", get_string(cdr(exception_object)));
       cleanup();
@@ -639,7 +774,11 @@ int repl(int mode)
 
     reg_next_expression = compile(out, cons(CONS_HALT_NIL, out));
 
+#ifdef WIN32
+    if(reg_next_expression == ERROR1)
+#else
     if(reg_next_expression == ERROR)
+#endif
     {
       fprintf(stdout, "Compilation of expression failed\n");
       return 1;
@@ -689,7 +828,11 @@ int repl(int mode)
 
     reg_next_expression = compile(exp, cons(CONS_HALT_NIL, exp));
 
+#ifdef WIN32
+    if(reg_next_expression == ERROR1)
+#else
     if(reg_next_expression == ERROR)
+#endif
       return 1;
 
     reg_current_env = NIL;
@@ -811,13 +954,21 @@ int load_core_library()
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
+#ifdef WIN32
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "./plisp.lisp"),
+#else
                         cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : DATADIR "/plisp.lisp"),
+#endif
                              NIL));
 
 
   OBJECT_PTR temp = compile(src, cons(CONS_HALT_NIL, src));
 
+#ifdef WIN32
+  if(temp == ERROR1)
+#else
   if(temp == ERROR)
+#endif
   {
     fprintf(stdout, "Compile failed while loading core library\n");
     return 1;
@@ -857,7 +1008,11 @@ int load_core_library()
   debug_window_dbg_stack = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
+#ifdef WIN32
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "../lib/plisp_full_monty_compiler_windows.lisp"),
+#else
                         cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : DATADIR "/plisp_full_monty_compiler.lisp"),
+#endif
                              NIL));
 
   OBJECT_PTR res = full_monty_eval(src);

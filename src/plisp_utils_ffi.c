@@ -224,6 +224,17 @@ int open_file(char *file_name, char *mode)
 
   /* return (uintptr_t)fp; */
   int fd;
+
+#ifdef WIN32
+  if(!strcmp(mode, "r"))
+    fd = open(file_name, O_RDONLY);
+  else if(!strcmp(mode, "w"))
+    fd = open(file_name, O_WRONLY | O_CREAT);
+  else if(!strcmp(mode, "a"))
+    fd = open(file_name, O_APPEND | O_CREAT);
+  else
+    return -1;
+#else
   mode_t mode1 = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
   if(!strcmp(mode, "r"))
     fd = open(file_name, O_RDONLY);
@@ -233,6 +244,7 @@ int open_file(char *file_name, char *mode)
     fd = open(file_name, O_APPEND | O_CREAT, mode1);
   else
     return -1;
+#endif
 
   return (uintptr_t)fd;
 }

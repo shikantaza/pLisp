@@ -21,7 +21,12 @@
 #include <stdint.h>
 #include <assert.h> 
 #include <time.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 
 #include "libtcc.h"
 
@@ -65,12 +70,24 @@ extern OBJECT_PTR CONS;
 
 extern OBJECT_PTR NEQ;
 extern OBJECT_PTR NOT;
+
+#ifdef WIN32
+extern OBJECT_PTR ATOM1;
+#else
 extern OBJECT_PTR ATOM;
+#endif
+
 extern OBJECT_PTR CAR;
 extern OBJECT_PTR CDR;
 extern OBJECT_PTR MULT;
 extern OBJECT_PTR DIV;
+
+#ifdef WIN32
+extern OBJECT_PTR ERROR1;
+#else
 extern OBJECT_PTR ERROR;
+#endif
+
 extern OBJECT_PTR PRINT;
 extern OBJECT_PTR NEWLINE;
 
@@ -160,7 +177,11 @@ extern OBJECT_PTR CONS_RETURN_NIL;
 extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 
+#ifdef WIN32
+#define TRUE SYMBOL_TAG
+#else
 extern OBJECT_PTR TRUE;
+#endif
 
 extern unsigned int POINTER_MASK;
 
@@ -185,8 +206,15 @@ extern hashtable_t *profiling_tab;
 
 extern OBJECT_PTR INTEGR;
 extern OBJECT_PTR FLOT;
+
+#ifdef WIN32
+extern OBJECT_PTR CHAR1;
+extern OBJECT_PTR VOID1;
+#else
 extern OBJECT_PTR CHAR;
 extern OBJECT_PTR VOID;
+#endif
+
 extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
@@ -196,7 +224,12 @@ extern BOOLEAN profiling_in_progress;
 extern OBJECT_PTR LAMBDA;
 
 extern int nof_dl_handles;
+
+#ifdef WIN32
+extern HMODULE *dl_handles;
+#else
 extern void **dl_handles;
+#endif
 
 extern char err_buf[500];
 
@@ -1882,7 +1915,13 @@ unsigned int create_image_compiled()
 unsigned int load_foreign_library_compiled()
 {
   OBJECT_PTR file_name;
+
+#ifdef WIN32
+  HMODULE *temp;
+#else
   void **temp;
+#endif
+
   char *fname;
   void *ret;
 
@@ -1907,8 +1946,12 @@ unsigned int load_foreign_library_compiled()
   }
 
   nof_dl_handles++;
-  
+
+#ifdef WIN32
+  temp = (HMODULE *)realloc(dl_handles, nof_dl_handles * sizeof(HMODULE));
+#else  
   temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
+#endif
 
   if(temp == NULL)
   {
@@ -1924,7 +1967,11 @@ unsigned int load_foreign_library_compiled()
   /*   ret = dlopen(strings[(int)file_name >> OBJECT_SHIFT], RTLD_LAZY); */
   /* else */
   /*   ret = dlopen(get_string(file_name), RTLD_LAZY); */
+#ifdef WIN32
+  ret = LoadLibrary(fname);
+#else
   ret = dlopen(fname, RTLD_LAZY);
+#endif
 
   if(!ret)
   {
@@ -1966,8 +2013,13 @@ unsigned int call_foreign_function_compiled()
 
   if(!(ret_type == INTEGR        ||
        ret_type == FLOT          ||
+#ifdef WIN32
+       ret_type == CHAR1         ||
+       ret_type == VOID1         ||
+#else
        ret_type == CHAR          ||
        ret_type == VOID          ||
+#endif
        /* ret_type == INT_POINTER   || */ //not handling int and float pointer return values
        /* ret_type == FLOAT_POINTER || */
        ret_type == CHAR_POINTER))
@@ -2049,7 +2101,11 @@ unsigned int call_foreign_function_compiled()
 	return 1;
       }
     }
+#ifdef WIN32
+    else if(type == CHAR1)
+#else
     else if(type == CHAR)
+#endif
     {
       if(!IS_CHAR_OBJECT(val))
       {
@@ -2116,7 +2172,11 @@ unsigned int eval_compiled()
 
   OBJECT_PTR temp = compile(car(reg_current_value_rib), NIL);
 
+#ifdef WIN32
+  if(temp == ERROR1)
+#else
   if(temp == ERROR)
+#endif
   {
     throw_generic_exception("EVAL: Compilation failed");
     return 1;
@@ -2162,7 +2222,11 @@ unsigned int time_compiled()
   memset(form, '\0', 500);
   print_object_to_string(car(reg_current_value_rib), form, 0);
 
+#ifdef WIN32
+  if(temp == ERROR1)
+#else
   if(temp == ERROR)
+#endif
   {
     throw_generic_exception("TIME: Compilation failed");
     return 1;
@@ -2231,7 +2295,11 @@ unsigned int profile()
 
   profiling_in_progress = true;
 
+#ifdef WIN32
+  if(temp == ERROR1)
+#else
   if(temp == ERROR)
+#endif
   {
     throw_generic_exception("PROFILE: Compilation failed");
     return 1;
@@ -2719,7 +2787,11 @@ unsigned int compile_compiled()
 
   temp = compile(car(reg_current_value_rib), CADR(reg_current_value_rib));
 
+#ifdef WIN32
+  if(temp == ERROR1)
+#else
   if(temp == ERROR)
+#endif
   {
     throw_generic_exception("COMPILE failed");
     return 1;
@@ -3152,7 +3224,11 @@ unsigned int apply_compiled()
     {
       not();
     }
+#ifdef WIN32
+    else if(operator == ATOM1)
+#else
     else if(operator == ATOM)
+#endif
     {
       atom();
     }
@@ -3180,7 +3256,11 @@ unsigned int apply_compiled()
     {
       div_compiled();
     }
+#ifdef WIN32
+    else if(operator == ERROR1)
+#else
     else if(operator == ERROR)
+#endif
     {
       error();
     }
@@ -3582,7 +3662,11 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    return -1;
 	  len += temp;
 	}
-	else if(CADR(exp) == ATOM)
+#ifdef WIN32
+	else if(CADR(exp) == ATOM1)
+#else
+        else if(CADR(exp) == ATOM)
+#endif
         {
 	  len += sprintf(buf+filled_len+len, "if(atom())\n  return 1;\n");
 	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);
@@ -3622,7 +3706,11 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	    return -1;
 	  len += temp;
 	}
+#ifdef WIN32
+	else if(CADR(exp) == ERROR1)
+#else
 	else if(CADR(exp) == ERROR)
+#endif
         {
 	  len += sprintf(buf+filled_len+len, "if(error())\n  return 1;\n");
 	  temp = compile_to_c(closure, CADDDR(exp), buf, filled_len+len, err_buf, called_closures, nof_called_closures);

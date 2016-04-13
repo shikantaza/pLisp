@@ -596,6 +596,26 @@ uintptr_t object_alloc(int size, int tag)
 {
   unsigned int *ret;
 
+#ifdef WIN32
+  ret = __mingw_aligned_malloc(size * sizeof(unsigned int), 16);
+
+  if(!ret)
+  {
+    if(!console_mode && !single_expression_mode && !pipe_mode)
+    {
+      char buf[MAX_STRING_LENGTH];
+      memset(buf, '\0', MAX_STRING_LENGTH);
+      int len=0;
+      len += sprintf(buf, "Unable to allocate memory\n");
+      show_error_dialog(buf);
+    }
+    else
+      printf("Unable to allocate memory\n");
+
+    cleanup();
+    exit(1);
+  }
+#else
   int err = posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
 
   if(err)
@@ -616,6 +636,7 @@ uintptr_t object_alloc(int size, int tag)
     cleanup();
     exit(1);
   }
+#endif
 
   //for arrays, the array size object is allocated outside the call to object_alloc
   //but we include it here for accounting
@@ -684,7 +705,11 @@ void dealloc(OBJECT_PTR ptr)
   for(i=0; i < words_deallocated - prev_words_deallocated; i++)
     *((unsigned int *)p+i) = 0xFEEEFEEE;
 
+#ifdef WIN32
+  __mingw_aligned_free((void *)(ptr & POINTER_MASK));
+#else
   free((void *)(ptr & POINTER_MASK));
+#endif
 }
 
 int initialize_memory()

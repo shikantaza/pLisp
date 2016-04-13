@@ -418,6 +418,15 @@ GtkToolbar *create_file_browser_toolbar()
 {
   GtkWidget *toolbar;
 
+#ifdef WIN32
+  GtkWidget *new_icon     = gtk_image_new_from_file ("../share/icons/new_file.png");
+  GtkWidget *open_icon    = gtk_image_new_from_file ("../share/icons/open_file.png");
+  GtkWidget *save_icon    = gtk_image_new_from_file ("../share/icons/save_file.png");
+  GtkWidget *close_icon   = gtk_image_new_from_file ("../share/icons/close_file.png");
+  GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
+  GtkWidget *eval_icon    = gtk_image_new_from_file ("../share/icons/evaluate.png");
+  GtkWidget *exit_icon    = gtk_image_new_from_file ("../share/icons/exit32x32.png");
+#else
   GtkWidget *new_icon     = gtk_image_new_from_file (DATADIR "/icons/new_file.png");
   GtkWidget *open_icon    = gtk_image_new_from_file (DATADIR "/icons/open_file.png");
   GtkWidget *save_icon    = gtk_image_new_from_file (DATADIR "/icons/save_file.png");
@@ -425,6 +434,7 @@ GtkToolbar *create_file_browser_toolbar()
   GtkWidget *refresh_icon = gtk_image_new_from_file (DATADIR "/icons/refresh.png");
   GtkWidget *eval_icon    = gtk_image_new_from_file (DATADIR "/icons/evaluate.png");
   GtkWidget *exit_icon    = gtk_image_new_from_file (DATADIR "/icons/exit32x32.png");
+#endif
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);

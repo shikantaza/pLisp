@@ -18,7 +18,13 @@
 **/
 
 #include <stdio.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
 #include <ffi.h>
 #include <assert.h>
 
@@ -32,7 +38,13 @@ extern OBJECT_PTR CAAR(OBJECT_PTR);
 extern OBJECT_PTR CADAR(OBJECT_PTR);
 
 extern int nof_dl_handles;
+
+#ifdef WIN32
+extern HMODULE *dl_handles;
+#else
 extern void **dl_handles;
+#endif
+
 extern char err_buf[];
 
 extern OBJECT_PTR NIL;
@@ -43,8 +55,15 @@ extern OBJECT_PTR reg_current_env;
 
 extern OBJECT_PTR INTEGR;
 extern OBJECT_PTR FLOT;
+
+#ifdef WIN32
+extern OBJECT_PTR CHAR1;
+extern OBJECT_PTR VOID1;
+#else
 extern OBJECT_PTR CHAR;
 extern OBJECT_PTR VOID;
+#endif
+
 extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
@@ -75,7 +94,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   for(i=0;i<nof_dl_handles; i++)
   {
+#ifdef WIN32
+    function_ptr = GetProcAddress(dl_handles[i], fn_name_str);
+#else
     function_ptr = dlsym(dl_handles[i], fn_name_str);
+#endif
     if(function_ptr != NULL)
       break;
   }
@@ -157,7 +180,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       arg_values[i] = (float *)malloc(sizeof(float));
       *(float *)arg_values[i] = f_val;
     }
+#ifdef WIN32
+    else if(type == CHAR1)
+#else
     else if(type == CHAR)
+#endif
     {
       arg_types[i] = &ffi_type_schar;
       c_val = (int)val >> OBJECT_SHIFT;
@@ -197,13 +224,21 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   if(ret_type == INTEGR)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_sint, arg_types);
+#ifdef WIN32
+  else if(ret_type == CHAR1)
+#else
   else if(ret_type == CHAR)
+#endif
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_schar, arg_types);
   else if(ret_type == FLOT)
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_float, arg_types);
   else if(ret_type == CHAR_POINTER) //not handling int and float pointer return values
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_pointer, arg_types);
+#ifdef WIN32
+  else if(ret_type == VOID1)
+#else
   else if(ret_type == VOID)
+#endif
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_void, arg_types);
 
   if(status != FFI_OK)
@@ -366,7 +401,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   if(ret_type == INTEGR)
     ret = convert_int_to_object((int)ret_val);
+#ifdef WIN32
+  else if(ret_type == CHAR1)
+#else
   else if(ret_type == CHAR)
+#endif
     ret = (OBJECT_PTR)(((char)ret_val << OBJECT_SHIFT) + CHAR_TAG);
   else if(ret_type == FLOT)
     ret = convert_float_to_object(float_ret_val);
@@ -398,7 +437,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     ret = ptr + ARRAY_TAG;
 
   }
+#ifdef WIN32
+  else if(ret_type == VOID1)
+#else
   else if(ret_type == VOID)
+#endif
     ret = NIL;
 
   free_arg_values(arg_types, arg_values, args, nof_args);
