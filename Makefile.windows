@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-# OBJS	= json_parser.o json_lex.o bison.o lex.o main.o util.o memory.o images.o ffi.o compiler.o vm.o red_black_tree.o stack.o misc.o ui.o event_handlers.o json.o queue.o hashtable.o native_compiler.o indent.o full_monty_compiler.o native_primitives.o
-
-OBJS    = util.o images.o hashtable.o queue.o main.o memory.o native_compiler.o full_monty_compiler.o vm.o compiler.o ffi.o event_handlers.o ui.o indent.o help.o native_primitives.o misc.o stack.o red_black_tree.o jsonlib.o file_browser.o bison.o lex.o json_parser.o json_lex.o
+OBJS    = util.o images.o hashtable.o queue.o main.o memory.o native_compiler.o full_monty_compiler.o vm.o compiler.o ffi.o event_handlers.o ui.o indent.o help.o native_primitives.o misc.o stack.o red_black_tree.o jsonlib.o file_browser.o plisp_parser.o lex.o json_parser.o json_lex.o
 
 CC	= i686-pc-mingw32-gcc
 CFLAGS	= -g -DWIN32 `pkg-config --cflags libffi` `pkg-config --cflags gtk+-3.0` `pkg-config --cflags gtksourceview-3.0` -I/cygdrive/c/temp/tcc-0.9.26 
@@ -42,11 +40,11 @@ lex.o:	src/lex.yy.c
 src/lex.yy.c:	src/plisp.l
 		flex -o src/lex.yy.c src/plisp.l
 
-bison.o:	src/plisp.tab.c
-		$(CC) $(CFLAGS) -c src/plisp.tab.c -o bison.o
+plisp_parser.o:	src/plisp_parser.c
+		$(CC) $(CFLAGS) -c src/plisp_parser.c -o plisp_parser.o
 
-src/plisp.tab.c:	src/plisp_parser.y
-		bison -d -v src/plisp_parser.y -o src/plisp.tab.c
+src/plisp_parser.c:	src/plisp_parser.y
+		bison -d -v src/plisp_parser.y -o src/plisp_parser.c
 
 json_parser.o:	src/json_parser.c
 		$(CC) $(CFLAGS) -c src/json_parser.c -o json_parser.o
@@ -132,8 +130,8 @@ help.o:	        src/gui/help.c
 file_browser.o:	src/gui/file_browser.c
 		$(CC) $(CFLAGS) -c src/gui/file_browser.c -o file_browser.o
 
-bison.o		: src/plisp.tab.c src/plisp.h src/util.h
-lex.o		: src/plisp.tab.h src/plisp.h
+plisp_parser.o	: src/plisp_parser.c src/plisp.h src/util.h
+lex.o		: src/plisp_parser.h src/plisp.h
 main.o		: src/plisp.h src/memory.h
 compiler.o	: src/plisp.h
 vm.o		: src/plisp.h src/memory.h
@@ -161,5 +159,5 @@ jsonlib.o               : src/json.h
 file_browser.o          : src/util.h src/json.h
 
 clean:
-	rm -f *.o *~ src/lex.yy.c src/plisp.tab.c src/plisp.tab.h src/json.c src/json_parser.h src/json_parser.c src/plisp.output src/json_parser.output plisp.exe libplisp.dll libtest.dll *.stackdump
+	rm -f *.o *~ src/lex.yy.c src/plisp_parser.c src/plisp_parser.h src/json.c src/json_parser.h src/json_parser.c src/plisp.output src/json_parser.output plisp.exe libplisp.dll libtest.dll *.stackdump
 
