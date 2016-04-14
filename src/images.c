@@ -491,7 +491,12 @@ void backup_image()
 
   char cmd[200];
 
+#ifdef WIN32
+  sprintf(cmd, "copy %s %s.%s", loaded_image_file_name, loaded_image_file_name, buffer);
+#else
   sprintf(cmd, "cp %s %s.%s", loaded_image_file_name, loaded_image_file_name, buffer);
+#endif
+
   system(cmd);
 }
 
