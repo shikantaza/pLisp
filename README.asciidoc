@@ -1,0 +1,87 @@
+<<what-is-plisp, What is pLisp?>>
+
+<<what-features-does-plisp-support, What features does pLisp support?>>
+
+<<what-dialect-of-lisp-is-plisp-based-on, What dialect of Lisp is pLisp based on?>>
+
+<<why-do-we-need-yet-another-lisp-system, Why do we need yet another Lisp system?>>
+
+<<what-platforms-is-plisp-available-on, What platforms is pLisp available on?>>
+
+<<what-about-the-license, What about the license?>>
+
+<<how-do-i-install-plisp, How do I install pLisp?>>
+
+<<what-do-i-need-to-install-plisp, What do I need to install pLisp?>>
+
+<<how-do-i-report-bugs-and-other-issues, How do I report bugs and other issues?>>
+
+<<where-is-the-documentation, Where is the documentation?>>
+
+What is pLisp?
+--------------
+
+pLisp is an integrated development environment for Lisp. While it aims to be a friendly Lisp development system for beginners, its feature-set is comprehensive enough to address the needs of a small-to-medium sized Lisp project.
+
+What features does pLisp support?
+---------------------------------
+* Basic operators like CAR, CDR, and other language primitives
+* Other operators and utility functions written in pLisp itself
+* Exception handling in the form of '(try .. (catch ..) ..)'
+* Garbage collection
+* Foreign function interface
+* Ability to store and load images (both at the system level and at the level of individual objects)
+* Macros
+* Debugger (break, resume)
+* Package/Namespace system
+* Continuations
+* Graphical IDE with context-sensitive help, syntax colouring and autocomplete
+
+What dialect of Lisp is pLisp based on?
+---------------------------------------
+pLisp is not based on any single Lisp dialect, but draws inspiration from Scheme. However, its macro system is based on Common Lisp (backquote, comma and comma-at).
+
+Why do we need yet another Lisp system?
+---------------------------------------
+pLisp started out as a hobby project, an implementation of an interpreter embodying the concepts in Paul Graham's "Roots of Lisp". As its feature-set kept growing, my dissatisfaction with existing Lisp development systems and my missing the beauty, power and elegance of Smalltalk environments in these systems prompted me to make pLisp more than just a command-line interpreter and add features like a system browser, workspace, and other good stuff.
+
+My current objective with pLisp is for it to serve as a) a friendly Lisp environment for beginners and b) an end-to-end demonstration of the construction of a Lisp-based programming language system from scratch (object system design, virtual machines and intermediate code generation, garbage collection, serialization, just-in-time compilation, exceptions/continuations, and so on). And also serve as my personal programming environment, of course.
+
+What platforms is pLisp available on?
+-------------------------------------
+pLisp should work in any POSIX-compliant system (including Cygwin), however it has been tested mainly on Linux. It's also available for Windows.
+
+What about the license?
+-----------------------
+pLisp is licensed under GPL v3.
+
+How do I install pLisp?
+-----------------------
+pLisp is installed by the standard './configure', 'make' and 'sudo make install' commands in the directory where you downloaded/extracted the pLisp files. The Windows version is shipped as a zip file which you simply have to unzip in the location of your choice.
+
+What do I need to install pLisp?
+--------------------------------
+Linux
+~~~~~
+You will need GCC and the make utility to install pLisp. In addition, the following dependencies need to be taken care of:
+
+* Flex and Bison
+* The link:http://www.gtk.org/[GTK+] 3.0 development package (libgtk-3-dev)
+* The link:https://wiki.gnome.org/Projects/GtkSourceView[GtkSourceView] development package (libgtksourceview-3.0-dev)
+* The link:http://bellard.org/tcc/[Tiny C Compiler] development package (libtcc-dev)
+* The link:https://sourceware.org/libffi/[libffi] package (libffi6)
+
+All these packages can be installed using the package manager that comes with your distro.
+
+Windows
+~~~~~~~
+* Install the MinGW Windows bundles for link:https://sourceforge.net/projects/gtk-mingw/[GTK3] and link:https://sourceforge.net/projects/gtk-mingw/files/gtksourceview3/[GtkSourceView3]
+* Unzip the contents of plisp_windows.zip to the location of your choice
+
+How do I report bugs and other issues?
+--------------------------------------
+You can email me at rajesh dot jayaprakash @ gmail dot com
+
+Where is the documentation?
+---------------------------
+Online help is available within pLisp, a link:https://github.com/shikantaza/pLisp/raw/master/doc/pLisp_User_Manual.pdf[user manual] and a link:http://htmlpreview.github.com/?https://github.com/shikantaza/pLisp/blob/master/doc/help.html[language reference] document are also available. I have link:http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html[some blog posts] that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
