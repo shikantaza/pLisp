@@ -36,7 +36,7 @@ pLisp is licensed under GPL v3.
 
 How do I install pLisp?
 
-pLisp is installed by the standard './configure', 'make' and 'sudo make install' commands in the directory where you downloaded/extracted the pLisp files. The Windows version is shipped as a tar.gz file which you simply have to untar in the location of your choice.
+pLisp is installed by the standard './configure', 'make' and 'sudo make install' commands in the directory where you downloaded/extracted the pLisp files. The Windows version is shipped as a zip file which you simply have to unzip in the location of your choice.
 
 What do I need to install pLisp?
 
@@ -58,9 +58,9 @@ Linux:
 
 Windows:
 
-  a. Install the MinGW Windows bundles for GTK3 and GtkSourceView3.
+  a. Install the MinGW Windows bundles for GTK3 and GtkSourceView3
 
-  b. Untar the contents of plisp_windows.tar.gz to the location of your choice
+  b. Unzip the contents of plisp_windows.zip to the location of your choice
 
 How do I report bugs and other issues?
 
