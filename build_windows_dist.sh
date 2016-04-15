@@ -27,6 +27,6 @@ cp ./data/plisp.lang $1/share
 cp ./tests/unit_tests_windows.lisp $1/tests
 cp ./tests/run_test_cases_windows.lisp $1/tests
 
-zip plisp_windows.zip $1/*
+zip plisp_windows-0.1.zip $1/*
 
 #rm -rf $1
