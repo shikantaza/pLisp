@@ -38,7 +38,9 @@ lib_LTLIBRARIES = libplisp.la
 libplisp_la_SOURCES = src/plisp_utils_ffi.c
 libplisp_la_LDFLAGS = -version-info 0:0:0
 
-pkgdata_DATA = data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
+pkgdata_DATA = plisp.image data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
+
+dist_pkgdata_DATA = ${pkgdata_DATA}
 
 dist_doc_DATA = doc/help.html doc/pLisp_User_Manual.pdf
 
@@ -49,6 +51,7 @@ icons_DATA  = icons/abort.png icons/clear.png icons/export_package.png icons/ref
               icons/clear32x32.png icons/exit.png icons/new_symbol.png icons/close_file.png icons/file_browser.png \
               icons/new_file.png icons/open_file.png icons/save_file.png
 
+dist_icons_DATA = ${icons_DATA}
 
 src/json.c:	src/json.l
 	$(LEX) --prefix=json -o src/json.c src/json.l
