@@ -29,4 +29,4 @@ cp ./tests/run_test_cases_windows.lisp $1/tests
 
 zip -r plisp_windows-0.1.zip $1/*
 
-#rm -rf $1
+rm -rf $1
