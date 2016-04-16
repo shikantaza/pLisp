@@ -32,7 +32,7 @@ AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
-plisp_LDADD = ${AM_LIBS} -ltcc
+plisp_LDADD = ${AM_LIBS} -ltcc -ldl
 
 lib_LTLIBRARIES = libplisp.la
 libplisp_la_SOURCES = src/plisp_utils_ffi.c

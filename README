@@ -56,7 +56,7 @@ All these packages can be installed using the package manager that comes with yo
 Windows
 ~~~~~~~
 * Install the MinGW Windows bundles for GTK+3.0 (https://sourceforge.net/projects/gtk-mingw/) and Gtksourceview3 (https://sourceforge.net/projects/gtk-mingw/files/gtksourceview3/)
-* Unzip the contents of plisp_windows.zip to the location of your choice
+* Unzip the contents of plisp_windows-0.1.zip to the location of your choice
 
 How do I report bugs and other issues?
 --------------------------------------
