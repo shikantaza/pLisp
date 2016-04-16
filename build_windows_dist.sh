@@ -1,32 +1,36 @@
 #!/bin/sh
 
-rm -rf $1
+verno=$1
 
-mkdir $1
-mkdir $1/bin
-mkdir $1/doc
-mkdir $1/lib
-mkdir -p $1/share/icons
-mkdir $1/tests
+dir=plisp-$verno
 
-cp ./plisp.exe $1/bin
-cp ./libplisp.dll $1/bin
-cp ./libtest.dll $1/bin
-cp ./plisp.image $1/bin
+rm -rf $dir
 
-cp ./doc/help.html $1/doc
-cp ./doc/pLisp_User_Manual.pdf $1/doc
+mkdir $dir
+mkdir $dir/bin
+mkdir $dir/doc
+mkdir $dir/lib
+mkdir -p $dir/share/icons
+mkdir $dir/tests
 
-cp ./lib/plisp_full_monty_compiler_windows.lisp $1/lib
-cp ./lib/libtcc1.a $1/lib
-cp ./icons/* $1/share/icons
+cp ./plisp.exe $dir/bin
+cp ./libplisp.dll $dir/bin
+cp ./libtest.dll $dir/bin
+cp ./plisp.image $dir/bin
 
-cp ./data/help.json $1/share
-cp ./data/plisp.lang $1/share
+cp ./doc/help.html $dir/doc
+cp ./doc/pLisp_User_Manual.pdf $dir/doc
 
-cp ./tests/unit_tests_windows.lisp $1/tests
-cp ./tests/run_test_cases_windows.lisp $1/tests
+cp ./lib/plisp_full_monty_compiler_windows.lisp $dir/lib
+cp ./lib/libtcc1.a $dir/lib
+cp ./icons/* $dir/share/icons
 
-zip -r plisp_windows-0.1.zip $1/*
+cp ./data/help.json $dir/share
+cp ./data/plisp.lang $dir/share
 
-rm -rf $1
+cp ./tests/unit_tests_windows.lisp $dir/tests
+cp ./tests/run_test_cases_windows.lisp $dir/tests
+
+zip -r plisp_windows-$verno.zip $dir/*
+
+rm -rf $dir
