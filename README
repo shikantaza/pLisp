@@ -55,12 +55,15 @@ All these packages can be installed using the package manager that comes with yo
 
 Windows
 ~~~~~~~
-* Install the MinGW Windows bundles for GTK+3.0 (https://sourceforge.net/projects/gtk-mingw/) and Gtksourceview3 (https://sourceforge.net/projects/gtk-mingw/files/gtksourceview3/)
+* Install the MinGW Windows bundles for GTK+3.0 (https://sourceforge.net/projects/gtk-mingw/) and Gtksourceview3 (https://sourceforge.net/projects/gtk-mingw/files/gtksourceview3/). Note: to get decent fonts, you may have to create a file called settings.ini in the <GTK3 dir>\etc\gtk-3.0 directory with these contents:
+    [Settings]
+    gtk-xft-antialias = 1
+    gtk-xft-rgba = rgb
 * Unzip the contents of plisp_windows-0.1.zip to the location of your choice
 
 How do I report bugs and other issues?
 --------------------------------------
-You can email me at rajesh dot jayaprakash @ gmail dot com
+You can email me at rajesh dot jayaprakash at gmail dot com
 
 Where is the documentation?
 ---------------------------
