@@ -299,7 +299,7 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
 #ifdef WIN32
   gtk_window_set_icon_from_file(workspace_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(workspace_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(workspace_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   gtk_window_set_default_size((GtkWindow *)win, width, height);
@@ -575,7 +575,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 #ifdef WIN32
   gtk_window_set_icon_from_file(system_browser_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(system_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(system_browser_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   GtkWidget *scrolled_win1, *scrolled_win2;
@@ -815,7 +815,7 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
 #ifdef WIN32
   gtk_window_set_icon_from_file(transcript_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(transcript_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(transcript_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   //gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
@@ -911,7 +911,7 @@ void error_window(char *msg)
 #ifdef WIN32
   gtk_window_set_icon_from_file(window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   gtk_window_set_title (GTK_WINDOW (window), "Error");
@@ -1149,7 +1149,7 @@ void create_debug_window(int posx, int posy, int width, int height)
 #ifdef WIN32
   gtk_window_set_icon_from_file(debugger_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(debugger_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(debugger_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   GtkWidget *scrolled_win1, *scrolled_win2;
@@ -1230,7 +1230,7 @@ void create_debug_window(int posx, int posy, int width, int height)
 #ifdef WIN32
   gtk_window_set_icon_from_file(debugger_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(debugger_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(debugger_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   GtkWidget *scrolled_win1;
@@ -1435,7 +1435,7 @@ void create_profiler_window(int posx, int posy, int width, int height)
 #ifdef WIN32
   gtk_window_set_icon_from_file(profiler_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(profiler_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(profiler_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   GtkWidget *scrolled_win1;
@@ -1498,7 +1498,7 @@ void create_help_window()
 #ifdef WIN32
   gtk_window_set_icon_from_file(help_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(help_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(help_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   //gtk_window_set_decorated((GtkWindow *)win, FALSE);
@@ -1622,7 +1622,7 @@ void create_callers_window(int posx, int posy, int width, int height)
 #ifdef WIN32
   gtk_window_set_icon_from_file(win, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(win, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(win, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   gtk_window_set_title((GtkWindow *)win, "pLisp Callers");

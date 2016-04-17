@@ -524,7 +524,7 @@ void create_file_browser_window(int posx, int posy, int width, int height)
 #ifdef WIN32
   gtk_window_set_icon_from_file(file_browser_window, "../share/icons/evaluate.png", NULL);
 #else
-  gtk_window_set_icon_from_file(file_browser_window, DATADIR "/share/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file(file_browser_window, DATADIR "/icons/evaluate.png", NULL);
 #endif
 
   gtk_window_set_title(file_browser_window, "pLisp File Browser");
