@@ -4986,6 +4986,12 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   }
 
+  if(cons_length(exp) != 3)
+  {
+    throw_exception1("INVALID-ARGUMENT", "DEFINE requires exactly two arguments");
+    return NIL;
+  }
+
   if(IS_CONS_OBJECT(third(exp)) && 
      (car(third(exp)) == LAMBDA || car(third(exp)) == MACRO))
   {
