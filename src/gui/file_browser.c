@@ -24,6 +24,7 @@
 
 #include <gtksourceview/gtksource.h>
 
+#include "../plisp.h"
 #include "../util.h"
 #include "../json.h"
 
@@ -93,16 +94,51 @@ void add_file_name_and_widget(file_name_and_widget_t *fnw)
   nof_fnws++;
 }
 
-gboolean fb_delete_event( GtkWidget *widget,
-                          GdkEvent  *event,
-                          gpointer  data)
+BOOLEAN quit_file_browser()
 {
-  if(current_file_name)
-    free(current_file_name);
+  if(any_buffers_modified())
+  {
+    GtkWidget *dialog1 = gtk_message_dialog_new ((GtkWindow *)file_browser_window,
+                                                 GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                 GTK_MESSAGE_QUESTION,
+                                                 GTK_BUTTONS_YES_NO,
+                                                 "There are one or more unsaved file(s), do you still want to close the File Browser?");
 
-  cleanup_file_name_widgets();
+    gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_NO));
 
-  close_application_window(&file_browser_window);
+    if(gtk_dialog_run(GTK_DIALOG (dialog1)) == GTK_RESPONSE_YES)
+    {
+      gtk_widget_destroy((GtkWidget *)dialog1);    
+
+      if(current_file_name)
+        free(current_file_name);
+
+      cleanup_file_name_widgets();
+
+      close_application_window(&file_browser_window);
+      return true;
+    }
+    else
+    {
+      gtk_widget_destroy((GtkWidget *)dialog1);
+      return false;
+    }
+  }
+  else
+  {
+    close_application_window(&file_browser_window);
+    return true;
+  }
+}
+
+gboolean fb_delete_event( GtkWidget *widget,
+                      GdkEvent  *event,
+                      gpointer  data)
+{
+  if(quit_file_browser())
+    return FALSE;
+  else
+    return TRUE;
 }
 
 void fb_select_file(GtkWidget *widget, gpointer data)
@@ -384,7 +420,7 @@ void reload_file()
                                                    GTK_BUTTONS_YES_NO,
                                                    "File has been modified; reload it?");
 
-      gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_YES));
+      gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_NO));
 
       if(gtk_dialog_run(GTK_DIALOG (dialog1)) == GTK_RESPONSE_YES)
       {
@@ -484,6 +520,12 @@ void create_file_browser_window(int posx, int posy, int width, int height)
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
   file_browser_window = (GtkWindow *)win;
+
+#ifdef WIN32
+  gtk_window_set_icon_from_file(file_browser_window, "../share/icons/evaluate.png", NULL);
+#else
+  gtk_window_set_icon_from_file(file_browser_window, DATADIR "/share/icons/evaluate.png", NULL);
+#endif
 
   gtk_window_set_title(file_browser_window, "pLisp File Browser");
 
@@ -640,4 +682,29 @@ void deserialize_file_browser_window(struct JSONObject *root)
 
     gtk_widget_show_all(file_browser_window);
   }
+}
+
+BOOLEAN any_buffers_modified()
+{
+  gint nof_pages = gtk_notebook_get_n_pages(fb_notebook);
+
+  int i=0;
+
+  for(i=0; i<nof_pages; i++)
+  {
+    GtkWidget *page = gtk_notebook_get_nth_page(fb_notebook, i);
+
+    GList *children = gtk_container_get_children((GtkContainer *)page);
+
+    //the assumption is that the page (the scrolled window)
+    //contains only one child, the text view.
+    GtkTextView *view = (GtkTextView *)children->data;
+
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(view);
+
+    if(gtk_text_buffer_get_modified(buffer) == TRUE)
+      return true;
+  }
+
+  return false;
 }

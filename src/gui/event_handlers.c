@@ -160,6 +160,8 @@ extern OBJECT_PTR callers_sym;
 
 extern void highlight_text(GtkTextBuffer *, char *);
 
+extern BOOLEAN quit_file_browser();
+
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -269,7 +271,15 @@ gboolean delete_event( GtkWidget *widget,
                        GdkEvent  *event,
                        gpointer   data )
 {
-  if(widget == (GtkWidget *)workspace_window)
+  if(widget == (GtkWidget *)transcript_window)
+  {
+    quit_application();
+
+    //if control comes here, it means
+    //the user cancelled the quit operation
+    return TRUE;
+  }
+  else if(widget == (GtkWidget *)workspace_window)
     close_application_window((GtkWidget **)&workspace_window);
   else if(widget == (GtkWidget *)system_browser_window)
     close_application_window((GtkWidget **)&system_browser_window);
@@ -302,6 +312,8 @@ void quit_application()
                                               GTK_MESSAGE_QUESTION,
                                               GTK_BUTTONS_YES_NO,
                                               "Do you really want to quit?");
+
+  gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_NO));
 
   if(gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
   {
@@ -394,6 +406,8 @@ void delete_package_or_symbol()
                                               GTK_MESSAGE_QUESTION,
                                               GTK_BUTTONS_YES_NO,
                                               "Confirm delete");
+
+  gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_NO));
 
   if(gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_YES)
   {
@@ -632,7 +646,8 @@ void close_window(GtkWidget *widget,
   else if((GtkWidget *)data == (GtkWidget *)system_browser_window)
     close_application_window((GtkWidget **)&system_browser_window);
   else if((GtkWidget *)data == (GtkWidget *)file_browser_window)
-    close_application_window((GtkWidget **)&file_browser_window);
+    //close_application_window((GtkWidget **)&file_browser_window);
+    quit_file_browser();
 }
 
 void evaluate()
@@ -838,7 +853,10 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   else if(widget == (GtkWidget *)file_browser_window && event->keyval == GDK_KEY_F5)
     reload_file();
   else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_q)
-    close_application_window(&file_browser_window);
+  {
+    quit_file_browser();
+    return TRUE;
+  }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
     load_source();
   //else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
