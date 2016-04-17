@@ -26,9 +26,9 @@
 
 //#define HASHSIZE 1000001
 
-inline unsigned hash(void * val, unsigned int hash_size) { return (unsigned int)val % hash_size; }
+unsigned hash(void * val, unsigned int hash_size) { return (unsigned int)val % hash_size; }
 
-inline unsigned int hashtable_count(hashtable_t *tab)
+unsigned int hashtable_count(hashtable_t *tab)
 {
   return tab->count;
 }

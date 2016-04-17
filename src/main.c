@@ -239,40 +239,40 @@ void **dl_handles = NULL;
 
 char *foreign_library_names[MAX_FOREIGN_LIBRARY_COUNT];
 
-inline OBJECT_PTR CAAR(OBJECT_PTR x)    { return car(car(x)); }
-inline OBJECT_PTR CDAR(OBJECT_PTR x)    { return cdr(car(x)); }
-inline OBJECT_PTR CADR(OBJECT_PTR x)    { return car(cdr(x)); }
-inline OBJECT_PTR CDDR(OBJECT_PTR x)    { return cdr(cdr(x)); }
-inline OBJECT_PTR CDDAR(OBJECT_PTR x)   { return cdr(cdr(car(x))); }
-inline OBJECT_PTR CAADR(OBJECT_PTR x)   { return car(car(cdr(x))); }
-inline OBJECT_PTR CADAR(OBJECT_PTR x)   { return car(cdr(car(x))); }
-inline OBJECT_PTR CADDR(OBJECT_PTR x)   { return car(cdr(cdr(x))); }
-inline OBJECT_PTR CDDDR(OBJECT_PTR x)   { return cdr(cdr(cdr(x))); }
-inline OBJECT_PTR CADDDR(OBJECT_PTR x)  { return car(cdr(cdr(cdr(x)))); }
-inline OBJECT_PTR CADDAR(OBJECT_PTR x)  { return car(cdr(cdr(car(x)))); }
-inline OBJECT_PTR CADADR(OBJECT_PTR x)  { return car(cdr(car(cdr(x)))); }
-inline OBJECT_PTR CADDDDR(OBJECT_PTR x) { return car(cdr(cdr(cdr(cdr(x))))); }
+OBJECT_PTR CAAR(OBJECT_PTR x)    { return car(car(x)); }
+OBJECT_PTR CDAR(OBJECT_PTR x)    { return cdr(car(x)); }
+OBJECT_PTR CADR(OBJECT_PTR x)    { return car(cdr(x)); }
+OBJECT_PTR CDDR(OBJECT_PTR x)    { return cdr(cdr(x)); }
+OBJECT_PTR CDDAR(OBJECT_PTR x)   { return cdr(cdr(car(x))); }
+OBJECT_PTR CAADR(OBJECT_PTR x)   { return car(car(cdr(x))); }
+OBJECT_PTR CADAR(OBJECT_PTR x)   { return car(cdr(car(x))); }
+OBJECT_PTR CADDR(OBJECT_PTR x)   { return car(cdr(cdr(x))); }
+OBJECT_PTR CDDDR(OBJECT_PTR x)   { return cdr(cdr(cdr(x))); }
+OBJECT_PTR CADDDR(OBJECT_PTR x)  { return car(cdr(cdr(cdr(x)))); }
+OBJECT_PTR CADDAR(OBJECT_PTR x)  { return car(cdr(cdr(car(x)))); }
+OBJECT_PTR CADADR(OBJECT_PTR x)  { return car(cdr(car(cdr(x)))); }
+OBJECT_PTR CADDDDR(OBJECT_PTR x) { return car(cdr(cdr(cdr(cdr(x))))); }
 
-inline OBJECT_PTR first(OBJECT_PTR x)  { return car(x); }
-inline OBJECT_PTR second(OBJECT_PTR x) { return car(cdr(x)); }
-inline OBJECT_PTR third(OBJECT_PTR x)  { return car(cdr(cdr(x))); } 
-inline OBJECT_PTR fourth(OBJECT_PTR x) { return car(cdr(cdr(cdr(x)))); } 
-inline OBJECT_PTR fifth(OBJECT_PTR x)  { return car(cdr(cdr(cdr(cdr(x))))); } 
+OBJECT_PTR first(OBJECT_PTR x)  { return car(x); }
+OBJECT_PTR second(OBJECT_PTR x) { return car(cdr(x)); }
+OBJECT_PTR third(OBJECT_PTR x)  { return car(cdr(cdr(x))); } 
+OBJECT_PTR fourth(OBJECT_PTR x) { return car(cdr(cdr(cdr(x)))); } 
+OBJECT_PTR fifth(OBJECT_PTR x)  { return car(cdr(cdr(cdr(cdr(x))))); } 
 
-inline BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG;         }
-inline BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return (x & BIT_MASK) == STRING_LITERAL_TAG; }
-inline BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CHAR_TAG;           }
-inline BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == INTEGER_TAG;        }
-inline BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == FLOAT_TAG;          }
-inline BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CONS_TAG;           }
-inline BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == CLOSURE_TAG;        }
-inline BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == MACRO_TAG;          }
-inline BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == ARRAY_TAG;          }
-inline BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return (x & BIT_MASK) == CONTINUATION_TAG;   }
+BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == SYMBOL_TAG;         }
+BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x) { return (x & BIT_MASK) == STRING_LITERAL_TAG; }
+BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CHAR_TAG;           }
+BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == INTEGER_TAG;        }
+BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == FLOAT_TAG;          }
+BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x)           { return (x & BIT_MASK) == CONS_TAG;           }
+BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x)        { return (x & BIT_MASK) == CLOSURE_TAG;        }
+BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == MACRO_TAG;          }
+BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x)          { return (x & BIT_MASK) == ARRAY_TAG;          }
+BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x)   { return (x & BIT_MASK) == CONTINUATION_TAG;   }
 
-inline BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == NATIVE_FN_TAG;      }
-inline BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == FUNCTION2_TAG;      }
-inline BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2_TAG;         }
+BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == NATIVE_FN_TAG;      }
+BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == FUNCTION2_TAG;      }
+BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2_TAG;         }
 
 //registers
 OBJECT_PTR reg_accumulator;
@@ -893,7 +893,7 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   return retval;
 }
 
-inline OBJECT_PTR car(OBJECT_PTR cons_obj)
+OBJECT_PTR car(OBJECT_PTR cons_obj)
 {
   if(cons_obj == NIL)
     return NIL;
@@ -909,7 +909,7 @@ inline OBJECT_PTR car(OBJECT_PTR cons_obj)
   }
 }
 
-inline OBJECT_PTR cdr(OBJECT_PTR cons_obj)
+OBJECT_PTR cdr(OBJECT_PTR cons_obj)
 {
   if(cons_obj == NIL)
     return NIL;
@@ -2095,7 +2095,7 @@ BOOLEAN form_contains_comma_at(OBJECT_PTR form)
   return false;
 }
 
-inline OBJECT_PTR last_cell(OBJECT_PTR lst)
+OBJECT_PTR last_cell(OBJECT_PTR lst)
 {
   OBJECT_PTR rest = lst;
 
@@ -2541,7 +2541,7 @@ BOOLEAN contains_keyword_parameter(OBJECT_PTR list)
   return ret;
 }
 
-inline int get_int_value(OBJECT_PTR obj)
+int get_int_value(OBJECT_PTR obj)
 {
   if(!IS_INTEGER_OBJECT(obj))
     assert(false);
@@ -2549,7 +2549,7 @@ inline int get_int_value(OBJECT_PTR obj)
   return *((int *)(obj & POINTER_MASK));
 }
 
-inline OBJECT_PTR convert_int_to_object(int v)
+OBJECT_PTR convert_int_to_object(int v)
 {
   uintptr_t ptr = object_alloc(1, INTEGER_TAG);
 

@@ -101,8 +101,8 @@ enum {WHITE, GREY, BLACK};
 unsigned int words_allocated;
 unsigned int words_deallocated;
 
-inline unsigned int memory_allocated() { return words_allocated; }
-inline unsigned int memory_deallocated() { return words_deallocated; }
+unsigned int memory_allocated() { return words_allocated; }
+unsigned int memory_deallocated() { return words_deallocated; }
 
 //an AND operation with POINTER_MASK will get
 //the pointer created by posix_memalign.
@@ -561,9 +561,6 @@ BOOLEAN value_exists(unsigned int set_type, OBJECT_PTR val)
 #endif
 }
 
-#ifndef DEBUG_MEMORY
-inline
-#endif
 void set_heap(uintptr_t ptr, unsigned int index, OBJECT_PTR val)
 {
   if(!is_valid_object(val))
@@ -574,7 +571,7 @@ void set_heap(uintptr_t ptr, unsigned int index, OBJECT_PTR val)
   *(ptr1 + index) = val;
 }
 
-inline OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
+OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
 {
   //unsigned int *ptr1 = (unsigned int *)ptr;
 

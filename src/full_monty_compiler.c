@@ -5277,7 +5277,7 @@ char *get_native_fn_source(nativefn fn)
   return NULL;
 }
 
-inline OBJECT_PTR cons_equivalent(OBJECT_PTR obj)
+OBJECT_PTR cons_equivalent(OBJECT_PTR obj)
 {
   assert(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
 
@@ -5370,7 +5370,7 @@ OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int i)
 //and float objects to the grey set. doesn't look
 //like they're needed, retaining them just in case.
 
-inline OBJECT_PTR convert_int_to_object_for_full_monty(int v)
+OBJECT_PTR convert_int_to_object_for_full_monty(int v)
 {
   uintptr_t ptr = object_alloc(1, INTEGER_TAG);
 
