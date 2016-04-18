@@ -1810,7 +1810,7 @@ OBJECT_PTR prim_load_file(OBJECT_PTR file_name)
     return NIL;
   }
 
-  while(!yyparse())
+  while(!yyparse() && !in_error)
   {
     repl2();
   }

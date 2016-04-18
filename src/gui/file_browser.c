@@ -327,7 +327,7 @@ void save_file()
 
     dialog = gtk_file_chooser_dialog_new ("Save pLisp source file",
                                           (GtkWindow *)file_browser_window,
-                                          GTK_FILE_CHOOSER_ACTION_OPEN,
+                                          GTK_FILE_CHOOSER_ACTION_SAVE,
                                           "Cancel", GTK_RESPONSE_CANCEL,
                                           "Save", GTK_RESPONSE_ACCEPT,
                                           NULL);
