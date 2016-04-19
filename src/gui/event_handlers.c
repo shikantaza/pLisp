@@ -351,6 +351,12 @@ void quit_application()
     gtk_widget_destroy((GtkWidget *)dialog);
 }
 
+void set_triggering_window(GtkWidget *widget,
+                           gpointer   data)
+{
+  action_triggering_window = (GtkWindow *)widget;
+}
+
 /* Another callback */
 void quit(GtkWidget *widget,
           gpointer   data )

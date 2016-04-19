@@ -53,6 +53,8 @@ extern gboolean handle_key_press_events(GtkWidget *,
 
 extern void handle_cursor_move(GtkWidget *, gpointer);
 
+extern void set_triggering_window(GtkWidget *, gpointer);
+
 extern void show_error_dialog(char *);
 
 extern GtkSourceLanguage *source_language;
@@ -534,6 +536,9 @@ void create_file_browser_window(int posx, int posy, int width, int height)
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (fb_delete_event), NULL);
+
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
 
   gtk_container_set_border_width (GTK_CONTAINER (win), 10);
 

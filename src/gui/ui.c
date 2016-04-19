@@ -119,6 +119,8 @@ extern callers(GtkWidget *, gpointer);
 extern void handle_cursor_move(GtkWidget *, gpointer);
 
 extern void fetch_symbol_value_for_caller(GtkWidget *, gpointer);
+
+extern void set_triggering_window(GtkWidget *, gpointer);
 /* event handler function definitions end */
 
 extern BOOLEAN in_break;
@@ -307,6 +309,9 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
+
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
 
   gtk_container_set_border_width (GTK_CONTAINER (win), 10);
 
@@ -591,6 +596,9 @@ void create_system_browser_window(int posx, int posy, int width, int height)
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
 
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
+
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 
                    G_CALLBACK (handle_key_press_events), 
@@ -830,6 +838,9 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
       
   g_signal_connect (transcript_window, "delete-event",
                     G_CALLBACK (delete_event), NULL);
+
+  g_signal_connect (transcript_window, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
     
   /* g_signal_connect (transcript_window, "destroy", */
   /*                    G_CALLBACK (quit), NULL); */
@@ -1165,6 +1176,9 @@ void create_debug_window(int posx, int posy, int width, int height)
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
 
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
+
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 
                    G_CALLBACK (handle_key_press_events), 
@@ -1245,6 +1259,9 @@ void create_debug_window(int posx, int posy, int width, int height)
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
+
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
 
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 
@@ -1451,7 +1468,10 @@ void create_profiler_window(int posx, int posy, int width, int height)
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
 
- g_signal_connect(win, 
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
+
+  g_signal_connect(win, 
 		  "key_press_event", 
 		  G_CALLBACK (handle_key_press_events), 
 		  NULL);
@@ -1534,6 +1554,9 @@ void create_help_window()
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
+
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
 
   g_signal_connect(G_OBJECT(win), 
                    "key_press_event", 
@@ -1632,6 +1655,9 @@ void create_callers_window(int posx, int posy, int width, int height)
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
+
+  g_signal_connect (win, "focus",
+                    G_CALLBACK (set_triggering_window), NULL);
 
   gtk_container_set_border_width (GTK_CONTAINER (win), 10);
 
