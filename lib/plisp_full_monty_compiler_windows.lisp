@@ -407,14 +407,17 @@
       str)))
 
 (defmacro try (body exception-clause finally-clause)
-  `(call-cc (lambda (cc)
-              (let ((ret))
-                (progn (add-exception-handler (lambda ,(cadr exception-clause)
-                                                (cc (progn ,finally-clause
-                                                           ,(caddr exception-clause)))))
-                       (set ret ,body)
-                       ,finally-clause
-                       ret)))))
+  (let ((ret (gensym))
+        (cc (gensym)))
+    `(call-cc (lambda (,cc)
+                (let ((,ret))
+                  (progn (add-exception-handler (lambda ,(cadr exception-clause)
+                                                  (,cc (progn ,finally-clause
+                                                              ,(caddr exception-clause)))))
+                         (set ,ret
+                              ,body)
+                         ,finally-clause
+                         ,ret))))))
 
 (defmacro unwind-protect (body finally-clause)
   `(try ,body (catch (e) (throw e)) ,finally-clause))
