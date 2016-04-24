@@ -5338,6 +5338,11 @@ OBJECT_PTR handle_exception()
 
 void throw_exception1(char *excp_name, char *excp_str)
 {
+  //mainly to handle exceptions that are thrown 
+  //in other clauses of 'try' forms (catch and finally)
+  if(exception_object != NIL)
+    return;
+
   in_error = true;
   exception_object = cons(get_symbol_object(excp_name), get_string_object(excp_str));
 }
