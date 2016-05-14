@@ -55,7 +55,7 @@
 
 (test-atom-19)
 
-(test-atom-20)
+;(test-atom-20)
 
 (test-atom-21)
 
@@ -69,7 +69,7 @@
 
 (test-add-26)
 
-(test-add-27)
+;(test-add-27)
 
 (test-add-28)
 
@@ -91,7 +91,7 @@
 
 (test-sub-37)
 
-(test-sub-38)
+;(test-sub-38)
 
 (test-sub-39)
 
@@ -113,7 +113,7 @@
 
 (test-mult-48)
 
-(test-mult-49)
+;(test-mult-49)
 
 (test-mult-50)
 
@@ -135,7 +135,7 @@
 
 (test-div-59)
 
-(test-div-60)
+;(test-div-60)
 
 (test-div-61)
 
@@ -173,11 +173,11 @@
 
 (test-listp-78)
 
-(test-listp-79)
+;(test-listp-79)
 
 (test-listp-80)
 
-(test-symbol-value-81)
+;(test-symbol-value-81)
 
 (test-symbol-value-82)
 
@@ -411,7 +411,7 @@
 
 (test-format-189)
 
-(test-format-190)
+;(test-format-190)
 
 (test-format-191)
 

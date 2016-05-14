@@ -15,6 +15,35 @@
 ;;  You should have received a copy of the GNU General Public License
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
+(define bq-append (lambda (x y)
+                    (if (eq x nil)
+                        y
+                      (cons (car x) (bq-append (cdr x) y)))))
+
+(define build-list (lambda (lst acc)
+                     (if (eq lst nil)
+                         acc
+                       (let ((x (car lst))
+                             (ret))
+                         (if (atom x)
+                             (set ret (bq-append acc (list (list 'list (list 'quote x)))))
+                           (if (eq (car x) 'comma)
+                               (set ret (bq-append acc (list (list 'list (car (cdr x))))))
+                             (if (eq (car x) 'comma-at)
+                                 (set ret (bq-append acc (list (car (cdr x)))))
+                               (set ret (bq-append acc (list (list 'list (bq1 x))))))))
+                         (build-list (cdr lst) ret)))))
+
+(define bq1 (lambda (exp)
+              (if (not (listp exp))
+                  (list 'quote exp)
+                (if (eq (car exp) 'comma) 
+                    (car (cdr exp))
+                  (build-list exp (list 'concat))))))
+
+(define backquote (macro (exp)
+                    (bq1 exp)))
+
 (define defun (macro (name vars &rest body)
                      `(define ,name (lambda ,vars ,@body))))
 

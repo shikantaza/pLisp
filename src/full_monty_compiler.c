@@ -28,7 +28,7 @@
 #include "util.h"
 #include "libtcc.h"
 
-#define MAX_C_SOURCE_SIZE 262144
+#define MAX_C_SOURCE_SIZE 524288
 
 enum {WHITE, GREY, BLACK};
 
@@ -997,7 +997,7 @@ OBJECT_PTR assignment_conversion(OBJECT_PTR exp, OBJECT_PTR ids)
     else
       return exp;
   }
-  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(first_exp == SET)
     return list(3, SETCAR, second(exp), assignment_conversion(third(exp),
@@ -1157,7 +1157,7 @@ OBJECT_PTR temp9(OBJECT_PTR x,
 
 OBJECT_PTR translate_to_il(OBJECT_PTR exp)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LETREC)
   {
@@ -1300,7 +1300,7 @@ OBJECT_PTR ren_transform(OBJECT_PTR exp, binding_env_t *env)
     return NIL;
   else if(IS_SYMBOL_OBJECT(exp))
     return get_binding_val(env, exp);
-  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LAMBDA)
   {
@@ -1394,6 +1394,31 @@ OBJECT_PTR flatten(OBJECT_PTR lst)
   return ret;  
 }
 
+OBJECT_PTR free_ids_il(OBJECT_PTR);
+
+OBJECT_PTR free_ids_in_bq_expression(OBJECT_PTR exp)
+{
+  if(is_atom(exp))
+    return NIL;
+  else
+  {
+    OBJECT_PTR rest = exp, ret = NIL;
+
+    while(rest != NIL)
+    {
+      OBJECT_PTR obj = car(rest);
+
+      if(IS_CONS_OBJECT(obj) && (car(obj) == COMMA || car(obj) == COMMA_AT))
+        ret = concat(2, ret, free_ids_il(second(obj)));
+      else
+        ret = concat(2, ret, free_ids_il(obj));
+
+      rest = cdr(rest);
+    }
+    return ret;
+  }
+}
+
 OBJECT_PTR free_ids_il(OBJECT_PTR exp)
 {
   OBJECT_PTR car_exp;
@@ -1410,10 +1435,12 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
     else
       return list(1, exp);
   }
-  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return NIL;
   else if(car_exp == QUOTE)
     return NIL;
+  else if(car_exp == BACKQUOTE)
+    return concat(2, list(1, BACKQUOTE), free_ids_in_bq_expression(second(exp)));
   else if(car_exp == IF)
     return union1(3,
                   free_ids_il(second(exp)),
@@ -1449,7 +1476,7 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
 
 OBJECT_PTR simplify_il_empty_let(OBJECT_PTR exp)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(first(exp) == LET && second(exp) == NIL)
     return third(exp);
@@ -1478,7 +1505,7 @@ OBJECT_PTR simplify_il_implicit_let(OBJECT_PTR exp)
 
 OBJECT_PTR simplify_il_eta(OBJECT_PTR exp)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LAMBDA &&
           IS_CONS_OBJECT(third(exp)) &&
@@ -1498,7 +1525,7 @@ OBJECT_PTR simplify_il_eta(OBJECT_PTR exp)
 
 OBJECT_PTR simplify_il_copy_prop(OBJECT_PTR exp)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LET &&
           cons_length(second(exp)) == 2 &&
@@ -1519,7 +1546,7 @@ OBJECT_PTR cps_transform(OBJECT_PTR exp)
   if(IS_CONS_OBJECT(exp))
     car_exp = car(exp);
 
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return cps_transform_var_literal(exp);
   else if(car_exp == LAMBDA)
     return cps_transform_abstraction(exp);
@@ -1870,7 +1897,7 @@ OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
 
   if(exp == NIL)
     return NIL;
-  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car_exp == LAMBDA)
   {
@@ -1903,7 +1930,7 @@ OBJECT_PTR closure_conv_transform(OBJECT_PTR exp)
 
 OBJECT_PTR lift_transform(OBJECT_PTR exp, OBJECT_PTR bindings)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return cons(exp, bindings);
   else if(car(exp) == LAMBDA)
   {
@@ -1941,7 +1968,7 @@ OBJECT_PTR replace_macros(OBJECT_PTR exp)
 {
   if(exp == MACRO)
     return LAMBDA;
-  else if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  else if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else
     return cons(replace_macros(car(exp)),
@@ -2011,7 +2038,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
 
   //this is not needed since
   //we're disallowing internal macros
-  res = replace_macros(res);
+  //res = replace_macros(res);
 //print_object(res);printf("\n");getchar();
 
   //TODO: only free ids that correspond
@@ -2059,7 +2086,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   res = expand_bodies(res);
 //print_object(res);getchar();
 
-  res = process_backquote(res);
+  //res = process_backquote(res);
 //print_object(res);printf("\n");getchar();
 
   if(in_error)
@@ -2156,12 +2183,20 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
     {
       char buf[200];
       memset(buf, 200, '\0');
-      sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
 
-      if(!console_mode && !single_expression_mode && !pipe_mode)
-        show_warning_dialog(buf);
+      if(symbol_to_be_used == MACRO)
+        sprintf(buf, "MACRO definitions permitted only at the top level");
       else
-        printf("%s\n", buf);
+        sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
+
+      //to avoid error during definition of BACKQUOTE macro
+      if(core_library_loaded == TRUE)
+      {
+        if(!console_mode && !single_expression_mode && !pipe_mode)
+          show_warning_dialog(buf);
+        else
+          printf("%s\n", buf);
+      }
 
       uintptr_t ptr = last_cell(ret) & POINTER_MASK;
       set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));        
@@ -2270,7 +2305,7 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == CDR          ||
     sym == PRINT        ||
     sym == SYMBOL_VALUE ||
-    sym == BACKQUOTE    ||
+    //sym == BACKQUOTE    ||
     sym == GENSYM       ||
     sym == SETCAR       ||
     sym == SETCDR       ||
@@ -3810,7 +3845,7 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp, BOOLEAN full)
 
   OBJECT_PTR free_variables = get_free_variables(exp);
 
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     ret = exp;
   else if(IS_SYMBOL_OBJECT(car(exp)) && exists(car(exp), free_variables))
   {
@@ -3892,7 +3927,7 @@ OBJECT_PTR expand_body(OBJECT_PTR body)
 
 OBJECT_PTR expand_bodies(OBJECT_PTR exp)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(car(exp) == LAMBDA || car(exp) == MACRO || car(exp) == LET || car(exp) == LETREC)
     return list(3, first(exp), second(exp), expand_body(CDDR(exp)));
@@ -4213,7 +4248,7 @@ OBJECT_PTR handle_and_rest_applications_for_macros(OBJECT_PTR exp)
 {
   OBJECT_PTR free_variables = get_free_variables(exp);
 
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(exists(car(exp), free_variables))
   {
@@ -4281,7 +4316,7 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 {
   OBJECT_PTR free_variables = get_free_variables(exp);
 
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(exists(car(exp), free_variables))
   {
@@ -4350,7 +4385,7 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 
 OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variables)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(exists(car(exp), free_variables))
   {
@@ -4421,7 +4456,7 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
 
 OBJECT_PTR handle_and_rest_applications_old(OBJECT_PTR exp, OBJECT_PTR free_variables)
 {
-  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+  if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
   else if(exists(car(exp), free_variables))
   {
@@ -4609,9 +4644,9 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
     throw_exception1("COMPILE-ERROR", "EQ requires two parameters");
     return false;
   }
-  else if(car_exp == CONCAT && len < 3)
+  else if(car_exp == CONCAT && len < 2)
   {
-    throw_exception1("COMPILE-ERROR", "CONCAT requires at least two parameters");
+    throw_exception1("COMPILE-ERROR", "CONCAT requires at least one parameter");
     return false;
   }
   else if(car_exp == NOT && len != 2)
