@@ -114,8 +114,8 @@
 (defun test-atom-19 ()
   (test-condition 19 (not (atom (make-array 10 nil)))))
 
-(defun test-atom-20 ()
-  (test-condition 20 (not (atom (macro (x) x)))))
+;(defun test-atom-20 ()
+;  (test-condition 20 (not (atom (macro (x) x)))))
 
 (defun test-atom-21 ()
   (let ((cont))
@@ -139,8 +139,8 @@
 (defun test-add-26 ()
   (test-exception 26 (+ 1 (lambda (x) x)) 'invalid-argument))
 
-(defun test-add-27 ()
-  (test-exception 27 (+ 1 (macro (x) x)) 'invalid-argument))
+;(defun test-add-27 ()
+;  (test-exception 27 (+ 1 (macro (x) x)) 'invalid-argument))
 
 (defun test-add-28 ()
   (let ((cont))
@@ -178,8 +178,8 @@
 (defun test-sub-37 ()
   (test-exception 37 (- 1 (lambda (x) x)) 'invalid-argument))
 
-(defun test-sub-38 ()
-  (test-exception 38 (- 1 (macro (x) x)) 'invalid-argument))
+;(defun test-sub-38 ()
+;  (test-exception 38 (- 1 (macro (x) x)) 'invalid-argument))
 
 (defun test-sub-39 ()
   (let ((cont))
@@ -217,8 +217,8 @@
 (defun test-mult-48 ()
   (test-exception 48 (* 1 (lambda (x) x)) 'invalid-argument))
 
-(defun test-mult-49 ()
-  (test-exception 49 (* 1 (macro (x) x)) 'invalid-argument))
+;(defun test-mult-49 ()
+;  (test-exception 49 (* 1 (macro (x) x)) 'invalid-argument))
 
 (defun test-mult-50 ()
   (let ((cont))
@@ -256,8 +256,8 @@
 (defun test-div-59 ()
   (test-exception 59 (/ 1 (lambda (x) x)) 'invalid-argument))
 
-(defun test-div-60 ()
-  (test-exception 60 (/ 1 (macro (x) x)) 'invalid-argument))
+;(defun test-div-60 ()
+;  (test-exception 60 (/ 1 (macro (x) x)) 'invalid-argument))
 
 (defun test-div-61 ()
   (let ((cont))
@@ -319,8 +319,8 @@
 (defun test-listp-78 ()
   (test-condition 78 (not (listp (lambda (x) x)))))
 
-(defun test-listp-79 ()
-  (test-condition 79 (not (listp (macro (x) x)))))
+;(defun test-listp-79 ()
+;  (test-condition 79 (not (listp (macro (x) x)))))
 
 (defun test-listp-80 ()
   (let ((cont))
@@ -329,9 +329,9 @@
 ;end listp
 
 ;symbol-value
-(defun test-symbol-value-81 ()
-  (dolist (x (list 1 1.0 "abc" #\a (make-array 10 nil) (lambda (x) x) (macro (x) x) '(1 2 3)))
-    (test-exception 81 (symbol-value x) 'invalid-argument)))
+;(defun test-symbol-value-81 ()
+;  (dolist (x (list 1 1.0 "abc" #\a (make-array 10 nil) (lambda (x) x) (macro (x) x) '(1 2 3)))
+;    (test-exception 81 (symbol-value x) 'invalid-argument)))
 
 (defun test-symbol-value-82 ()
   (let ((cont))
@@ -824,8 +824,8 @@
 (defun test-format-189 ()
   (test-exception 189 (format nil "%d" (lambda (x) x)) 'invalid-argument))
 
-(defun test-format-190 ()
-  (test-exception 190 (format nil "%d" (macro (x) x)) 'invalid-argument))
+;(defun test-format-190 ()
+;  (test-exception 190 (format nil "%d" (macro (x) x)) 'invalid-argument))
 
 (defun test-format-191 ()
   (let ((cont))
