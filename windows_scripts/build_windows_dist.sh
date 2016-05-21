@@ -31,6 +31,6 @@ cp ../data/plisp.lang $dir/share
 cp ../tests/unit_tests_windows.lisp $dir/tests
 cp ../tests/run_test_cases_windows.lisp $dir/tests
 
-zip -r plisp_windows-$verno.zip $dir/*
+zip -r ../plisp_windows-$verno.zip $dir/*
 
 rm -rf $dir
