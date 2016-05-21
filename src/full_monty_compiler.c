@@ -2023,7 +2023,6 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   OBJECT_PTR res = clone_object(exp);
 
   res = replace_t(res);
-//print_object(res);printf("\n");getchar();
 
   BOOLEAN macro_flag = false;
 
@@ -2039,7 +2038,6 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   //this is not needed since
   //we're disallowing internal macros
   //res = replace_macros(res);
-//print_object(res);printf("\n");getchar();
 
   //TODO: only free ids that correspond
   //to top level macro objects should be
@@ -2048,7 +2046,6 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   macro_expansion_in_progress = true;
   res = expand_macro_full(res, true);
   macro_expansion_in_progress = false;
-//print_object(res);printf("\n");//getchar();
 
   if(!is_valid_expression(res))
     return NIL; //error would have been raised in is_valid_expression()
@@ -2084,10 +2081,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   }
 
   res = expand_bodies(res);
-//print_object(res);getchar();
 
   //res = process_backquote(res);
-//print_object(res);printf("\n");getchar();
 
   if(in_error)
   {
@@ -2106,29 +2101,23 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
                                           get_top_level_symbols(),
                                           //free_ids_il(exp)));
                                           get_free_variables(exp)));
-//print_object(res);printf("\n");//getchar();
 
   res = translate_to_il(res);
-//print_object(res);printf("\n");getchar();
 
   binding_env_t *env = create_binding_env();
   res = ren_transform(res, env);
-//print_object(res);printf("\n");getchar();
+
   free(env->bindings);
   env->bindings = NULL;
   free(env);
 
   res = simplify_il(res);
-//print_object(res);printf("\n");getchar();
 
   res = cps_transform(res);
-//print_object(res);printf("\n");getchar();
 
   res = closure_conv_transform(res);
-//print_object(res);printf("\n");getchar();
 
   res = lift_transform(res, NIL);
-//print_object(res);printf("\n");getchar();
 
   OBJECT_PTR lambdas = reverse(cdr(res));
 
@@ -2189,14 +2178,10 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
       else
         sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
 
-      //to avoid error during definition of BACKQUOTE macro
-      if(core_library_loaded == TRUE)
-      {
-        if(!console_mode && !single_expression_mode && !pipe_mode)
-          show_warning_dialog(buf);
-        else
-          printf("%s\n", buf);
-      }
+      if(!console_mode && !single_expression_mode && !pipe_mode)
+        show_warning_dialog(buf);
+      else
+        printf("%s\n", buf);
 
       uintptr_t ptr = last_cell(ret) & POINTER_MASK;
       set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));        
@@ -3197,8 +3182,6 @@ nativefn extract_native_fn(OBJECT_PTR closure)
 {
   if(!IS_FUNCTION2_OBJECT(closure) && !IS_MACRO2_OBJECT(closure))
   {
-    //print_object(closure);
-    //assert(false);
     throw_exception1("EXCEPTION", "Attempt to invoke an object that is not a function or a macro");
     return NULL;
   }
@@ -4314,16 +4297,56 @@ OBJECT_PTR handle_and_rest_applications_for_macros(OBJECT_PTR exp)
 
 OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 {
-  OBJECT_PTR free_variables = get_free_variables(exp);
 
   if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
+
+  OBJECT_PTR free_variables = get_free_variables(exp);
+
+  OBJECT_PTR car_exp;
+
+  if(IS_CONS_OBJECT(exp))
+    car_exp = car(exp);
+
+  if(primop(car_exp))
+    return concat(2, list(1, car_exp), map(handle_and_rest_applications_for_functions, cdr(exp)));
+  else if(car_exp == LET || car_exp == LETREC)
+  {
+    OBJECT_PTR bindings = second(exp);
+    OBJECT_PTR rest = bindings;
+    OBJECT_PTR ret = NIL;
+    OBJECT_PTR obj;
+
+    while(rest != NIL)
+    {
+      obj = list(2, car(car(rest)), handle_and_rest_applications_for_functions(second(car(rest))));
+      ret = cons(obj, ret);
+      rest = cdr(rest);
+    }
+
+    return concat(2, list(2, car_exp, reverse(ret)), map(handle_and_rest_applications_for_functions, CDDR(exp)));
+  }
+  else if(car_exp == DEFINE || car_exp == SET)
+    return list(3, car_exp, second(exp), handle_and_rest_applications_for_functions(third(exp)));
+  else if(car_exp == LAMBDA || car_exp == MACRO)
+    return concat(2, list(2, car_exp, second(exp)), map(handle_and_rest_applications_for_functions, CDDR(exp)));
+#ifdef WIN32
+  else if(car_exp == ERROR1 || car_exp == CALL_CC)
+#else
+  else if(car_exp == ERROR || car_exp == CALL_CC)
+#endif
+    return list(2, car_exp, handle_and_rest_applications_for_functions(second(exp)));
+  else if(car_exp == IF)
+    return list(4, IF, 
+                handle_and_rest_applications_for_functions(second(exp)), 
+                handle_and_rest_applications_for_functions(third(exp)),
+                handle_and_rest_applications_for_functions(fourth(exp)));
   else if(exists(car(exp), free_variables))
   {
     OBJECT_PTR out;
 
-    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
-    OBJECT_PTR symbol_to_be_used = car(exp);
+    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    //OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -4376,11 +4399,11 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 
       return ret;
     }
-    else
-      return map(handle_and_rest_applications_for_functions, exp);
+    else //there are no &rest parameters associated with this closure
+      return exp;
   }
-  else
-    return map(handle_and_rest_applications_for_functions, exp);
+  else //car(exp) is not a free variable
+    return exp;
 }
 
 OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variables)
