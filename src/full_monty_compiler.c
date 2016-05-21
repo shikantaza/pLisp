@@ -5366,11 +5366,35 @@ OBJECT_PTR handle_exception()
 
     debug_window_dbg_stack = debug_stack;
 
-    if(debug_window_dbg_stack != NIL)
-      create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-                          DEFAULT_DEBUG_WINDOW_POSY,
-                          DEFAULT_DEBUG_WINDOW_WIDTH,
-                          DEFAULT_DEBUG_WINDOW_HEIGHT);
+    if(console_mode || single_expression_mode || pipe_mode)
+    {
+      printf("Call Stack:\n");
+
+      OBJECT_PTR rest = debug_window_dbg_stack;
+
+      int i = 1;
+
+      while(rest != NIL)
+      {
+        OBJECT_PTR frame = car(rest);
+
+        char buf[MAX_STRING_LENGTH];
+        memset(buf, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(car(frame), buf, 0);
+        printf("%d: %s\n", i, buf);
+
+        i++;
+        rest = cdr(rest);
+      }      
+    }
+    else
+    {
+      if(debug_window_dbg_stack != NIL)
+        create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+                            DEFAULT_DEBUG_WINDOW_POSY,
+                            DEFAULT_DEBUG_WINDOW_WIDTH,
+                            DEFAULT_DEBUG_WINDOW_HEIGHT);
+    }
 
     return NIL;
   }
