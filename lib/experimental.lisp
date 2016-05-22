@@ -1,0 +1,33 @@
+;;  Copyright 2011-2016 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+
+;;  This file is part of pLisp.
+
+;;  pLisp is free software: you can redistribute it and/or modify
+;;  it under the terms of the GNU General Public License as published by
+;;  the Free Software Foundation, either version 3 of the License, or
+;;  (at your option) any later version.
+
+;;  pLisp is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+
+;;  You should have received a copy of the GNU General Public License
+;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
+
+(in-package "user")
+
+(defun any-empty-list (lists)
+  (if (null lists)
+      nil
+    (or (null (car lists))
+        (any-empty-list (cdr lists)))))
+
+(defun my-mapcar (f &rest lsts)
+  (if (any-empty-list lsts)
+      nil
+    (cons (apply f (map (lambda (x) (car x))
+                        lsts))
+          (apply my-mapcar (concat (list f)
+                                   (map (lambda (x) (cdr x))
+                                        lsts))))))

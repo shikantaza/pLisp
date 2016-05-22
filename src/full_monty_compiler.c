@@ -2294,8 +2294,8 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == GENSYM       ||
     sym == SETCAR       ||
     sym == SETCDR       ||
-    sym == COMMA        ||
-    sym == COMMA_AT     ||
+    //sym == COMMA        ||
+    //sym == COMMA_AT     ||
     sym == APPLY        ||
     sym == SYMBL        ||
     sym == SYMBOL_NAME  ||

@@ -831,9 +831,17 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
   log_function_entry("cons");
 
   if(!is_valid_object(car))
-    assert(false);
+    //assert(false);
+  {
+    throw_exception1("EXCEPTION", "Invalid first argument to CONS operator");
+    return NIL;
+  }
   if(!is_valid_object(cdr))
-    assert(false);
+    //assert(false);
+  {
+    throw_exception1("EXCEPTION", "Invalid second argument to CONS operator");
+    return NIL;
+  }
 
   set_heap(ptr, 0, car);
   set_heap(ptr, 1, cdr);

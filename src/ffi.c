@@ -803,9 +803,24 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
     return NIL;
   }
 
+  nativefn nf = extract_native_fn(macro_or_fn_obj);
+
+  if(!nf)
+  {
+    raise_error("Error in invoking macro/function - extracting native function failed");
+
+    for(i=0; i<nof_args; i++)
+      free(arg_values[i]);
+
+    free(arg_values);
+    free(arg_types);
+
+    return NIL;
+  }
+
   ffi_arg ret_val;
 
-  ffi_call(&cif, (void *)extract_native_fn(macro_or_fn_obj), &ret_val, arg_values);
+  ffi_call(&cif, (void *)nf, &ret_val, arg_values);
 
   for(i=0; i<nof_args; i++)
     free(arg_values[i]);
