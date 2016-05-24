@@ -471,13 +471,22 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
     //no need for equal() since compilation only involves 
     //comparing symbols
     //if(obj == *((unsigned int *)(rest & POINTER_MASK))) 
-    if(obj == *((unsigned int *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
+    //if(obj == *((unsigned int *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
+    //  return true;
+
+    //to strip package names while comparing symbols.
+    //this is OK because exists() is used only
+    //within the compiler, where package names don't matter
+    if(IS_SYMBOL_OBJECT(obj) && IS_SYMBOL_OBJECT(car(rest)) && !strcmp(get_symbol_name(obj), get_symbol_name(car(rest))))
+      return true;
+    else if(obj == *((unsigned int *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
       return true;
 
     //rest = cdr(rest);
     //rest = *((unsigned int *)(rest & POINTER_MASK) + 1);
     rest = *((unsigned int *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT  ) + 1);
   }
+
   return false;
 }
 
@@ -3204,7 +3213,15 @@ nativefn extract_native_fn(OBJECT_PTR closure)
     assert(false);
   }
 
-  return get_nativefn_value(nativefn_obj);
+  nativefn nf = get_nativefn_value(nativefn_obj);
+
+  if(!nf)
+  {
+    throw_exception1("EXCEPTION", "Extracting native function failed");
+    return NULL;
+  }
+
+  return nf;
 }
 
 OBJECT_PTR get_exception_handler()
@@ -3237,6 +3254,12 @@ void set_most_recent_closure(OBJECT_PTR clo)
 
 void save_continuation(OBJECT_PTR cont)
 {
+  if(!IS_FUNCTION2_OBJECT(cont))
+  {
+    throw_exception1("EXCEPTION", "Invalid continuation object");
+    return;
+  }
+
   saved_continuations = cons(cont, saved_continuations);
   if(most_recent_closure != NIL)
     continuations_for_return = cons(cons(most_recent_closure, cont), continuations_for_return);
