@@ -30,6 +30,7 @@ cp ../data/plisp.lang $dir/share
 
 cp ../tests/unit_tests_windows.lisp $dir/tests
 cp ../tests/run_test_cases_windows.lisp $dir/tests
+cp ../tests/run_tests_windows.bat $dir/tests
 
 zip -r ../plisp_windows-$verno.zip $dir/*
 
