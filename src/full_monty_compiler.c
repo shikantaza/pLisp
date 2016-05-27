@@ -2059,7 +2059,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   if(!is_valid_expression(res))
     return NIL; //error would have been raised in is_valid_expression()
 
-  res = handle_and_rest_applications_for_functions(res);
+  //res = handle_and_rest_applications_for_functions(res);
 
   res = replace_t(res);
   //res = replace_macros(res);
@@ -2088,6 +2088,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
       return r;
     }
   }
+
+  res = handle_and_rest_applications_for_functions(res);
 
   res = expand_bodies(res);
 
@@ -4368,13 +4370,14 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
   {
     OBJECT_PTR out;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
-    //OBJECT_PTR symbol_to_be_used = car(exp);
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
     if(retval)
-      return exp;
+      //return exp;
+      return map(handle_and_rest_applications_for_functions, exp);
 
     OBJECT_PTR clo = car(out);
 
@@ -4423,10 +4426,10 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
       return ret;
     }
     else //there are no &rest parameters associated with this closure
-      return exp;
+      return map(handle_and_rest_applications_for_functions, exp);
   }
   else //car(exp) is not a free variable
-    return exp;
+    return map(handle_and_rest_applications_for_functions, exp);
 }
 
 OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variables)
@@ -5111,7 +5114,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
     int pos_of_and_rest = location_of_and_rest(second(third(exp)));
     if(pos_of_and_rest != -1)
     {
-      res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
+      //res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
+      res = concat(2, list(2, car(third(exp)), strip_and_rest(second(third(exp)))), CDDR(third(exp)));
       record_and_rest_closure(symbol_to_be_used, pos_of_and_rest);
     }
   }

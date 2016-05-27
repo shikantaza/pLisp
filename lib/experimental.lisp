@@ -28,6 +28,35 @@
       nil
     (cons (apply f (map (lambda (x) (car x))
                         lsts))
-          (apply my-mapcar (concat (list f)
+          (apply my-mapcar (bq-append (list f)
                                    (map (lambda (x) (cdr x))
                                         lsts))))))
+
+(defmacro my-apply (fn args)
+  `(,fn ,@args))
+
+(defun my-mapcar2 (f &rest lsts)
+  (if (any-empty-list lsts)
+      nil
+    (cons (apply f (map-internal (lambda (x1) (car x1)) lsts))
+          (my-mapcar2 f (map-internal (lambda (x2) (cdr x2)) lsts)))))
+
+(defun my-mapcar-2-arg (f lst1 lst2)
+  (if (or (null lst1)
+          (null lst2))
+      nil
+    (cons (f (car lst1) (car lst2))
+          (my-mapcar-2-arg f (cdr lst1) (cdr lst2)))))
+
+(defun mapcar2-internal (f lsts acc)
+  (if (any-empty-list lsts)
+      (reverse acc)
+    (mapcar2-internal f 
+                      (map (lambda (x) (cdr x)) lsts)
+                      (cons (apply f (map (lambda (x) (car x)) lsts)) acc))))
+
+(defun mapcar2 (f lsts)
+  (mapcar2-internal f lsts nil))
+
+(defun mapcar3 (f &rest lsts)
+  (mapcar2-internal f lsts nil))
