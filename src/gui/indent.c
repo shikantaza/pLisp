@@ -65,6 +65,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
 
   BOOLEAN new_form_encountered = false;
 
+  BOOLEAN newline_char = false;
+
   unsigned int i=1;
   unsigned int len = strlen(str);
 
@@ -96,6 +98,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
         i++;
         corrected_i = i;
       }
+
+      newline_char = true;
     }
     else if(c == '#')
     {
@@ -114,6 +118,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
 
       i++;
       corrected_i++;
+
+      newline_char = false;
     }
     else if(c == ';')
     {
@@ -122,6 +128,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
 
       i++;
       corrected_i++;
+
+      newline_char = false;
     }
     else if(c == '"')
     {
@@ -140,6 +148,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
 
       i++;
       corrected_i++;
+
+      newline_char = false;
     }
     else if(c == '(')
     {
@@ -164,6 +174,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
       }
       i++;
       corrected_i++;
+
+      newline_char = false;
     }
     else if(c == ')')
     {
@@ -175,6 +187,8 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
       }
       i++;
       corrected_i++;
+
+      newline_char = false;
     }
     else if(c != ' ') //all other characters except space
     {
@@ -189,7 +203,10 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
           //capture form and pos -- need to capture the full form here, to
           //get keywords (LET, DEFUN, IF, WHILE, ...)
 
-          pos = corrected_i;
+          if(corrected_i == 0)
+            pos = fp[(*count)-1].pos;
+          else
+            pos = corrected_i;
 
           while(str[i] != ' ' && str[i] != '\n' && str[i] != '(' && str[i] != '"' && str[i] != ';' && str[i] != '#' && i < len)
           {
@@ -241,12 +258,15 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
         i++;
         corrected_i++;
       }
+
+      newline_char = false;
     }
     else
     {
       assert(c == ' ');
       i++;
-      corrected_i++;
+      if(!newline_char)
+        corrected_i++;
     }
 
     if(new_form_encountered)
@@ -416,10 +436,10 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
   {
     if(count == 1)
       return 5;
-    else if(count == 2)
+    else if(count >= 2)
       return 2;
-    else
-      return fp[1].pos;
+    /* else */
+    /*   return fp[1].pos; */
   }
   else if(fp[0].form_type == DEFUN    || 
           fp[0].form_type == DEFMACRO ||
