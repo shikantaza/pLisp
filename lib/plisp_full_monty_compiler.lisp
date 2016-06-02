@@ -435,12 +435,22 @@
 (defun mapcar (f &rest lsts)
   (mapcar-internal f lsts nil))
 
+;(defun flatten (lst)
+;  (apply append  (map (lambda (x)
+;                        (if (listp x)
+;                           x
+;                         (list x)))
+;                     lst)))
+
 (defun flatten (lst)
-  (apply append  (map (lambda (x)
-                        (if (listp x)
-                           x
-                         (list x)))
-                     lst)))
+  (if (null lst)
+      nil
+    (progn
+      (assert (consp lst) "Argument to FLATTEN must be a list")
+      (append (if (listp (car lst))
+                  (car lst)
+                (list (car lst)))
+              (flatten (cdr lst))))))
 
 (defmacro mapcan (f &rest lists)  
   `(flatten (mapcar ,f ,@lists))) 

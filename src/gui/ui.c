@@ -506,7 +506,7 @@ GtkToolbar *create_system_browser_toolbar()
   /*                          (GtkWidget *)system_browser_window); */
   GtkToolItem *new_symbol_button = gtk_tool_button_new(new_symbol_icon, NULL);
   gtk_tool_item_set_tooltip_text(new_symbol_button, "New symbol (Ctrl-N)");
-  g_signal_connect (new_symbol_button, "clicked", G_CALLBACK (new_symbol), workspace_window);
+  g_signal_connect (new_symbol_button, "clicked", G_CALLBACK (new_symbol), system_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, new_symbol_button, 1);
 
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */

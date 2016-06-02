@@ -366,7 +366,7 @@ void quit(GtkWidget *widget,
 
 void create_new_symbol()
 {
-  gchar *package_name;
+  gchar *package_name = NULL;
 
   GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
   GtkTreeModel *model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
@@ -377,6 +377,12 @@ void create_new_symbol()
     gtk_tree_model_get(model1, &iter1,
                        0, &package_name,
                        -1);
+  }
+
+  if(!package_name)
+  {
+    show_error_dialog("Please select package in which to create the symbol");
+    return;
   }
 
   if(!strcmp(package_name, "CORE"))
@@ -585,6 +591,33 @@ void system_browser_accept()
     {
       update_workspace_title();
       refresh_system_browser();
+
+      gboolean valid;
+      BOOLEAN package_found = false;
+      int idx = 0;
+      gchar *pkg_name;
+
+      valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store1), &iter1);
+
+      while (valid && !package_found)
+      {
+        gtk_tree_model_get(model1, &iter1, 0, &pkg_name, -1);
+
+        if(!strcmp(pkg_name, package_name))
+        {
+          package_found = true;
+
+          GtkTreePath *path = gtk_tree_path_new_from_indices(idx, -1);
+          gtk_tree_view_set_cursor(packages_list, path, NULL, false);
+
+          g_free(pkg_name);
+          //g_free(path);
+          break;
+        }
+
+        valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store1), &iter1);
+        idx++;
+      }
 
       //the newly added symbol will be the last row
       set_focus_to_last_row(symbols_list);
