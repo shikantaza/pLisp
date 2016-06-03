@@ -951,6 +951,8 @@ OBJECT_PTR primitive_unbind(OBJECT_PTR sym)
     return NIL;
   }
 
+  system_changed = true;
+
   return NIL;
 }
 

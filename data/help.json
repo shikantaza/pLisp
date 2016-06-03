@@ -1493,10 +1493,10 @@
   {"type" : 2, 
    "name" : "unbind", 
    "syntax" : "(unbind sym) => NIL",
-   "args" : "sym: a symbol",
+   "args" : "sym: a qualified symbol",
    "desc" : "unbind unbinds 'sym' from the top level environment",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type INVALID-ARGUMENT is thrown if the argument is not a symbol. Throws an exception of type SYMBOL-NOT-BOUND if the symbol was not bound already",
-   "examples" : [ "(unbind 'x) => NIL" ],
+   "examples" : [ "(unbind 'user:x) => NIL" ],
    "see-also" : [ "define", "set", "setq" ]
   },
 

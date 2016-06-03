@@ -140,6 +140,8 @@ extern OBJECT_PTR debug_window_dbg_stack;
 
 extern OBJECT_PTR continuation_to_resume;
 
+extern BOOLEAN serialize_gui_elements;
+
 //forward declarations
 BOOLEAN is_dynamic_reference(unsigned int);
 void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, uintptr_t, unsigned int);
@@ -590,7 +592,7 @@ void create_image(char *file_name)
 
   fprintf(fp, ", ");
   
-  if(profiler_window)
+  if(serialize_gui_elements && profiler_window)
   {
     int posx, posy, width, height;
 
@@ -645,7 +647,7 @@ void create_image(char *file_name)
     fprintf(fp, "]], ");
   }
 
-  if(system_browser_window)
+  if(serialize_gui_elements && system_browser_window)
   {
     int posx, posy, width, height;
 
@@ -703,7 +705,7 @@ void create_image(char *file_name)
 
   fprintf(fp, "]");
 
-  if(workspace_window)
+  if(serialize_gui_elements && workspace_window)
   {
     int posx, posy, width, height;
     GtkTextIter start, end;
@@ -749,7 +751,7 @@ void create_image(char *file_name)
             posx, posy, width, height, text);
   }
 
-  if(debugger_window)
+  if(serialize_gui_elements && debugger_window)
   {
     int posx, posy, width, height;
 
@@ -761,6 +763,9 @@ void create_image(char *file_name)
             posx, posy, width, height);
   }
 
+  //no need to check for serialize_gui_elements,
+  //as the transcript window is always open
+  //when pLisp is running (in GUI mode)
   if(transcript_window)
   {
     //begin transcript window serialization
@@ -809,7 +814,7 @@ void create_image(char *file_name)
     //end transcript window serialization
   }
 
-  if(callers_window)
+  if(serialize_gui_elements && callers_window)
   {
     int posx, posy, width, height;
 
@@ -1425,6 +1430,7 @@ int load_from_image(char *file_name)
                             JSON_get_array_item(workspace, 2)->ivalue,
                             JSON_get_array_item(workspace, 3)->ivalue,
                             text);
+
   }
 
   struct JSONObject *debugger = JSON_get_object_item(root, "debugger");

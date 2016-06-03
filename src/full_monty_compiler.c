@@ -3579,7 +3579,7 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
       top_level_symbols[i].delete_flag = false;
       found = true;
 
-      system_changed = true;
+      //system_changed = true;
     }
   }
 
@@ -3601,7 +3601,7 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
 
     add_to_autocomplete_list(convert_to_lower_case(strdup(get_symbol_name(sym))));
 
-    system_changed = true;
+    //system_changed = true;
   }
 }
 
@@ -3639,7 +3639,7 @@ int remove_top_level_sym(OBJECT_PTR sym)
             global_unmet_dependencies[k].pos = pos;
             found = true;
 
-            system_changed = true;
+            //system_changed = true;
 
             break;
           }
@@ -3661,7 +3661,7 @@ int remove_top_level_sym(OBJECT_PTR sym)
           global_unmet_dependencies[nof_unmet_dependencies - 1].pos = pos;
           global_unmet_dependencies[nof_unmet_dependencies - 1].delete_flag = false;
 
-          system_changed = true;
+          //system_changed = true;
         }
       }
       return OK;
@@ -5144,6 +5144,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   }
 
+  system_changed = true;
+
   return res;
 }
 
@@ -5201,6 +5203,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
     throw_exception1("EXCEPTION", "Update of reference to top level symbol failed");
     return NIL;
   }
+
+  system_changed = true;
 
   return res;
 }
