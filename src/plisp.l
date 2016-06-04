@@ -132,7 +132,7 @@ int open_square_brackets = 0;
 [ \t]+                  /* ignore whitespace */
 \n                      /* ignore newlines */
 "#|"(.|\n)*"|#"         /* ignore multiline comments */
-^;(.)*                  /* ignore single line comments */
+;(.)*                  /* ignore single line comments */
 
 "\033[A"                { printf("\n"); } /* ignore up arrow; the printf prevents overwriting the prompt  */
 "\033[B"                /* ignore down arrow */
