@@ -131,7 +131,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   i=0;
 
   int   i_val, *i_val_ptr;
-  float f_val, *f_val_ptr;
+  double f_val, *f_val_ptr;
   char  c_val, *c_val_ptr;
 
   while(rest_args != NIL)
@@ -175,10 +175,12 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     }
     else if(type == FLOT) //FLOAT spelt wrongly because it's already bean #define'd
     {
-      arg_types[i] = &ffi_type_float;
+      arg_types[i] = &ffi_type_double;
       f_val = get_float_value(val);
-      arg_values[i] = (float *)malloc(sizeof(float));
-      *(float *)arg_values[i] = f_val;
+      /* arg_values[i] = (float *)malloc(sizeof(float)); */
+      /* *(float *)arg_values[i] = f_val; */
+      arg_values[i] = (double *)malloc(sizeof(double));
+      *(double *)arg_values[i] = f_val;
     }
 #ifdef WIN32
     else if(type == CHAR1)
@@ -209,10 +211,14 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     else if(type == FLOAT_POINTER)
     {
       arg_types[i] = &ffi_type_pointer;
-      f_val_ptr = (float *)malloc(sizeof(float));
+      /* f_val_ptr = (float *)malloc(sizeof(float)); */
+      /* *f_val_ptr = get_float_value(val); */
+      /* arg_values[i] = (float **)malloc(sizeof(float *)); */
+      /* *(float **)arg_values[i] = f_val_ptr; */
+      f_val_ptr = (double *)malloc(sizeof(double));
       *f_val_ptr = get_float_value(val);
-      arg_values[i] = (float **)malloc(sizeof(float *));
-      *(float **)arg_values[i] = f_val_ptr;
+      arg_values[i] = (double **)malloc(sizeof(double *));
+      *(double **)arg_values[i] = f_val_ptr;
     }
 
     i++;
@@ -231,7 +237,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 #endif
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_schar, arg_types);
   else if(ret_type == FLOT)
-    status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_float, arg_types);
+    status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_double, arg_types);
   else if(ret_type == CHAR_POINTER) //not handling int and float pointer return values
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_pointer, arg_types);
 #ifdef WIN32
@@ -251,7 +257,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   }
 
   ffi_arg ret_val;
-  float float_ret_val;
+  double float_ret_val;
 
   if(ret_type == FLOT)
     ffi_call(&cif, function_ptr, &float_ret_val, arg_values);
@@ -311,7 +317,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;
       }
 #else
-      *((float *)(sym & POINTER_MASK)) = *((float *)*(float **)arg_values[i]);
+      //*((float *)(sym & POINTER_MASK)) = *((float *)*(float **)arg_values[i]);
+      *((double *)(sym & POINTER_MASK)) = *((double *)*(double **)arg_values[i]);
 #endif
 
     }
@@ -467,14 +474,16 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
       if(type == INT_POINTER)
         free(*(int **)values[i]);
       else if(type  == FLOAT_POINTER)
-        free(*(float **)values[i]);
+        //free(*(float **)values[i]);
+        free(*(double **)values[i]);
       else if(type == CHAR_POINTER)
         free(*(char **)values[i]);
     }
     else if(types[i] == &ffi_type_sint)
       free((int *)values[i]);
-    else if(types[i] == &ffi_type_float)
-      free((float *)values[i]);
+    else if(types[i] == &ffi_type_double)
+      //free((float *)values[i]);
+      free((double *)values[i]);
     else if(types[i] == &ffi_type_schar)
       free((char *)values[i]);
 
@@ -610,8 +619,9 @@ void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args
     }
     else if(types[i] == &ffi_type_sint)
       free((int *)values[i]);
-    else if(types[i] == &ffi_type_float)
-      free((float *)values[i]);
+    else if(types[i] == &ffi_type_double)
+      //free((float *)values[i]);
+      free((double *)values[i]);
     else if(types[i] == &ffi_type_schar)
       free((char *)values[i]);
 

@@ -594,7 +594,11 @@ uintptr_t object_alloc(int size, int tag)
   unsigned int *ret;
 
 #ifdef WIN32
-  ret = __mingw_aligned_malloc(size * sizeof(unsigned int), 16);
+
+  if(tag == FLOAT_TAG)
+    ret = __mingw_aligned_malloc(sizeof(double), 16);
+  else
+    ret = __mingw_aligned_malloc(size * sizeof(unsigned int), 16);
 
   if(!ret)
   {
@@ -613,7 +617,12 @@ uintptr_t object_alloc(int size, int tag)
     exit(1);
   }
 #else
-  int err = posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
+  int err;
+
+  if(tag == FLOAT_TAG)
+    err = posix_memalign((void **)&ret, 16, sizeof(double));
+  else
+    err = posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
 
   if(err)
   {

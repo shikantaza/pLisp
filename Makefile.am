@@ -21,7 +21,7 @@ all:	${bin_PROGRAMS} ${lib_LTLIBRARIES} help.html
 
 bin_PROGRAMS = plisp
 
-plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/test_so.c src/queue.c src/main.c src/memory.c src/native_compiler.c src/full_monty_compiler.c src/vm.c  src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/rb/misc.h src/rb/misc.c src/rb/stack.h src/rb/red_black_tree.h src/rb/stack.c src/rb/red_black_tree.c src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c
+plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/native_compiler.c src/full_monty_compiler.c src/vm.c  src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/rb/misc.h src/rb/misc.c src/rb/stack.h src/rb/red_black_tree.h src/rb/stack.c src/rb/red_black_tree.c src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c
 
 noinst_PROGRAMS = docgen
 
@@ -34,9 +34,13 @@ ACLOCAL_AMFLAGS = -I m4 --install
 
 plisp_LDADD = ${AM_LIBS} -ltcc -ldl
 
-lib_LTLIBRARIES = libplisp.la
+lib_LTLIBRARIES = libplisp.la libtest.la
+
 libplisp_la_SOURCES = src/plisp_utils_ffi.c
 libplisp_la_LDFLAGS = -version-info 0:0:0
+
+libtest_la_SOURCES = src/test_so.c
+libtest_la_LDFLAGS = -version-info 0:0:0
 
 pkgdata_DATA = plisp.image data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
 

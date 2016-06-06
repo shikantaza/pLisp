@@ -29,41 +29,41 @@ commands to build .so file:
 
  **/
 
-int fn_ret_int(int i, float f, char c, char *s)
+int fn_ret_int(int i, double f, char c, char *s)
 {
   printf("entering funtion1\n");
   printf("%d\n",i);
-  printf("%f\n",f);
+  printf("%lf\n",f);
   printf("%c\n",c);
   printf("%s\n",s);
   printf("exiting function1\n");
   return i * i;
 }
 
-float fn_ret_float(int i, float f, char c, char *s)
+double fn_ret_float(int i, double f, char c, char *s)
 {
   printf("%d\n",i);
-  printf("%f\n",f);
+  printf("%lf\n",f);
   printf("%c\n",c);
   printf("%s\n",s);
-  printf("%f\n", f + f);
+  printf("%lf\n", f + f);
   printf("exiting fn_ret_float\n");
   return f+f;
 }
 
-char fn_ret_char(int i, float f, char c, char *s)
+char fn_ret_char(int i, double f, char c, char *s)
 {
   printf("%d\n",i);
-  printf("%f\n",f);
+  printf("%lf\n",f);
   printf("%c\n",c);
   printf("%s\n",s);
   return c;
 }
 
-char *fn_ret_char_ptr(int i, float f, char c, char *s)
+char *fn_ret_char_ptr(int i, double f, char c, char *s)
 {
   printf("%d\n",i);
-  printf("%f\n",f);
+  printf("%lf\n",f);
   printf("%c\n",c);
   printf("%s\n",s);
   
@@ -83,9 +83,10 @@ int fn_arg_int_ptr(int *i)
   return 0;
 }
 
-int fn_arg_float_ptr(float *f)
+//int fn_arg_float_ptr(float *f)
+int fn_arg_float_ptr(double *f)
 {
-  printf("passed value is %f\n", *f);
+  printf("passed value is %lf\n", *f);
   *f = 100.97;
   return 0;
 }
@@ -101,10 +102,10 @@ int fn_arg_char_ptr(char *str)
   return 0;
 }
 
-void function_ret_void(int i, float f, char c, char *s)
+void function_ret_void(int i, double f, char c, char *s)
 {
   printf("%d\n",i);
-  printf("%f\n",f);
+  printf("%lf\n",f);
   printf("%c\n",c);
   printf("%s\n",s);
 

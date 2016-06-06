@@ -949,7 +949,7 @@ OBJECT_PTR get_continuation_for_return(OBJECT_PTR obj)
 
 void throw_generic_exception(char *err_str)
 {
-  throw_exception("EXCEPTION", err_str);
+  throw_exception1("EXCEPTION", err_str);
 }
 
 void throw_exception(char *excp, char *err_str)

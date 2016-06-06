@@ -288,8 +288,10 @@ BOOLEAN contains_keyword_parameter(OBJECT_PTR list);
 int get_int_value(OBJECT_PTR);
 OBJECT_PTR convert_int_to_object(int);
 
-float get_float_value(OBJECT_PTR);
-OBJECT_PTR convert_float_to_object(float);
+//float get_float_value(OBJECT_PTR);
+//OBJECT_PTR convert_float_to_object(float);
+double get_float_value(OBJECT_PTR);
+OBJECT_PTR convert_float_to_object(double);
 
 void print_array_object(OBJECT_PTR);
 

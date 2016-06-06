@@ -2566,18 +2566,22 @@ OBJECT_PTR convert_int_to_object(int v)
   return ptr + INTEGER_TAG;
 }
 
-float get_float_value(OBJECT_PTR obj)
+//float get_float_value(OBJECT_PTR obj)
+double get_float_value(OBJECT_PTR obj)
 {
   assert(IS_FLOAT_OBJECT(obj));
   //return *((float *)obj);
-  return *((float *)(obj & POINTER_MASK));
+  //return *((float *)(obj & POINTER_MASK));
+  return *((double *)(obj & POINTER_MASK));
 }
 
-OBJECT_PTR convert_float_to_object(float v)
+//OBJECT_PTR convert_float_to_object(float v)
+OBJECT_PTR convert_float_to_object(double v)
 {
   uintptr_t ptr = object_alloc(1, FLOAT_TAG);
 
-  *((float *)ptr) = v;
+  //*((float *)ptr) = v;
+  *((double *)ptr) = v;
 
   return ptr + FLOAT_TAG;
 }

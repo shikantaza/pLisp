@@ -22,6 +22,11 @@
 (define passed-cases 0)
 (define failed-cases 0)
 
+(defun float-eq (f1 f2)
+  (if (> f1 f2)
+      (< (- f1 f2) 0.00001)
+    (< (- f2 f1) 0.00001)))
+
 (defmacro test-condition (id condition)
   `(try (if ,condition 
             (incf passed-cases)
@@ -579,10 +584,10 @@
   (test-exception 137 (load-foreign-library 1) 'invalid-argument))
 
 (defun test-load-foreign-library-138 ()
-  (test-happy-case 138 (load-foreign-library "./libtest.so")))
+  (test-happy-case 138 (load-foreign-library "libtest.so")))
 
 (defun test-load-foreign-library-139 ()
-  (test-happy-case 139 (load-foreign-library (string "./libtest.so"))))
+  (test-happy-case 139 (load-foreign-library (string "libtest.so"))))
 ;end load-foreign-library
 
 ;call-foreign-function
@@ -696,7 +701,7 @@
     (call-foreign-function "fn_arg_float_ptr" 
                            integer
                            ((f float-pointer)))
-    (test-condition 156 (eq f 100.97))))
+    (test-condition 156 (float-eq f 100.97))))
 
 (defun test-call-foreign-function-157 ()
   (let ((i 10)

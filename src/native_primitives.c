@@ -112,7 +112,7 @@ OBJECT_PTR primitive_add(OBJECT_PTR count1, ...)
   va_list ap;
   OBJECT_PTR arg;
   int i;
-  float sum = 0;
+  double sum = 0.0;
 
   BOOLEAN is_float = false;
 
@@ -137,7 +137,8 @@ OBJECT_PTR primitive_add(OBJECT_PTR count1, ...)
     else if(IS_FLOAT_OBJECT(arg))
     {
       is_float = true;
-      sum += get_float_value(arg);
+      double val = get_float_value(arg);
+      sum += val;
     }
     else
     {
@@ -157,7 +158,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
   OBJECT_PTR arg;
   int i;
   int int_res;
-  float float_res;
+  double float_res;
 
   BOOLEAN is_float = false;
 
@@ -220,7 +221,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
 
 OBJECT_PTR primitive_lt(OBJECT_PTR v1, OBJECT_PTR v2)
 {
-  float val1, val2;
+  double val1, val2;
 
   if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -330,7 +331,7 @@ OBJECT_PTR primitive_mult(OBJECT_PTR count1, ...)
   va_list ap;
   OBJECT_PTR arg;
   int i;
-  float prod = 1;
+  double prod = 1;
 
   BOOLEAN is_float = false;
 
@@ -373,12 +374,12 @@ OBJECT_PTR primitive_div(OBJECT_PTR count1, ...)
   va_list ap;
   OBJECT_PTR arg;
   int i;
-  float val;
+  double val;
   BOOLEAN is_float = false;
 
   OBJECT_PTR first;        
 
-  float prod = 1;
+  double prod = 1;
 
   unsigned int count = get_int_value(count1);
 
@@ -585,7 +586,7 @@ OBJECT_PTR primitive_cdr(OBJECT_PTR obj)
 
 OBJECT_PTR primitive_gt(OBJECT_PTR v1, OBJECT_PTR v2)
 {
-  float val1, val2;
+  double val1, val2;
 
   if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -610,7 +611,7 @@ OBJECT_PTR primitive_gt(OBJECT_PTR v1, OBJECT_PTR v2)
 
 OBJECT_PTR primitive_geq(OBJECT_PTR v1, OBJECT_PTR v2)
 {
-  float val1, val2;
+  double val1, val2;
 
   if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))
@@ -635,7 +636,7 @@ OBJECT_PTR primitive_geq(OBJECT_PTR v1, OBJECT_PTR v2)
 
 OBJECT_PTR primitive_leq(OBJECT_PTR v1, OBJECT_PTR v2)
 {
-  float val1, val2;
+  double val1, val2;
 
   if((!(IS_INTEGER_OBJECT(v1)) && !(IS_FLOAT_OBJECT(v1))) ||
      (!(IS_INTEGER_OBJECT(v2)) && !(IS_FLOAT_OBJECT(v2))))

@@ -394,7 +394,10 @@ OBJECT_PTR flatten(OBJECT_PTR);
 void throw_exception1(char *, char *);
 OBJECT_PTR handle_exception();
 OBJECT_PTR add_exception_handler(OBJECT_PTR);
-unsigned int wrap_float(OBJECT_PTR);
+
+//unsigned int wrap_float(OBJECT_PTR);
+long long wrap_float(OBJECT_PTR);
+
 OBJECT_PTR convert_float_to_object1(float);
 OBJECT_PTR convert_int_to_object_for_full_monty(int);
 OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int);
@@ -2927,7 +2930,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       if(IS_INTEGER_OBJECT(var))
         sprintf(s, "convert_int_to_object(%d)", get_int_value(var));
       else if(IS_FLOAT_OBJECT(var))
-        sprintf(s, "convert_float_to_object(%d)", wrap_float(var));
+        sprintf(s, "convert_float_to_object(%lld)", wrap_float(var));
       else
         sprintf(s, "%d", var);
 
@@ -5471,11 +5474,14 @@ OBJECT_PTR add_exception_handler(OBJECT_PTR handler)
 
 union float_wrap
 {
-  unsigned int i;
-  float f;
+  //unsigned int i;
+  //float f;
+  long long i;
+  double f;
 } ;
 
-unsigned int wrap_float(OBJECT_PTR float_obj)
+//unsigned int wrap_float(OBJECT_PTR float_obj)
+long long wrap_float(OBJECT_PTR float_obj)
 {
   union float_wrap fw;
   fw.f = get_float_value(float_obj);
