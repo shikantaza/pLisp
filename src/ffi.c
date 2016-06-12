@@ -72,7 +72,7 @@ extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 extern OBJECT_PTR idclo;
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
@@ -332,7 +332,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
 
-      *((unsigned int *)ptr) = sz;
+      *((uintptr_t *)ptr) = sz;
 
       int j;
       for(j=0; j< sz; j++)
@@ -374,9 +374,9 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       uintptr_t ptr = sym & POINTER_MASK;
 
-      int orig_len = *((unsigned int *)ptr);
+      int orig_len = *((uintptr_t *)ptr);
 
-      if(sz > *((unsigned int *)ptr))
+      if(sz > *((uintptr_t *)ptr))
       {
         throw_exception1("EXCEPTION", "Attempting to write beyond the size of the string");
         free_arg_values(arg_types, arg_values, args, nof_args);
@@ -385,7 +385,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;
       }
 
-      *((unsigned int *)ptr) = sz;
+      *((uintptr_t *)ptr) = sz;
 
       int j;
       for(j=0; j< sz; j++)
@@ -433,7 +433,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     //heap[ptr] = convert_int_to_object(sz);
     //set_heap(ptr, 0, convert_int_to_object(sz));
     //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-    *((unsigned int *)ptr) = sz;
+    *((uintptr_t *)ptr) = sz;
 
     for(i=0; i< sz; i++)
       //heap[ptr + i + 1] = (str[i] << OBJECT_SHIFT) + CHAR_TAG;
@@ -771,7 +771,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   i=0;
 
   arg_types[i] = &ffi_type_uint;
-  arg_values[i] = (unsigned int *)malloc(sizeof(unsigned int));
+  arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
 
   //the first parameter to the native function is
   //the closure (macro object) itself
@@ -784,7 +784,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   while(rest_args != NIL)
   {
     arg_types[i] = &ffi_type_uint;
-    arg_values[i] = (unsigned int *)malloc(sizeof(unsigned int));
+    arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
     *(int *)arg_values[i] = car(rest_args);
 
     i++;
@@ -792,7 +792,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   }
 
   arg_types[i] = &ffi_type_uint;
-  arg_values[i] = (unsigned int *)malloc(sizeof(unsigned int));
+  arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
   *(int *)arg_values[i] = idclo;
   
   ffi_cif cif;

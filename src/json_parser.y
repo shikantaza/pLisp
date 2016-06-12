@@ -34,7 +34,7 @@ extern struct JSONObject *root_obj;
   char                    *string_value;
   int                     integer_value;
   struct JSONObject       *object_value;
-  float                   float_value;
+  double                  float_value;
   struct name_value_pairs *pairs;
   struct JSONObject       *array;
   struct JSONArray        *values;

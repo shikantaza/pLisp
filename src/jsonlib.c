@@ -43,7 +43,7 @@ struct JSONObject *JSON_create_int_object(int ival)
   return obj;
 }
 
-struct JSONObject *JSON_create_float_object(float fval)
+struct JSONObject *JSON_create_float_object(double fval)
 {
   struct JSONObject *obj = (struct JSONObject *)malloc(sizeof(struct JSONObject));
   obj->type = JSON_FLOAT;
@@ -92,7 +92,7 @@ void JSON_print_object(struct JSONObject *obj)
       printf("Type: INTEGER; value: %d\n", obj->ivalue);
       break;
     case JSON_FLOAT:
-      printf("Type: FLOAT; value: %f\n", obj->fvalue);
+      printf("Type: FLOAT; value: %lf\n", obj->fvalue);
       break;
     case JSON_STRING:
       printf("Type: STRING; value: %s\n", obj->strvalue);

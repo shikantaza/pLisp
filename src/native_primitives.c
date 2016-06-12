@@ -56,7 +56,7 @@ extern char **strings;
 
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 extern int nof_dl_handles;
 
@@ -782,7 +782,7 @@ OBJECT_PTR primitive_symbol(OBJECT_PTR str)
 
     uintptr_t ptr = str & POINTER_MASK;
 
-    int len = *((unsigned int *)ptr);
+    int len = *((uintptr_t *)ptr);
 
     int i;
 
@@ -1107,7 +1107,7 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
     return NIL;
   }        
 
-  array_len = *((unsigned int *)ptr);
+  array_len = *((uintptr_t *)ptr);
 
   index = get_int_value(idx);
 
@@ -1162,7 +1162,7 @@ OBJECT_PTR prim_array_get(OBJECT_PTR array_obj, OBJECT_PTR idx)
       return NIL;
     }        
 
-    array_len = *((unsigned int *)ptr);
+    array_len = *((uintptr_t *)ptr);
 
     if(index < 0 || (index >= array_len))
     {
@@ -1208,7 +1208,7 @@ OBJECT_PTR prim_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR array_l
     return NIL;
   }
 
-  len = *((unsigned int *)(array & POINTER_MASK));
+  len = *((OBJECT_PTR *)(array & POINTER_MASK));
 
   if((get_int_value(start) + get_int_value(array_length)) > len)
   {
@@ -1234,7 +1234,7 @@ OBJECT_PTR prim_array_length(OBJECT_PTR array)
       return NIL;
     }
 
-    return convert_int_to_object(*((unsigned int *)(array & POINTER_MASK)));
+    return convert_int_to_object(*((OBJECT_PTR *)(array & POINTER_MASK)));
   }
 }
 

@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #define SYMBOL_STRING_SIZE 100
 
@@ -88,7 +89,7 @@
 #define DEFAULT_PROFILER_WINDOW_WIDTH 600
 #define DEFAULT_PROFILER_WINDOW_HEIGHT 400
 
-typedef unsigned int OBJECT_PTR;
+typedef uintptr_t OBJECT_PTR;
 
 #ifndef WIN32
 typedef int BOOLEAN;

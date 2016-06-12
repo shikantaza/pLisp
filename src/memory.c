@@ -107,7 +107,7 @@ unsigned int memory_deallocated() { return words_deallocated; }
 //an AND operation with POINTER_MASK will get
 //the pointer created by posix_memalign.
 //const unsigned int POINTER_MASK = 4294967280;
-unsigned int POINTER_MASK;
+uintptr_t POINTER_MASK;
 
 BOOLEAN can_do_gc;
 
@@ -123,7 +123,7 @@ void free_white_set_objects()
     assert(is_valid_object(obj));
 #else
     rb_red_blk_node *white_obj = white->root->left;
-    OBJECT_PTR obj = *((unsigned int *)(white_obj->key));
+    OBJECT_PTR obj = *((OBJECT_PTR *)(white_obj->key));
 #endif
 
     if(!value_exists(BLACK, obj))
@@ -155,7 +155,7 @@ OBJECT_PTR get_an_object_from_grey()
 #else
   //we can pick any  object,
   //picking the root for convenience
-  OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)grey->root->left->key;
+  OBJECT_PTR obj = (OBJECT_PTR)*(OBJECT_PTR *)grey->root->left->key;
 #endif
   return obj;
 }
@@ -168,7 +168,7 @@ OBJECT_PTR get_an_object_from_black()
 #else
   //we can pick any object,
   //picking the root for convenience
-  OBJECT_PTR obj = (OBJECT_PTR)*(unsigned int *)black->root->left->key;
+  OBJECT_PTR obj = (OBJECT_PTR)*(OBJECT_PTR *)black->root->left->key;
 #endif
   return obj;
 }
@@ -252,7 +252,7 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
       //move_from_white_to_grey(length_obj);
 
       //int len = get_int_value(length_obj);
-      int len = *((unsigned int *)ptr);
+      int len = *((OBJECT_PTR *)ptr);
 
       int i;
 
@@ -566,7 +566,7 @@ void set_heap(uintptr_t ptr, unsigned int index, OBJECT_PTR val)
   if(!is_valid_object(val))
     assert(false);
 
-  unsigned int *ptr1 = (unsigned int *)ptr;
+  uintptr_t *ptr1 = (uintptr_t *)ptr;
 
   *(ptr1 + index) = val;
 }
@@ -585,13 +585,13 @@ OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
 
   //return ret;
 
-  return (OBJECT_PTR)*((unsigned int *)ptr + index);
+  return (OBJECT_PTR)*((OBJECT_PTR *)ptr + index);
 
 }
 
 uintptr_t object_alloc(int size, int tag)
 {
-  unsigned int *ret;
+  uintptr_t *ret;
 
 #ifdef WIN32
 
@@ -622,7 +622,7 @@ uintptr_t object_alloc(int size, int tag)
   if(tag == FLOAT_TAG)
     err = posix_memalign((void **)&ret, 16, sizeof(double));
   else
-    err = posix_memalign((void **)&ret, 16, size * sizeof(unsigned int));
+    err = posix_memalign((void **)&ret, 16, size * sizeof(OBJECT_PTR));
 
   if(err)
   {
@@ -675,7 +675,7 @@ void dealloc(OBJECT_PTR ptr)
       words_deallocated += 2;
       break;
     case ARRAY_TAG:
-      array_size = *((unsigned int *)(ptr & POINTER_MASK));
+      array_size = *((OBJECT_PTR *)(ptr & POINTER_MASK));
       words_deallocated += (array_size + 1);
       break;
     case CLOSURE_TAG:
@@ -709,7 +709,7 @@ void dealloc(OBJECT_PTR ptr)
   uintptr_t p = ptr & POINTER_MASK;
   int i;
   for(i=0; i < words_deallocated - prev_words_deallocated; i++)
-    *((unsigned int *)p+i) = 0xFEEEFEEE;
+    *((OBJECT_PTR *)p+i) = 0xFEEEFEEE;
 
 #ifdef WIN32
   __mingw_aligned_free((void *)(ptr & POINTER_MASK));
@@ -737,7 +737,7 @@ int initialize_memory()
   words_allocated = 0;
   words_deallocated = 0;
 
-  POINTER_MASK = ((unsigned int)(pow(2, 8 * sizeof(uintptr_t))) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  POINTER_MASK = ((uintptr_t)(pow(2, 8 * sizeof(uintptr_t))) >> OBJECT_SHIFT) << OBJECT_SHIFT;
 
   can_do_gc = true;
 

@@ -202,7 +202,7 @@ extern OBJECT_PTR SAVE_CONTINUATION_TO_RESUME;
 
 extern OBJECT_PTR ABORT;
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 extern expression_t *g_expr;
 
@@ -400,7 +400,7 @@ long long wrap_float(OBJECT_PTR);
 
 OBJECT_PTR convert_float_to_object1(float);
 OBJECT_PTR convert_int_to_object_for_full_monty(int);
-OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int);
+OBJECT_PTR convert_float_to_object_for_full_monty(long long);
 
 char *generate_lst_construct(OBJECT_PTR);
 
@@ -482,12 +482,12 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
     //within the compiler, where package names don't matter
     if(IS_SYMBOL_OBJECT(obj) && IS_SYMBOL_OBJECT(car(rest)) && !strcmp(get_symbol_name(obj), get_symbol_name(car(rest))))
       return true;
-    else if(obj == *((unsigned int *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
+    else if(obj == *((OBJECT_PTR *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
       return true;
 
     //rest = cdr(rest);
     //rest = *((unsigned int *)(rest & POINTER_MASK) + 1);
-    rest = *((unsigned int *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT  ) + 1);
+    rest = *((OBJECT_PTR *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT  ) + 1);
   }
 
   return false;
@@ -2952,7 +2952,11 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   unsigned int len = 0;
 
+#if __x86_64__
+  len += sprintf(buf+len, "unsigned long long %s(", fname);
+#else
   len += sprintf(buf+len, "unsigned int %s(", fname);
+#endif
 
   OBJECT_PTR params = second(second(lambda_form));
 
@@ -2967,7 +2971,11 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
     if(!first_time)
       len += sprintf(buf+len, ", ");
 
+#if __x86_64__
+    len += sprintf(buf+len, "unsigned long long %s", pname);
+#else
     len += sprintf(buf+len, "unsigned int %s", pname);
+#endif
 
     rest = cdr(rest);
     first_time = false;
@@ -3024,7 +3032,12 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
   free(closure_name);
 
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
+
+#if __x86_64__
+  len += sprintf(buf+len, "unsigned long long nil = 17;\n");
+#else
   len += sprintf(buf+len, "unsigned int nil = 17;\n");
+#endif
 
   OBJECT_PTR body = CDDR(second(lambda_form));
 
@@ -3081,13 +3094,21 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
 
       if(IS_CONS_OBJECT(second(car(rest))) && first(second(car(rest))) == EXTRACT_NATIVE_FN)
       {
+#if __x86_64__
+        len += sprintf(buf+len, "typedef unsigned long long (*nativefn)(unsigned long long, ...);\n");
+#else
         len += sprintf(buf+len, "typedef unsigned int (*nativefn)(unsigned int, ...);\n");
+#endif
         len += sprintf(buf+len, "nativefn %s = (nativefn)", var);
         len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
       else
       {
+#if __x86_64__
+        len += sprintf(buf+len, "unsigned long long %s = (unsigned long long)", var);
+#else
         len += sprintf(buf+len, "unsigned int %s = (unsigned int)", var);
+#endif
         len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
 
@@ -5361,8 +5382,11 @@ void add_native_fn_source(nativefn fn, char *source)
 char *get_native_fn_source(nativefn fn)
 {
   if(fn == (nativefn)identity_function)
+#if __x86_64__
+    return "unsigned long long identity_function(unsigned long long closure, unsigned long long x) {  return x; }";
+#else
     return "unsigned int identity_function(unsigned int closure, unsigned int x) {  return x; }";
-
+#endif
   int i;
   for(i=0; i<nof_native_fns; i++)
   {
@@ -5488,7 +5512,7 @@ long long wrap_float(OBJECT_PTR float_obj)
   return fw.i;
 }
 
-OBJECT_PTR convert_float_to_object_for_full_monty(unsigned int i)
+OBJECT_PTR convert_float_to_object_for_full_monty(long long i)
 {
   union float_wrap fw;
   fw.i = i;

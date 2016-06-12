@@ -289,7 +289,7 @@ extern OBJECT_PTR debug_execution_stack;
 extern OBJECT_PTR debug_continuation;
 extern OBJECT_PTR debug_env;
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 extern OBJECT_PTR idclo;
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
@@ -913,7 +913,7 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
        assert(false);
      }
      //return get_heap(cons_obj & POINTER_MASK, 0);
-    return (OBJECT_PTR)*((unsigned int *)(cons_obj & POINTER_MASK));
+    return (OBJECT_PTR)*((OBJECT_PTR *)(cons_obj & POINTER_MASK));
   }
 }
 
@@ -926,7 +926,7 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
     /* if(!IS_CONS_OBJECT(cons_obj)) */
     /*    assert(false); */
     //return get_heap(cons_obj & POINTER_MASK, 1);
-    return (OBJECT_PTR)*((unsigned int *)(cons_obj & POINTER_MASK)+1);
+    return (OBJECT_PTR)*((OBJECT_PTR *)(cons_obj & POINTER_MASK)+1);
   }
 }
 
@@ -1730,9 +1730,9 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       uintptr_t ptr = obj & POINTER_MASK;
 
       //int len = get_int_value(get_heap(ptr, 0));
-      unsigned int len = *((unsigned int *)ptr);
+      unsigned int len = *((OBJECT_PTR *)ptr);
 
-      unsigned int *raw_ptr;
+      uintptr_t *raw_ptr;
 
       uintptr_t new_obj;
 
@@ -1753,7 +1753,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
       
       //set_heap(new_obj, 0, get_heap(ptr, 0));
       //set_heap(new_obj, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-      *((unsigned int *)new_obj) = len;
+      *((OBJECT_PTR *)new_obj) = len;
 
       for(i=1; i<=len; i++)
 	set_heap(new_obj, i, clone_object(get_heap(ptr, i)));
@@ -2111,7 +2111,7 @@ OBJECT_PTR last_cell(OBJECT_PTR lst)
   {
     //rest = cdr(rest);
     //rest = (OBJECT_PTR)*((unsigned int *)(rest & POINTER_MASK)+1);
-    rest = (OBJECT_PTR)*((unsigned int *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT )+1);
+    rest = (OBJECT_PTR)*((OBJECT_PTR *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT )+1);
   }
   
   return rest;
@@ -2593,7 +2593,7 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
   uintptr_t ptr = array & POINTER_MASK;
 
   //int length = get_int_value(get_heap(ptr, 0));
-  int length = *((unsigned int *)ptr);
+  int length = *((OBJECT_PTR *)ptr);
 
   int i;
 
@@ -2627,7 +2627,7 @@ void print_array_object(OBJECT_PTR array)
     print_to_transcript("[");
 
     //length = get_int_value(get_heap(ptr, 0));
-    length = *((unsigned int *)ptr);
+    length = *((OBJECT_PTR *)ptr);
 
     for(i=0; i< length; i++)
     {
@@ -2645,7 +2645,7 @@ void print_array_object(OBJECT_PTR array)
     fprintf(stdout, "[");
 
     //length = get_int_value(get_heap(ptr, 0));
-    length = *((unsigned int *)ptr);
+    length = *((OBJECT_PTR *)ptr);
 
     for(i=0; i< length; i++)
     {
@@ -2667,7 +2667,7 @@ int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_l
   uintptr_t ptr = string_object & POINTER_MASK;
 
   //int len = get_int_value(get_heap(ptr, 0));
-  int len = *((unsigned int *)ptr);
+  int len = *((OBJECT_PTR *)ptr);
 
   int i;
 
@@ -2688,7 +2688,7 @@ void print_string(OBJECT_PTR string_object)
   uintptr_t ptr = string_object & POINTER_MASK;
 
   //int len = get_int_value(get_heap(ptr, 0));
-  int len = *((unsigned int *)ptr);
+  int len = *((OBJECT_PTR *)ptr);
 
   int i;
 
@@ -2734,7 +2734,7 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
   ptr = obj & POINTER_MASK;
 
   //len = get_int_value(get_heap(ptr, 0));
-  len = *((unsigned int *)ptr);
+  len = *((OBJECT_PTR *)ptr);
 
   for(i=1; i<=len; i++)
   {
@@ -2757,7 +2757,7 @@ char *get_string(OBJECT_PTR string_object)
   ptr = string_object & POINTER_MASK;
 
   //len = get_int_value(get_heap(ptr, 0));
-  len = *((unsigned int *)ptr);
+  len = *((OBJECT_PTR *)ptr);
 
   ret = (char *)malloc(len * sizeof(char) + 1);
 

@@ -46,7 +46,7 @@ extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
   char                   *atom_value;
   int                    integer_value;
   expression_t           *expr_value;
-  float                  float_value;
+  double                 float_value;
 }
 
 %start	expression

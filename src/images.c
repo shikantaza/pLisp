@@ -80,7 +80,7 @@ extern HMODULE *dl_handles;
 extern void **dl_handles;
 #endif
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 extern GtkWindow *workspace_window;
 extern GtkTextBuffer *workspace_buffer;
@@ -143,13 +143,13 @@ extern OBJECT_PTR continuation_to_resume;
 extern BOOLEAN serialize_gui_elements;
 
 //forward declarations
-BOOLEAN is_dynamic_reference(unsigned int);
-void add_to_deserialization_queue(struct JSONObject *, queue_t *, unsigned int, uintptr_t, unsigned int);
-OBJECT_PTR deserialize_internal(struct JSONObject *, unsigned int, hashtable_t *, queue_t *, BOOLEAN);
+BOOLEAN is_dynamic_reference(OBJECT_PTR);
+void add_to_deserialization_queue(struct JSONObject *, queue_t *, OBJECT_PTR, uintptr_t, unsigned int);
+OBJECT_PTR deserialize_internal(struct JSONObject *, OBJECT_PTR, hashtable_t *, queue_t *, BOOLEAN);
 void convert_heap(struct JSONObject *, hashtable_t *, queue_t *, BOOLEAN);
 void recompile_functions_and_macros();
 void json_add_native_fn_source(OBJECT_PTR, char *);
-char *get_json_native_fn_source(unsigned int);
+char *get_json_native_fn_source(OBJECT_PTR);
 void recreate_native_fn_objects();
 //end of forward declarations
 
@@ -158,7 +158,7 @@ extern void deserialize_file_browser_window(struct JSONObject *);
 
 struct slot
 {
-  unsigned int ref;
+  OBJECT_PTR ref;
   OBJECT_PTR ptr;
   unsigned int index;
 };
@@ -214,7 +214,7 @@ void print_json_object(FILE *fp,
       add_obj_to_print_list(print_queue, obj, printed_objects);
     }
     else
-      fprintf(fp, "%d", (unsigned int)obj);
+      fprintf(fp, "%d", obj);
   }
 }
 
@@ -262,7 +262,7 @@ void print_heap_representation(FILE *fp,
   {
     fprintf(fp, "[ ");
 
-    int len = *((unsigned int *)(obj & POINTER_MASK));
+    int len = *((OBJECT_PTR *)(obj & POINTER_MASK));
 
     int i;
 
@@ -315,7 +315,7 @@ void print_heap_representation(FILE *fp,
   else if(IS_INTEGER_OBJECT(obj))
     fprintf(fp, "%d", get_int_value(obj));
   else if(IS_FLOAT_OBJECT(obj))
-    fprintf(fp, "%f", get_float_value(obj));
+    fprintf(fp, "%lf", get_float_value(obj));
   else
     if(!single_object)assert(false);
 
@@ -1627,7 +1627,7 @@ int load_from_image(char *file_name)
 /*   cJSON_Delete(root); */
 /* } */
 
-BOOLEAN is_dynamic_reference(unsigned int ref)
+BOOLEAN is_dynamic_reference(OBJECT_PTR ref)
 {
   unsigned int type = ref & BIT_MASK;
 
@@ -1643,7 +1643,7 @@ BOOLEAN is_dynamic_reference(unsigned int ref)
          type == MACRO2_TAG;
 }
 
-void add_to_deserialization_queue(struct JSONObject *heap, queue_t *q, unsigned int ref, uintptr_t ptr, unsigned int index)
+void add_to_deserialization_queue(struct JSONObject *heap, queue_t *q, OBJECT_PTR ref, uintptr_t ptr, unsigned int index)
 {
   struct slot *s = (struct slot *)malloc(sizeof(struct slot));
   s->ref = ref;
@@ -1652,7 +1652,7 @@ void add_to_deserialization_queue(struct JSONObject *heap, queue_t *q, unsigned 
   queue_enqueue(q, s);
 }
 
-OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hashtable_t *ht, queue_t *q, BOOLEAN single_object)
+OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtable_t *ht, queue_t *q, BOOLEAN single_object)
 {
   unsigned int object_type = ref & BIT_MASK;
 
@@ -1715,8 +1715,8 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
   {
     ptr = object_alloc(2, CONS_TAG);
 
-    unsigned int car_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
-    unsigned int cdr_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
+    OBJECT_PTR car_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
+    OBJECT_PTR cdr_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
 
     if(is_dynamic_reference(car_ref))
     {
@@ -1748,11 +1748,11 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
 
     ptr = object_alloc(len + 1, ARRAY_TAG);
 
-    (*(unsigned int *)ptr) = len;
+    (*(OBJECT_PTR *)ptr) = len;
 
     for(i=0; i<len; i++)
     {
-      unsigned int elem_ref = JSON_get_array_item(heap_obj, i)->ivalue;
+      OBJECT_PTR elem_ref = JSON_get_array_item(heap_obj, i)->ivalue;
       if(is_dynamic_reference(elem_ref))
       {
         hashtable_entry_t *e = hashtable_get(ht, (void *)elem_ref);
@@ -1769,7 +1769,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
   {
     ptr = object_alloc(4, object_type);
 
-    unsigned int env_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
+    OBJECT_PTR env_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
     if(is_dynamic_reference(env_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)env_ref);
@@ -1781,7 +1781,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     else
       if(single_object) add_to_deserialization_queue(heap, q, env_ref, ptr, 0); else set_heap(ptr, 0, env_ref);
 
-    unsigned int params_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
+    OBJECT_PTR params_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
     if(is_dynamic_reference(params_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)params_ref);
@@ -1793,7 +1793,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     else
       if(single_object) add_to_deserialization_queue(heap, q, params_ref, ptr, 1); else set_heap(ptr, 1, params_ref);
 
-    unsigned int body_ref = JSON_get_array_item(heap_obj, 2)->ivalue;
+    OBJECT_PTR body_ref = JSON_get_array_item(heap_obj, 2)->ivalue;
     if(is_dynamic_reference(body_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)body_ref);
@@ -1805,7 +1805,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
     else
       if(single_object) add_to_deserialization_queue(heap, q, body_ref, ptr, 2); else set_heap(ptr, 2, body_ref);
 
-    unsigned int source_ref = JSON_get_array_item(heap_obj, 3)->ivalue;
+    OBJECT_PTR source_ref = JSON_get_array_item(heap_obj, 3)->ivalue;
     if(is_dynamic_reference(source_ref))
     {
       hashtable_entry_t *e = hashtable_get(ht, (void *)source_ref);
@@ -1821,7 +1821,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
   {
     ptr = object_alloc(1, CONTINUATION_TAG);
 
-    unsigned int stack_ref = heap_obj->ivalue;
+    OBJECT_PTR stack_ref = heap_obj->ivalue;
 
     if(is_dynamic_reference(stack_ref))
     {
@@ -1839,8 +1839,8 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
   {
     ptr = object_alloc(2, CONS_TAG);
 
-    unsigned int car_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
-    unsigned int cdr_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
+    OBJECT_PTR car_ref = JSON_get_array_item(heap_obj, 0)->ivalue;
+    OBJECT_PTR cdr_ref = JSON_get_array_item(heap_obj, 1)->ivalue;
 
     if(is_dynamic_reference(car_ref))
     {
@@ -1868,12 +1868,12 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, unsigned int ref, hasht
   else if(object_type == INTEGER_TAG)
   {
     ptr = object_alloc(1, INTEGER_TAG);
-    (*(unsigned int *)ptr) = heap_obj->ivalue;
+    (*(OBJECT_PTR *)ptr) = heap_obj->ivalue;
   }
   else if(object_type == FLOAT_TAG)
   {
     ptr = object_alloc(1, FLOAT_TAG);
-    (*(float *)ptr) = heap_obj->fvalue;
+    (*(double *)ptr) = heap_obj->fvalue;
   }
 #ifndef INTERPRETER_MODE
   else if(object_type == NATIVE_FN_TAG)
@@ -1904,7 +1904,7 @@ void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q, BOOLEAN 
     queue_item_t *queue_item = queue_dequeue(q);
     struct slot *slot_obj = (struct slot *)(queue_item->data);
 
-    unsigned int ref = slot_obj->ref;
+    OBJECT_PTR ref = slot_obj->ref;
 
     hashtable_entry_t *e = hashtable_get(ht, (void *)ref);
 
