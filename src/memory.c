@@ -380,19 +380,19 @@ void build_grey_set()
 
 void IntDest(void* a)
 {
-  free((unsigned int*)a);
+  free((OBJECT_PTR*)a);
 }
 
 int IntComp(const void* a,const void* b)
 {
-  if( *(unsigned int*)a > *(unsigned int*)b) return(1);
-  if( *(unsigned int*)a < *(unsigned int*)b) return(-1);
+  if( *(OBJECT_PTR *)a > *(OBJECT_PTR *)b) return(1);
+  if( *(OBJECT_PTR *)a < *(OBJECT_PTR *)b) return(-1);
   return(0);
 }
 
 void IntPrint(const void* a)
 {
-  printf("%i",*(unsigned int*)a);
+  printf("%i",*(OBJECT_PTR *)a);
 }
 
 void InfoPrint(void* a)
@@ -442,8 +442,8 @@ void insert_node(unsigned int set_type, OBJECT_PTR val)
   else
     assert(false);
 
-  unsigned int *newInt=(unsigned int*) malloc(sizeof(unsigned int));
-  *newInt = (unsigned int)val;
+  OBJECT_PTR *newInt=(OBJECT_PTR *) malloc(sizeof(OBJECT_PTR));
+  *newInt = (OBJECT_PTR)val;
 
   RBTreeInsert(tree, newInt, 0);
 
@@ -598,7 +598,7 @@ uintptr_t object_alloc(int size, int tag)
   if(tag == FLOAT_TAG)
     ret = __mingw_aligned_malloc(sizeof(double), 16);
   else
-    ret = __mingw_aligned_malloc(size * sizeof(unsigned int), 16);
+    ret = __mingw_aligned_malloc(size * sizeof(OBJECT_PTR), 16);
 
   if(!ret)
   {
@@ -667,7 +667,7 @@ void dealloc(OBJECT_PTR ptr)
 
   unsigned int tag = ptr & BIT_MASK;
 
-  unsigned int array_size;
+  OBJECT_PTR array_size;
 
   switch(tag)
   {

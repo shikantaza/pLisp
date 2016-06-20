@@ -316,6 +316,7 @@ extern void insert_node(unsigned int, OBJECT_PTR);
 extern gc(BOOLEAN, BOOLEAN);
 extern BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 
+extern double get_float_value(OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -396,11 +397,11 @@ OBJECT_PTR handle_exception();
 OBJECT_PTR add_exception_handler(OBJECT_PTR);
 
 //unsigned int wrap_float(OBJECT_PTR);
-long long wrap_float(OBJECT_PTR);
+unsigned long long wrap_float(OBJECT_PTR);
 
-OBJECT_PTR convert_float_to_object1(float);
+OBJECT_PTR convert_float_to_object1(double);
 OBJECT_PTR convert_int_to_object_for_full_monty(int);
-OBJECT_PTR convert_float_to_object_for_full_monty(long long);
+OBJECT_PTR conv_float_to_obj_for_fm(unsigned long long);
 
 char *generate_lst_construct(OBJECT_PTR);
 
@@ -2930,9 +2931,13 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       if(IS_INTEGER_OBJECT(var))
         sprintf(s, "convert_int_to_object(%d)", get_int_value(var));
       else if(IS_FLOAT_OBJECT(var))
-        sprintf(s, "convert_float_to_object(%lld)", wrap_float(var));
+        sprintf(s, "conv_float_to_obj_for_fm(%lld)", wrap_float(var));
       else
+#if __x86_64__
+        sprintf(s, "%lld", var);
+#else
         sprintf(s, "%d", var);
+#endif
 
       return s;
     /* } */
@@ -2952,11 +2957,11 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   unsigned int len = 0;
 
-#if __x86_64__
-  len += sprintf(buf+len, "unsigned long long %s(", fname);
-#else
-  len += sprintf(buf+len, "unsigned int %s(", fname);
-#endif
+  len += sprintf(buf+len, "#include <stdint.h>\n");
+  len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "nativefn extract_native_fn(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t %s(", fname);
 
   OBJECT_PTR params = second(second(lambda_form));
 
@@ -2971,11 +2976,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
     if(!first_time)
       len += sprintf(buf+len, ", ");
 
-#if __x86_64__
-    len += sprintf(buf+len, "unsigned long long %s", pname);
-#else
-    len += sprintf(buf+len, "unsigned int %s", pname);
-#endif
+    len += sprintf(buf+len, "uintptr_t %s", pname);
 
     rest = cdr(rest);
     first_time = false;
@@ -2985,6 +2986,9 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   len += sprintf(buf+len, ")\n{\n");
 
+  //uncomment for debugging
+  //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
+
   //GC enhancement code begin
   rest = params;
 
@@ -2993,6 +2997,9 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
     char *pname = extract_variable_string(car(rest), serialize_flag);
 
     len += sprintf(buf+len, "if(is_dynamic_memory_object(%s))insert_node(1, %s);\n", pname, pname);
+
+    //uncomment for debugging
+    //len += sprintf(buf+len, "print_object(%s);printf(\"\\n\");\n", pname);
 
     rest = cdr(rest);
 
@@ -3033,11 +3040,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
 
-#if __x86_64__
-  len += sprintf(buf+len, "unsigned long long nil = 17;\n");
-#else
-  len += sprintf(buf+len, "unsigned int nil = 17;\n");
-#endif
+  len += sprintf(buf+len, "uintptr_t nil = 17;\n");
 
   OBJECT_PTR body = CDDR(second(lambda_form));
 
@@ -3057,6 +3060,9 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
   len += sprintf(buf+len, "\n}\n");
 
   free(fname);
+
+  //uncomment for debugging
+  //printf("%s\n", buf);
 
   return len;
 }
@@ -3094,21 +3100,13 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
 
       if(IS_CONS_OBJECT(second(car(rest))) && first(second(car(rest))) == EXTRACT_NATIVE_FN)
       {
-#if __x86_64__
-        len += sprintf(buf+len, "typedef unsigned long long (*nativefn)(unsigned long long, ...);\n");
-#else
-        len += sprintf(buf+len, "typedef unsigned int (*nativefn)(unsigned int, ...);\n");
-#endif
+        len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
         len += sprintf(buf+len, "nativefn %s = (nativefn)", var);
         len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
       else
       {
-#if __x86_64__
-        len += sprintf(buf+len, "unsigned long long %s = (unsigned long long)", var);
-#else
-        len += sprintf(buf+len, "unsigned int %s = (unsigned int)", var);
-#endif
+        len += sprintf(buf+len, "uintptr_t %s = (uintptr_t)", var);
         len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
 
@@ -3143,7 +3141,11 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       }
       else
       {
+#if __x86_64__
+	len += sprintf(buf+len, "%lld", second(exp));
+#else
         len += sprintf(buf+len, "%d", second(exp));
+#endif
       }
     }
     /* else if(car(exp) == IF) */
@@ -3167,6 +3169,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
         len += sprintf(buf+len, "return ");
 
       char *var = extract_variable_string(car(exp), serialize_flag);
+
       len += sprintf(buf+len, "%s(", var);
       free(var);
 
@@ -3392,7 +3395,7 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "primitive_eval",     full_monty_eval);
 
   tcc_add_symbol(tcc_state, "convert_int_to_object",   convert_int_to_object);
-  tcc_add_symbol(tcc_state, "convert_float_to_object", convert_float_to_object);
+  tcc_add_symbol(tcc_state, "conv_float_to_obj_for_fm", conv_float_to_obj_for_fm);
 
   tcc_add_symbol(tcc_state, "set_most_recent_closure",  set_most_recent_closure);
   tcc_add_symbol(tcc_state, "get_continuation",         get_continuation);
@@ -3409,6 +3412,9 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "insert_node",              insert_node);
   tcc_add_symbol(tcc_state, "gc",                       gc);
   tcc_add_symbol(tcc_state, "is_dynamic_memory_object", is_dynamic_memory_object);
+
+  //uncomment for debugging
+  //tcc_add_symbol(tcc_state, "print_object",             print_object);
 
   return tcc_state;
 }
@@ -3433,7 +3439,6 @@ nativefn get_nativefn_value(OBJECT_PTR obj)
     assert(false);
 
   return *((nativefn *)(obj & POINTER_MASK));
-  
 }
 
 OBJECT_PTR create_closure(unsigned int count, BOOLEAN function, OBJECT_PTR fnobj, ...)
@@ -3442,6 +3447,8 @@ OBJECT_PTR create_closure(unsigned int count, BOOLEAN function, OBJECT_PTR fnobj
   int i;
   OBJECT_PTR closed_object;
   OBJECT_PTR ret;
+
+  assert(IS_NATIVE_FN_OBJECT(fnobj));
 
   //since count can be zero,
   //disabling this
@@ -5382,11 +5389,7 @@ void add_native_fn_source(nativefn fn, char *source)
 char *get_native_fn_source(nativefn fn)
 {
   if(fn == (nativefn)identity_function)
-#if __x86_64__
-    return "unsigned long long identity_function(unsigned long long closure, unsigned long long x) {  return x; }";
-#else
-    return "unsigned int identity_function(unsigned int closure, unsigned int x) {  return x; }";
-#endif
+    return "uintptr_t identity_function(uintptr_t closure, uintptr_t x) {  return x; }";
   int i;
   for(i=0; i<nof_native_fns; i++)
   {
@@ -5500,19 +5503,19 @@ union float_wrap
 {
   //unsigned int i;
   //float f;
-  long long i;
+  unsigned long long i;
   double f;
 } ;
 
 //unsigned int wrap_float(OBJECT_PTR float_obj)
-long long wrap_float(OBJECT_PTR float_obj)
+unsigned long long wrap_float(OBJECT_PTR float_obj)
 {
   union float_wrap fw;
   fw.f = get_float_value(float_obj);
   return fw.i;
 }
 
-OBJECT_PTR convert_float_to_object_for_full_monty(long long i)
+OBJECT_PTR conv_float_to_obj_for_fm(unsigned long long i)
 {
   union float_wrap fw;
   fw.i = i;
@@ -5535,11 +5538,11 @@ OBJECT_PTR convert_int_to_object_for_full_monty(int v)
   return ptr + INTEGER_TAG;
 }
 
-OBJECT_PTR convert_float_to_object1(float v)
+OBJECT_PTR convert_float_to_object1(double v)
 {
   uintptr_t ptr = object_alloc(1, FLOAT_TAG);
 
-  *((float *)ptr) = v;
+  *((double *)ptr) = v;
 
   insert_node(GREY, ptr + FLOAT_TAG);
 
@@ -5587,7 +5590,11 @@ char *generate_lst_construct(OBJECT_PTR exp)
         free(name);
       }
       else
+#if __x86_64__
+	len += sprintf(buf+len, "%lld", obj);
+#else
         len += sprintf(buf+len, "%d", obj);
+#endif
     }
     else
     {

@@ -183,7 +183,7 @@ extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR TRUE;
 #endif
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 extern OBJECT_PTR first(OBJECT_PTR);
 extern OBJECT_PTR second(OBJECT_PTR);

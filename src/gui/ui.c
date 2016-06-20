@@ -25,6 +25,7 @@
 #include "../plisp.h"
 #include "../memory.h"
 #include "../hashtable.h"
+#include "../util.h"
 
 #define FONT "Monospace Bold 9"
 
@@ -1100,6 +1101,7 @@ void populate_frames_list(GtkTreeView *list)
 
     memset(buf, '\0', MAX_STRING_LENGTH);
     print_object_to_string(CADR(frame), buf, 0);
+
     gtk_list_store_set(store, &iter, 1, convert_to_upper_case(buf), -1);
 
     rest = cdr(rest);

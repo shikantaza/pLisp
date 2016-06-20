@@ -2085,12 +2085,18 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     //note: the last parameter value (11)
     //will have to be updated if we're
     //making the size of gensym symbols bigger
-    char *fname = substring(source, 13, 11);
+    //note2: since we're adding the preamable '#include <stdint.h>...'
+    //to all functions to make use of uintptr_t in the generated code,
+    //second parameter is set to 116 to skip all this preamble
+    char *fname = substring(source, 116, 11);
 
     //crude way to check if fn is the identity function,
     //but this works as all other native functions
     //will be named from gensym symbols
-    nativefn fn = !strcmp(fname, "identity_fu") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
+    //note2: fname will be null for identify_function (as the
+    //above substring() would have failed)
+    //nativefn fn = !strcmp(fname, "identity_fu") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
+    nativefn fn = !fname ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
     assert(fn);
 
     uintptr_t ptr = obj & POINTER_MASK;
@@ -2124,10 +2130,10 @@ void recreate_native_fn_objects()
   int i, len=0;
   char *buf;
 
-  buf = (char *)malloc(nof_json_native_fns * 1000);
+  buf = (char *)malloc(nof_json_native_fns * 2000);
   assert(buf);
 
-  memset(buf, nof_json_native_fns * 1000, '\0');
+  memset(buf, nof_json_native_fns * 2000, '\0');
 
   for(i=0; i<nof_json_native_fns; i++)
     len += sprintf(buf+len, "%s\n", json_native_fns[i].source);

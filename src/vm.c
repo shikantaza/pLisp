@@ -236,7 +236,7 @@ extern BOOLEAN system_changed;
 
 extern char *foreign_library_names[];
 
-extern unsigned int POINTER_MASK;
+extern uintptr_t POINTER_MASK;
 
 extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
@@ -765,7 +765,7 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   unsigned int len = strlen(str_val);
 
-  unsigned int *raw_ptr1;
+  uintptr_t *raw_ptr1;
 
   uintptr_t raw_ptr;
 
@@ -781,7 +781,7 @@ OBJECT_PTR eval_string(OBJECT_PTR literal)
 
   //set_heap(raw_ptr, 0, convert_int_to_object(len));
   //set_heap(raw_ptr, 0, (uintptr_t)raw_ptr1 + INTEGER_TAG);
-  *((unsigned int *)raw_ptr) = len;
+  *((uintptr_t *)raw_ptr) = len;
 
   for(ptr=str_val;*ptr;ptr++) 
   { 
@@ -796,7 +796,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
 {
   int sz = get_int_value(size);
 
-  unsigned int *raw_ptr;
+  uintptr_t *raw_ptr;
 
   uintptr_t ptr;
 
@@ -812,7 +812,7 @@ OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
 
   //set_heap(ptr, 0, size);
   //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-  *((unsigned int *)ptr) = sz;
+  *((uintptr_t *)ptr) = sz;
 
   for(i=0; i<sz; i++)
     set_heap(ptr, i + 1, clone_object(default_value));
@@ -826,7 +826,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   int st = get_int_value(start);
   int len = get_int_value(length);
 
-  unsigned int *raw_ptr;
+  uintptr_t *raw_ptr;
 
   uintptr_t orig_ptr, ptr;
 
@@ -842,7 +842,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
 
   //set_heap(ptr, 0, convert_int_to_object(len));
   //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
-  *((unsigned int *)ptr) = len;
+  *((uintptr_t *)ptr) = len;
 
   for(i=1; i<=len; i++)
     set_heap(ptr, i, get_heap(orig_ptr, st + i));

@@ -74,6 +74,8 @@ extern OBJECT_PTR idclo;
 
 extern uintptr_t POINTER_MASK;
 
+extern nativefn extract_native_fn(OBJECT_PTR);
+
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 
@@ -500,7 +502,7 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
 //but this is simpler and cleaner
 int format(OBJECT_PTR args)
 {
-  int nof_args = cons_length(args);
+  unsigned int nof_args = cons_length(args);
   int i;
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
@@ -524,7 +526,11 @@ int format(OBJECT_PTR args)
 
   i=0;
 
+#if __x86_64__
+  arg_types[i] = &ffi_type_ulong;
+#else
   arg_types[i] = &ffi_type_sint;
+#endif
   arg_values[i] = (int *)malloc(sizeof(int));
 
   if(car(args) == NIL)
@@ -750,7 +756,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   assert(IS_MACRO2_OBJECT(macro_or_fn_obj) || IS_FUNCTION2_OBJECT(macro_or_fn_obj));
   assert(args == NIL || IS_CONS_OBJECT(args));
 
-  int nof_args = cons_length(args) + 2; //since the closure (macro object) will be the first argument, and the id closure will be the last argument
+  unsigned int nof_args = cons_length(args) + 2; //since the closure (macro object) will be the first argument, and the id closure will be the last argument
   int i;
 
   ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
@@ -770,12 +776,16 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
   i=0;
 
+#if __x86_64__
+  arg_types[i] = &ffi_type_uint64;
+#else
   arg_types[i] = &ffi_type_uint;
+#endif
   arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
 
   //the first parameter to the native function is
   //the closure (macro object) itself
-  *(int *)arg_values[i] = macro_or_fn_obj;
+  *(OBJECT_PTR *)arg_values[i] = macro_or_fn_obj;
 
   i++;
 
@@ -783,22 +793,34 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
   while(rest_args != NIL)
   {
+#if __x86_64__
+    arg_types[i] = &ffi_type_uint64;
+#else
     arg_types[i] = &ffi_type_uint;
+#endif
     arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
-    *(int *)arg_values[i] = car(rest_args);
+    *(OBJECT_PTR *)arg_values[i] = car(rest_args);
 
     i++;
     rest_args = cdr(rest_args);
   }
 
+#if __x86_64__
+  arg_types[i] = &ffi_type_uint64;
+#else
   arg_types[i] = &ffi_type_uint;
+#endif
   arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
-  *(int *)arg_values[i] = idclo;
+  *(OBJECT_PTR *)arg_values[i] = idclo;
   
   ffi_cif cif;
   ffi_status status;
 
+#if __x86_64__
+  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_uint64, arg_types);
+#else
   status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_uint, arg_types);
+#endif
 
   if(status != FFI_OK)
   {
@@ -840,5 +862,5 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
   assert(is_valid_object((int)ret_val));
 
-  return (int)ret_val;
+  return (OBJECT_PTR)ret_val;
 }
