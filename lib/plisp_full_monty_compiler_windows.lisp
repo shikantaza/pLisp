@@ -15,6 +15,48 @@
 ;;  You should have received a copy of the GNU General Public License
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
+(define bq-append (lambda (x y)
+                    (if (eq x nil)
+                        y
+                      (cons (car x) (bq-append (cdr x) y)))))
+
+;(define build-list (lambda (lst acc)
+;                     (if (eq lst nil)
+;                         acc
+;                       (let ((x (car lst))
+;                             (ret))
+;                         (if (atom x)
+;                             (set ret (bq-append acc (list (list 'list (list 'quote x)))))
+;                           (if (eq (car x) 'comma)
+;                               (set ret (bq-append acc (list (list 'list (car (cdr x))))))
+;                             (if (eq (car x) 'comma-at)
+;                                 (set ret (bq-append acc (list (car (cdr x)))))
+;                               (set ret (bq-append acc (list (list 'list (bq1 x))))))))
+;                         (build-list (cdr lst) ret)))))
+
+;(define bq1 (lambda (exp)
+;              (if (not (listp exp))
+;                  (list 'quote exp)
+;                (if (eq (car exp) 'comma) 
+;                    (car (cdr exp))
+;                  (build-list exp (list 'concat))))))
+
+(define qq (lambda (x)
+             (if (consp x)
+                 (if (eq 'comma (car x))
+                     (car (cdr x))
+                   (if (eq 'backquote (car x))
+                       (list 'quote x)
+                     (if (consp (car x))
+                         (if (eq 'comma-at (car (car x)))
+                             (list 'bq-append (car (cdr (car x))) (qq (cdr x)))
+                           (list 'cons (qq (car x)) (qq (cdr x))))
+                       (list 'cons (qq (car x)) (qq (cdr x))))))
+               (list 'quote x))))
+
+(define backquote (macro (quoted-form)
+                         (qq quoted-form)))
+
 (define defun (macro (name vars &rest body)
                      `(define ,name (lambda ,vars ,@body))))
 
@@ -371,18 +413,44 @@
   (assert (and (>= n 1) (<= n (length lst))) "Second argument to BUTLAST should be a positive integer less than or equal to the length of the list")
   (sub-list lst 0 (- (length lst) n)))
 
-(defun mapcar (f &rest lists)
-  (if (eq (car lists) nil)
+;(defun mapcar (f &rest lists)
+;  (if (eq (car lists) nil)
+;      nil
+;    (cons (apply1 f (map (lambda (x) (car x)) lists))
+;          (apply1 mapcar (concat (list f) (map (lambda (x) (cdr x)) lists))))))
+
+(defun any-empty-list (lists)
+  (if (null lists)
       nil
-    (cons (apply1 f (map (lambda (x) (car x)) lists))
-          (apply1 mapcar (concat (list f) (map (lambda (x) (cdr x)) lists))))))
+    (or (null (car lists))
+        (any-empty-list (cdr lists)))))
+
+(defun mapcar-internal (f lsts acc)
+  (if (any-empty-list lsts)
+      (reverse acc)
+    (mapcar-internal f 
+                      (map (lambda (x) (cdr x)) lsts)
+                      (cons (apply f (map (lambda (x) (car x)) lsts)) acc))))
+
+(defun mapcar (f &rest lsts)
+  (mapcar-internal f lsts nil))
+
+;(defun flatten (lst)
+;  (apply append  (map (lambda (x)
+;                        (if (listp x)
+;                           x
+;                         (list x)))
+;                     lst)))
 
 (defun flatten (lst)
-  (apply append  (map (lambda (x)
-                        (if (listp x)
-                           x
-                         (list x)))
-                     lst)))
+  (if (null lst)
+      nil
+    (progn
+      (assert (consp lst) "Argument to FLATTEN must be a list")
+      (append (if (listp (car lst))
+                  (car lst)
+                (list (car lst)))
+              (flatten (cdr lst))))))
 
 (defmacro mapcan (f &rest lists)  
   `(flatten (mapcar ,f ,@lists))) 
