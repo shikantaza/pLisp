@@ -2957,7 +2957,12 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   unsigned int len = 0;
 
+//Tiny C Compiler has trouble finding stdint.h in windows
+#ifdef WIN32
+  len += sprintf(buf+len, "typedef unsigned int uintptr_t;\n");
+#else
   len += sprintf(buf+len, "#include <stdint.h>\n");
+#endif
   len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
   len += sprintf(buf+len, "nativefn extract_native_fn(uintptr_t);\n");
 

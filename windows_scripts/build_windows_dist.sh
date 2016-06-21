@@ -16,7 +16,7 @@ mkdir $dir/tests
 cp ../plisp.exe $dir/bin
 cp ../libplisp.dll $dir/bin
 cp ../libtest.dll $dir/bin
-cp ../plisp.image $dir/bin
+cp ../plisp_win.image $dir/bin/plisp.image
 
 cp ../doc/help.html $dir/doc
 cp ../doc/pLisp_User_Manual.pdf $dir/doc

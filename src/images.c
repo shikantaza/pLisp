@@ -2088,7 +2088,11 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     //note2: since we're adding the preamable '#include <stdint.h>...'
     //to all functions to make use of uintptr_t in the generated code,
     //second parameter is set to 116 to skip all this preamble
+#ifdef WIN32 //to account for the replacement of #include <stdint.h>' with 'typedef unsigned int uintptr_t;' in Windows
+    char *fname = substring(source, 128, 11);
+#else
     char *fname = substring(source, 116, 11);
+#endif
 
     //crude way to check if fn is the identity function,
     //but this works as all other native functions
