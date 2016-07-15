@@ -70,6 +70,12 @@ file_name_and_widget_t **fnws;
 GtkTextBuffer *curr_file_browser_buffer;
 GtkTextView *curr_file_browser_text_view;
 
+//for find functionality
+char search_string[MAX_STRING_LENGTH];
+GtkTextBuffer *find_buffer;
+GtkTextIter last_find_iter;
+//end for find functionality
+
 void cleanup_file_name_widgets()
 {
   int i;
@@ -157,6 +163,45 @@ void fb_select_file(GtkWidget *widget, gpointer data)
   curr_file_browser_text_view = fnw->view;
 }
 
+void find_next_occurrence()
+{
+  GtkTextIter start_match, end_match;
+  GtkTextBuffer *buffer = curr_file_browser_buffer;
+
+  if(find_buffer != curr_file_browser_buffer)
+    gtk_text_buffer_get_start_iter(buffer, &last_find_iter);
+
+  find_buffer = buffer;
+
+  if(gtk_text_iter_forward_search(&last_find_iter, search_string, 
+                                  GTK_TEXT_SEARCH_TEXT_ONLY | 
+                                  GTK_TEXT_SEARCH_VISIBLE_ONLY, 
+                                  &start_match, &end_match, NULL))
+  {
+    //remove all tags
+    ///
+    GtkTextIter start_find, end_find;
+    gtk_text_buffer_get_start_iter(buffer, &start_find);
+    gtk_text_buffer_get_end_iter(buffer, &end_find);
+      
+    gtk_text_buffer_remove_tag_by_name(buffer, "gray_bg", 
+                                       &start_find, &end_find); 
+    ///
+
+    gtk_text_view_scroll_to_iter(curr_file_browser_text_view, &start_match, 0, FALSE, 0, 0);
+
+    gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
+                                      &start_match, &end_match);
+    gint offset = gtk_text_iter_get_offset(&end_match);
+    gtk_text_buffer_get_iter_at_offset(buffer, 
+                                       &last_find_iter, offset);
+    gtk_widget_grab_focus(curr_file_browser_text_view);
+
+  }
+  else
+    show_error_dialog("No further matches found");  
+}
+
 gboolean fb_handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
   if(event->keyval == GDK_KEY_Tab)
@@ -165,6 +210,11 @@ gboolean fb_handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpoin
     indent(buffer);
     do_auto_complete(buffer);
     return TRUE;  
+  }
+  else if((event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_g)
+  {
+    find_next_occurrence();
+    return TRUE;
   }
 
   return FALSE;
@@ -177,6 +227,10 @@ void new_source_file()
   GtkWidget *scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
   GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
+
+  //for search functionality
+  gtk_text_buffer_create_tag(buffer, "gray_bg", 
+                             "background", "lightgray", NULL);
 
   g_signal_connect(G_OBJECT(buffer), 
                    "notify::cursor-position", 
@@ -249,6 +303,10 @@ void fb_load_source_file()
     GtkWidget *scrolled_win = gtk_scrolled_window_new (NULL, NULL);
     GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
     GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
+
+    //for search functionality
+    gtk_text_buffer_create_tag(buffer, "gray_bg", 
+                               "background", "lightgray", NULL);
 
     g_signal_connect(G_OBJECT(buffer), 
                      "notify::cursor-position", 
@@ -451,6 +509,110 @@ void fb_reload_source_file(GtkWidget *widget, gpointer data)
   reload_file();
 }
 
+int get_text_to_find(char *buf)
+{
+  GtkWidget *dialog;
+  GtkWidget *entry;
+  GtkWidget *content_area;
+
+  action_triggering_window = file_browser_window;
+
+  dialog = gtk_dialog_new_with_buttons("Find Text",
+                                       action_triggering_window,
+                                       GTK_DIALOG_DESTROY_WITH_PARENT, 
+                                       //GTK_STOCK_OK,
+                                       "Find",
+                                       GTK_RESPONSE_ACCEPT,
+                                       //GTK_STOCK_CANCEL,
+                                       "Cancel",
+                                       GTK_RESPONSE_REJECT,
+                                       NULL);
+
+  gtk_window_set_resizable((GtkWindow *)dialog, FALSE);
+
+  //gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
+
+  gtk_dialog_set_default_response(dialog, GTK_RESPONSE_ACCEPT);
+
+  content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  entry = gtk_entry_new();
+  gtk_entry_set_activates_default(entry, TRUE);
+  gtk_container_add(GTK_CONTAINER(content_area), entry);
+
+  gtk_widget_show_all(dialog);
+  gint result = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  if(result == GTK_RESPONSE_ACCEPT)
+    strcpy(buf, gtk_entry_get_text(GTK_ENTRY(entry)));
+
+  gtk_widget_destroy(dialog);
+  
+  return result;
+    
+}
+
+void find_text()
+{
+  if(curr_file_browser_buffer == NULL)
+  {
+    show_error_dialog("No file open\n");
+    return;
+  }
+
+  memset(search_string, '\0', MAX_STRING_LENGTH);
+
+ int result = GTK_RESPONSE_ACCEPT;
+
+  while(result == GTK_RESPONSE_ACCEPT && strlen(search_string) == 0)
+  {
+    result = get_text_to_find(search_string);
+    if(strlen(search_string) == 0 && result == GTK_RESPONSE_ACCEPT)
+      show_error_dialog("Please enter search string\n");
+  }
+
+  if(result == GTK_RESPONSE_ACCEPT)
+  {
+    GtkTextIter start_match, end_match;
+    GtkTextBuffer *buffer = curr_file_browser_buffer;
+
+    find_buffer = buffer;
+
+    gtk_text_buffer_get_start_iter(buffer, &last_find_iter);
+
+    if(gtk_text_iter_forward_search(&last_find_iter, search_string, 
+                                    GTK_TEXT_SEARCH_TEXT_ONLY | 
+                                    GTK_TEXT_SEARCH_VISIBLE_ONLY, 
+                                    &start_match, &end_match, NULL))
+    {
+      //remove all tags
+      ///
+      GtkTextIter start_find, end_find;
+      gtk_text_buffer_get_start_iter(buffer, &start_find);
+      gtk_text_buffer_get_end_iter(buffer, &end_find);
+      
+      gtk_text_buffer_remove_tag_by_name(buffer, "gray_bg", 
+                                         &start_find, &end_find); 
+      ///
+
+      gtk_text_view_scroll_to_iter(curr_file_browser_text_view, &start_match, 0, FALSE, 0, 0);
+
+      gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
+                                        &start_match, &end_match);
+      gint offset = gtk_text_iter_get_offset(&end_match);
+      gtk_text_buffer_get_iter_at_offset(buffer, 
+                                         &last_find_iter, offset);
+
+      gtk_widget_grab_focus(curr_file_browser_text_view);
+    }
+    else
+      show_error_dialog("No matches found");
+  }
+}
+
+void fb_find_text(GtkWidget *widget, gpointer data)
+{
+  find_text();
+}
 
 GtkToolbar *create_file_browser_toolbar()
 {
@@ -462,6 +624,7 @@ GtkToolbar *create_file_browser_toolbar()
   GtkWidget *save_icon    = gtk_image_new_from_file ("../share/icons/save_file.png");
   GtkWidget *close_icon   = gtk_image_new_from_file ("../share/icons/close_file.png");
   GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
+  GtkWidget *find_icon    = gtk_image_new_from_file ("../share/icons/find.png");
   GtkWidget *eval_icon    = gtk_image_new_from_file ("../share/icons/evaluate.png");
   GtkWidget *exit_icon    = gtk_image_new_from_file ("../share/icons/exit32x32.png");
 #else
@@ -470,6 +633,7 @@ GtkToolbar *create_file_browser_toolbar()
   GtkWidget *save_icon    = gtk_image_new_from_file (DATADIR "/icons/save_file.png");
   GtkWidget *close_icon   = gtk_image_new_from_file (DATADIR "/icons/close_file.png");
   GtkWidget *refresh_icon = gtk_image_new_from_file (DATADIR "/icons/refresh.png");
+  GtkWidget *find_icon    = gtk_image_new_from_file (DATADIR "/icons/find.png");
   GtkWidget *eval_icon    = gtk_image_new_from_file (DATADIR "/icons/evaluate.png");
   GtkWidget *exit_icon    = gtk_image_new_from_file (DATADIR "/icons/exit32x32.png");
 #endif
@@ -504,15 +668,20 @@ GtkToolbar *create_file_browser_toolbar()
   g_signal_connect (refresh_button, "clicked", G_CALLBACK (fb_reload_source_file), file_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, refresh_button, 4);
 
+  GtkToolItem *find_button = gtk_tool_button_new(find_icon, NULL);
+  gtk_tool_item_set_tooltip_text(find_button, "Find (Ctrl+F)");
+  g_signal_connect (find_button, "clicked", G_CALLBACK (fb_find_text), file_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, find_button, 5);
+
   GtkToolItem *eval_button = gtk_tool_button_new(eval_icon, NULL);
   gtk_tool_item_set_tooltip_text(eval_button, "Evaluate (Ctrl+Enter)");
   g_signal_connect (eval_button, "clicked", G_CALLBACK (eval_expression), file_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, eval_button, 5);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, eval_button, 6);
 
   GtkToolItem *exit_button = gtk_tool_button_new(exit_icon, NULL);
   gtk_tool_item_set_tooltip_text(exit_button, "Exit (Ctrl-Q)");
   g_signal_connect (exit_button, "clicked", G_CALLBACK (close_window), file_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, exit_button, 6);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, exit_button, 7);
 
   return (GtkToolbar *)toolbar;
 }

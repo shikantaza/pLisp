@@ -162,6 +162,8 @@ extern void highlight_text(GtkTextBuffer *, char *);
 
 extern BOOLEAN quit_file_browser();
 
+extern void find_text();
+
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -891,6 +893,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     close_file();
   else if(widget == (GtkWidget *)file_browser_window && event->keyval == GDK_KEY_F5)
     reload_file();
+  else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_f)
+    find_text();
   else if(widget == (GtkWidget *)file_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_q)
   {
     quit_file_browser();
