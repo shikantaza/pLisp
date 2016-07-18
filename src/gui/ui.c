@@ -250,7 +250,7 @@ GtkToolbar *create_workspace_toolbar()
   /*                          (GtkWidget *)workspace_window); */
 
   GtkToolItem *load_button = gtk_tool_button_new(load_icon, NULL);
-  gtk_tool_item_set_tooltip_text(load_button, "Load file (Ctrl-O)");
+  gtk_tool_item_set_tooltip_text(load_button, "Load file (Ctrl-L)");
   g_signal_connect (load_button, "clicked", G_CALLBACK (load_source_file), workspace_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, load_button, 0);
 
@@ -263,7 +263,7 @@ GtkToolbar *create_workspace_toolbar()
   /*                          (GtkWidget *)workspace_window); */
 
   GtkToolItem *fb_button = gtk_tool_button_new(fb_icon, NULL);
-  gtk_tool_item_set_tooltip_text(fb_button, "File Browser");
+  gtk_tool_item_set_tooltip_text(fb_button, "File Browser (Ctrl-B)");
   g_signal_connect (fb_button, "clicked", G_CALLBACK (show_file_browser_win), workspace_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, fb_button, 1);
 

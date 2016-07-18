@@ -903,6 +903,11 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_l)
     load_source();
   //else if(widget == (GtkWidget *)workspace_window && event->keyval == GDK_F5)
+  else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_b)
+  {
+    show_file_browser_window();
+    return TRUE;
+  }
   else if(widget == (GtkWidget *)workspace_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_Return)
   {
     if(event->state & GDK_CONTROL_MASK)
