@@ -2095,6 +2095,12 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
 
   res = handle_and_rest_applications_for_functions(res);
 
+  if(in_error)
+  {
+    handle_exception();
+    return NIL;
+  }
+
   res = expand_bodies(res);
 
   //res = process_backquote(res);
@@ -3700,6 +3706,15 @@ int remove_top_level_sym(OBJECT_PTR sym)
           //system_changed = true;
         }
       }
+
+      //mark &rest data as deleted
+      for(i=0; i<nof_and_rest_mappings; i++)
+      {
+        if(and_rest_mappings[i].sym == sym)
+          and_rest_mappings[i].delete_flag = true;
+      }
+      //end of mark &rest data
+
       return OK;
     }
   }
@@ -4237,6 +4252,16 @@ void record_and_rest_closure(OBJECT_PTR sym, int pos_of_and_rest)
   //assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
   assert(pos_of_and_rest >= 0);
 
+  //to handle redefinition of symbols
+  int i=0;
+
+  for(i=0; i< nof_and_rest_mappings; i++)
+  {
+    if(and_rest_mappings[i].sym == sym)
+      and_rest_mappings[i].delete_flag = true;
+  }
+  //end handling redefinition of symbols
+
   nof_and_rest_mappings++;
 
   and_rest_mapping_t *temp = (and_rest_mapping_t *)realloc(and_rest_mappings, nof_and_rest_mappings * sizeof(and_rest_mapping_t));
@@ -4406,8 +4431,8 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
   {
     OBJECT_PTR out;
 
-    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
-    OBJECT_PTR symbol_to_be_used = car(exp);
+    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    //OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -4427,7 +4452,11 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 
       OBJECT_PTR ret = cons(symbol_to_be_used, NIL);
 
-      assert(cons_length(rest) >= pos);
+      if(cons_length(rest) < pos)
+      {
+        throw_exception1("COMPILE-ERROR", "Insufficient number of arguments to invoke the function/macro");
+        return NIL;
+      }
 
       while(rest != NIL && i < pos)
       {
@@ -4992,7 +5021,11 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
 
       if(loc == -1)
       {
-        if(cons_length(cdr(exp)) != cons_length(params))
+        //to permit invocations of continuations from the top-level
+        //(in general, it's OK if more number of arguments are passed
+        //than is required)
+        //if(cons_length(cdr(exp)) != cons_length(params))
+        if(cons_length(cdr(exp)) < cons_length(params))
         {
           throw_exception1("COMPILE-ERROR", "Insufficient number of arguments to invoke the function/macro");
           return false;
@@ -5216,7 +5249,20 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   }
 
-  res = compile_and_evaluate(third(exp), src);
+  if(IS_CONS_OBJECT(third(exp)) && 
+     (car(third(exp)) == LAMBDA || car(third(exp)) == MACRO))
+  {
+    int pos_of_and_rest = location_of_and_rest(second(third(exp)));
+    if(pos_of_and_rest != -1)
+    {
+      //res = list(3, car(third(exp)), strip_and_rest(second(third(exp))), third(third(exp)));
+      res = concat(2, list(2, car(third(exp)), strip_and_rest(second(third(exp)))), CDDR(third(exp)));
+      record_and_rest_closure(symbol_to_be_used, pos_of_and_rest);
+    }
+  }
+
+  //res = compile_and_evaluate(third(exp), src);
+  res = compile_and_evaluate(res, src);
 
   //store the source of the function/macro as the
   //last cell in the closure

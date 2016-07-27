@@ -677,6 +677,7 @@ void eval_expression(GtkWidget *widget,
 {
   action_triggering_window = (GtkWindow *)data;
   evaluate();
+  gtk_window_present(transcript_window);
 }
 
 void close_window(GtkWidget *widget,
@@ -697,7 +698,11 @@ void evaluate()
   GtkTextIter start_sel, end_sel;
   gboolean selected;
 
-  buf = workspace_buffer;
+  if(action_triggering_window == workspace_window)
+    buf = workspace_buffer;
+  else
+    buf = curr_file_browser_buffer;
+
   selected = gtk_text_buffer_get_selection_bounds(buf, &start_sel, &end_sel);
 
   char *expression;

@@ -170,6 +170,16 @@ void find_next_occurrence()
 
   if(find_buffer != curr_file_browser_buffer)
     gtk_text_buffer_get_start_iter(buffer, &last_find_iter);
+  else
+  {
+    GtkTextMark *last_pos;
+
+    last_pos = gtk_text_buffer_get_mark (buffer, "last_pos");
+    if (last_pos == NULL)
+      return;
+
+    gtk_text_buffer_get_iter_at_mark (buffer, &last_find_iter, last_pos);
+  }
 
   find_buffer = buffer;
 
@@ -188,13 +198,17 @@ void find_next_occurrence()
                                        &start_find, &end_find); 
     ///
 
-    gtk_text_view_scroll_to_iter(curr_file_browser_text_view, &start_match, 0, FALSE, 0, 0);
+    gtk_text_view_scroll_to_iter(curr_file_browser_text_view, &start_match, 0, TRUE, 0.5, 0.5);
 
     gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
                                       &start_match, &end_match);
-    gint offset = gtk_text_iter_get_offset(&end_match);
-    gtk_text_buffer_get_iter_at_offset(buffer, 
-                                       &last_find_iter, offset);
+
+    /* gint offset = gtk_text_iter_get_offset(&end_match); */
+    /* gtk_text_buffer_get_iter_at_offset(buffer,  */
+    /*                                    &last_find_iter, offset); */
+
+    gtk_text_buffer_create_mark (buffer, "last_pos", &end_match, FALSE);
+
     gtk_widget_grab_focus(curr_file_browser_text_view);
 
   }
@@ -406,26 +420,44 @@ void save_file()
     }
   }
 
-  FILE *out = fopen(current_file_name, "w");
+  /* FILE *out = fopen(current_file_name, "w"); */
   
-  if(!out)
-  {
-    show_error_dialog("Unable to open file");
-    return;
-  }
+  /* if(!out) */
+  /* { */
+  /*   show_error_dialog("Unable to open file"); */
+  /*   return; */
+  /* } */
 
-  GtkTextIter start, end;  
+  /* GtkTextIter start, end;   */
+
+  /* gtk_text_buffer_get_start_iter(curr_file_browser_buffer, &start); */
+  /* gtk_text_buffer_get_end_iter (curr_file_browser_buffer, &end); */
+
+  /* fprintf(out, "%s", gtk_text_buffer_get_text(curr_file_browser_buffer, &start, &end, FALSE)); */
+
+  /* fclose(out); */
+
+  GtkTextIter start, end;
 
   gtk_text_buffer_get_start_iter(curr_file_browser_buffer, &start);
   gtk_text_buffer_get_end_iter (curr_file_browser_buffer, &end);
 
-  fprintf(out, "%s", gtk_text_buffer_get_text(curr_file_browser_buffer, &start, &end, FALSE));
+  GError *err = NULL;
 
-  fclose(out);
+  gboolean result = g_file_set_contents(current_file_name,
+                                        gtk_text_buffer_get_text(curr_file_browser_buffer, &start, &end, FALSE),
+                                        -1,
+                                        &err);
 
-  gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);
-
-  gtk_statusbar_push(file_browser_statusbar, 0, "File saved successfully");
+  if(result == FALSE)
+  {
+    show_error_dialog(err->message);
+  }
+  else
+  {
+    gtk_statusbar_push(file_browser_statusbar, 0, "File saved successfully");
+    gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);
+  }
 }
 
 void fb_save_source_file(GtkWidget *widget, gpointer data)
@@ -561,7 +593,7 @@ void find_text()
 
   memset(search_string, '\0', MAX_STRING_LENGTH);
 
- int result = GTK_RESPONSE_ACCEPT;
+  int result = GTK_RESPONSE_ACCEPT;
 
   while(result == GTK_RESPONSE_ACCEPT && strlen(search_string) == 0)
   {
@@ -594,13 +626,16 @@ void find_text()
                                          &start_find, &end_find); 
       ///
 
-      gtk_text_view_scroll_to_iter(curr_file_browser_text_view, &start_match, 0, FALSE, 0, 0);
+      gtk_text_view_scroll_to_iter(curr_file_browser_text_view, &start_match, 0, TRUE, 0.5, 0.5);
 
       gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", 
                                         &start_match, &end_match);
-      gint offset = gtk_text_iter_get_offset(&end_match);
-      gtk_text_buffer_get_iter_at_offset(buffer, 
-                                         &last_find_iter, offset);
+
+      /* gint offset = gtk_text_iter_get_offset(&end_match); */
+      /* gtk_text_buffer_get_iter_at_offset(buffer,  */
+      /*                                    &last_find_iter, offset); */
+
+      gtk_text_buffer_create_mark (buffer, "last_pos", &end_match, FALSE);
 
       gtk_widget_grab_focus(curr_file_browser_text_view);
     }

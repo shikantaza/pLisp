@@ -173,15 +173,17 @@ char *get_file_contents(char *file_name)
   rewind(fp);
 
   /* allocate memory for entire content */
-  buffer = calloc(1,lSize+1 );
-  if(!buffer )
+  buffer = calloc(1, lSize+1);
+
+  if(!buffer)
   {
     fclose(fp);
     return NULL;
   }
 
   /* copy the file into the buffer */
-  if(1 != fread(buffer, lSize, 1, fp))
+  size_t bytes_read = fread(buffer, lSize, 1, fp);
+  if(bytes_read != 1)
   {
     fclose(fp);
     free(buffer);
