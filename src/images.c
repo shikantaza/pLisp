@@ -710,7 +710,7 @@ void create_image(char *file_name)
     int posx, posy, width, height;
     GtkTextIter start, end;
 
-    char text[MAX_STRING_LENGTH];
+    char text[32384];
 
     char *workspace_text;
 
@@ -725,7 +725,7 @@ void create_image(char *file_name)
 
     len = strlen(workspace_text);
 
-    memset(text, '\0', MAX_STRING_LENGTH);
+    memset(text, '\0', 32384);
 
     while(i<len)
     {

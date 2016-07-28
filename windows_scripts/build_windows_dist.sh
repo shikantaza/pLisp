@@ -20,6 +20,7 @@ cp ../plisp_win.image $dir/bin/plisp.image
 
 cp ../doc/help.html $dir/doc
 cp ../doc/pLisp_User_Manual.pdf $dir/doc
+cp ../doc/tutorial.lisp $dir/doc
 
 cp ../lib/plisp_full_monty_compiler_windows.lisp $dir/lib
 cp ../lib/libtcc1.a $dir/lib
