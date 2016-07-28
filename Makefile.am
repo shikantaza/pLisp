@@ -46,7 +46,7 @@ pkgdata_DATA = plisp.image data/plisp.lang data/help.json lib/plisp_full_monty_c
 
 dist_pkgdata_DATA = ${pkgdata_DATA}
 
-dist_doc_DATA = doc/help.html doc/pLisp_User_Manual.pdf
+dist_doc_DATA = doc/help.html doc/pLisp_User_Manual.pdf doc/tutorial.lisp
 
 iconsdir = $(pkgdatadir)/icons
 icons_DATA  = icons/abort.png icons/clear.png icons/export_package.png icons/refresh.png icons/accept.png  \
