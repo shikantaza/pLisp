@@ -1417,7 +1417,7 @@ int load_from_image(char *file_name)
 
     while(i<len)
     {
-      if(json_text[i] != '\\')
+      if(json_text[i] != '\\' || ((i < len-1) && json_text[i] == '\\' && json_text[i+1] != '"'))
       {
         text[j] = json_text[i];
         j++;
