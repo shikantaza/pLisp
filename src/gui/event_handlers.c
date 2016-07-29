@@ -677,7 +677,7 @@ void eval_expression(GtkWidget *widget,
 {
   action_triggering_window = (GtkWindow *)data;
   evaluate();
-  gtk_window_present(transcript_window);
+  //gtk_window_present(transcript_window);
 }
 
 void close_window(GtkWidget *widget,
@@ -920,7 +920,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       build_form_for_eval(workspace_buffer);
       action_triggering_window = workspace_window;
       evaluate();
-      gtk_window_present(transcript_window);
+      //gtk_window_present(transcript_window);
       /* GtkTextIter start_sel, end_sel; */
       /* if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel)) */
       /* 	gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1); */
@@ -938,7 +938,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
       build_form_for_eval(curr_file_browser_buffer);
       action_triggering_window = file_browser_window;
       evaluate();
-      gtk_window_present(transcript_window);
+      //gtk_window_present(transcript_window);
       /* GtkTextIter start_sel, end_sel; */
       /* if(!gtk_text_buffer_get_selection_bounds(workspace_buffer, &start_sel, &end_sel)) */
       /* 	gtk_text_buffer_insert_at_cursor(workspace_buffer, "\n", -1); */
