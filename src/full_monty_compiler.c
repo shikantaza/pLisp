@@ -5259,10 +5259,11 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
       res = concat(2, list(2, car(third(exp)), strip_and_rest(second(third(exp)))), CDDR(third(exp)));
       record_and_rest_closure(symbol_to_be_used, pos_of_and_rest);
     }
-  }
 
-  //res = compile_and_evaluate(third(exp), src);
-  res = compile_and_evaluate(res, src);
+    res = compile_and_evaluate(res, src);
+  }
+  else
+    res = compile_and_evaluate(third(exp), src);
 
   //store the source of the function/macro as the
   //last cell in the closure
