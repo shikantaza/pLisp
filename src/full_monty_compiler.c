@@ -2146,6 +2146,12 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
 
   TCCState *tcc_state1 = compile_functions(lambdas);
 
+  if(in_error)
+  {
+    handle_exception();
+    return NIL;
+  }
+
   while(lambdas != NIL)
   {
     OBJECT_PTR lambda = car(lambdas);
@@ -3553,10 +3559,18 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
   /* fclose(out); */
 
   if(tcc_compile_string(tcc_state1, str) == -1)
-    assert(false);
+    //assert(false);
+  {
+    throw_exception1("COMPILE-ERROR", "Error compiling expression to native code (1)");
+    return NULL;
+  }
 
   if(tcc_relocate(tcc_state1, TCC_RELOCATE_AUTO) < 0)
-    assert(false);
+    //assert(false);
+  {
+    throw_exception1("COMPILE-ERROR", "Error compiling expression to native code (2)");
+    return NULL;
+  }
 
   return tcc_state1;
 }
