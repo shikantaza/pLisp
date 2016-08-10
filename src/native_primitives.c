@@ -1323,18 +1323,24 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
     return NIL;
   }
 
-  if(!(ret_type == INTEGR        ||
-       ret_type == FLOT          ||
-#ifdef WIN32
-       ret_type == CHAR1         ||
-       ret_type == VOID1         ||
-#else
-       ret_type == CHAR          ||
-       ret_type == VOID          ||
-#endif
+  char *s = get_symbol_name(ret_type);
+
+/*   if(!(ret_type == INTEGR        || */
+/*        ret_type == FLOT          || */
+/* #ifdef WIN32 */
+/*        ret_type == CHAR1         || */
+/*        ret_type == VOID1         || */
+/* #else */
+/*        ret_type == CHAR          || */
+/*        ret_type == VOID          || */
+/* #endif */
+  if(strcmp(s, "INTEGER") &&
+     strcmp(s, "FLOAT") &&
+     strcmp(s, "CHARACTER") &&
+     strcmp(s, "VOID") &&
+     strcmp(s, "CHARACTER-POINTER"))
        /* ret_type == INT_POINTER   || */ //not handling int and float pointer return values
        /* ret_type == FLOAT_POINTER || */
-       ret_type == CHAR_POINTER))
   {
     throw_exception1("INVALID-ARGUMENT", "Second parameter to CALL-FOREIGN-FUNCTION should be a valid return type");
     return NIL;
@@ -1380,7 +1386,13 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 
     type = CADAR(rest_args);
 
-    if(type == INTEGR)
+    if(IS_SYMBOL_OBJECT(type))
+      s = get_symbol_name(type);
+    else
+      s = NULL;
+
+    //if(type == INTEGR)
+    if(s && !strcmp(s, "INTEGER"))
     {
       if(!IS_INTEGER_OBJECT(val))
       {
@@ -1388,7 +1400,8 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	return NIL;
       }
     }          
-    else if(type == FLOT)
+    //else if(type == FLOT)
+    else if(s && !strcmp(s, "FLOAT"))
     {
       if(!IS_FLOAT_OBJECT(val))
       {
@@ -1397,9 +1410,11 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
       }
     }
 #ifdef WIN32
-    else if(type == CHAR1)
+    //else if(type == CHAR1)
+    else if(s && !strcmp(s, "CHARACTER"))
 #else
-    else if(type == CHAR)
+    //else if(type == CHAR)
+    else if(s && !strcmp(s, "CHARACTER"))
 #endif
     {
       if(!IS_CHAR_OBJECT(val))
@@ -1408,7 +1423,8 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	return NIL;
       }
     }
-    else if(type == CHAR_POINTER)
+    //else if(type == CHAR_POINTER)
+    else if(s && !strcmp(s, "CHARACTER-POINTER"))
     {
       if(!IS_STRING_LITERAL_OBJECT(val) && !is_string_object(val))
       {
@@ -1416,7 +1432,8 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
 	return NIL;
       }
     }
-    else if(type == INT_POINTER)
+    //else if(type == INT_POINTER)
+    else if(s && !strcmp(s, "INTEGER-POINTER"))
     {
       if(!IS_INTEGER_OBJECT(val))
       {
@@ -1424,7 +1441,8 @@ OBJECT_PTR prim_call_fgn_func(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT_PT
         return NIL;
       }
     }
-    else if(type == FLOAT_POINTER)
+    //else if(type == FLOAT_POINTER)
+    else if(s && !strcmp(s, "FLOAT-POINTER"))
     {
       if(!IS_FLOAT_OBJECT(val))
       {

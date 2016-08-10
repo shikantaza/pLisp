@@ -168,14 +168,23 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 #endif
     }
 
-    if(type == INTEGR) //INTEGER spelt wrongly because it's already bean #define'd
+    char *s;
+
+    if(IS_SYMBOL_OBJECT(type))
+      s = get_symbol_name(type);
+    else
+      s = NULL;
+
+    //if(type == INTEGR) //INTEGER spelt wrongly because it's already bean #define'd
+    if(s && !strcmp(s, "INTEGER"))
     {
       arg_types[i] = &ffi_type_sint;
       i_val = get_int_value(val);
       arg_values[i] = (int *)malloc(sizeof(int));
       *(int *)arg_values[i] = i_val;
     }
-    else if(type == FLOT) //FLOAT spelt wrongly because it's already bean #define'd
+    //else if(type == FLOT) //FLOAT spelt wrongly because it's already bean #define'd
+    else if(s && !strcmp(s, "FLOAT"))
     {
       arg_types[i] = &ffi_type_double;
       f_val = get_float_value(val);
@@ -184,25 +193,28 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       arg_values[i] = (double *)malloc(sizeof(double));
       *(double *)arg_values[i] = f_val;
     }
-#ifdef WIN32
-    else if(type == CHAR1)
-#else
-    else if(type == CHAR)
-#endif
+//#ifdef WIN32
+//    else if(type == CHAR1)
+//#else
+//    else if(type == CHAR)
+//#endif
+    else if(s && !strcmp(s, "CHARACTER"))
     {
       arg_types[i] = &ffi_type_schar;
       c_val = (int)val >> OBJECT_SHIFT;
       arg_values[i] = (char *)malloc(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
-    else if(type == CHAR_POINTER)
+    //else if(type == CHAR_POINTER)
+    else if(s && !strcmp(s, "CHARACTER-POINTER"))
     {
       arg_types[i] = &ffi_type_pointer;
       c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)malloc(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
-    else if(type == INT_POINTER)
+    //else if(type == INT_POINTER)
+    else if(s && !strcmp(s, "INTEGER-POINTER"))
     {
       arg_types[i] = &ffi_type_pointer;
       i_val_ptr = (int *)malloc(sizeof(int));
@@ -210,7 +222,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       arg_values[i] = (int **)malloc(sizeof(int *));
       *(int **)arg_values[i] = i_val_ptr;
     }
-    else if(type == FLOAT_POINTER)
+    //else if(type == FLOAT_POINTER)
+    else if(s && !strcmp(s, "FLOAT-POINTER"))
     {
       arg_types[i] = &ffi_type_pointer;
       /* f_val_ptr = (float *)malloc(sizeof(float)); */
@@ -230,23 +243,35 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   ffi_cif cif;
   ffi_status status;
 
-  if(ret_type == INTEGR)
+  char *s;
+
+  if(IS_SYMBOL_OBJECT(ret_type))
+    s = get_symbol_name(ret_type);
+  else
+    s = NULL;
+  
+  //if(ret_type == INTEGR)
+  if(s && !strcmp(s, "INTEGER"))
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_sint, arg_types);
-#ifdef WIN32
-  else if(ret_type == CHAR1)
-#else
-  else if(ret_type == CHAR)
-#endif
+//#ifdef WIN32
+//  else if(ret_type == CHAR1)
+//#else
+//  else if(ret_type == CHAR)
+//#endif
+  else if(s && !strcmp(s, "CHARACTER"))
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_schar, arg_types);
-  else if(ret_type == FLOT)
+  //else if(ret_type == FLOT)
+  else if(s && !strcmp(s, "FLOAT"))
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_double, arg_types);
-  else if(ret_type == CHAR_POINTER) //not handling int and float pointer return values
+  //else if(ret_type == CHAR_POINTER) //not handling int and float pointer return values
+  else if(s && !strcmp(s, "CHARACTER-POINTER"))
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_pointer, arg_types);
-#ifdef WIN32
-  else if(ret_type == VOID1)
-#else
-  else if(ret_type == VOID)
-#endif
+//#ifdef WIN32
+//  else if(ret_type == VOID1)
+//#else
+//  else if(ret_type == VOID)
+//#endif
+  else if(s && !strcmp(s, "VOID"))
     status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_void, arg_types);
 
   if(status != FFI_OK)
@@ -261,7 +286,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   ffi_arg ret_val;
   double float_ret_val;
 
-  if(ret_type == FLOT)
+  //if(ret_type == FLOT)
+  if(s && !strcmp(s, "FLOAT"))
     ffi_call(&cif, function_ptr, &float_ret_val, arg_values);
   else
     ffi_call(&cif, function_ptr, &ret_val, arg_values);
@@ -277,10 +303,17 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     OBJECT_PTR type = CADAR(rest_args);
     OBJECT_PTR value;
 
+    if(IS_SYMBOL_OBJECT(type))
+      s = get_symbol_name(type);
+    else
+      s = NULL;
+
 #ifdef INTERPRETER_MODE
-    if(type == INT_POINTER && IS_SYMBOL_OBJECT(sym))
+    //if(type == INT_POINTER && IS_SYMBOL_OBJECT(sym))
+    if(s && !strcmp(s, "INTEGER-POINTER") && IS_SYMBOL_OBJECT(sym))
 #else
-    if(type == INT_POINTER)
+    //if(type == INT_POINTER)
+    if(s && !strcmp(s, "INTEGER-POINTER"))  
 #endif
     {
 
@@ -301,9 +334,11 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     }
 
 #ifdef INTERPRETER_MODE
-    else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
+    //else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
+    else if(s && !strcmp(s, "FLOAT-POINTER") && IS_SYMBOL_OBJECT(sym))
 #else
-    else if(type == FLOAT_POINTER)
+    //else if(type == FLOAT_POINTER)
+    else if(s, !strcmp(s, "FLOAT-POINTER"))
 #endif
     {
 
@@ -326,7 +361,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     }
 
 #ifdef INTERPRETER_MODE
-    else if(type == CHAR_POINTER && IS_SYMBOL_OBJECT(sym))
+    //else if(type == CHAR_POINTER && IS_SYMBOL_OBJECT(sym))
+    else if(s && !strcmp(s, "CHARACTER-POINTER") && IS_SYMBOL_OBJECT(sym))
     {
       char *str = *(char **)arg_values[i];
 
@@ -350,7 +386,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       }
     }
 #else
-    else if(type == CHAR_POINTER)
+    //else if(type == CHAR_POINTER)
+    else if(s && !strcmp(s, "CHARACTER-POINTER"))
     {
       char *str = *(char **)arg_values[i];
 
@@ -408,17 +445,26 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   OBJECT_PTR ret;
 
-  if(ret_type == INTEGR)
+  if(IS_SYMBOL_OBJECT(ret_type))
+    s = get_symbol_name(ret_type);
+  else
+    s = NULL;
+
+  //if(ret_type == INTEGR)
+  if(s && !strcmp(s, "INTEGER"))
     ret = convert_int_to_object((int)ret_val);
-#ifdef WIN32
-  else if(ret_type == CHAR1)
-#else
-  else if(ret_type == CHAR)
-#endif
+//#ifdef WIN32
+//  else if(ret_type == CHAR1)
+//#else
+//  else if(ret_type == CHAR)
+//#endif
+  if(s && !strcmp(s, "CHARACTER"))
     ret = (OBJECT_PTR)(((char)ret_val << OBJECT_SHIFT) + CHAR_TAG);
-  else if(ret_type == FLOT)
+  //else if(ret_type == FLOT)
+  else if(s && !strcmp(s, "FLOAT"))
     ret = convert_float_to_object(float_ret_val);
-  else if(ret_type == CHAR_POINTER)
+  //else if(ret_type == CHAR_POINTER)
+  else if(s && !strcmp(s, "CHARACTER-POINTER"))
   {
 
     char *str = (char *)ret_val;
@@ -446,11 +492,12 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     ret = ptr + ARRAY_TAG;
 
   }
-#ifdef WIN32
-  else if(ret_type == VOID1)
-#else
-  else if(ret_type == VOID)
-#endif
+//#ifdef WIN32
+//  else if(ret_type == VOID1)
+//#else
+//  else if(ret_type == VOID)
+//#endif
+  else if(s && !strcmp(s, "VOID"))
     ret = NIL;
 
   free_arg_values(arg_types, arg_values, args, nof_args);
@@ -471,14 +518,24 @@ void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs
   {    
     OBJECT_PTR type = CADAR(rest);
 
+    char *s;
+
+    if(IS_SYMBOL_OBJECT(type))
+      s = get_symbol_name(type);
+    else
+      s = NULL;
+
     if(types[i] == &ffi_type_pointer)
     {
-      if(type == INT_POINTER)
+      //if(type == INT_POINTER)
+      if(s && !strcmp(s, "INTEGER-POINTER"))
         free(*(int **)values[i]);
-      else if(type  == FLOAT_POINTER)
+      //else if(type  == FLOAT_POINTER)
+      else if(s && !strcmp(s, "FLOAT-POINTER"))
         //free(*(float **)values[i]);
         free(*(double **)values[i]);
-      else if(type == CHAR_POINTER)
+      //else if(type == CHAR_POINTER)
+      else if(s && !strcmp(s, "CHARACTER-POINTER"))
         free(*(char **)values[i]);
     }
     else if(types[i] == &ffi_type_sint)

@@ -795,7 +795,7 @@
   (test-condition 180 (closurep (lambda (x) x))))
 
 (defun test-closurep-181 ()
-  (test-condition 181 (closurep cadr)))
+  (test-condition 181 (closurep (lambda (lst) (car (cdr lst))))))
 
 (defun test-macrop-182 ()
   (test-condition 182 (null (macrop 1))))
@@ -803,8 +803,11 @@
 ;(defun test-macrop-188 ()
 ;  (test-condition 188 (macrop (macro (x) x))))
 
+(defmacro my-first (lst)
+  `(car ,lst))
+
 (defun test-macrop-183 ()
-  (test-condition 183 (macrop defun)))
+  (test-condition 183 (macrop my-first)))
 
 (defun test-continuationp-184 ()
   (test-condition 184 (null (continuationp 1))))

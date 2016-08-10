@@ -317,6 +317,8 @@ extern gc(BOOLEAN, BOOLEAN);
 extern BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 
 extern double get_float_value(OBJECT_PTR);
+
+extern OBJECT_PTR rewrite_symbols(OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -2205,7 +2207,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
         printf("%s\n", buf);
 
       uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-      set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));        
+      //set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));
+      set_heap(ptr, 1, cons(NIL, NIL));
     }
     else
     {
@@ -3574,18 +3577,18 @@ int get_top_level_sym_value(OBJECT_PTR sym, OBJECT_PTR *out)
     }
   }
 
-  sym_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(sym)));
+  /* sym_to_be_used = cdr(get_qualified_symbol_object(packages[current_package].name, get_symbol_name(sym))); */
 
-  for(i=0; i<nof_global_vars; i++)
-  {
-    if(top_level_symbols[i].delete_flag)
-      continue;
-    else if(top_level_symbols[i].sym == sym_to_be_used)
-    {
-      *out = top_level_symbols[i].val;
-      return 0;
-    }
-  }
+  /* for(i=0; i<nof_global_vars; i++) */
+  /* { */
+  /*   if(top_level_symbols[i].delete_flag) */
+  /*     continue; */
+  /*   else if(top_level_symbols[i].sym == sym_to_be_used) */
+  /*   { */
+  /*     *out = top_level_symbols[i].val; */
+  /*     return 0; */
+  /*   } */
+  /* } */
 
   return 1;
 }
@@ -3829,6 +3832,8 @@ int repl2()
       return 1;
     }
 
+    //exp = rewrite_symbols(exp);
+
     OBJECT_PTR res = full_monty_eval(exp);
 
     if(in_error)
@@ -3980,7 +3985,7 @@ OBJECT_PTR expand_body(OBJECT_PTR body)
   else
     return list(3,
                 LET,
-                list(1, list(2, gensym(), car(body))),
+                list(1, list(2, gensym(), expand_bodies(car(body)))),
                 expand_body(cdr(body)));
 }
 
@@ -4431,8 +4436,8 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
   {
     OBJECT_PTR out;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
-    //OBJECT_PTR symbol_to_be_used = car(exp);
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -4505,8 +4510,8 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
   {
     OBJECT_PTR out;
 
-    OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
-    //OBJECT_PTR symbol_to_be_used = car(exp);
+    //OBJECT_PTR symbol_to_be_used = symbol_to_use(car(exp));
+    OBJECT_PTR symbol_to_be_used = car(exp);
 
     int retval = get_top_level_sym_value(symbol_to_be_used, &out);
 
@@ -5155,8 +5160,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
       return NIL; //exception would have been set in is_valid_macro_exp()
   }
 
-  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  //OBJECT_PTR symbol_to_be_used = second(exp);
+  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR t1 = cons(NIL, NIL);
 
@@ -5234,8 +5239,8 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   } 
 
-  OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
-  //OBJECT_PTR symbol_to_be_used = second(exp);
+  //OBJECT_PTR symbol_to_be_used = symbol_to_use(second(exp));
+  OBJECT_PTR symbol_to_be_used = second(exp);
 
   OBJECT_PTR out;
   int retval = get_top_level_sym_value(symbol_to_be_used, &out);
@@ -5292,8 +5297,9 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
   return res;
 }
 
-OBJECT_PTR full_monty_eval(OBJECT_PTR exp)
+OBJECT_PTR full_monty_eval(OBJECT_PTR exp1)
 {
+  OBJECT_PTR exp = rewrite_symbols(exp1);
 
   if(debug_mode && 
      IS_CONS_OBJECT(exp) && 

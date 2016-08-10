@@ -274,6 +274,8 @@ BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == NATIVE
 BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x)      { return (x & BIT_MASK) == FUNCTION2_TAG;      }
 BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2_TAG;         }
 
+OBJECT_PTR rewrite_symbols(OBJECT_PTR);
+
 //registers
 OBJECT_PTR reg_accumulator;
 OBJECT_PTR reg_next_expression;
@@ -303,6 +305,9 @@ extern void cleanup_help_entries();
 extern OBJECT_PTR exception_object;
 
 extern OBJECT_PTR continuation_to_resume;
+
+extern unsigned int nof_global_vars;
+extern global_var_mapping_t *top_level_symbols;
 
 void initialize()
 {
@@ -2910,3 +2915,189 @@ OBJECT_PTR convert_symbol_to_core_package_symbol(OBJECT_PTR sym)
 
   return CONS_NIL_NIL;
 }
+
+BOOLEAN is_language_symbol(OBJECT_PTR sym)
+{
+  if(!IS_SYMBOL_OBJECT(sym))
+    return false;
+
+  char *s = get_symbol_name(sym);
+
+  return !strcmp(s, "LET")               ||
+         !strcmp(s, "LET1")              ||
+         !strcmp(s, "LETREC")            ||
+         !strcmp(s, "IF")                ||
+         !strcmp(s, "SET")               ||
+         !strcmp(s, "LAMBDA")            ||
+         !strcmp(s, "MACRO")             ||
+#ifdef WIN32
+         !strcmp(s, "ERROR1")            ||
+#else
+         !strcmp(s, "ERROR")             ||
+#endif
+         !strcmp(s, "CALL-CC")           ||
+         !strcmp(s, "DEFINE")            ||
+         !strcmp(s, "T")                 ||
+         !strcmp(s, "NIL")               ||
+         !strcmp(s, "COMMA")             ||
+         !strcmp(s, "COMMA-AT")          ||
+
+         !strcmp(s, "INTEGER")           ||
+         !strcmp(s, "FLOAT")             ||
+         !strcmp(s, "CHARACTER")         ||
+         !strcmp(s, "VOID")              ||
+         !strcmp(s, "CHARACTER-POINTER") ||
+         !strcmp(s, "FLOAT-POINTER")     ||
+         !strcmp(s, "INTEGER-POINTER");
+}
+
+BOOLEAN is_core_package_op(OBJECT_PTR sym)
+{
+  if(!IS_SYMBOL_OBJECT(sym))
+    return false;
+
+  char *symbol_name = get_symbol_name(sym);   
+
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    OBJECT_PTR top_level_sym = top_level_symbols[i].sym;  
+
+    int package_index = (int)top_level_sym >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+    if(package_index != 0)
+      continue;
+
+    if(!strcmp(symbol_name, get_symbol_name(top_level_sym)))
+      return true;
+  }
+
+  return false;
+}
+
+OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
+{
+  if(current_package == 0)
+    return exp;
+
+  if(is_atom(exp))
+  {
+    if(!IS_SYMBOL_OBJECT(exp))
+      return exp;
+    else
+    {
+      char *symbol_name = get_symbol_name(exp);
+
+      if(!strcmp(symbol_name, "NIL") || !strcmp(symbol_name, "T"))
+        return exp;
+
+      int package_index = (int)exp >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+      if(package_index != 0 && package_index != current_package)
+        return exp;
+      else
+      {
+        int index = find_symbol(symbol_name, current_package);
+    
+        if(index != NOT_FOUND) //symbol exists in symbol table
+          return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG);
+        else
+          return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
+      }
+    }
+  }
+
+  OBJECT_PTR car_exp = car(exp);
+  
+  if(IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "QUOTE"))
+     return exp;
+  else if((IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LET"))  || 
+     (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LET1")) || 
+     (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LETREC")))
+  {
+    OBJECT_PTR rest = second(exp), ret = NIL;
+
+    //since we do not know whether
+    //the LET is a valid construction,
+    //as we are processing raw
+    //s-expressions from the parser
+    if(IS_CONS_OBJECT(rest))
+    {
+      while(rest != NIL)
+      {
+        if(IS_CONS_OBJECT(car(rest)))
+          ret = cons(map(rewrite_symbols, car(rest)), ret);
+        else
+          ret = cons(rewrite_symbols(car(rest)), ret);
+
+        rest = cdr(rest);
+      }
+
+      if(CDDR(exp) != NIL)
+        return concat(3, 
+                      list(1, car_exp),
+                      list(1, reverse(ret)),
+                      map(rewrite_symbols, CDDR(exp)));
+      else
+        return concat(2, 
+                      list(1, car_exp),
+                      list(1, reverse(ret)));
+    }
+    else
+      return cons(car_exp, map(rewrite_symbols, cdr(exp)));
+
+  }
+  else if((IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LAMBDA")) || 
+          (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "MACRO"))  || 
+          (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "CATCH")))
+  {
+    OBJECT_PTR params = second(exp);
+
+    if(IS_CONS_OBJECT(params))
+    {
+      if(CDDR(exp) != NIL)
+        return concat(3,
+                    list(1, car_exp),
+                    list(1, map(rewrite_symbols, params)),
+                    map(rewrite_symbols, CDDR(exp)));
+      else
+        return concat(2,
+                      list(1, car_exp),
+                      list(1, map(rewrite_symbols, params)));
+    }
+    else
+      return cons(car_exp, map(rewrite_symbols, cdr(exp)));
+                    
+  }
+  else if((IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "DEFUN")) || 
+          (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "DEFMACRO")))
+  {
+    OBJECT_PTR params = third(exp);
+
+    if(IS_CONS_OBJECT(params))
+    {
+      if(CDDDR(exp) != NIL)
+        return concat(4,
+                      list(1, car_exp),
+                      list(1, rewrite_symbols(second(exp))),
+                      list(1, map(rewrite_symbols, params)),
+                      map(rewrite_symbols, CDDDR(exp)));
+      else
+        return concat(3,
+                      list(1, car_exp),
+                      list(1, rewrite_symbols(second(exp))),
+                      list(1, map(rewrite_symbols, params)));
+    }
+    else
+      return cons(car_exp, map(rewrite_symbols, cdr(exp)));
+  }
+  else if(is_language_symbol(car_exp) || primop(car_exp) || is_core_package_op(car_exp))
+    return cons(car_exp, map(rewrite_symbols, cdr(exp)));
+  else
+    return map(rewrite_symbols, exp);
+}
+
