@@ -4276,7 +4276,8 @@ void record_and_rest_closure(OBJECT_PTR sym, int pos_of_and_rest)
 
   for(i=0; i< nof_and_rest_mappings; i++)
   {
-    if(and_rest_mappings[i].sym == sym)
+    //if(and_rest_mappings[i].sym == sym)
+    if(!strcmp(get_symbol_name(and_rest_mappings[i].sym), get_symbol_name(sym)))
       and_rest_mappings[i].delete_flag = true;
   }
   //end handling redefinition of symbols
@@ -4305,7 +4306,8 @@ int and_rest_closure_pos(OBJECT_PTR sym)
     if(and_rest_mappings[i].delete_flag)
       continue;
 
-    if(and_rest_mappings[i].sym == sym)
+    //if(and_rest_mappings[i].sym == sym)
+    if(!strcmp(get_symbol_name(and_rest_mappings[i].sym), get_symbol_name(sym)))
       return and_rest_mappings[i].pos;
   }
 
