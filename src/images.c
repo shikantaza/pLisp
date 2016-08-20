@@ -2082,16 +2082,16 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     char *source = get_json_native_fn_source(obj);
     assert(source);
 
-    //note: the last parameter value (11)
+    //note: the last parameter value (12)
     //will have to be updated if we're
     //making the size of gensym symbols bigger
     //note2: since we're adding the preamable '#include <stdint.h>...'
     //to all functions to make use of uintptr_t in the generated code,
     //second parameter is set to 116 to skip all this preamble
 #ifdef WIN32 //to account for the replacement of #include <stdint.h>' with 'typedef unsigned int uintptr_t;' in Windows
-    char *fname = substring(source, 128, 11);
+    char *fname = substring(source, 128, 12);
 #else
-    char *fname = substring(source, 116, 11);
+    char *fname = substring(source, 116, 12);
 #endif
 
     //crude way to check if fn is the identity function,
