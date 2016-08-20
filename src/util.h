@@ -36,4 +36,6 @@ char *conv_to_lower_case_preserve_strings(char *);
 
 char *get_file_contents(char *);
 
+char *convert_identifier(char *);
+
 #endif

@@ -115,11 +115,13 @@ int open_square_brackets = 0;
 
 <string>(\\.|[^\\"])*\"       { yylval.atom_value = substring(yytext, 0, strlen(yytext)-1); BEGIN(INITIAL); return T_STRING_LITERAL; }
 
-[>]|[<]|(<=)|(>=)|[+]|[\-]|[\*]|[\/]|\:[a-zA-Z&][a-zA-Z0-9\-]*|[a-zA-Z&][a-zA-Z0-9\-]*|[a-zA-Z&][a-zA-Z0-9\-]*:[a-zA-Z][a-zA-Z0-9\-]* { yylval.atom_value = strdup(yytext); return T_SYMBOL; }
 [-+]?[0-9]+             { yylval.integer_value = atoi(yytext); return T_INTEGER; }
-[-+]?[0-9]*\.?[0-9]*    { yylval.float_value = atof(yytext); return T_FLOAT; }
+[-+]?[0-9]*\.[0-9]*    { yylval.float_value = atof(yytext); return T_FLOAT; }
 
 #\\[a-zA-Z0-9!$"'(),_\-./:;?+<=>#%&*@\[\\\]{|}`\^~] { yylval.atom_value = yytext; return T_CHAR; }
+
+[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+|[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+:[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+ { yylval.atom_value = strdup(yytext); return T_SYMBOL; }
+
 \(                      { open_parens++; return T_LEFT_PAREN; }
 \)                      { open_parens--; return T_RIGHT_PAREN; }
 \[                      { open_square_brackets++; return T_LEFT_SQUARE_BRACKET; }

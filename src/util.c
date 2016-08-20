@@ -194,3 +194,84 @@ char *get_file_contents(char *file_name)
 
   return(buffer);
 }
+
+char convert_special_char(char c)
+{
+  switch(c)
+  {
+    case '\\':
+      return '0';
+    case '^':
+      return '1';
+    case '$':
+      return '2';
+    case '.':
+      return '3';
+    case '|':
+      return '4';
+    case '?':
+      return '5';
+    case '*':
+      return '6';
+    case '+':
+      return '7';
+    case '{':
+      return '8';
+    case '!':
+      return '9';
+    case '_':
+      return 'a';
+    case '-':
+      return 'b';
+    case '/':
+      return 'c';
+    case '<':
+      return 'd';
+    case '=':
+      return 'e';
+    case '>':
+      return 'f';
+    case '#':
+      return 'g';
+    case '%':
+      return 'h';
+    case '&':
+      return 'i';
+    case '}':
+      return 'j';
+    case '~':
+      return 'k';
+    case ':':
+      return 'l';
+    default:
+      return c;
+  }
+}
+
+#define MAX_IDENTIFIER_LENGTH 100
+
+char *convert_identifier(char *id)
+{
+  int i;
+
+  int len = strlen(id);
+
+  if(len > MAX_IDENTIFIER_LENGTH)
+  {
+    printf("Max identifier length exceeded\n");
+    return NULL;
+  }
+
+  char *s = (char *)malloc((MAX_IDENTIFIER_LENGTH + 1) * sizeof(char));
+
+  memset(s, MAX_IDENTIFIER_LENGTH + 1, '\0');
+
+  s[0] = '_';
+
+  for(i=0; i<len; i++)
+    s[i+1] = convert_special_char(id[i]);
+
+  s[i+1] = '\0';
+
+  return s;
+}

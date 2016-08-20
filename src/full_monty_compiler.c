@@ -2743,16 +2743,17 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
   {
     char *raw_name = strdup(get_symbol_name(var));
 
-    if(raw_name[0] == '#')
-    {
-      //char *name = substring(raw_name, 2, strlen(raw_name)-2);
-      char *name = strdup(raw_name);
-      free(raw_name);
-      name[0] = '_';
-      name[1] = '_';
-      return convert_to_lower_case(replace_hyphens(name));
-    }
-    else if(primop(var))
+    /* if(raw_name[0] == '#') */
+    /* { */
+    /*   //char *name = substring(raw_name, 2, strlen(raw_name)-2); */
+    /*   char *name = strdup(raw_name); */
+    /*   free(raw_name); */
+    /*   name[0] = '_'; */
+    /*   name[1] = '_'; */
+    /*   return convert_to_lower_case(replace_hyphens(name)); */
+    /* } */
+    /* else if(primop(var)) */
+    if(primop(var))
     {
       char *s = (char *)malloc(40*sizeof(char));
       if(var == ADD)
@@ -2923,15 +2924,16 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       //two underscores to prevent
       //conflicts with C keywords
 
-      char *name = (char *)malloc(3 + strlen(raw_name));
-      name[0] = '-';
-      name[1] = '-';
+      /* char *name = (char *)malloc(3 + strlen(raw_name)); */
+      /* name[0] = '-'; */
+      /* name[1] = '-'; */
 
-      strcpy(name+2, raw_name);
+      /* strcpy(name+2, raw_name); */
 
-      free(raw_name);
+      /* free(raw_name); */
 
-      return convert_to_lower_case(replace_hyphens(name));
+      /* return convert_to_lower_case(replace_hyphens(name)); */
+      return convert_to_lower_case(convert_identifier(get_symbol_name(var)));
     }
     else
       return convert_to_lower_case(replace_hyphens(raw_name));
