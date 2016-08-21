@@ -16,9 +16,9 @@
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
 (define bq-append (lambda (x y)
-                    (if (eq x nil)
+                    (if (prim-eq x nil)
                         y
-                      (cons (car x) (bq-append (cdr x) y)))))
+                      (prim-cons (prim-car x) (bq-append (prim-cdr x) y)))))
 
 ;(define build-list (lambda (lst acc)
 ;                     (if (eq lst nil)
@@ -42,17 +42,17 @@
 ;                  (build-list exp (list 'concat))))))
 
 (define qq (lambda (x)
-             (if (consp x)
-                 (if (eq 'comma (car x))
-                     (car (cdr x))
-                   (if (eq 'backquote (car x))
-                       (list 'quote x)
-                     (if (consp (car x))
-                         (if (eq 'comma-at (car (car x)))
-                             (list 'bq-append (car (cdr (car x))) (qq (cdr x)))
-                           (list 'cons (qq (car x)) (qq (cdr x))))
-                       (list 'cons (qq (car x)) (qq (cdr x))))))
-               (list 'quote x))))
+             (if (prim-consp x)
+                 (if (prim-eq 'comma (prim-car x))
+                     (prim-car (prim-cdr x))
+                   (if (prim-eq 'backquote (prim-car x))
+                       (prim-list 'quote x)
+                     (if (prim-consp (prim-car x))
+                         (if (prim-eq 'comma-at (prim-car (prim-car x)))
+                             (prim-list 'bq-append (prim-car (prim-cdr (prim-car x))) (qq (prim-cdr x)))
+                           (prim-list 'prim-cons (qq (prim-car x)) (qq (prim-cdr x))))
+                       (prim-list 'prim-cons (qq (prim-car x)) (qq (prim-cdr x))))))
+               (prim-list 'quote x))))
 
 (define backquote (macro (quoted-form)
                          (qq quoted-form)))
@@ -62,6 +62,8 @@
 
 (define defmacro (macro (name vars &rest body)
                         `(define ,name (macro ,vars ,@body))))
+
+(prim-load-file "..\lib\primitives.lisp")
 
 (defun exception (excp desc)
   (cons excp desc))
@@ -429,8 +431,8 @@
   (if (any-empty-list lsts)
       (reverse acc)
     (mapcar-internal f 
-                      (map (lambda (x) (cdr x)) lsts)
-                      (cons (apply f (map (lambda (x) (car x)) lsts)) acc))))
+                      (map cdr lsts)
+                      (cons (apply f (map car lsts)) acc))))
 
 (defun mapcar (f &rest lsts)
   (mapcar-internal f lsts nil))

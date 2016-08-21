@@ -23,6 +23,7 @@ cp ../doc/pLisp_User_Manual.pdf $dir/doc
 cp ../doc/tutorial.lisp $dir/doc
 
 cp ../lib/plisp_full_monty_compiler_windows.lisp $dir/lib
+cp ../lib/primitives.lisp $dir/lib
 cp ../lib/libtcc1.a $dir/lib
 cp ../icons/* $dir/share/icons
 
