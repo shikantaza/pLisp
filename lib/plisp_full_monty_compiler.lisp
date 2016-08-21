@@ -16,9 +16,9 @@
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
 (define bq-append (lambda (x y)
-                    (if (eq x nil)
+                    (if (prim-eq x nil)
                         y
-                      (cons (car x) (bq-append (cdr x) y)))))
+                      (prim-cons (prim-car x) (bq-append (prim-cdr x) y)))))
 
 ;(define build-list (lambda (lst acc)
 ;                     (if (eq lst nil)
@@ -42,17 +42,17 @@
 ;                  (build-list exp (list 'concat))))))
 
 (define qq (lambda (x)
-             (if (consp x)
-                 (if (eq 'comma (car x))
-                     (car (cdr x))
-                   (if (eq 'backquote (car x))
-                       (list 'quote x)
-                     (if (consp (car x))
-                         (if (eq 'comma-at (car (car x)))
-                             (list 'bq-append (car (cdr (car x))) (qq (cdr x)))
-                           (list 'cons (qq (car x)) (qq (cdr x))))
-                       (list 'cons (qq (car x)) (qq (cdr x))))))
-               (list 'quote x))))
+             (if (prim-consp x)
+                 (if (prim-eq 'comma (prim-car x))
+                     (prim-car (prim-cdr x))
+                   (if (prim-eq 'backquote (prim-car x))
+                       (prim-list 'quote x)
+                     (if (prim-consp (prim-car x))
+                         (if (prim-eq 'comma-at (prim-car (prim-car x)))
+                             (prim-list 'bq-append (prim-car (prim-cdr (prim-car x))) (qq (prim-cdr x)))
+                           (prim-list 'prim-cons (qq (prim-car x)) (qq (prim-cdr x))))
+                       (prim-list 'prim-cons (qq (prim-car x)) (qq (prim-cdr x))))))
+               (prim-list 'quote x))))
 
 (define backquote (macro (quoted-form)
                          (qq quoted-form)))
@@ -62,6 +62,223 @@
 
 (define defmacro (macro (name vars &rest body)
                         `(define ,name (macro ,vars ,@body))))
+
+(defun plus-internal (args)
+  (if (prim-eq args nil)
+      0
+    (prim-add (prim-car args)
+              (plus-internal (prim-cdr args)))))
+
+(defun + (&rest args)
+  (plus-internal args))
+
+(defun - (&rest args)
+  (prim-sub (prim-car args)
+            (plus-internal (prim-cdr args))))
+
+(defun car (x)
+  (prim-car x))
+
+(defun cdr (x)
+  (prim-cdr x))
+
+(defun < (a b)
+  (prim-lt a b))
+
+(defun > (a b)
+  (prim-gt a b))
+
+(defun <= (a b)
+  (prim-leq a b))
+
+(defun >= (a b)
+  (prim-geq a b))
+
+(defun error (x)
+  (prim-error x))
+
+(defun print (x)
+  (prim-print x))
+
+(defun cons (a b)
+  (prim-cons a b))
+
+(defun setcar (x y)
+  (prim-setcar x y))
+
+(defun setcdr (x y)
+  (prim-setcdr x y))
+
+(defun list-internal (args)
+  (if (prim-eq args nil)
+      nil
+    (prim-cons (prim-car args)
+               (list-internal (prim-cdr args)))))
+
+(defun list (&rest args)
+  (list-internal args))
+
+(defun mult-internal (args)
+  (if (prim-eq args nil)
+      1
+    (prim-mult (prim-car args)
+               (mult-internal (prim-cdr args)))))
+
+(defun * (&rest args)
+  (mult-internal args))
+
+(defun / (&rest args)
+  (prim-div (prim-car args)
+            (mult-internal (prim-cdr args))))
+
+(defun eq (a b)
+  (prim-eq a b))
+
+(defun concat-two-lists (x y)
+  (if (prim-eq x nil)
+      y
+    (prim-cons (prim-car x) (concat-two-lists (prim-cdr x) y))))
+
+(defun concat-internal (args)
+  (if (prim-eq args nil)
+      nil
+    (concat-two-lists (prim-car args)
+                      (concat-internal (prim-cdr args)))))
+
+(defun concat (&rest args)
+  (concat-internal args))
+
+(defun not (x)
+  (prim-not x))
+
+(defun gensym ()
+  (prim-gensym))
+
+(defun atom (x)
+  (prim-atom x))
+
+(defun symbol-value (x)
+  (prim-symbol-value x))
+
+(defun apply (x y)
+  (prim-apply x y))
+
+(defun symbol (x)
+  (prim-symbol x))
+
+(defun symbol-name (x)
+  (prim-symbol-name x))
+
+;(defun format-internal (args)
+;  (prim-apply prim-format args))
+
+;(defun format (&rest args)
+;  (format-internal args))
+
+(defun clone (x)
+  (prim-clone x))
+
+(defun unbind (x)
+  (prim-unbind x))
+
+(defun newline (x)
+  (prim-newline x))
+
+(defun consp (x)
+  (prim-consp x))
+
+(defun listp (x)
+  (prim-listp x))
+
+(defun integerp (x)
+  (prim-integerp x))
+
+(defun floatp (x)
+  (prim-floatp x))
+
+(defun characterp (x)
+  (prim-characterp x))
+
+(defun symbolp (x)
+  (prim-symbolp x))
+
+(defun stringp (x)
+  (prim-stringp x))
+
+(defun arrayp (x)
+  (prim-arrayp x))
+
+(defun closurep (x)
+  (prim-closurep x))
+
+(defun macrop (x)
+  (prim-macrop x))
+
+(defun continuationp (x)
+  (prim-continuationp x))
+
+(defun string (x)
+  (prim-string x))
+
+(defun make-array (x y)
+  (prim-make-array x y))
+
+(defun array-set (x y z)
+  (prim-array-set x y z))
+
+(defun array-get (x y)
+  (prim-array-get x y))
+
+(defun sub-array (x y z)
+  (prim-sub-array x y z))
+
+(defun array-length (x)
+  (prim-array-length x))
+
+(defun print-string (x)
+  (prim-print-string x))
+
+(defun load-foreign-library (x)
+  (prim-load-foreign-library x))
+
+(defun call-ff-internal (x y z)
+  (prim-call-ff-internal x y z))
+
+(defun create-package (x)
+  (prim-create-package x))
+
+(defun in-package (x)
+  (prim-in-package x))
+
+(defun export-package (x y)
+  (prim-export-package x y))
+
+(defun create-image (x)
+  (prim-create-image x))
+
+(defun save-object (x y)
+  (prim-save-object x y))
+
+(defun load-object (x)
+  (prim-load-object x))
+
+(defun load-file (x)
+  (prim-load-file x))
+
+(defun time (x)
+  (prim-time x))
+
+(defun profile (x)
+  (prim-profile x))
+
+(defun env ()
+  (prim-env))
+
+(defun expand-macro (x)
+  (prim-expand-macro x))
+
+(defun eval (x)
+  (prim-eval x))
 
 (defun exception (excp desc)
   (cons excp desc))
@@ -429,8 +646,8 @@
   (if (any-empty-list lsts)
       (reverse acc)
     (mapcar-internal f 
-                      (map (lambda (x) (cdr x)) lsts)
-                      (cons (apply f (map (lambda (x) (car x)) lsts)) acc))))
+                      (map cdr lsts)
+                      (cons (apply f (map car lsts)) acc))))
 
 (defun mapcar (f &rest lsts)
   (mapcar-internal f lsts nil))
