@@ -946,6 +946,14 @@ OBJECT_PTR primitive_unbind(OBJECT_PTR sym)
     return NIL;
   }
 
+  int package_index = (int)sym >> (SYMBOL_BITS + OBJECT_SHIFT);
+
+  if(package_index == 0)
+  {
+    throw_exception1("ACCESS-VIOLATION", "Cannot unbind CORE package symbol");
+    return NIL;
+  }
+
   if(remove_top_level_sym(sym) == NOT_OK)
   {
     throw_exception1("EXCEPTION", "Error unbinding symbol");
