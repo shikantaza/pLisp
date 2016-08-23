@@ -6073,25 +6073,24 @@ BOOLEAN is_valid_let_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
   }
 
   OBJECT_PTR rest = second(exp);
+
+  while(rest != NIL)
   {
-    while(rest != NIL)
+    if(!IS_CONS_OBJECT(car(rest)))
     {
-      if(!IS_CONS_OBJECT(car(rest)))
-      {
-        if(throw_excp)
-          throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
-        return false;    
-      }
-
-      if(!IS_SYMBOL_OBJECT(CAAR(rest)))
-      {
-        if(throw_excp)
-          throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
-        return false;    
-      }
-
-      rest = cdr(rest);
+      if(throw_excp)
+        throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
+      return false;    
     }
+
+    if(!IS_SYMBOL_OBJECT(CAAR(rest)))
+    {
+      if(throw_excp)
+        throw_exception1("COMPILE-ERROR", "First argument to LET must be a list of (symbol value) bindings");
+      return false;    
+    }
+
+    rest = cdr(rest);
   }
 
   return true;

@@ -914,7 +914,8 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
   {
      if(!IS_CONS_OBJECT(cons_obj))
      {
-       print_object(cons_obj);printf("\n");
+       //print_object(cons_obj);printf("\n");
+       char buf[20];memset(buf, 20, '\0');print_qualified_symbol(cons_obj,buf);printf("%s\n",buf);
        assert(false);
      }
      //return get_heap(cons_obj & POINTER_MASK, 0);
@@ -2979,6 +2980,53 @@ BOOLEAN is_core_package_op(OBJECT_PTR sym)
   return false;
 }
 
+BOOLEAN sym_eq(OBJECT_PTR sym, char *s)
+{
+  if(!IS_SYMBOL_OBJECT(sym))
+    return false;
+
+  return !strcmp(get_symbol_name(sym), s);
+}
+
+BOOLEAN is_valid_binding_exp(OBJECT_PTR exp)
+{
+  if(!IS_CONS_OBJECT(exp))
+    return false;    
+
+  OBJECT_PTR rest = exp;
+
+  while(rest != NIL)
+  {
+    if(!IS_CONS_OBJECT(car(rest)))
+      return false;    
+
+    if(!IS_SYMBOL_OBJECT(CAAR(rest)))
+      return false;    
+
+    rest = cdr(rest);
+  }
+
+  return true;
+}
+
+BOOLEAN is_valid_param_list(OBJECT_PTR exp)
+{
+  if(!IS_CONS_OBJECT(exp))
+    return false;    
+
+  OBJECT_PTR rest = exp;
+
+  while(rest != NIL)
+  {
+    if(!IS_SYMBOL_OBJECT(car(rest)))
+      return false;    
+
+    rest = cdr(rest);
+  }
+
+  return true;
+}
+
 OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
 {
   if(current_package == 0)
@@ -3014,10 +3062,15 @@ OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
   OBJECT_PTR car_exp = car(exp);
   
   if(IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "QUOTE"))
-     return exp;
+  {
+    if(cons_length(exp) == 2 && IS_SYMBOL_OBJECT(second(exp)))
+      return exp;
+    else
+      return cons(car_exp, rewrite_symbols(cdr(exp)));
+  }
   else if((IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LET"))  || 
-     (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LET1")) || 
-     (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LETREC")))
+          (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LET1")) || 
+          (IS_SYMBOL_OBJECT(car_exp) && !strcmp(get_symbol_name(car_exp), "LETREC")))
   {
     OBJECT_PTR rest = second(exp), ret = NIL;
 
@@ -3025,14 +3078,15 @@ OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
     //the LET is a valid construction,
     //as we are processing raw
     //s-expressions from the parser
-    if(IS_CONS_OBJECT(rest))
+    //if(IS_CONS_OBJECT(rest))
+    if(is_valid_binding_exp(rest))
     {
       while(rest != NIL)
       {
-        if(IS_CONS_OBJECT(car(rest)))
+        //if(IS_CONS_OBJECT(car(rest)))
           ret = cons(map(rewrite_symbols, car(rest)), ret);
-        else
-          ret = cons(rewrite_symbols(car(rest)), ret);
+          //else
+          //  ret = cons(rewrite_symbols(car(rest)), ret);
 
         rest = cdr(rest);
       }
@@ -3057,7 +3111,8 @@ OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
   {
     OBJECT_PTR params = second(exp);
 
-    if(IS_CONS_OBJECT(params))
+    //if(IS_CONS_OBJECT(params))
+    if(is_valid_param_list(params))
     {
       if(CDDR(exp) != NIL)
         return concat(3,
@@ -3078,7 +3133,8 @@ OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
   {
     OBJECT_PTR params = third(exp);
 
-    if(IS_CONS_OBJECT(params))
+    //if(IS_CONS_OBJECT(params))
+    if(is_valid_param_list(params))
     {
       if(CDDDR(exp) != NIL)
         return concat(4,
