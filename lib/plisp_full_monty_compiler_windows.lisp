@@ -479,7 +479,7 @@
 (defmacro try (body exception-clause finally-clause)
   (let ((ret (gensym))
         (cc (gensym)))
-    `(call-cc (lambda (,cc)
+    `(call/cc (lambda (,cc)
                 (let ((,ret))
                   (progn (add-exception-handler (lambda ,(cadr exception-clause)
                                                   (,cc (progn ,finally-clause

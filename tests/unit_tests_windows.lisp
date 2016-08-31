@@ -124,7 +124,7 @@
 
 (defun test-atom-21 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-condition 21 (not (atom cont)))))
 ;end atom
 
@@ -149,7 +149,7 @@
 
 (defun test-add-28 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-exception 28 (+ 1 cont) 'invalid-argument)))
 
 (defun test-add-29 ()
@@ -188,7 +188,7 @@
 
 (defun test-sub-39 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-exception 39 (- 1 cont) 'invalid-argument)))
 
 (defun test-sub-40 ()
@@ -227,7 +227,7 @@
 
 (defun test-mult-50 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-exception 50 (* 1 cont) 'invalid-argument)))
 
 (defun test-mult-51 ()
@@ -266,7 +266,7 @@
 
 (defun test-div-61 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-exception 61 (/ 1 cont) 'invalid-argument)))
 
 (defun test-div-62 ()
@@ -329,7 +329,7 @@
 
 (defun test-listp-80 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-condition 80 (not (listp cont)))))
 ;end listp
 
@@ -340,7 +340,7 @@
 
 (defun test-symbol-value-82 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-exception 82 (symbol-value cont) 'invalid-argument)))
 
 (defun test-symbol-value-83 ()
@@ -815,7 +815,7 @@
 (define cont-185 nil)
 
 (defun test-continuationp-185 ()
-  (call-cc (lambda (cc) (set cont-185 cc)))
+  (call/cc (lambda (cc) (set cont-185 cc)))
   (test-condition 185 (continuationp cont-185)))
 ;end predicate functions that test for object type
 
@@ -837,7 +837,7 @@
 
 (defun test-format-191 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-exception 191 (format nil "%d" cont) 'invalid-argument)))
 
 (defun test-format-192 ()
@@ -870,7 +870,7 @@
 
 (defun test-clone-199 ()
   (let ((cont))
-    (call-cc (lambda (cc) (set cont cc)))
+    (call/cc (lambda (cc) (set cont cc)))
     (test-condition 199 (eq cont (clone cont)))))
 ;end clone
 
