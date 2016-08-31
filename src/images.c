@@ -156,6 +156,8 @@ void recreate_native_fn_objects();
 extern void serialize_file_browser_window(FILE *);
 extern void deserialize_file_browser_window(struct JSONObject *);
 
+extern char *default_transcript_text;
+
 struct slot
 {
   OBJECT_PTR ref;
@@ -749,6 +751,8 @@ void create_image(char *file_name)
     fprintf(fp, 
             ", \"workspace\" : [ %d, %d, %d, %d, \"%s\" ]", 
             posx, posy, width, height, text);
+
+    free(workspace_text);
   }
 
   if(serialize_gui_elements && debugger_window)
@@ -811,6 +815,8 @@ void create_image(char *file_name)
     fprintf(fp, 
 	    ", \"transcript\" : [ %d, %d, %d, %d, \"%s\" ]", 
 	    posx, posy, width, height, text);
+
+    free(transcript_text);
     //end transcript window serialization
   }
 
@@ -1446,46 +1452,72 @@ int load_from_image(char *file_name)
 
   struct JSONObject *transcript = JSON_get_object_item(root, "transcript");
 
-  assert(transcript);
-
-  char text[MAX_STRING_LENGTH];
-  memset(text, '\0', MAX_STRING_LENGTH);
-  int ii=0, jj=0, len;
-  char *json_text = JSON_get_array_item(transcript, 4)->strvalue;
-    
-  len = strlen(json_text);
-
-  while(ii<len)
+  if(transcript)
   {
-    if(json_text[ii] != '\\')
+    char text[MAX_STRING_LENGTH];
+    memset(text, '\0', MAX_STRING_LENGTH);
+    int ii=0, jj=0, len;
+    char *json_text = JSON_get_array_item(transcript, 4)->strvalue;
+    
+    len = strlen(json_text);
+
+    while(ii<len)
     {
-      text[jj] = json_text[ii];
-      jj++;
+      if(json_text[ii] != '\\')
+      {
+        text[jj] = json_text[ii];
+        jj++;
+      }
+      ii++;
     }
-    ii++;
-  }
 
-  if(transcript_window)
-  {
-    gtk_window_set_default_size(transcript_window,
-				JSON_get_array_item(transcript, 2)->ivalue,
-				JSON_get_array_item(transcript, 3)->ivalue);
+    if(transcript_window)
+    {
+      gtk_window_set_default_size(transcript_window,
+                                  JSON_get_array_item(transcript, 2)->ivalue,
+                                  JSON_get_array_item(transcript, 3)->ivalue);
 
-    gtk_window_move(transcript_window,
-		    JSON_get_array_item(transcript, 0)->ivalue,
-		    JSON_get_array_item(transcript, 1)->ivalue); 
+      gtk_window_move(transcript_window,
+                      JSON_get_array_item(transcript, 0)->ivalue,
+                      JSON_get_array_item(transcript, 1)->ivalue); 
     
-    gtk_text_buffer_set_text(transcript_buffer, "", 0);
-    print_to_transcript(text);
-    update_transcript_title();
+      gtk_text_buffer_set_text(transcript_buffer, "", 0);
+      print_to_transcript(text);
+      update_transcript_title();
+    }
+    else
+    {
+      create_transcript_window(JSON_get_array_item(transcript, 0)->ivalue,
+                               JSON_get_array_item(transcript, 1)->ivalue,
+                               JSON_get_array_item(transcript, 2)->ivalue,
+                               JSON_get_array_item(transcript, 3)->ivalue,
+                               text);
+    }
   }
   else
   {
-    create_transcript_window(JSON_get_array_item(transcript, 0)->ivalue,
-			     JSON_get_array_item(transcript, 1)->ivalue,
-			     JSON_get_array_item(transcript, 2)->ivalue,
-			     JSON_get_array_item(transcript, 3)->ivalue,
-			     text);
+    if(transcript_window)
+    {
+      gtk_window_set_default_size(transcript_window,
+                                  DEFAULT_TRANSCRIPT_WIDTH,
+                                  DEFAULT_TRANSCRIPT_HEIGHT);
+
+      gtk_window_move(transcript_window,
+                      DEFAULT_TRANSCRIPT_POSX,
+                      DEFAULT_TRANSCRIPT_POSY);
+    
+      gtk_text_buffer_set_text(transcript_buffer, "", 0);
+      print_to_transcript(default_transcript_text);
+      update_transcript_title();      
+    }
+    else
+    {
+      create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
+			       DEFAULT_TRANSCRIPT_POSY,
+			       DEFAULT_TRANSCRIPT_WIDTH,
+			       DEFAULT_TRANSCRIPT_HEIGHT,
+			       default_transcript_text);
+    }
   }
 
   struct JSONObject *callers = JSON_get_object_item(root, "callers");

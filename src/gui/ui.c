@@ -27,7 +27,7 @@
 #include "../hashtable.h"
 #include "../util.h"
 
-#define FONT "Monospace Bold 9"
+#define FONT "DejaVu Sans Mono Bold 9"
 
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;

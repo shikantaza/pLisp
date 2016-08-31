@@ -1570,6 +1570,25 @@ void save_image()
     }
 
     gtk_widget_destroy (dialog);
+
+    if(file_exists(loaded_image_file_name))
+    {
+      GtkWidget *dialog1 = gtk_message_dialog_new ((GtkWindow *)transcript_window,
+                                                   GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                   GTK_MESSAGE_QUESTION,
+                                                   GTK_BUTTONS_YES_NO,
+                                                   "File exists, do you want to overwite it?");
+
+      gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_NO));
+
+      if(gtk_dialog_run(GTK_DIALOG (dialog1)) == GTK_RESPONSE_NO)
+      {
+        gtk_widget_destroy((GtkWidget *)dialog1);
+        g_free(loaded_image_file_name);
+        loaded_image_file_name = NULL;
+        return;
+      }
+    }
   }
 
   sprintf(exp,"(create-image \"%s\")", loaded_image_file_name);
@@ -1917,6 +1936,30 @@ void export_package_gui()
     {
       char *file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 
+      gtk_widget_destroy (dialog);
+
+      if(file_exists(file_name))
+      {
+        GtkWidget *dialog1 = gtk_message_dialog_new ((GtkWindow *)system_browser_window,
+                                                     GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                     GTK_MESSAGE_QUESTION,
+                                                     GTK_BUTTONS_YES_NO,
+                                                     "File exists, do you want to overwite it?");
+
+        gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_NO));
+
+        if(gtk_dialog_run(GTK_DIALOG (dialog1)) == GTK_RESPONSE_NO)
+        {
+          gtk_widget_destroy((GtkWidget *)dialog1);
+          g_free(file_name);
+          return;
+        }
+        else
+        {
+          gtk_widget_destroy((GtkWidget *)dialog1);
+        }
+      }
+
       char buf[MAX_STRING_LENGTH];
       memset(buf, '\0', MAX_STRING_LENGTH);
 
@@ -1926,9 +1969,9 @@ void export_package_gui()
       {
 	gtk_statusbar_push(system_browser_statusbar, 0, "Package exported successfully");
       }
-    }
 
-    gtk_widget_destroy (dialog);
+      g_free(file_name);
+    }
   }
 }
 

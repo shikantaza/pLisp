@@ -28,7 +28,7 @@
 #include "../util.h"
 #include "../json.h"
 
-#define FONT "Monospace Bold 9"
+#define FONT "DejaVu Sans Mono Bold 9"
 
 typedef struct file_name_and_widget
 {

@@ -38,4 +38,6 @@ char *get_file_contents(char *);
 
 char *convert_identifier(char *);
 
+unsigned int file_exists(char *);
+
 #endif

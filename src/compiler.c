@@ -28,12 +28,6 @@
 
 #include "plisp.h"
 
-#define DEFAULT_TRANSCRIPT_POSX 0
-#define DEFAULT_TRANSCRIPT_POSY 350
-
-#define DEFAULT_TRANSCRIPT_WIDTH 600
-#define DEFAULT_TRANSCRIPT_HEIGHT 420
-
 extern GtkWindow *transcript_window;
 
 char *default_transcript_text =  "Copyright 2011-2016 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 char *convert_to_upper_case(char *str)
 {
@@ -274,4 +275,9 @@ char *convert_identifier(char *id)
   s[i+1] = '\0';
 
   return s;
+}
+
+unsigned int file_exists(char *fname)
+{
+  return access(fname, F_OK) != -1;
 }
