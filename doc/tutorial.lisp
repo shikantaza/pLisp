@@ -359,14 +359,14 @@
   (+ 8 x))
 
 ; You can capture the current continuation (for later use)
-; using the CALL-CC special operator. An example will make 
+; using the CALL/CC special operator. An example will make 
 ; things clear:
 
 (define x 0)
 
 (define cont nil)
 
-(progn (call-cc (lambda (cc)
+(progn (call/cc (lambda (cc)
                   (set cont cc)))
        (incf x)
        x)

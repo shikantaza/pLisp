@@ -178,7 +178,7 @@ int get_indents_for_form(char *form)
     return 4;
   else if(!strcmp(up, "LET"))
     return 6;
-  else if(!strcmp(up, "LET1"))
+  else if(!strcmp(up, "LET*"))
     return 7;
 
   return 0;
@@ -1588,6 +1588,8 @@ void save_image()
         loaded_image_file_name = NULL;
         return;
       }
+      else
+        gtk_widget_destroy((GtkWidget *)dialog1);
     }
   }
 
@@ -2248,7 +2250,7 @@ void build_autocomplete_words()
   //loading keywords and special ops
   //only once
 
-  char *keywords_and_special_ops[] = {"let", "letrec", "if", "set", "lambda", "macro", "error", "call-cc", "define", "nil", "atom",
+  char *keywords_and_special_ops[] = {"let", "letrec", "if", "set", "lambda", "macro", "error", "call/cc", "define", "nil", "atom",
                                     "concat",  "quote",  "eq",  "list",  "car", "cdr", "print", "symbol-value", "gensym", "setcar", 
                                     "setcdr", "apply", "symbol", "symbol-name", "format", "clone", "unbind", "newline", "not", 
                                     "return-from", "throw" ,"string", "make-array", "array-get", "array-set", "sub-array", "array-length", 

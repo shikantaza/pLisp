@@ -694,7 +694,7 @@
 (defmacro try (body exception-clause finally-clause)
   (let ((ret (gensym))
         (cc (gensym)))
-    `(call-cc (lambda (,cc)
+    `(call/cc (lambda (,cc)
                 (let ((,ret))
                   (progn (add-exception-handler (lambda ,(cadr exception-clause)
                                                   (,cc (progn ,finally-clause
@@ -708,10 +708,10 @@
   `(try ,body (catch (e) (throw e)) ,finally-clause))
 
 ;let* named let1 as we don't allow asterisks in symbol names (yet)
-(defmacro let1 (specs &rest body)
+(defmacro let* (specs &rest body)
   (if (or (null specs) (eq (length specs) 1))
       `(let ,specs ,@body)
-    `(let (,(car specs)) (let1 ,(cdr specs) ,@body))))
+    `(let (,(car specs)) (let* ,(cdr specs) ,@body))))
 
 (defun array-eq (a1 a2)
   (if (or (not (arrayp a1)) (not (arrayp a2)))
@@ -755,7 +755,7 @@
 ;general-purpose read; returns integer, float or string
 ;depending on what is read from stdin
 (defun read ()
-  (let1 ((i 0) 
+  (let* ((i 0) 
          (f 0.0)
          (c (make-array 100 #\0))
          (ret (call-foreign-function "plisp_read" integer ((i integer-pointer)

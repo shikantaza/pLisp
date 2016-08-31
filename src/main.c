@@ -2222,7 +2222,7 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[43] = strdup("PRIM-ENV");
   packages[CORE_PACKAGE_INDEX].symbols[44] = strdup("IF");
   packages[CORE_PACKAGE_INDEX].symbols[45] = strdup("PRIM-EVAL"); 
-  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("CALL-CC"); 
+  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("CALL/CC"); 
   packages[CORE_PACKAGE_INDEX].symbols[47] = strdup("DEFINE"); 
   packages[CORE_PACKAGE_INDEX].symbols[48] = strdup("RESUME"); 
   packages[CORE_PACKAGE_INDEX].symbols[49] = strdup("BACKTRACE"); 
@@ -2936,7 +2936,7 @@ BOOLEAN is_language_symbol(OBJECT_PTR sym)
 #else
          !strcmp(s, "ERROR")             ||
 #endif
-         !strcmp(s, "CALL-CC")           ||
+         !strcmp(s, "CALL/CC")           ||
          !strcmp(s, "DEFINE")            ||
          !strcmp(s, "T")                 ||
          !strcmp(s, "NIL")               ||

@@ -54,7 +54,7 @@
 <li><a href="#caddr">caddr</a></li><br/>
 <li><a href="#cadr">cadr</a></li><br/>
 <li><a href="#call-foreign-function">call-foreign-function</a></li><br/>
-<li><a href="#call-cc">call-cc</a></li><br/>
+<li><a href="#call/cc">call/cc</a></li><br/>
 <li><a href="#car">car</a></li><br/>
 <li><a href="#cdar">cdar</a></li><br/>
 <li><a href="#cddr">cddr</a></li><br/>
@@ -125,7 +125,7 @@
 <li><a href="#last-n">last-n</a></li><br/>
 <li><a href="#length">length</a></li><br/>
 <li><a href="#let">let</a></li><br/>
-<li><a href="#let1">let1</a></li><br/>
+<li><a href="#let*">let*</a></li><br/>
 <li><a href="#letrec">letrec</a></li><br/>
 <li><a href="#list">list</a></li><br/>
 <li><a href="#listp">listp</a></li><br/>
@@ -480,14 +480,14 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Examples:</b><br/><br/>
 (call-foreign-function some_func void ((ivar integer, fvar float)))<br/><br/><b>See Also:</b> 
 <a href="#load-foreign-library">load-foreign-library</a><hr/>
-<a name="call-cc"></a>
-<i>Special Operator</i><b> call-cc</b><br/><br/>
-<b>Syntax:</b> (call-cc lambda-exp) => result<br/><br/>
+<a name="call/cc"></a>
+<i>Special Operator</i><b> call/cc</b><br/><br/>
+<b>Syntax:</b> (call/cc lambda-exp) => result<br/><br/>
 <b>Arguments:</b> lambda-exp: a form; result: an object<br/><br/>
-<b>Description: call-cc</b> captures the current continuation object and invokes the function object <i>lambda-exp</i> with this continuation object as the parameter<br/><br/>
+<b>Description: call/cc</b> captures the current continuation object and invokes the function object <i>lambda-exp</i> with this continuation object as the parameter<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied.<br/><br/>
 <b>Examples:</b><br/><br/>
-(call-cc (lambda (cc) (set cont cc)))<br/><br/><b>See Also:</b> 
+(call/cc (lambda (cc) (set cont cc)))<br/><br/><b>See Also:</b> 
 <hr/>
 <a name="car"></a>
 <i>Special Operator</i><b> car</b><br/><br/>
@@ -613,7 +613,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Description: continuationp</b> returns T if <i>form</i> evaluates to a continuation object and NIL otherwise<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied<br/><br/>
 <b>Examples:</b><br/><br/>
-(define cont nil) => NIL<br/><br/>(progn (call-cc (lambda (cc) (set cont cc))) (print 1)) =><br/><br/>1<br/><br/>1<br/><br/>(continuationp cont) => T<br/><br/><b>See Also:</b> 
+(define cont nil) => NIL<br/><br/>(progn (call/cc (lambda (cc) (set cont cc))) (print 1)) =><br/><br/>1<br/><br/>1<br/><br/>(continuationp cont) => T<br/><br/><b>See Also:</b> 
 <hr/>
 <a name="create-image"></a>
 <i>Special Operator</i><b> create-image</b><br/><br/>
@@ -956,15 +956,15 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Exceptions: </b>Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings<br/><br/>
 <b>Examples:</b><br/><br/>
 (let ((x 10) (y 20)) (+ x y)) => 30<br/><br/><b>See Also:</b> 
-<a href="#letrec">letrec</a>, <a href="#let1">let1</a><hr/>
-<a name="let1"></a>
-<i>Macro</i><b> let1</b><br/><br/>
-<b>Syntax:</b> (let1 decls &rest body) => result<br/><br/>
+<a href="#letrec">letrec</a>, <a href="#let*">let*</a><hr/>
+<a name="let*"></a>
+<i>Macro</i><b> let*</b><br/><br/>
+<b>Syntax:</b> (let* decls &rest body) => result<br/><br/>
 <b>Arguments:</b> decls: a form; body: rest of the arguments converted into a list; result: an object<br/><br/>
-<b>Description: let1</b> executes <i>body</i> after binding the definitions in <i>decl</i>. let1 is similar to let, but variables in <i>decl</i> can refer to variables declared earlier<br/><br/>
+<b>Description: let*</b> executes <i>body</i> after binding the definitions in <i>decl</i>. let* is similar to let, but variables in <i>decl</i> can refer to variables declared earlier<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings<br/><br/>
 <b>Examples:</b><br/><br/>
-(let1 ((x 10) (y (+ x 10))) (+ x y)) => 30<br/><br/><b>See Also:</b> 
+(let* ((x 10) (y (+ x 10))) (+ x y)) => 30<br/><br/><b>See Also:</b> 
 <a href="#let">let</a>, <a href="#letrec">letrec</a><hr/>
 <a name="letrec"></a>
 <i>Special Operator</i><b> letrec</b><br/><br/>
@@ -974,7 +974,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Exceptions: </b>Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings<br/><br/>
 <b>Examples:</b><br/><br/>
 (letrec ((fact (lambda (n) (if (eq n 0) 1 (* n (fact (- n 1))))))) (fact 10.0)) => 3628800<br/><br/><b>See Also:</b> 
-<a href="#let">let</a>, <a href="#let1">let1</a><hr/>
+<a href="#let">let</a>, <a href="#let*">let*</a><hr/>
 <a name="list"></a>
 <i>Special Operator</i><b> list</b><br/><br/>
 <b>Syntax:</b> (list &rest elems) => result<br/><br/>

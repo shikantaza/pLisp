@@ -261,12 +261,12 @@
   },
 
   {"type" : 2, 
-   "name" : "call-cc", 
-   "syntax" : "(call-cc lambda-exp) => result",
+   "name" : "call/cc", 
+   "syntax" : "(call/cc lambda-exp) => result",
    "args" : "lambda-exp: a form; result: an object",
-   "desc" : "call-cc captures the current continuation object and invokes the function object 'lambda-exp' with this continuation object as the parameter",
+   "desc" : "call/cc captures the current continuation object and invokes the function object 'lambda-exp' with this continuation object as the parameter",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied.",
-   "examples" : [ "(call-cc (lambda (cc) (set cont cc)))" ],
+   "examples" : [ "(call/cc (lambda (cc) (set cont cc)))" ],
    "see-also" : []
   },
 
@@ -406,7 +406,7 @@
    "args" : "form: an object; result: T or NIL",
    "desc" : "continuationp returns T if 'form' evaluates to a continuation object and NIL otherwise",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied",
-   "examples" : [ "(define cont nil) => NIL", "(progn (call-cc (lambda (cc) (set cont cc))) (print 1)) =>", "1", "1", "(continuationp cont) => T" ],
+   "examples" : [ "(define cont nil) => NIL", "(progn (call/cc (lambda (cc) (set cont cc))) (print 1)) =>", "1", "1", "(continuationp cont) => T" ],
    "see-also" : [  ]
   },
 
@@ -787,16 +787,16 @@
    "desc" : "let executes 'body' after binding the definitions in 'decl'",
    "exceptions" : "Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings",
    "examples" : [ "(let ((x 10) (y 20)) (+ x y)) => 30" ],
-   "see-also" : [ "letrec", "let1" ]
+   "see-also" : [ "letrec", "let*" ]
   },
 
   {"type" : 1, 
-   "name" : "let1", 
-   "syntax" : "(let1 decls &rest body) => result",
+   "name" : "let*", 
+   "syntax" : "(let* decls &rest body) => result",
    "args" : "decls: a form; body: rest of the arguments converted into a list; result: an object",
-   "desc" : "let1 executes 'body' after binding the definitions in 'decl'. let1 is similar to let, but variables in 'decl' can refer to variables declared earlier",
+   "desc" : "let* executes 'body' after binding the definitions in 'decl'. let* is similar to let, but variables in 'decl' can refer to variables declared earlier",
    "exceptions" : "Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings",
-   "examples" : [ "(let1 ((x 10) (y (+ x 10))) (+ x y)) => 30" ],
+   "examples" : [ "(let* ((x 10) (y (+ x 10))) (+ x y)) => 30" ],
    "see-also" : [ "let", "letrec" ]
   },
 
@@ -807,7 +807,7 @@
    "desc" : "letrec executes 'body' after binding the definitions in 'decl'; it differs from 'let' in that the bindings can be (mutually) recursive",
    "exceptions" : "Throws an exception of type COMPILER-ERROR if the required number of parameters are not supplied or if the first parameter is not a list of (symbol value) bindings",
    "examples" : [ "(letrec ((fact (lambda (n) (if (eq n 0) 1 (* n (fact (- n 1))))))) (fact 10.0)) => 3628800" ],
-   "see-also" : [ "let", "let1" ]
+   "see-also" : [ "let", "let*" ]
   },
 
   {"type" : 2, 

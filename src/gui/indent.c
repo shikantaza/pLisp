@@ -237,7 +237,7 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
             form_type = LAMBDA;
           else if(!strncmp(tempstr, "MACRO", (i-pos)))
             form_type = MACRO;
-          else if(!strncmp(tempstr, "LET1", (i-pos)))
+          else if(!strncmp(tempstr, "LET*", (i-pos)))
             form_type = LET1;
           else if(!strncmp(tempstr, "DOLIST", (i-pos)))
             form_type = DOLIST;

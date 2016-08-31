@@ -5781,8 +5781,8 @@ BOOLEAN is_continuation_object(OBJECT_PTR obj)
 
 BOOLEAN is_core_symbol(char *s)
 {
-  char *core_symbols[77] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET1", "LETREC", "BREAK", "ABORT", "RESUME",
-                            "IF", "CALL-CC", "RETURN-FROM", "CATCH", "THROW",  "ATOM", "EQ", "CAR", "CDR",
+  char *core_symbols[77] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET*", "LETREC", "BREAK", "ABORT", "RESUME",
+                            "IF", "CALL/CC", "RETURN-FROM", "CATCH", "THROW",  "ATOM", "EQ", "CAR", "CDR",
                             "CONS", "+", "-", "*", "/", "PROGN", "PRINT", "LIST", "LISTP", "SYMBOL-VALUE", "GENSYM",
                             "SETCAR", "SETCDR", "CREATE-PACKAGE", "IN-PACKAGE", "EXPAND-MACRO", "APPLY",
                             "STRING", "MAKE-ARRAY", "ARRAY-GET", "ARRAY-SET", "SUB-ARRAY", "ARRAY-LENGTH", "PRINT-STRING", "CREATE-IMAGE",
@@ -5848,8 +5848,8 @@ char *get_signature_for_core_symbol(char *symbol_name)
     ret = "(error str)";
   else if(!strcmp(s,"LET"))
     ret = "(let decls (&rest body))";
-  else if(!strcmp(s,"LET1"))
-    ret = "(let1 decls (&rest body))";
+  else if(!strcmp(s,"LET*"))
+    ret = "(let* decls (&rest body))";
   else if(!strcmp(s,"LETREC"))
     ret = "(letrec decls (&rest body))";
   else if(!strcmp(s,"BREAK"))
@@ -5860,8 +5860,8 @@ char *get_signature_for_core_symbol(char *symbol_name)
   ret = "(resume)";
   else if(!strcmp(s,"IF"))
     ret = "(if cond then else)";
-  else if(!strcmp(s,"CALL-CC"))
-    ret = "(call-cc lambda-exp)";
+  else if(!strcmp(s,"CALL/CC"))
+    ret = "(call/cc lambda-exp)";
   else if(!strcmp(s,"RETURN-FROM"))
     ret = "(return-from fn ret)";
   else if(!strcmp(s,"CATCH"))
@@ -6103,7 +6103,7 @@ BOOLEAN is_valid_let1_exp(OBJECT_PTR exp, BOOLEAN throw_excp)
   if(len < 3)
   {
     if(throw_excp)
-      throw_exception1("COMPILE-ERROR", "LET1 requires at least two parameters");
+      throw_exception1("COMPILE-ERROR", "LET* requires at least two parameters");
     return false;
   }
 
