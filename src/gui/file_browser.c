@@ -409,15 +409,37 @@ void save_file()
     if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
     {
       current_file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+
+      gtk_widget_destroy (dialog);
+
+      if(file_exists(current_file_name))
+      {
+        GtkWidget *dialog1 = gtk_message_dialog_new ((GtkWindow *)file_browser_window,
+                                                     GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                     GTK_MESSAGE_QUESTION,
+                                                     GTK_BUTTONS_YES_NO,
+                                                     "File exists, do you want to overwite it?");
+
+        gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog1), GTK_RESPONSE_NO));
+
+        if(gtk_dialog_run(GTK_DIALOG (dialog1)) == GTK_RESPONSE_NO)
+        {
+          gtk_widget_destroy((GtkWidget *)dialog1);
+          g_free(current_file_name);
+          current_file_name = "";
+          return;
+        }
+        else
+        {
+          gtk_widget_destroy((GtkWidget *)dialog1);
+        }
+      }
+
       //gint page_no = gtk_notebook_get_current_page(fb_notebook);
       gtk_notebook_set_tab_label_text(fb_notebook, gtk_container_get_focus_child(fb_notebook), current_file_name);
-      gtk_widget_destroy (dialog);
     }
     else
-    {
-      gtk_widget_destroy (dialog);
       return;
-    }
   }
 
   /* FILE *out = fopen(current_file_name, "w"); */

@@ -5967,7 +5967,7 @@ char *get_signature_for_core_symbol(char *symbol_name)
   else if(!strcmp(s,"UNBIND"))
     ret = "(unbind sym)";
   else if(!strcmp(s,"NEWLINE")) 
-    ret = "(newline)";
+    ret = "(newline fd)";
   else if(!strcmp(s,"TIME"))
     ret = "(time exp)";
   else if(!strcmp(s,"PROFILE")) 
