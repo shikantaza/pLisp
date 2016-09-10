@@ -185,6 +185,7 @@ void find_next_occurrence()
 
   if(gtk_text_iter_forward_search(&last_find_iter, search_string, 
                                   GTK_TEXT_SEARCH_TEXT_ONLY | 
+                                  GTK_TEXT_SEARCH_CASE_INSENSITIVE |
                                   GTK_TEXT_SEARCH_VISIBLE_ONLY, 
                                   &start_match, &end_match, NULL))
   {
@@ -635,6 +636,7 @@ void find_text()
 
     if(gtk_text_iter_forward_search(&last_find_iter, search_string, 
                                     GTK_TEXT_SEARCH_TEXT_ONLY | 
+                                    GTK_TEXT_SEARCH_CASE_INSENSITIVE |
                                     GTK_TEXT_SEARCH_VISIBLE_ONLY, 
                                     &start_match, &end_match, NULL))
     {
