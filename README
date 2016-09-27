@@ -48,7 +48,7 @@ You will need GCC and the make utility to install pLisp. In addition, the follow
 * Flex and Bison
 * The GTK+ 3.0 (http://www.gtk.org/) development package (libgtk-3-dev)
 * The GtkSourceview3 (https://wiki.gnome.org/Projects/GtkSourceView) development package (libgtksourceview-3.0-dev)
-* The Tiny C Compiler (http://bellard.org/tcc/) development package (libtcc-dev)
+* Tiny C Compiler (http://bellard.org/tcc/) (tcc and libtcc-dev)
 * The libffi (https://sourceware.org/libffi/) package (libffi6)
 
 All these packages can be installed using the package manager that comes with your distro.
