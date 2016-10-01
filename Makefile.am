@@ -42,7 +42,7 @@ libplisp_la_LDFLAGS = -version-info 0:0:0
 libtest_la_SOURCES = src/test_so.c
 libtest_la_LDFLAGS = -version-info 0:0:0
 
-pkgdata_DATA = plisp.image data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
+pkgdata_DATA = data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
 
 dist_pkgdata_DATA = ${pkgdata_DATA}
 
