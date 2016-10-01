@@ -20,13 +20,6 @@
 
 ; Welcome to the pLisp tutorial!
 
-; If you're viewing this tutorial from within pLisp,
-; you've either started pLisp for the first time
-; after installation, in which case the tutorial
-; would be displayed in the Workspace window, or you are 
-; in the File Browser, visiting the file 'tutorial.lisp' 
-; from the 'doc' directory.
-
 ; A few things before we get started with the tutorial:
 
 ; a) Refer to the user manual in the 'doc' directory for

@@ -45,7 +45,16 @@ char *default_workspace_text =  "; This is the workspace; type pLisp expressions
                                 "; and press Ctrl+Enter when the expression is complete\n"
                                 "; (indicated by the highlighted matching parens).\n"
                                 "; To display help information about a core symbol or\n" 
-                                "; operator, press F1 when the focus is on that symbol.\n";
+                                "; operator, press F1 when the focus is on that symbol.\n"
+                                "; If you are new to pLisp (or Lisp), please visit the file\n"
+                                "; tutorial.lisp from the File Browser for a quick overview\n"
+                                "; of the language and its features. This file is present in\n"
+#ifdef WIN32
+                                "; in the 'doc' directory of your pLisp installation.\n";
+#else
+                                "; in the 'doc' directory of your pLisp installation\n"
+                                "; (typically /usr/local/share/doc/plisp).\n";
+#endif
 
 
 extern OBJECT_PTR CAAR(OBJECT_PTR);

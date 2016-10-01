@@ -581,7 +581,17 @@ int main(int argc, char **argv)
     }
     else
     {
-      fprintf(stdout, "Default image file plisp.image not found\n");
+      fprintf(stdout, "-----------------------------INFO------------------------------\n");
+      fprintf(stdout, "Default image file 'plisp.image' not found in the current\n");
+      fprintf(stdout, "directory. Working with an image is faster and more convenient,\n");
+      fprintf(stdout, "as the core library doesn't have to be recompiled each time\n");
+      fprintf(stdout, "plisp is invoked. You can create the image file by choosing\n");
+      fprintf(stdout, "the 'Save Image' option in the Transcript window, and invoking\n");
+      fprintf(stdout, "plisp as 'plisp -i <image file>' thereafter. If you name your\n");
+      fprintf(stdout, "image file as 'plisp.image', you do not have to specify it\n");
+      fprintf(stdout, "during startup; pLisp will use this file automatically.\n");
+      fprintf(stdout, "---------------------------------------------------------------\n\n");
+
       image_mode = false;
       raw_mode = true;
     }
