@@ -98,7 +98,7 @@ extern void build_autocomplete_words();
 
 extern BOOLEAN is_continuation_object(OBJECT_PTR);
 
-extern OBJECT_PTR expand_macro_full(OBJECT_PTR, boolean);
+extern OBJECT_PTR expand_macro_full(OBJECT_PTR, BOOLEAN);
 
 extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
