@@ -584,10 +584,10 @@
   (test-exception 137 (load-foreign-library 1) 'invalid-argument))
 
 (defun test-load-foreign-library-138 ()
-  (test-happy-case 138 (load-foreign-library "libtest.so")))
+  (test-happy-case 138 (load-foreign-library "libtest")))
 
 (defun test-load-foreign-library-139 ()
-  (test-happy-case 139 (load-foreign-library (string "libtest.so"))))
+  (test-happy-case 139 (load-foreign-library (string "libtest"))))
 ;end load-foreign-library
 
 ;call-foreign-function

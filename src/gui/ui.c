@@ -27,7 +27,11 @@
 #include "../hashtable.h"
 #include "../util.h"
 
+#ifndef __APPLE__
 #define FONT "DejaVu Sans Mono Bold 9"
+#else
+#define FONT "Menlo Bold 12"
+#endif
 
 GtkTextBuffer *transcript_buffer;
 GtkTextBuffer *workspace_buffer;
@@ -78,8 +82,6 @@ extern OBJECT_PTR NIL;
 extern OBJECT_PTR LAMBDA;
 
 extern hashtable_t *profiling_tab;
-
-extern unsigned int POINTER_MASK;
 
 /* event handler function definitions begin */
 extern gboolean delete_event(GtkWidget *,
@@ -144,6 +146,13 @@ GtkSourceBuffer *system_browser_source_buffer;
 
 extern unsigned nof_global_vars;
 extern global_var_mapping_t *top_level_symbols;
+
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR);
+
+extern OBJECT_PTR CADR(OBJECT_PTR);
 
 OBJECT_PTR callers_sym;
 
@@ -1055,7 +1064,7 @@ void populate_frames_list(GtkTreeView *list)
 
   while(rest != NIL)
   {
-    uintptr_t frame = car(rest) & POINTER_MASK;
+    uintptr_t frame = extract_ptr(car(rest));
 
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);

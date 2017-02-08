@@ -28,6 +28,8 @@
 
 #include "plisp.h"
 
+#include "memory.h"
+
 extern GtkWindow *transcript_window;
 
 char *default_transcript_text =  "Copyright 2011-2016 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
@@ -135,6 +137,8 @@ extern OBJECT_PTR idclo;
 extern OBJECT_PTR identity_function(OBJECT_PTR, OBJECT_PTR);
 
 extern void build_autocomplete_words();
+
+extern OBJECT_PTR nth1(OBJECT_PTR, OBJECT_PTR);
 
 OBJECT_PTR compile_loop(OBJECT_PTR args, OBJECT_PTR c, OBJECT_PTR next)
 {
@@ -414,7 +418,7 @@ OBJECT_PTR compile(OBJECT_PTR exp, OBJECT_PTR next)
               reg_current_value_rib = cons(car(args), NIL);
             else
             {
-              uintptr_t ptr = (last_cell(reg_current_value_rib) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+              uintptr_t ptr = extract_ptr(last_cell(reg_current_value_rib));
               set_heap(ptr, 1, 
                        cons(car(args), NIL));         
             }

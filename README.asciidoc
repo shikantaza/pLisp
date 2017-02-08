@@ -49,7 +49,7 @@ My current objective with pLisp is for it to serve as a) a friendly Lisp environ
 
 What platforms is pLisp available on?
 -------------------------------------
-pLisp should work in any POSIX-compliant system (including Cygwin), however it has been tested mainly on Linux. It's also available for Windows.
+pLisp should work in any POSIX-compliant system (including Cygwin), however it has been tested mainly on Linux. It's also available for OS X and Windows.
 
 What about the license?
 -----------------------
@@ -72,6 +72,27 @@ You will need GCC and the make utility to install pLisp. In addition, the follow
 * The link:https://sourceware.org/libffi/[libffi] package (libffi6)
 
 All these packages can be installed using the package manager that comes with your distro.
+
+OS X
+~~~~
+
+* Install pkg-config using link:http://brew.sh Homebrew
+
+* Install GTK3 using the link:https://wiki.gnome.org/Projects/GTK+/OSX/Building jhbuild system:
+
+    ./gtk-osx-build-setup.sh
+    jhbuild bootstrap
+    jhbuild build meta-gtk-osx-bootstrap meta-gtk-osx-gtk3
+
+* Install GtkSourceView3, again using jhbuild:
+
+    jhbuild build gtksourceview3
+
+* Install the  link:http://bellard.org/tcc/[Tiny C Compiler]. You will have to do it the './configure; make; sudo make install' way.
+
+* Install pLisp by entering into a jhbuild shell and typing './configure', 'make' and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
+
+Note: tcc on OS X throws up a lot of warnings when running pLisp. These warnings can be ignored. One option is to redirect them to /dev/null (plisp 2>/dev/null). I'm working on this.
 
 Windows
 ~~~~~~~

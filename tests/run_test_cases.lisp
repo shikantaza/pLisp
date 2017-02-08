@@ -329,7 +329,7 @@
 
 (test-call-foreign-function-150)
 
-(load-foreign-library "libtest.so")
+(load-foreign-library "libtest")
 
 (test-call-foreign-function-151)
 

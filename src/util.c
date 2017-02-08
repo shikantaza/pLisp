@@ -23,6 +23,12 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
 char *convert_to_upper_case(char *str)
 {
   char *ptr = NULL;
@@ -280,4 +286,41 @@ char *convert_identifier(char *id)
 unsigned int file_exists(char *fname)
 {
   return access(fname, F_OK) != -1;
+}
+
+void *open_library(char *fname)
+{
+  void *ret;
+  
+#ifdef WIN32
+  ret= LoadLibrary(fname);
+#else
+#ifdef __APPLE__
+  unsigned int len = strlen(fname) + 7; //six characters for ".dylib"
+
+  char *buf = (char *)malloc(len); 
+  memset(buf,'\0', len);
+
+  strcat(buf, fname);
+  strcat(buf, ".dylib");
+
+  ret = dlopen(buf, RTLD_LAZY);
+
+  free(buf);
+#else
+  unsigned int len = strlen(fname) + 4; //three characters for ".so"
+
+  char *buf = (char *)malloc(len); 
+  memset(buf,'\0', len);
+
+  strcat(buf, fname);
+  strcat(buf, ".so");
+
+  ret = dlopen(buf, RTLD_LAZY);
+
+  free(buf);  
+#endif
+#endif
+  
+  return ret;
 }

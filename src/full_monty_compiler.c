@@ -28,6 +28,8 @@
 #include "util.h"
 #include "libtcc.h"
 
+#include "memory.h"
+
 #define MAX_C_SOURCE_SIZE 524288
 
 enum {WHITE, GREY, BLACK};
@@ -313,12 +315,40 @@ extern add_to_autocomplete_list(char *);
 extern close_debugger_window();
 
 extern void insert_node(unsigned int, OBJECT_PTR);
-extern gc(BOOLEAN, BOOLEAN);
+extern void gc(BOOLEAN, BOOLEAN);
 extern BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
 
 extern double get_float_value(OBJECT_PTR);
 
 extern OBJECT_PTR rewrite_symbols(OBJECT_PTR);
+
+extern uintptr_t object_alloc(int, int);
+extern OBJECT_PTR CDDR(OBJECT_PTR);
+extern OBJECT_PTR second(OBJECT_PTR);
+extern OBJECT_PTR get_heap(uintptr_t, unsigned int);
+extern int cons_length(OBJECT_PTR);
+
+extern BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR);
+
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR);
+
+extern OBJECT_PTR CAAR(OBJECT_PTR);
+
+extern OBJECT_PTR get_string_object(char *);
+
+extern void print_object(OBJECT_PTR);
+
 //end of external functions
 
 //forward declarations
@@ -414,6 +444,31 @@ OBJECT_PTR resume_continuation(OBJECT_PTR);
 OBJECT_PTR abort_evaluation();
 
 BOOLEAN exp_contains_comma_comma_at(OBJECT_PTR);
+
+BOOLEAN primop(OBJECT_PTR);
+BOOLEAN is_vararg_primop(OBJECT_PTR);
+
+BOOLEAN arithop(OBJECT_PTR);
+BOOLEAN core_op(OBJECT_PTR);
+BOOLEAN string_array_op(OBJECT_PTR);
+BOOLEAN predicate_op(OBJECT_PTR);
+BOOLEAN ffi_op(OBJECT_PTR);
+BOOLEAN package_op(OBJECT_PTR);
+BOOLEAN serialization_op(OBJECT_PTR);
+BOOLEAN interpreter_specific_op(OBJECT_PTR);
+BOOLEAN debug_op(OBJECT_PTR);
+BOOLEAN perf_op(OBJECT_PTR);
+
+BOOLEAN is_valid_expression(OBJECT_PTR);
+
+BOOLEAN is_valid_lambda_exp(OBJECT_PTR);
+BOOLEAN is_valid_macro_exp(OBJECT_PTR);
+BOOLEAN is_valid_let_exp(OBJECT_PTR, BOOLEAN);
+BOOLEAN is_valid_let1_exp(OBJECT_PTR, BOOLEAN);
+BOOLEAN is_valid_letrec_exp(OBJECT_PTR, BOOLEAN);
+
+unsigned int build_fn_prototypes(char *, unsigned int);
+
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -473,10 +528,10 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
   while(rest != NIL)
   {
     //if(equal(obj, car(rest)))
-    //if(equal(obj, *((unsigned int *)(rest & POINTER_MASK))))
+    //if(equal(obj, *((unsigned int *)extract_ptr(rest))))
     //no need for equal() since compilation only involves 
     //comparing symbols
-    //if(obj == *((unsigned int *)(rest & POINTER_MASK))) 
+    //if(obj == *((unsigned int *)extract_ptr(rest))) 
     //if(obj == *((unsigned int *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
     //  return true;
 
@@ -485,12 +540,12 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
     //within the compiler, where package names don't matter
     if(IS_SYMBOL_OBJECT(obj) && IS_SYMBOL_OBJECT(car(rest)) && !strcmp(get_symbol_name(obj), get_symbol_name(car(rest))))
       return true;
-    else if(obj == *((OBJECT_PTR *)((rest >> OBJECT_SHIFT) << OBJECT_SHIFT))) 
+    else if(obj == *((OBJECT_PTR *)extract_ptr(rest))) 
       return true;
 
     //rest = cdr(rest);
-    //rest = *((unsigned int *)(rest & POINTER_MASK) + 1);
-    rest = *((OBJECT_PTR *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT  ) + 1);
+    //rest = *((unsigned int *)extract_ptr(rest) + 1);
+    rest = *((OBJECT_PTR *)(  extract_ptr(rest)  ) + 1);
   }
 
   return false;
@@ -511,7 +566,7 @@ OBJECT_PTR union1(unsigned int count, ...)
 
   for(i=0; i<count; i++)
   {
-    rest = (OBJECT_PTR)va_arg(ap, int);
+    rest = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     while(rest != NIL)
     {
@@ -522,7 +577,7 @@ OBJECT_PTR union1(unsigned int count, ...)
         /*   ret = cons(clone_object(obj), NIL); */
         /* else */
         /* { */
-        /*   uintptr_t ptr = last_cell(ret) & POINTER_MASK; */
+        /*   uintptr_t ptr = extract_ptr(last_cell(ret)); */
         /*   set_heap(ptr, 1, cons(clone_object(obj), NIL)); */
         /* } */
         ret = cons(clone_object(obj), ret);
@@ -558,7 +613,7 @@ OBJECT_PTR union_single_list(OBJECT_PTR lst)
           ret = cons(clone_object(obj), NIL);
         else
         {
-          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          uintptr_t ptr = extract_ptr(last_cell(ret));
           set_heap(ptr, 1, cons(clone_object(obj), NIL));
         }
       }
@@ -587,7 +642,7 @@ OBJECT_PTR difference(OBJECT_PTR lst1, OBJECT_PTR lst2)
       /*   ret = cons(clone_object(obj), NIL); */
       /* else */
       /* { */
-      /*   uintptr_t ptr = last_cell(ret) & POINTER_MASK; */
+      /*   uintptr_t ptr = extract_ptr(last_cell(ret)); */
       /*   set_heap(ptr, 1, cons(clone_object(obj), NIL)); */
       /* } */
       //ret = cons(clone_object(obj), ret);
@@ -598,7 +653,7 @@ OBJECT_PTR difference(OBJECT_PTR lst1, OBJECT_PTR lst2)
       }
       else
       {
-        uintptr_t ptr = last & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last);
         OBJECT_PTR temp = cons(clone_object(obj), NIL);
         set_heap(ptr, 1, temp);
         last = temp;
@@ -625,7 +680,7 @@ OBJECT_PTR map(OBJECT_PTR (*f)(OBJECT_PTR), OBJECT_PTR lst)
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -653,7 +708,7 @@ OBJECT_PTR map2(OBJECT_PTR (*f)(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR),
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -680,7 +735,7 @@ OBJECT_PTR map2_fn(OBJECT_PTR (*f)(OBJECT_PTR,
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -701,7 +756,7 @@ OBJECT_PTR concat(unsigned int count, ...)
 
   va_start(ap, count);
 
-  lst = (OBJECT_PTR)va_arg(ap, int);
+  lst = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
   if(!IS_CONS_OBJECT(lst) && lst != NIL)
   {
@@ -717,7 +772,7 @@ OBJECT_PTR concat(unsigned int count, ...)
     if(start > count)
       return NIL;
 
-    lst = (OBJECT_PTR)va_arg(ap, int);
+    lst = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(!IS_CONS_OBJECT(lst) && lst != NIL)
     {
@@ -730,7 +785,7 @@ OBJECT_PTR concat(unsigned int count, ...)
 
   for(i=start; i<count; i++)
   {
-    lst = (OBJECT_PTR)va_arg(ap, int);
+    lst = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(lst == NIL)
       continue;
@@ -745,7 +800,7 @@ OBJECT_PTR concat(unsigned int count, ...)
 
     while(rest != NIL)
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(clone_object(car(rest)), NIL));
 
       rest = cdr(rest);
@@ -848,7 +903,7 @@ OBJECT_PTR intersection(OBJECT_PTR lst1, OBJECT_PTR lst2)
         ret = cons(clone_object(obj), NIL);
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(clone_object(obj), NIL));        
       }
     }
@@ -939,7 +994,7 @@ OBJECT_PTR map2_fn1(OBJECT_PTR (*f)(OBJECT_PTR,
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -1242,7 +1297,7 @@ OBJECT_PTR mapcar(OBJECT_PTR (*f)(OBJECT_PTR,OBJECT_PTR),
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -1275,7 +1330,7 @@ OBJECT_PTR map2_for_ren_transform(OBJECT_PTR (*f)(OBJECT_PTR, binding_env_t *, O
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -1298,7 +1353,7 @@ OBJECT_PTR pair( OBJECT_PTR list1,
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -1385,7 +1440,7 @@ OBJECT_PTR flatten(OBJECT_PTR lst)
           ret = cons(car(rest1), NIL);
         else
         {
-          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          uintptr_t ptr = extract_ptr(last_cell(ret));
           set_heap(ptr, 1, cons(car(rest1), NIL));        
         }
 
@@ -1398,7 +1453,7 @@ OBJECT_PTR flatten(OBJECT_PTR lst)
         ret = cons(car(rest), NIL);
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(car(rest), NIL));        
       }
     }
@@ -1870,6 +1925,8 @@ OBJECT_PTR cps_transform_error(OBJECT_PTR exp)
 #endif
 }
 
+extern OBJECT_PTR CDDDR(OBJECT_PTR);
+
 OBJECT_PTR closure_conv_transform_let(OBJECT_PTR exp)
 {
   OBJECT_PTR exp1 = closure_conv_transform(second(first(second(exp))));
@@ -2007,7 +2064,7 @@ OBJECT_PTR get_top_level_symbols()
     /*   ret = cons(val, NIL); */
     /* else */
     /* { */
-    /*   uintptr_t ptr = last_cell(ret) & POINTER_MASK; */
+    /*   uintptr_t ptr = extract_ptr(last_cell(ret)); */
     /*   set_heap(ptr, 1, cons(val, NIL));         */
     /* } */
     ret = cons(val, ret);
@@ -2212,13 +2269,13 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
       else
         printf("%s\n", buf);
 
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       //set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));
       set_heap(ptr, 1, cons(NIL, NIL));
     }
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(out1, NIL));        
     }
 
@@ -2226,10 +2283,13 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
     pos++;
   }
 
-  ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
+  ret = extract_ptr(ret) + FUNCTION2_TAG;
 
-  nativefn tt = extract_native_fn(ret);
-
+  OBJECT_PTR nfo = (OBJECT_PTR)*((OBJECT_PTR *)extract_ptr(ret));
+  
+  //nativefn tt = extract_native_fn(ret);
+  nativefn tt = *((nativefn *)extract_ptr(nfo));
+  
   if(!tt)
     return NIL;
 
@@ -2243,7 +2303,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   can_do_gc = true;
 
   if(macro_flag)
-    ret1 = ((ret1 >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
+    ret1 = extract_ptr(ret1) + MACRO2_TAG;
 
   if(!IS_FUNCTION2_OBJECT(ret1) && !IS_MACRO2_OBJECT(ret1))
     return ret1;
@@ -2422,7 +2482,7 @@ OBJECT_PTR range(int start, int end, int step)
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));        
     }
 
@@ -2438,8 +2498,9 @@ OBJECT_PTR nth1(OBJECT_PTR n, OBJECT_PTR lst)
 
   assert(IS_INTEGER_OBJECT(n));
 
-  int lst1 = IS_CONS_OBJECT(lst) ? lst : ((lst >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
-
+  OBJECT_PTR lst1 = IS_CONS_OBJECT(lst) ? lst : extract_ptr(lst) + CONS_TAG;
+  //OBJECT_PTR lst1 = lst;
+  
   int i_val = get_int_value(n);
 
   if(i_val < 0 || i_val >= cons_length(lst1))
@@ -2588,7 +2649,7 @@ OBJECT_PTR butlast(OBJECT_PTR lst)
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));      
     }
 
@@ -2622,7 +2683,7 @@ OBJECT_PTR backquote2(OBJECT_PTR exp)
 
   while(rest != NIL)
   {
-    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(last_cell(ret));
     set_heap(ptr, 1, cons(car(rest), NIL));
     
     rest = cdr(rest);
@@ -2974,6 +3035,8 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   unsigned int len = 0;
 
+  /* code moved to separate function
+  
 //Tiny C Compiler has trouble finding stdint.h in windows
 #ifdef WIN32
   len += sprintf(buf+len, "typedef unsigned int uintptr_t;\n");
@@ -2982,6 +3045,20 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 #endif
   len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
   len += sprintf(buf+len, "nativefn extract_native_fn(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t convert_int_to_object(int);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_list(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t create_fn_closure(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t nth1(uintptr_t, uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_car(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_cdr(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t cons(uintptr_t, uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_add(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_gt(uintptr_t, uintptr_t);\n");
+  
+  end of code moved to separate function */
 
   len += sprintf(buf+len, "uintptr_t %s(", fname);
 
@@ -3011,6 +3088,21 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
   //uncomment for debugging
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
 
+  //uncomment for debugging
+  /* rest = params; */
+
+  /* while(rest != NIL) */
+  /* { */
+  /*   char *pname = extract_variable_string(car(rest), serialize_flag); */
+
+  /*   len += sprintf(buf+len, "printf(\"%%p\\n\", %s);\n", pname); */
+    
+  /*   rest = cdr(rest); */
+  /*   free(pname); */
+  /* } */
+  //end debugging code
+
+  
   //GC enhancement code begin
   rest = params;
 
@@ -3122,7 +3214,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
 
       if(IS_CONS_OBJECT(second(car(rest))) && first(second(car(rest))) == EXTRACT_NATIVE_FN)
       {
-        len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
+        //len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
         len += sprintf(buf+len, "nativefn %s = (nativefn)", var);
         len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
       }
@@ -3130,6 +3222,9 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       {
         len += sprintf(buf+len, "uintptr_t %s = (uintptr_t)", var);
         len += build_c_fragment(CADR(car(rest)), buf+len, false, serialize_flag);
+
+        //uncomment for debugging
+        //len += sprintf(buf+len, "printf(\"%%p\\n\", %s);\n", var);
       }
 
       rest = cdr(rest);
@@ -3255,16 +3350,18 @@ nativefn extract_native_fn(OBJECT_PTR closure)
     throw_exception1("COMPILE-ERROR", "Unmet dependencies exist for function/macro");
     return NULL;
   }
-
-  OBJECT_PTR nativefn_obj = get_heap(closure & POINTER_MASK, 0);
-
+  
+  //OBJECT_PTR nativefn_obj = get_heap(extract_ptr(closure), 0);
+  OBJECT_PTR nativefn_obj = (OBJECT_PTR)*((OBJECT_PTR *)extract_ptr(closure));
+  
   if(!IS_NATIVE_FN_OBJECT(nativefn_obj))
   {
     print_object(nativefn_obj);
     assert(false);
   }
 
-  nativefn nf = get_nativefn_value(nativefn_obj);
+  //nativefn nf = get_nativefn_value(nativefn_obj);
+  nativefn nf = *((nativefn *)(extract_ptr(nativefn_obj)));
 
   if(!nf)
   {
@@ -3460,7 +3557,7 @@ nativefn get_nativefn_value(OBJECT_PTR obj)
   if(!IS_NATIVE_FN_OBJECT(obj))
     assert(false);
 
-  return *((nativefn *)(obj & POINTER_MASK));
+  return *((nativefn *)extract_ptr(obj));
 }
 
 OBJECT_PTR create_closure(unsigned int count, BOOLEAN function, OBJECT_PTR fnobj, ...)
@@ -3483,12 +3580,12 @@ OBJECT_PTR create_closure(unsigned int count, BOOLEAN function, OBJECT_PTR fnobj
 
   for(i=0; i<count; i++)
   {
-    closed_object = (OBJECT_PTR)va_arg(ap, int);
-    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    closed_object = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
+    uintptr_t ptr = extract_ptr(last_cell(ret));
     set_heap(ptr, 1, cons(closed_object, NIL));
   }
 
-  ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + (function ? FUNCTION2_TAG : MACRO2_TAG);
+  ret = extract_ptr(ret) + (function ? FUNCTION2_TAG : MACRO2_TAG);
 
   return ret;
 }
@@ -3524,15 +3621,15 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
 
   for(i=0; i<count; i++)
   {
-    closed_object = (OBJECT_PTR)va_arg(ap, int);
-    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    closed_object = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
+    uintptr_t ptr = extract_ptr(last_cell(ret));
     set_heap(ptr, 1, cons(closed_object, NIL));
   }
 
-  ret = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
+  ret = extract_ptr(ret) + FUNCTION2_TAG;
 
   assert(IS_FUNCTION2_OBJECT(ret));
-
+  
   return ret;  
 }
 
@@ -3546,6 +3643,8 @@ TCCState *compile_functions(OBJECT_PTR lambda_forms)
   TCCState *tcc_state1 = create_tcc_state1();
   assert(tcc_state1);
 
+  len += build_fn_prototypes(str+len, len);
+  
   OBJECT_PTR rest = lambda_forms;
 
   while(rest != NIL)
@@ -3938,7 +4037,7 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp, BOOLEAN full)
     if(!retval && IS_MACRO2_OBJECT(car(out)))
     {
       OBJECT_PTR temp1 = cons(sym_to_use, NIL);
-      uintptr_t ptr = last_cell(temp1) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(temp1));
       set_heap(ptr, 1, cdr(exp));        
 
       OBJECT_PTR temp2 = expand_bodies(handle_and_rest_applications_for_macros(temp1));
@@ -4078,16 +4177,20 @@ int update_references(OBJECT_PTR sym, OBJECT_PTR new_val)
 
         assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
 
+        //if(clo == new_val)
+        //  continue;
+        
         //print_object(clo);printf("\n");
         int pos = top_level_symbols[i].references[j].pos;
 
         OBJECT_PTR rest = cons_equivalent(clo);
+        
         int k=0;
 
         for(k=0; k<pos; k++)
           rest = cdr(rest);
 
-        set_heap(car(rest) & POINTER_MASK, 0, new_val);
+        set_heap(extract_ptr(car(rest)), 0, new_val);
       }
 
       return 0;
@@ -4191,7 +4294,7 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
       {
         int pos = global_unmet_dependencies[i].pos;
 
-        OBJECT_PTR cons_eqiv = ((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+        OBJECT_PTR cons_eqiv = extract_ptr(clo) + CONS_TAG;
 
         OBJECT_PTR rest = cons_eqiv;
         int k=0;
@@ -4199,7 +4302,7 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
         for(k=0; k<pos; k++)
           rest = cdr(rest);
 
-        set_heap(car(rest) & POINTER_MASK, 0, car(val));
+        set_heap(extract_ptr(car(rest)), 0, car(val));
 
         add_reference_to_top_level_sym(sym, pos, clo);
       }
@@ -4213,7 +4316,7 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
 
 void debug_print_closure(OBJECT_PTR clo)
 {
-  print_object(((clo >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG);
+  print_object(extract_ptr(clo) + CONS_TAG);
 }
 
 int location_of_and_rest(OBJECT_PTR lst)
@@ -4257,7 +4360,7 @@ OBJECT_PTR strip_and_rest(OBJECT_PTR lst)
         ret = cons(val, NIL);
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));        
       }      
     }
@@ -4372,7 +4475,7 @@ OBJECT_PTR handle_and_rest_applications_for_macros(OBJECT_PTR exp)
       {
         OBJECT_PTR val = car(rest);
 
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));
 
         i++;
@@ -4384,12 +4487,12 @@ OBJECT_PTR handle_and_rest_applications_for_macros(OBJECT_PTR exp)
       if(rest != NIL)
       {
         val = rest;
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));
       }
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(NIL, NIL));
       }
 
@@ -4487,7 +4590,7 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 
         val = handle_and_rest_applications_for_functions(val);
 
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));
 
         i++;
@@ -4502,12 +4605,12 @@ OBJECT_PTR handle_and_rest_applications_for_functions(OBJECT_PTR exp)
 
         val = handle_and_rest_applications_for_functions(val);
 
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));
       }
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(NIL, NIL));
       }
 
@@ -4558,7 +4661,7 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
 
         val = handle_and_rest_applications(val, free_variables);
 
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));
 
         i++;
@@ -4573,12 +4676,12 @@ OBJECT_PTR handle_and_rest_applications(OBJECT_PTR exp, OBJECT_PTR free_variable
 
         val = handle_and_rest_applications(val, free_variables);
 
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(val, NIL));
       }
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(NIL, NIL));
       }
 
@@ -4636,13 +4739,13 @@ OBJECT_PTR handle_and_rest_applications_old(OBJECT_PTR exp, OBJECT_PTR free_vari
             bindings = cons(binding, NIL);
           else
           {
-            uintptr_t ptr = last_cell(bindings) & POINTER_MASK;
+            uintptr_t ptr = extract_ptr(last_cell(bindings));
             set_heap(ptr, 1, cons(binding, NIL));
           }
         }
         else
         {
-          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          uintptr_t ptr = extract_ptr(last_cell(ret));
           set_heap(ptr, 1, cons(val, NIL));
         }
 
@@ -4666,13 +4769,13 @@ OBJECT_PTR handle_and_rest_applications_old(OBJECT_PTR exp, OBJECT_PTR free_vari
           bindings = cons(binding, NIL);
         else
         {
-          uintptr_t ptr = last_cell(bindings) & POINTER_MASK;
+          uintptr_t ptr = extract_ptr(last_cell(bindings));
           set_heap(ptr, 1, cons(binding, NIL));
         }
       }
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, rest == NIL ? NIL : cons(val, NIL));
       }
 
@@ -5186,10 +5289,10 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
   if(IS_CONS_OBJECT(third(exp)))
   {
     if(first(third(exp)) == LAMBDA)
-      t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG,
+      t1 = cons(extract_ptr(NIL) + FUNCTION2_TAG,
                 NIL);
     else if(first(third(exp)) == MACRO)
-      t1 = cons(((NIL >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG,
+      t1 = cons(extract_ptr(NIL) + MACRO2_TAG,
                 NIL);
   }      
 
@@ -5220,10 +5323,10 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
   {
     BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
     OBJECT_PTR cons_equiv = cons_equivalent(res);
-    uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(last_cell(cons_equiv));
     //set_heap(ptr, 1, cons(third(exp), NIL));
     set_heap(ptr, 1, cons(src, NIL));
-    res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
+    res = (extract_ptr(cons_equiv)) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
   }
 
   add_top_level_sym(symbol_to_be_used, cons(res, NIL));
@@ -5294,10 +5397,10 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
   {
     BOOLEAN macro_flag = IS_MACRO2_OBJECT(res);
     OBJECT_PTR cons_equiv = cons_equivalent(res);
-    uintptr_t ptr = last_cell(cons_equiv) & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(last_cell(cons_equiv));
     //set_heap(ptr, 1, cons(third(exp), NIL));
     set_heap(ptr, 1, cons(src, NIL));
-    res = ((cons_equiv >> OBJECT_SHIFT) << OBJECT_SHIFT) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
+    res = (extract_ptr(cons_equiv)) + (macro_flag ? MACRO2_TAG : FUNCTION2_TAG);
   }
 
   add_top_level_sym(symbol_to_be_used, cons(res, NIL));     
@@ -5482,7 +5585,7 @@ OBJECT_PTR cons_equivalent(OBJECT_PTR obj)
 {
   assert(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
 
-  return ((obj >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+  return extract_ptr(obj) + CONS_TAG;
 }
 
 OBJECT_PTR handle_exception()
@@ -5992,11 +6095,11 @@ char *get_signature_for_core_symbol(char *symbol_name)
     ret = "(export-package package-name str)";
 
   free(s);
-
+  
   return ret;
 }
 
-BOOLEAN is_valid_lambda_exp(exp)
+BOOLEAN is_valid_lambda_exp(OBJECT_PTR exp)
 {
   unsigned int len = cons_length(exp);
 
@@ -6025,7 +6128,7 @@ BOOLEAN is_valid_lambda_exp(exp)
   return true;
 }
 
-BOOLEAN is_valid_macro_exp(exp)
+BOOLEAN is_valid_macro_exp(OBJECT_PTR exp)
 {
   unsigned int len = cons_length(exp);
 
@@ -6203,4 +6306,122 @@ BOOLEAN exp_contains_comma_comma_at(OBJECT_PTR exp)
   }
 
   return false;
+}
+
+unsigned int build_fn_prototypes(char *buf, unsigned int offset)
+{
+  unsigned int len = offset;
+
+//Tiny C Compiler has trouble finding stdint.h in windows
+#ifdef WIN32
+  len += sprintf(buf+len, "typedef unsigned int uintptr_t;\n");
+#else
+  len += sprintf(buf+len, "#include <stdint.h>\n");
+#endif
+
+  len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
+  
+  len += sprintf(buf+len, "uintptr_t nth1(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "void save_continuation(uintptr_t);\n");
+  len += sprintf(buf+len, "nativefn extract_native_fn(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t create_fn_closure(uintptr_t, nativefn, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_add(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_sub(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_car(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_cdr(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t cdr(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t quote(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_error(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_lt(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_gt(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_leq(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_geq(uintptr_t, uintptr_t);\n");
+
+  len += sprintf(buf+len, "int in_error_condition();\n");
+  len += sprintf(buf+len, "uintptr_t primitive_print(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t cons(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_setcar(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_setcdr(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_list(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_mult(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_div(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_equal(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_concat(uintptr_t, ...);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_not(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t gensym();\n");
+  len += sprintf(buf+len, "uintptr_t primitive_atom(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_symbol_value(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_apply(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_symbol(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_symbol_name(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_format(uintptr_t, uintptr_t, uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_clone(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_unbind(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_newline();\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_consp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_listp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_integerp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_floatp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_characterp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_symbolp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_stringp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_arrayp(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_closurep(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_macrop(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t primitive_contp(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_string(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_make_array(uintptr_t, ...);\n");
+  len += sprintf(buf+len, "uintptr_t prim_array_set(uintptr_t, uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_array_get(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_sub_array(uintptr_t, uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_array_length(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_print_string(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t prim_load_fgn_lib(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_call_fgn_func(uintptr_t, uintptr_t, uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t prim_create_pkg(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_in_package(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_export_pkg(uintptr_t, uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t prim_create_image(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_serialize(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_deserialize(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t prim_load_file(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_time(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_profile(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_env();\n");
+  len += sprintf(buf+len, "uintptr_t prim_expand_macro(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t primitive_eval(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t convert_int_to_object(int);\n");
+  len += sprintf(buf+len, "uintptr_t conv_float_to_obj_for_fm(unsigned long long);\n");
+
+  len += sprintf(buf+len, "void set_most_recent_closure(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t get_continuation(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t handle_exception();\n");
+  len += sprintf(buf+len, "uintptr_t add_exception_handler(uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t get_exception_handler();\n");
+  len += sprintf(buf+len, "uintptr_t primitive_throw(uintptr_t);\n");
+
+  len += sprintf(buf+len, "void push_into_debug_stack(uintptr_t);\n");
+
+  len += sprintf(buf+len, "uintptr_t save_cont_to_resume(uintptr_t);\n");
+
+  len += sprintf(buf+len, "void insert_node(unsigned int, uintptr_t);\n");
+  len += sprintf(buf+len, "void gc(int, int);\n");
+  len += sprintf(buf+len, "int is_dynamic_memory_object(uintptr_t);\n");
+
+  return len;
 }

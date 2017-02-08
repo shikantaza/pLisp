@@ -15,7 +15,7 @@
 ;;  You should have received a copy of the GNU General Public License
 ;;  along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-(load-foreign-library "libtest.so")
+(load-foreign-library "libtest")
 
 (define i 10)
 

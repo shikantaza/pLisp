@@ -40,4 +40,6 @@ char *convert_identifier(char *);
 
 unsigned int file_exists(char *);
 
+void *open_library(char *);
+
 #endif

@@ -20,12 +20,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
-
 #include <gtk/gtk.h>
 #include <time.h>
 
@@ -158,6 +152,34 @@ extern void deserialize_file_browser_window(struct JSONObject *);
 
 extern char *default_transcript_text;
 
+extern BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR);
+
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR);
+
+extern BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
+extern OBJECT_PTR cons_equivalent(OBJECT_PTR);
+
+extern int get_top_level_sym_value(OBJECT_PTR, OBJECT_PTR *);
+
+extern OBJECT_PTR create_closure(unsigned int, BOOLEAN, OBJECT_PTR, ...);
+
+extern OBJECT_PTR convert_native_fn_to_object(nativefn);
+
+extern OBJECT_PTR compile_and_evaluate(OBJECT_PTR, OBJECT_PTR);
+
+extern unsigned int build_fn_prototypes(char *, unsigned int);
+  
 struct slot
 {
   OBJECT_PTR ref;
@@ -264,13 +286,13 @@ void print_heap_representation(FILE *fp,
   {
     fprintf(fp, "[ ");
 
-    int len = *((OBJECT_PTR *)(obj & POINTER_MASK));
+    int len = *((OBJECT_PTR *)extract_ptr(obj));
 
     int i;
 
     for(i=1; i<=len; i++)
     {
-      print_json_object(fp, get_heap(obj & POINTER_MASK, i), print_queue, obj_count, hashtable, printed_objects, single_object);
+      print_json_object(fp, get_heap(extract_ptr(obj), i), print_queue, obj_count, hashtable, printed_objects, single_object);
 
       if(i != len)     fprintf(fp, ", ");
       else             fprintf(fp, " ");
@@ -297,7 +319,7 @@ void print_heap_representation(FILE *fp,
   }
   else if(IS_CONTINUATION_OBJECT(obj))
   {
-    print_json_object(fp, get_heap(obj & POINTER_MASK, 0), print_queue, obj_count, hashtable, printed_objects, single_object);
+    print_json_object(fp, get_heap(extract_ptr(obj), 0), print_queue, obj_count, hashtable, printed_objects, single_object);
   }
   else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
   {
@@ -888,7 +910,7 @@ void create_image(char *file_name)
     
 /*     uintptr_t ptr = object_alloc(size + 1, ARRAY_TAG); */
 
-/*     *((unsigned int *)(ptr & POINTER_MASK)) = size; */
+/*     *((unsigned int *)extract_ptr(ptr)) = size; */
 
 /*     for(i=0; i<size; i++) */
 /*       set_heap(ptr, i+1, convert_to_plisp_obj(root, heap, cJSON_GetArrayItem(value, i), hashtable)); */
@@ -1109,12 +1131,8 @@ int load_from_image(char *file_name)
     struct JSONObject *strobj = JSON_get_array_item(temp, i);
     foreign_library_names[i] = strdup(strobj->strvalue);
 
-#ifdef WIN32
-    dl_handles[i] = LoadLibrary(strobj->strvalue);
-#else
-    dl_handles[i] = dlopen(strobj->strvalue, RTLD_LAZY);
-#endif
-
+    dl_handles[i] = open_library(strobj->strvalue);
+    
   }
 
   temp = JSON_get_object_item(root, "packages");
@@ -2047,7 +2065,7 @@ int deserialize(char *file_name)
   JSON_delete_object(root);
 
   if(object_type == FUNCTION2_TAG || object_type == MACRO2_TAG)
-    return ((object >> OBJECT_SHIFT) << OBJECT_SHIFT) + object_type;
+    return extract_ptr(object) + object_type;
   else
     return object;
 }
@@ -2071,7 +2089,7 @@ void recompile_functions_and_macros()
     if(IS_FUNCTION2_OBJECT(car_val) || IS_MACRO2_OBJECT(car_val))
     {
       OBJECT_PTR cons_equiv = cons_equivalent(car_val);
-      set_heap(val & POINTER_MASK, 0, compile_and_evaluate(car(cons_equiv)));
+      set_heap(extract_ptr(val), 0, compile_and_evaluate(car(cons_equiv), NIL));
     }
 
     //TODO: update the references and unmet dependencies
@@ -2123,7 +2141,8 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
 #ifdef WIN32 //to account for the replacement of #include <stdint.h>' with 'typedef unsigned int uintptr_t;' in Windows
     char *fname = substring(source, 128, 12);
 #else
-    char *fname = substring(source, 116, 12);
+    //char *fname = substring(source, 116, 12);
+    char *fname = substring(source, 10, 12);
 #endif
 
     //crude way to check if fn is the identity function,
@@ -2131,11 +2150,13 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     //will be named from gensym symbols
     //note2: fname will be null for identify_function (as the
     //above substring() would have failed)
-    //nativefn fn = !strcmp(fname, "identity_fu") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
-    nativefn fn = !fname ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
-    assert(fn);
+    nativefn fn = !strcmp(fname, "identity_fun") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
+    //nativefn fn = !fname ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
 
-    uintptr_t ptr = obj & POINTER_MASK;
+    if(!fn)
+      assert(false);
+
+    uintptr_t ptr = extract_ptr(obj);
 
     *((nativefn *)ptr) = fn;
 
@@ -2171,6 +2192,8 @@ void recreate_native_fn_objects()
 
   memset(buf, nof_json_native_fns * 2000, '\0');
 
+  len += build_fn_prototypes(buf+len, len);
+  
   for(i=0; i<nof_json_native_fns; i++)
     len += sprintf(buf+len, "%s\n", json_native_fns[i].source);
 

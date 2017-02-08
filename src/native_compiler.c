@@ -481,7 +481,7 @@ unsigned int return_op()
   frame = car(reg_current_stack);
   reg_current_stack = cdr(reg_current_stack);
 
-  ptr = frame & POINTER_MASK;
+  ptr = extract_ptr(frame);
   reg_next_expression   = get_heap(ptr,1);
   reg_current_env       = get_heap(ptr,2);
   reg_current_value_rib = get_heap(ptr,3);
@@ -675,7 +675,7 @@ void bind_formal_parameters(fn_macro_obj)
 	params_env = cons(cons(CADR(rest_params), rest_args), NIL);
       else
       {
-	uintptr_t ptr = last_cell(params_env) & POINTER_MASK;
+	uintptr_t ptr = extract_ptr(last_cell(params_env));
 	set_heap(ptr, 1, 
 		 cons(cons(CADR(rest_params),rest_args), NIL));            
       }
@@ -687,7 +687,7 @@ void bind_formal_parameters(fn_macro_obj)
 	params_env = cons(cons(car(rest_params), car(rest_args)), NIL);
       else
       {
-	uintptr_t ptr = last_cell(params_env) & POINTER_MASK;
+	uintptr_t ptr = extract_ptr(last_cell(params_env));
 	set_heap(ptr, 1, 
 		 cons(cons(car(rest_params),car(rest_args)), NIL));
       }
@@ -979,7 +979,7 @@ unsigned int error()
   {
     char msg[500];
 
-    uintptr_t ptr = error_string_obj & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(error_string_obj);
 
     //int len = get_int_value(get_heap(ptr, 0));
     int len = *((unsigned int *)ptr);
@@ -1016,13 +1016,13 @@ unsigned int newline()
   if(cons_length(reg_current_value_rib) != 1)
   {
     throw_exception("ARG-MISMATCH", "NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
-    return;
+    return 1;
   }
 
   if(car(reg_current_value_rib) != NIL && !IS_INTEGER_OBJECT(car(reg_current_value_rib)))
   {
     throw_exception("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
-    return;
+    return 1;
   }
 
   if(car(reg_current_value_rib) != NIL)
@@ -1056,7 +1056,7 @@ unsigned int lst()
       reg_accumulator = cons(car(rest), NIL);
     else
     {
-      uintptr_t ptr = last_cell(reg_accumulator) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(reg_accumulator));
       set_heap(ptr, 1, 
 	       cons(car(rest), NIL));         
     }
@@ -1327,7 +1327,7 @@ unsigned int setcar()
     return 1;
   }
 
-  set_heap(car_obj & POINTER_MASK, 0, CADR(reg_current_value_rib));
+  set_heap(extract_ptr(car_obj), 0, CADR(reg_current_value_rib));
 
   reg_accumulator = CADR(reg_current_value_rib);
 
@@ -1355,7 +1355,7 @@ unsigned int setcdr()
     return 1;
   }
 
-  set_heap(car_obj & POINTER_MASK, 1, CADR(reg_current_value_rib));
+  set_heap(extract_ptr(car_obj), 1, CADR(reg_current_value_rib));
 
   reg_accumulator = CADR(reg_current_value_rib);
 
@@ -1508,7 +1508,7 @@ unsigned int expand_macro()
 	reg_current_value_rib = cons(car(args), NIL);
       else
       {
-	uintptr_t ptr = last_cell(reg_current_value_rib) & POINTER_MASK;
+	uintptr_t ptr = extract_ptr(last_cell(reg_current_value_rib));
 	set_heap(ptr, 1, 
 		 cons(car(args), NIL));         
       }
@@ -1644,7 +1644,7 @@ unsigned int array_set()
 
   array_obj = car(reg_current_value_rib);
 
-  ptr = array_obj & POINTER_MASK;
+  ptr = extract_ptr(array_obj);
 
   if((!(IS_ARRAY_OBJECT(array_obj))))
   {
@@ -1694,7 +1694,7 @@ unsigned int array_get()
   }        
 
   array_obj = car(reg_current_value_rib);
-  ptr = array_obj & POINTER_MASK;
+  ptr = extract_ptr(array_obj);
 
   idx = CADR(reg_current_value_rib);
 
@@ -1794,7 +1794,7 @@ unsigned int sub_array()
     return 1;
   }
 
-  len = *((unsigned int *)(array & POINTER_MASK));
+  len = *((unsigned int *)extract_ptr(array));
 
   if((get_int_value(start) + get_int_value(array_length)) > len)
   {
@@ -1827,7 +1827,7 @@ unsigned int array_length()
     reg_accumulator = convert_int_to_object(0);
     reg_current_value_rib = NIL;
     reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
-    return;
+    return 1;
   }
 
   if(IS_STRING_LITERAL_OBJECT(array))
@@ -1840,8 +1840,8 @@ unsigned int array_length()
       return 1;
     }
 
-      //reg_accumulator = get_heap(array & POINTER_MASK, 0);
-    reg_accumulator = convert_int_to_object(*((unsigned int *)(array & POINTER_MASK)));
+      //reg_accumulator = get_heap(extract_ptr(array), 0);
+    reg_accumulator = convert_int_to_object(*((unsigned int *)extract_ptr(array)));
   }
 
   reg_current_value_rib = NIL;
@@ -1976,7 +1976,7 @@ unsigned int load_foreign_library_compiled()
   if(!ret)
   {
     throw_exception("FFI-OPEN-FAILED", "dl_open() failed");
-    return;
+    return 1;
   }
 
   dl_handles[nof_dl_handles - 1] = ret;
@@ -2423,7 +2423,7 @@ unsigned int resume_compiled()
 
   debug_mode = false;
 
-  reg_current_stack = get_heap(debug_continuation & POINTER_MASK, 0);
+  reg_current_stack = get_heap(extract_ptr(debug_continuation), 0);
 
   reg_current_value_rib = NIL;
   reg_next_expression = cons(CONS_RETURN_NIL, cdr(reg_next_expression));
@@ -2766,7 +2766,7 @@ unsigned int return_from()
     return 1;
   }
 
-  reg_current_stack = get_heap(cont & POINTER_MASK, 0);
+  reg_current_stack = get_heap(extract_ptr(cont), 0);
 
   reg_accumulator = CADR(reg_current_value_rib);
   reg_current_value_rib = NIL;
@@ -2829,7 +2829,7 @@ unsigned int symbl()
   {
     char msg[500];
 
-    uintptr_t ptr = str & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(str);
 
     //int len = get_int_value(get_heap(ptr, 0));
     int len = *((unsigned int *)ptr);
@@ -2918,7 +2918,7 @@ unsigned int unbind()
       if(prev == NIL)
 	top_level_env = cdr(top_level_env);
       else
-	set_heap(prev & POINTER_MASK, 1, cdr(rest));
+	set_heap(extract_ptr(prev), 1, cdr(rest));
       break;
     }
 
@@ -3557,7 +3557,7 @@ unsigned int apply_compiled()
 	return 1;
       }
 
-      reg_current_stack = get_heap(reg_accumulator & POINTER_MASK, 0);
+      reg_current_stack = get_heap(extract_ptr(reg_accumulator), 0);
 
       reg_accumulator = car(reg_current_value_rib);
       reg_current_value_rib = NIL;

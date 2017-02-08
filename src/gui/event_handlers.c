@@ -163,7 +163,7 @@ char *get_common_prefix(unsigned int, char **);
 
 extern OBJECT_PTR get_signature(char *);
 
-extern get_signature_for_core_symbol(char *);
+extern char *get_signature_for_core_symbol(char *);
 
 extern OBJECT_PTR callers_sym;
 
@@ -172,6 +172,10 @@ extern void highlight_text(GtkTextBuffer *, char *);
 extern BOOLEAN quit_file_browser();
 
 extern void find_text();
+
+void quit_application();
+void show_file_browser_window();
+void callers_window_accept();
 
 int get_indents_for_form(char *form)
 {

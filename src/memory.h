@@ -30,23 +30,25 @@ void cleanup_memory();
 
 uintptr_t object_alloc(int, int);
 
-#ifndef DEBUG_MEMORY
-inline
-#endif
+//#ifndef DEBUG_MEMORY
+//inline
+//#endif
 void set_heap(uintptr_t, unsigned int, OBJECT_PTR);
 
-#ifndef DEBUG_MEMORY
-inline
-#endif
+//#ifndef DEBUG_MEMORY
+//inline
+//#endif
 OBJECT_PTR get_heap(uintptr_t, unsigned int);
 
 unsigned int memory_allocated();
 
 void pin_globals();
 
-void gc();
+void gc(BOOLEAN, BOOLEAN);
 
 void test_memory();
 void test_bst();
+
+uintptr_t extract_ptr(OBJECT_PTR);
 
 #endif

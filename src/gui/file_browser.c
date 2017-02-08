@@ -28,7 +28,11 @@
 #include "../util.h"
 #include "../json.h"
 
+#ifndef __APPLE__
 #define FONT "DejaVu Sans Mono Bold 9"
+#else
+#define FONT "Menlo Bold 12"
+#endif
 
 typedef struct file_name_and_widget
 {

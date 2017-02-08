@@ -309,6 +309,20 @@ extern OBJECT_PTR continuation_to_resume;
 extern unsigned int nof_global_vars;
 extern global_var_mapping_t *top_level_symbols;
 
+extern OBJECT_PTR create_closure(unsigned int, BOOLEAN, OBJECT_PTR, ...);
+
+extern OBJECT_PTR convert_native_fn_to_object(nativefn);
+
+extern BOOLEAN is_valid_let_exp(OBJECT_PTR, BOOLEAN);
+extern BOOLEAN is_valid_let1_exp(OBJECT_PTR, BOOLEAN);
+extern BOOLEAN is_valid_letrec_exp(OBJECT_PTR, BOOLEAN);
+extern BOOLEAN is_continuation_object(OBJECT_PTR);
+extern OBJECT_PTR cons_equivalent(OBJECT_PTR);
+extern OBJECT_PTR map(OBJECT_PTR (*f)(OBJECT_PTR), OBJECT_PTR lst);
+extern OBJECT_PTR concat(unsigned int, ...);
+extern OBJECT_PTR reverse(OBJECT_PTR);
+extern BOOLEAN primop(OBJECT_PTR);
+
 void initialize()
 {
   if(initialize_memory())
@@ -918,8 +932,9 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
        char buf[20];memset(buf, 20, '\0');print_qualified_symbol(cons_obj,buf);printf("%s\n",buf);
        assert(false);
      }
-     //return get_heap(cons_obj & POINTER_MASK, 0);
-    return (OBJECT_PTR)*((OBJECT_PTR *)(cons_obj & POINTER_MASK));
+     //return get_heap(extract_ptr(cons_obj), 0);
+     return (OBJECT_PTR)*((OBJECT_PTR *)(extract_ptr(cons_obj)));
+     //return (OBJECT_PTR)*((OBJECT_PTR *)((cons_obj >> 4) << 4));
   }
 }
 
@@ -931,8 +946,8 @@ OBJECT_PTR cdr(OBJECT_PTR cons_obj)
   {
     /* if(!IS_CONS_OBJECT(cons_obj)) */
     /*    assert(false); */
-    //return get_heap(cons_obj & POINTER_MASK, 1);
-    return (OBJECT_PTR)*((OBJECT_PTR *)(cons_obj & POINTER_MASK)+1);
+    //return get_heap(extract_ptr(cons_obj), 1);
+    return (OBJECT_PTR)*((OBJECT_PTR *)(extract_ptr(cons_obj))+1);
   }
 }
 
@@ -1733,7 +1748,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
                                 clone_object(get_source_object(obj)));
     else if(IS_ARRAY_OBJECT(obj))
     {
-      uintptr_t ptr = obj & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(obj);
 
       //int len = get_int_value(get_heap(ptr, 0));
       unsigned int len = *((OBJECT_PTR *)ptr);
@@ -1770,13 +1785,13 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
     {
       OBJECT_PTR cons_equiv = cons_equivalent(obj);
       OBJECT_PTR cloned_cons = clone_object(cons_equiv);
-      ret = ((cloned_cons >> OBJECT_SHIFT) << OBJECT_SHIFT) + FUNCTION2_TAG;
+      ret = (extract_ptr(cloned_cons)) + FUNCTION2_TAG;
     }
     else if(IS_MACRO2_OBJECT(obj))
     {
       OBJECT_PTR cons_equiv = cons_equivalent(obj);
       OBJECT_PTR cloned_cons = clone_object(cons_equiv);
-      ret = ((cloned_cons >> OBJECT_SHIFT) << OBJECT_SHIFT) + MACRO2_TAG;
+      ret = (cloned_cons) + MACRO2_TAG;
     }
     else if(IS_NATIVE_FN_OBJECT(obj))
     {
@@ -1799,7 +1814,7 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
 OBJECT_PTR get_env_list(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj & POINTER_MASK, 0);
+  return get_heap(extract_ptr(obj), 0);
 }
 
 OBJECT_PTR get_params_object(OBJECT_PTR obj)
@@ -1807,7 +1822,7 @@ OBJECT_PTR get_params_object(OBJECT_PTR obj)
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
 
   if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
-    return get_heap(obj & POINTER_MASK, 1);
+    return get_heap(extract_ptr(obj), 1);
   else
   {
     OBJECT_PTR cons_equiv = cons_equivalent(obj);
@@ -1819,7 +1834,7 @@ OBJECT_PTR get_params_object(OBJECT_PTR obj)
 OBJECT_PTR get_body_object(OBJECT_PTR obj)
 {
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj));
-  return get_heap(obj & POINTER_MASK, 2);
+  return get_heap(extract_ptr(obj), 2);
 }
 
 OBJECT_PTR get_source_object(OBJECT_PTR obj)
@@ -1827,7 +1842,7 @@ OBJECT_PTR get_source_object(OBJECT_PTR obj)
   assert(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj));
 
   if(IS_CLOSURE_OBJECT(obj) || IS_MACRO_OBJECT(obj))
-    return get_heap(obj & POINTER_MASK, 3);
+    return get_heap(extract_ptr(obj), 3);
   else
   {
     OBJECT_PTR cons_equiv = cons_equivalent(obj);
@@ -1969,7 +1984,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
     {
       if(equal(CAAR(rest2),symbol_obj))
       {
-        uintptr_t ptr = car(rest2) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(car(rest2));
 	set_heap(ptr, 1, val);
 	return symbol_obj;
       }
@@ -1987,7 +2002,7 @@ OBJECT_PTR update_environment(OBJECT_PTR env_list, OBJECT_PTR symbol_obj, OBJECT
   {
     if(equal(CAAR(rest2),symbol_obj))
     {
-      uintptr_t ptr = car(rest2) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(car(rest2));
       set_heap(ptr, 1, val);
       system_changed = true;
       return symbol_obj;
@@ -2023,7 +2038,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
       //the new value
       if(equal(CAAR(rest),symbol_obj))
       {
-        uintptr_t ptr = car(rest) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(car(rest));
         set_heap(ptr, 1, val);
         system_changed = true;
         return;
@@ -2032,7 +2047,7 @@ void add_to_top_level_environment(OBJECT_PTR symbol_obj, OBJECT_PTR val)
     }
 
     //symbol does not exist in the environment
-    ptr = last_cell(top_level_env) & POINTER_MASK;
+    ptr = extract_ptr(last_cell(top_level_env));
     set_heap(ptr, 1, cons(cons(symbol_obj, val), NIL));
     system_changed = true;
   }
@@ -2116,8 +2131,8 @@ OBJECT_PTR last_cell(OBJECT_PTR lst)
   while(cdr(rest) != NIL)
   {
     //rest = cdr(rest);
-    //rest = (OBJECT_PTR)*((unsigned int *)(rest & POINTER_MASK)+1);
-    rest = (OBJECT_PTR)*((OBJECT_PTR *)(  (rest >> OBJECT_SHIFT) << OBJECT_SHIFT )+1);
+    //rest = (OBJECT_PTR)*((unsigned int *)extract_ptr(rest)+1);
+    rest = (OBJECT_PTR)*((OBJECT_PTR *)(  extract_ptr(rest) )+1);
   }
   
   return rest;
@@ -2560,7 +2575,7 @@ int get_int_value(OBJECT_PTR obj)
   if(!IS_INTEGER_OBJECT(obj))
     assert(false);
 
-  return *((int *)(obj & POINTER_MASK));
+  return *((int *)extract_ptr(obj));
 }
 
 OBJECT_PTR convert_int_to_object(int v)
@@ -2577,8 +2592,8 @@ double get_float_value(OBJECT_PTR obj)
 {
   assert(IS_FLOAT_OBJECT(obj));
   //return *((float *)obj);
-  //return *((float *)(obj & POINTER_MASK));
-  return *((double *)(obj & POINTER_MASK));
+  //return *((float *)extract_ptr(obj));
+  return *((double *)extract_ptr(obj));
 }
 
 //OBJECT_PTR convert_float_to_object(float v)
@@ -2596,7 +2611,7 @@ int print_array_object_to_string(OBJECT_PTR array, char *buf, int filled_buf_len
 {
   int len = 0;
 
-  uintptr_t ptr = array & POINTER_MASK;
+  uintptr_t ptr = extract_ptr(array);
 
   //int length = get_int_value(get_heap(ptr, 0));
   int length = *((OBJECT_PTR *)ptr);
@@ -2626,7 +2641,7 @@ void print_array_object(OBJECT_PTR array)
 
   log_function_entry("print_array_object");
 
-  ptr = array & POINTER_MASK;
+  ptr = extract_ptr(array);
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
@@ -2670,7 +2685,7 @@ void print_array_object(OBJECT_PTR array)
 
 int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_len)
 {
-  uintptr_t ptr = string_object & POINTER_MASK;
+  uintptr_t ptr = extract_ptr(string_object);
 
   //int len = get_int_value(get_heap(ptr, 0));
   int len = *((OBJECT_PTR *)ptr);
@@ -2691,7 +2706,7 @@ int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_l
 
 void print_string(OBJECT_PTR string_object)
 {
-  uintptr_t ptr = string_object & POINTER_MASK;
+  uintptr_t ptr = extract_ptr(string_object);
 
   //int len = get_int_value(get_heap(ptr, 0));
   int len = *((OBJECT_PTR *)ptr);
@@ -2737,7 +2752,7 @@ BOOLEAN is_string_object(OBJECT_PTR obj)
   if(!(IS_ARRAY_OBJECT(obj)))
     return false;
 
-  ptr = obj & POINTER_MASK;
+  ptr = extract_ptr(obj);
 
   //len = get_int_value(get_heap(ptr, 0));
   len = *((OBJECT_PTR *)ptr);
@@ -2760,7 +2775,7 @@ char *get_string(OBJECT_PTR string_object)
   if(!is_string_object(string_object))
     assert(false);
 
-  ptr = string_object & POINTER_MASK;
+  ptr = extract_ptr(string_object);
 
   //len = get_int_value(get_heap(ptr, 0));
   len = *((OBJECT_PTR *)ptr);
@@ -2888,12 +2903,12 @@ OBJECT_PTR list(int count, ...)
 
   va_start(ap, count);
 
-  ret = cons((OBJECT_PTR)va_arg(ap, int), NIL);
+  ret = cons((OBJECT_PTR)va_arg(ap, OBJECT_PTR), NIL);
 
   for(i=1; i<count; i++)
   {
-    OBJECT_PTR val = (OBJECT_PTR)va_arg(ap, int);
-    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+    OBJECT_PTR val = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
+    uintptr_t ptr = extract_ptr(last_cell(ret));
     set_heap(ptr, 1, cons(val, NIL));
   }
 

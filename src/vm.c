@@ -588,7 +588,7 @@ void print_stack()
   {
     OBJECT_PTR frame = car(rest);
 
-    uintptr_t ptr = frame & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(frame);
 
     printf("---- begin frame %0x----\n", frame);
     printf("Next expression: ");
@@ -725,7 +725,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = obj;
 	  else
-	    set_heap(last_cell(result) & POINTER_MASK, 1, obj);
+	    set_heap(extract_ptr(last_cell(result)), 1, obj);
 	}
 	else
 	{
@@ -734,7 +734,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	  if(result == NIL)
 	    result = cons(obj, NIL);
 	  else
-	    set_heap(last_cell(result) & POINTER_MASK, 1, cons(obj, NIL));
+	    set_heap(extract_ptr(last_cell(result)), 1, cons(obj, NIL));
 	}
       }
       else
@@ -744,7 +744,7 @@ OBJECT_PTR eval_backquote(OBJECT_PTR form)
 	if(result == NIL)
 	  result = cons(obj, NIL);
 	else
-	  set_heap(last_cell(result) & POINTER_MASK, 1, cons(obj, NIL));
+	  set_heap(extract_ptr(last_cell(result)), 1, cons(obj, NIL));
       }
       rest = cdr(rest);
     }
@@ -836,7 +836,7 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
   //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
   //*((int *)raw_ptr) = len;
 
-  orig_ptr = array & POINTER_MASK;
+  orig_ptr = extract_ptr(array);
 
   ptr = object_alloc(len + 1, ARRAY_TAG);
 
@@ -888,7 +888,7 @@ void print_backtrace()
   while(rest != NIL)
   {
     //print_object(car(rest));
-    print_object(cdr(get_heap(car(rest) & POINTER_MASK, 1)));
+    print_object(cdr(get_heap(extract_ptr(car(rest)), 1)));
 
     printf("\n");
 

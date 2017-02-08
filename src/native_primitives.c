@@ -22,12 +22,6 @@
 #include <assert.h>
 #include <stdint.h>
 
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
-
 #include <time.h>
 
 #include <unistd.h>
@@ -41,6 +35,8 @@
 
 #include "plisp.h"
 #include "util.h"
+
+#include "memory.h"
 
 enum {WHITE, GREY, BLACK};
 
@@ -101,6 +97,37 @@ extern void throw_exception1(char *, char *);
 extern void build_autocomplete_words();
 
 extern BOOLEAN is_continuation_object(OBJECT_PTR);
+
+extern OBJECT_PTR expand_macro_full(OBJECT_PTR, boolean);
+
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR);
+extern int get_top_level_sym_value(OBJECT_PTR, OBJECT_PTR*);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR);
+extern OBJECT_PTR reverse_sym_lookup(OBJECT_PTR);
+extern int and_rest_closure_pos(OBJECT_PTR);
+extern int cons_length(OBJECT_PTR);
+extern OBJECT_PTR apply_macro_or_fn(OBJECT_PTR, OBJECT_PTR);
+extern int add_string(char *);
+extern BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR);
+extern int format_for_gui(OBJECT_PTR);
+extern int remove_top_level_sym(OBJECT_PTR);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR);
+extern OBJECT_PTR CAAR(OBJECT_PTR);
+extern OBJECT_PTR CADAR(OBJECT_PTR);
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR);
+extern unsigned int memory_deallocated();
+extern OBJECT_PTR full_monty_eval(OBJECT_PTR);
+extern BOOLEAN is_dynamic_memory_object(OBJECT_PTR);
+extern void serialize(OBJECT_PTR, char *);
+extern int deserialize(char *);
+extern OBJECT_PTR compile_and_evaluate(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR handle_exception();
 
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
@@ -172,7 +199,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
 
   va_start(ap, count1);
 
-  OBJECT_PTR first_arg = (OBJECT_PTR)va_arg(ap, int);
+  OBJECT_PTR first_arg = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
   if(IS_FLOAT_OBJECT(first_arg))
   {
@@ -189,7 +216,7 @@ OBJECT_PTR primitive_sub(OBJECT_PTR count1, ...)
 
   for(i=1; i < count; i++)
   {
-    OBJECT_PTR arg = (OBJECT_PTR)va_arg(ap, int);
+    OBJECT_PTR arg = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(IS_INTEGER_OBJECT(arg))
     {
@@ -279,7 +306,7 @@ OBJECT_PTR primitive_setcar(OBJECT_PTR obj, OBJECT_PTR val)
   //if(is_dynamic_memory_object(val))
   //  insert_node(GREY, val);
 
-  set_heap(obj & POINTER_MASK, 0, val);
+  set_heap(extract_ptr(obj), 0, val);
 
   return val;
 }
@@ -295,7 +322,7 @@ OBJECT_PTR primitive_setcdr(OBJECT_PTR obj, OBJECT_PTR val)
   //if(is_dynamic_memory_object(val))
   //  insert_node(GREY, val);
 
-  set_heap(obj & POINTER_MASK, 1, val);
+  set_heap(extract_ptr(obj), 1, val);
 
   return val;
 }
@@ -313,12 +340,12 @@ OBJECT_PTR primitive_list(OBJECT_PTR count1, ...)
 
   va_start(ap, count1);
 
-  ret = cons((OBJECT_PTR)va_arg(ap, int), NIL);
+  ret = cons((OBJECT_PTR)va_arg(ap, OBJECT_PTR), NIL);
 
   for(i=1; i<count; i++)
   {
-    uintptr_t ptr = last_cell(ret) & POINTER_MASK;
-    set_heap(ptr, 1, cons((OBJECT_PTR)va_arg(ap, int), NIL));
+    uintptr_t ptr = extract_ptr(last_cell(ret));
+    set_heap(ptr, 1, cons((OBJECT_PTR)va_arg(ap, OBJECT_PTR), NIL));
   }
 
   va_end(ap);
@@ -391,7 +418,7 @@ OBJECT_PTR primitive_div(OBJECT_PTR count1, ...)
 
   va_start(ap, count1);
 
-  first = (OBJECT_PTR)va_arg(ap, int);
+  first = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
   if(IS_FLOAT_OBJECT(first))
   {
@@ -408,7 +435,7 @@ OBJECT_PTR primitive_div(OBJECT_PTR count1, ...)
 
   for(i=1; i<count; i++)
   {
-    arg = (OBJECT_PTR)va_arg(ap, int);
+    arg = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(IS_FLOAT_OBJECT(arg))
     {
@@ -501,7 +528,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
   va_start(ap, count1);
 
-  lst = (OBJECT_PTR)va_arg(ap, int);
+  lst = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
   if(!IS_CONS_OBJECT(lst) && lst != NIL)
   {
@@ -517,7 +544,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
     if(start > count)
       return NIL;
 
-    lst = (OBJECT_PTR)va_arg(ap, int);
+    lst = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(!IS_CONS_OBJECT(lst) && lst != NIL)
     {
@@ -530,7 +557,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
   for(i=start; i<count; i++)
   {
-    lst = (OBJECT_PTR)va_arg(ap, int);
+    lst = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(lst == NIL)
       continue;
@@ -545,7 +572,7 @@ OBJECT_PTR primitive_concat(OBJECT_PTR count1, ...)
 
     while(rest != NIL)
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(clone_object(car(rest)), NIL));
 
       rest = cdr(rest);
@@ -726,7 +753,7 @@ OBJECT_PTR primitive_apply(OBJECT_PTR obj, OBJECT_PTR args)
           ret = cons(val, NIL);
         else
         {
-          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          uintptr_t ptr = extract_ptr(last_cell(ret));
           set_heap(ptr, 1, cons(val, NIL));
         }
 
@@ -744,13 +771,13 @@ OBJECT_PTR primitive_apply(OBJECT_PTR obj, OBJECT_PTR args)
           ret = cons(val, NIL);
         else
         {
-          uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+          uintptr_t ptr = extract_ptr(last_cell(ret));
           set_heap(ptr, 1, cons(val, NIL));
         }
       }
       else
       {
-        uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+        uintptr_t ptr = extract_ptr(last_cell(ret));
         set_heap(ptr, 1, cons(NIL, NIL));
       }
 
@@ -780,7 +807,7 @@ OBJECT_PTR primitive_symbol(OBJECT_PTR str)
   {
     char msg[500];
 
-    uintptr_t ptr = str & POINTER_MASK;
+    uintptr_t ptr = extract_ptr(str);
 
     int len = *((uintptr_t *)ptr);
 
@@ -852,7 +879,7 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
     if(errno != 0 && errno != EAGAIN)
     {
       throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
-      return;
+      return NIL;
     }
 #endif
   
@@ -868,7 +895,7 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
 
   while(i <= count - 2)
   {
-    OBJECT_PTR val = (OBJECT_PTR)va_arg(ap, int);
+    OBJECT_PTR val = (OBJECT_PTR)va_arg(ap, OBJECT_PTR);
 
     if(!(IS_INTEGER_OBJECT(val)        ||
          IS_FLOAT_OBJECT(val)          ||
@@ -884,7 +911,7 @@ OBJECT_PTR primitive_format(OBJECT_PTR count1, OBJECT_PTR fd, OBJECT_PTR spec, .
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));      
     }
 
@@ -970,7 +997,7 @@ OBJECT_PTR primitive_newline(OBJECT_PTR obj)
   if(obj != NIL && !IS_INTEGER_OBJECT(obj))
   {
     throw_exception1("INVALID-ARGUMENT", "NEWLINE should be passed exactly one argument: NIL or an integer denoting a file descriptor");
-    return;
+    return NIL;
   }
 
   if(obj != NIL)
@@ -991,7 +1018,7 @@ OBJECT_PTR primitive_newline(OBJECT_PTR obj)
     if(errno != 0 && errno != EAGAIN)
     {
       throw_exception1("INVALID-ARGUMENT", "Invalid file descriptor");
-      return;
+      return NIL;
     }  
 #endif
 
@@ -1085,7 +1112,7 @@ OBJECT_PTR prim_make_array(OBJECT_PTR count1, OBJECT_PTR size, ...)
 
   va_start(ap, size);
 
-  OBJECT_PTR default_value = (count > 1) ? (OBJECT_PTR)va_arg(ap, int) : NIL;
+  OBJECT_PTR default_value = (count > 1) ? (OBJECT_PTR)va_arg(ap, OBJECT_PTR) : NIL;
 
   if((!(IS_INTEGER_OBJECT(size))))
   {
@@ -1101,7 +1128,7 @@ OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
   uintptr_t ptr;
   int array_len, index;
 
-  ptr = array_obj & POINTER_MASK;
+  ptr = extract_ptr(array_obj);
 
   if((!(IS_ARRAY_OBJECT(array_obj))))
   {
@@ -1138,7 +1165,7 @@ OBJECT_PTR prim_array_get(OBJECT_PTR array_obj, OBJECT_PTR idx)
   uintptr_t ptr;
   int index;
 
-  ptr = array_obj & POINTER_MASK;
+  ptr = extract_ptr(array_obj);
 
   if(!IS_INTEGER_OBJECT(idx))
   {
@@ -1216,7 +1243,7 @@ OBJECT_PTR prim_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR array_l
     return NIL;
   }
 
-  len = *((OBJECT_PTR *)(array & POINTER_MASK));
+  len = *((OBJECT_PTR *)extract_ptr(array));
 
   if((get_int_value(start) + get_int_value(array_length)) > len)
   {
@@ -1242,7 +1269,7 @@ OBJECT_PTR prim_array_length(OBJECT_PTR array)
       return NIL;
     }
 
-    return convert_int_to_object(*((OBJECT_PTR *)(array & POINTER_MASK)));
+    return convert_int_to_object(*((OBJECT_PTR *)extract_ptr(array)));
   }
 }
 
@@ -1302,12 +1329,8 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 
   fname = IS_STRING_LITERAL_OBJECT(file_name) ? strings[(int)file_name >> OBJECT_SHIFT] : get_string(file_name);
 
-#ifdef WIN32
-  ret = LoadLibrary(fname);
-#else
-  ret = dlopen(fname, RTLD_LAZY);
-#endif
-
+  ret = open_library(fname);
+  
   if(!ret)
   {
     throw_exception1("EXCEPTION", "dl_open() failed");
@@ -1649,7 +1672,7 @@ OBJECT_PTR primitive_env(OBJECT_PTR dummy)
       ret = cons(val, NIL);
     else
     {
-      uintptr_t ptr = last_cell(ret) & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(last_cell(ret));
       set_heap(ptr, 1, cons(val, NIL));
     }
   }
@@ -1806,7 +1829,7 @@ OBJECT_PTR prim_deserialize(OBJECT_PTR file_name)
 
   if(IS_FUNCTION2_OBJECT(ret) || IS_MACRO2_OBJECT(ret))
   {
-    OBJECT_PTR cons_equiv = ((ret >> OBJECT_SHIFT) << OBJECT_SHIFT) + CONS_TAG;
+    OBJECT_PTR cons_equiv = extract_ptr(ret) + CONS_TAG;
     return compile_and_evaluate(car(cons_equiv), car(cons_equiv));
   }
 

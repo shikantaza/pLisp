@@ -632,13 +632,13 @@
 ; and CALL-FOREIGN-FUNCTION special forms.
 
 ; The LOAD-FOREIGN-LIBRARY loads a shared library file
-; (.so or .dll, depending on the platform) into pLisp so 
+; (.so, .dylib or .dll, depending on the platform) into pLisp so 
 ; that the functions exported by it can be invoked by 
 ; pLisp code.
 
 ; For example, consider this function defined in the
-; shared library libtest.so (or libtest.dll if you're
-; using Windows) that ships with pLisp:
+; shared library libtest.so (or libtest.dylib/libtest.dll if you're
+; using OS X/Windows) that ships with pLisp:
 
 ; int fn_ret_int(int i, double f, char c, char *s)
 ; {
@@ -653,11 +653,7 @@
 
 ; You will load this shared library as below:
 
-(load-foreign-library "libtest.so")
-
-; or in Windows as:
-
-(load-foreign-library "./libtest.dll")
+(load-foreign-library "libtest")
 
 ; and invoke the above function as:
 

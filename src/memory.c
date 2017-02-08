@@ -111,6 +111,11 @@ uintptr_t POINTER_MASK;
 
 BOOLEAN can_do_gc;
 
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR);
+extern OBJECT_PTR cons_equivalent(OBJECT_PTR);
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR);
+
 void free_white_set_objects()
 {
   while(!is_set_empty(WHITE))
@@ -245,7 +250,7 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
     }
     else if(IS_ARRAY_OBJECT(obj))
     {
-      uintptr_t ptr = obj & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(obj);
 
       //OBJECT_PTR length_obj = get_heap(ptr, 0);
 
@@ -260,7 +265,7 @@ void gc(BOOLEAN force, BOOLEAN clear_black)
         move_from_white_to_grey(get_heap(ptr, i));
     }
     else if(IS_CONTINUATION_OBJECT(obj))
-      move_from_white_to_grey(get_heap(obj & POINTER_MASK, 0));
+      move_from_white_to_grey(get_heap(extract_ptr(obj), 0));
     else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
     {
       OBJECT_PTR cons_equiv = cons_equivalent(obj);
@@ -675,7 +680,7 @@ void dealloc(OBJECT_PTR ptr)
       words_deallocated += 2;
       break;
     case ARRAY_TAG:
-      array_size = *((OBJECT_PTR *)(ptr & POINTER_MASK));
+      array_size = *((OBJECT_PTR *)extract_ptr(ptr));
       words_deallocated += (array_size + 1);
       break;
     case CLOSURE_TAG:
@@ -706,15 +711,15 @@ void dealloc(OBJECT_PTR ptr)
       assert(false);
   }
 
-  uintptr_t p = ptr & POINTER_MASK;
+  uintptr_t p = extract_ptr(ptr);
   int i;
   for(i=0; i < words_deallocated - prev_words_deallocated; i++)
     *((OBJECT_PTR *)p+i) = 0xFEEEFEEE;
 
 #ifdef WIN32
-  __mingw_aligned_free((void *)(ptr & POINTER_MASK));
+  __mingw_aligned_free((void *)extract_ptr(ptr));
 #else
-  free((void *)(ptr & POINTER_MASK));
+  free((void *)extract_ptr(ptr));
 #endif
 }
 
@@ -737,8 +742,9 @@ int initialize_memory()
   words_allocated = 0;
   words_deallocated = 0;
 
-  POINTER_MASK = ((uintptr_t)(pow(2, 8 * sizeof(uintptr_t))) >> OBJECT_SHIFT) << OBJECT_SHIFT;
-
+  //POINTER_MASK = ((uintptr_t)(pow(2, 8 * sizeof(uintptr_t))) >> OBJECT_SHIFT) << OBJECT_SHIFT;
+  POINTER_MASK = 0xFFFFFFFFFFFFFFF0;
+  
   can_do_gc = true;
 
   return 0;
@@ -774,3 +780,7 @@ void recreate_black()
   black = RBTreeCreate(IntComp,IntDest,InfoDest,IntPrint,InfoPrint);
 }
 
+uintptr_t extract_ptr(OBJECT_PTR obj)
+{
+  return (obj >> OBJECT_SHIFT) << OBJECT_SHIFT;
+}

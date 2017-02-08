@@ -329,7 +329,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;
       }
 #else
-      *((int *)(sym & POINTER_MASK)) = *((int *)*(int **)arg_values[i]);
+      *((int *)extract_ptr(sym)) = *((int *)*(int **)arg_values[i]);
 #endif
     }
 
@@ -354,8 +354,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;
       }
 #else
-      //*((float *)(sym & POINTER_MASK)) = *((float *)*(float **)arg_values[i]);
-      *((double *)(sym & POINTER_MASK)) = *((double *)*(double **)arg_values[i]);
+      //*((float *)extract_ptr(sym)) = *((float *)*(float **)arg_values[i]);
+      *((double *)extract_ptr(sym)) = *((double *)*(double **)arg_values[i]);
 #endif
 
     }
@@ -411,7 +411,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
         return NIL;        
       }
 
-      uintptr_t ptr = sym & POINTER_MASK;
+      uintptr_t ptr = extract_ptr(sym);
 
       int orig_len = *((uintptr_t *)ptr);
 
@@ -432,7 +432,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
       for(j=sz+1; j<orig_len+1; j++)
       {
-        OBJECT_PTR temp = get_heap(sym & POINTER_MASK, j);
+        OBJECT_PTR temp = get_heap(extract_ptr(sym), j);
         if(is_dynamic_memory_object(temp))
           dealloc(temp);
       }
