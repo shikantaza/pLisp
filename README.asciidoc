@@ -76,9 +76,9 @@ All these packages can be installed using the package manager that comes with yo
 OS X
 ~~~~
 
-* Install pkg-config using link:http://brew.sh Homebrew
+* Install pkg-config using link:http://brew.sh[Homebrew]
 
-* Install GTK3 using the link:https://wiki.gnome.org/Projects/GTK+/OSX/Building jhbuild system:
+* Install GTK3 using the link:https://wiki.gnome.org/Projects/GTK+/OSX/Building[jhbuild] system:
 
     ./gtk-osx-build-setup.sh
     jhbuild bootstrap
