@@ -3288,7 +3288,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       char *var = extract_variable_string(car(exp), serialize_flag);
 
       len += sprintf(buf+len, "%s(", var);
-      free(var);
+      //free(var);
 
       OBJECT_PTR rest = cdr(exp);
 
@@ -3300,6 +3300,8 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       {
         BOOLEAN first_time = true;
 
+        int i = 0;
+        
         while(rest != NIL)
         {
           if(!first_time)
@@ -3308,7 +3310,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
           if(is_atom(car(rest)))
           {
             char *arg_name = extract_variable_string(car(rest), serialize_flag);
-            len += sprintf(buf+len, "%s", arg_name);
+            len += sprintf(buf+len, "%s%s", (i == 1 && !strcmp(var, "create_fn_closure")) ? "(nativefn)" : "", arg_name);
             free(arg_name);
           }
           else
@@ -3316,10 +3318,12 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
 
           rest = cdr(rest);
           first_time = false;
+          i++;
         }
 
         len += sprintf(buf+len, ")");
       }
+      free(var);
     }
 
     if(!nested_call)
