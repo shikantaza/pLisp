@@ -464,7 +464,7 @@
    "name" : "def-curry-fn", 
    "syntax" : "(def-curry-fn f1 f0 &rest args) => result",
    "args" : "f1: a symbol; f0: a function; args: a list of the rest of the arguments; result: a function",
-   "desc" : "def-curry-function takes a symbol, a function object and a partial list of the arguments to the function, and binds the symbol to a function object which takes as arguments the remaining list of the arguments of the given function object. The returned function object invokes the given function object with the parameters comprising the partial list and the supplied parameters list",
+   "desc" : "def-curry-fn takes a symbol, a function object and a partial list of the arguments to the function, and binds the symbol to a function object which takes as arguments the remaining list of the arguments of the given function object. The returned function object invokes the given function object with the parameters comprising the partial list and the supplied parameters list",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol or if the second argument is not a function object",
    "examples" : [ "(defun f (a b c) (+ a b c)) => <function>", "(def-curry-fn c f 10 20) => <function>", "(c 30) => 60"],
    "see-also" : [  ]
