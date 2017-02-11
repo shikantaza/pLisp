@@ -66,6 +66,7 @@ libtool
 Makefile
 Makefile.in
 plisp
+*.image.*
 *.image
 .deps
 .dirstamp
@@ -78,3 +79,4 @@ json.c
 plisp_parser.h
 plisp_parser.c
 plisp.c
+

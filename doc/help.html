@@ -664,7 +664,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <i>Macro</i><b> def-curry-fn</b><br/><br/>
 <b>Syntax:</b> (def-curry-fn f1 f0 &rest args) => result<br/><br/>
 <b>Arguments:</b> f1: a symbol; f0: a function; args: a list of the rest of the arguments; result: a function<br/><br/>
-<b>Description: def-curry-function</b> takes a symbol, a function object and a partial list of the arguments to the function, and binds the symbol to a function object which takes as arguments the remaining list of the arguments of the given function object. The returned function object invokes the given function object with the parameters comprising the partial list and the supplied parameters list<br/><br/>
+<b>Description: def-curry-fn</b> takes a symbol, a function object and a partial list of the arguments to the function, and binds the symbol to a function object which takes as arguments the remaining list of the arguments of the given function object. The returned function object invokes the given function object with the parameters comprising the partial list and the supplied parameters list<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if at least two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if the first argument is not a symbol or if the second argument is not a function object<br/><br/>
 <b>Examples:</b><br/><br/>
 (defun f (a b c) (+ a b c)) => <function><br/><br/>(def-curry-fn c f 10 20) => <function><br/><br/>(c 30) => 60<br/><br/><b>See Also:</b> 
