@@ -27,14 +27,14 @@ noinst_PROGRAMS = docgen
 
 docgen_SOURCES = tools/docgen.c src/util.c src/util.h src/json.h src/jsonlib.c src/json.l src/json_parser.y
 
-docgen_LDADD = $(LIBDL)
+docgen_LDADD = $(LIBS)
 
 AM_CFLAGS = -DPLISPDATADIR=\"$(pkgdatadir)\" ${gtk_CFLAGS} ${gtksourceview_CFLAGS} ${libffi_CFLAGS}
 AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
-plisp_LDADD = ${AM_LIBS} -ltcc $(LIBDL)
+plisp_LDADD = ${AM_LIBS} -ltcc $(LIBS)
 
 lib_LTLIBRARIES = libplisp.la libtest.la
 

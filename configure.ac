@@ -32,7 +32,7 @@ AC_PROG_YACC
 AM_PROG_CC_C_O
 # Put various checks and such here.
 
-AC_CHECK_LIB(c, dlopen, LIBDL="", AC_CHECK_LIB(dl, dlopen, LIBDL="-ldl"))
+AC_SEARCH_LIBS([dlopen], [dl], [], [])
 
 PKG_CHECK_MODULES([gtk], [gtk+-3.0 >= 3.4.2])
 PKG_CHECK_MODULES([gtksourceview], [gtksourceview-3.0 >= 3.4.2])
