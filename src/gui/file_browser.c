@@ -28,10 +28,14 @@
 #include "../util.h"
 #include "../json.h"
 
-#ifndef __APPLE__
-#define FONT "DejaVu Sans Mono Bold 9"
-#else
+#ifdef __APPLE__
 #define FONT "Menlo Bold 12"
+#else
+#ifdef WIN32
+#define FONT "Courier Regular 10"
+#else
+#define FONT "DejaVu Sans Mono Bold 9"
+#endif
 #endif
 
 typedef struct file_name_and_widget
@@ -681,25 +685,25 @@ GtkToolbar *create_file_browser_toolbar()
 {
   GtkWidget *toolbar;
 
-#ifdef WIN32
-  GtkWidget *new_icon     = gtk_image_new_from_file ("../share/icons/new_file.png");
-  GtkWidget *open_icon    = gtk_image_new_from_file ("../share/icons/open_file.png");
-  GtkWidget *save_icon    = gtk_image_new_from_file ("../share/icons/save_file.png");
-  GtkWidget *close_icon   = gtk_image_new_from_file ("../share/icons/close_file.png");
-  GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
-  GtkWidget *find_icon    = gtk_image_new_from_file ("../share/icons/find.png");
-  GtkWidget *eval_icon    = gtk_image_new_from_file ("../share/icons/evaluate.png");
-  GtkWidget *exit_icon    = gtk_image_new_from_file ("../share/icons/exit32x32.png");
-#else
-  GtkWidget *new_icon     = gtk_image_new_from_file (DATADIR "/icons/new_file.png");
-  GtkWidget *open_icon    = gtk_image_new_from_file (DATADIR "/icons/open_file.png");
-  GtkWidget *save_icon    = gtk_image_new_from_file (DATADIR "/icons/save_file.png");
-  GtkWidget *close_icon   = gtk_image_new_from_file (DATADIR "/icons/close_file.png");
-  GtkWidget *refresh_icon = gtk_image_new_from_file (DATADIR "/icons/refresh.png");
-  GtkWidget *find_icon    = gtk_image_new_from_file (DATADIR "/icons/find.png");
-  GtkWidget *eval_icon    = gtk_image_new_from_file (DATADIR "/icons/evaluate.png");
-  GtkWidget *exit_icon    = gtk_image_new_from_file (DATADIR "/icons/exit32x32.png");
-#endif
+//#ifdef WIN32
+//  GtkWidget *new_icon     = gtk_image_new_from_file ("../share/icons/new_file.png");
+//  GtkWidget *open_icon    = gtk_image_new_from_file ("../share/icons/open_file.png");
+//  GtkWidget *save_icon    = gtk_image_new_from_file ("../share/icons/save_file.png");
+//  GtkWidget *close_icon   = gtk_image_new_from_file ("../share/icons/close_file.png");
+//  GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
+//  GtkWidget *find_icon    = gtk_image_new_from_file ("../share/icons/find.png");
+//  GtkWidget *eval_icon    = gtk_image_new_from_file ("../share/icons/evaluate.png");
+//  GtkWidget *exit_icon    = gtk_image_new_from_file ("../share/icons/exit32x32.png");
+//#else
+  GtkWidget *new_icon     = gtk_image_new_from_file (PLISPDATADIR "/icons/new_file.png");
+  GtkWidget *open_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/open_file.png");
+  GtkWidget *save_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/save_file.png");
+  GtkWidget *close_icon   = gtk_image_new_from_file (PLISPDATADIR "/icons/close_file.png");
+  GtkWidget *refresh_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/refresh.png");
+  GtkWidget *find_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/find.png");
+  GtkWidget *eval_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/evaluate.png");
+  GtkWidget *exit_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/exit32x32.png");
+//#endif
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -755,11 +759,11 @@ void create_file_browser_window(int posx, int posy, int width, int height)
 
   file_browser_window = (GtkWindow *)win;
 
-#ifdef WIN32
-  gtk_window_set_icon_from_file(file_browser_window, "../share/icons/evaluate.png", NULL);
-#else
-  gtk_window_set_icon_from_file(file_browser_window, DATADIR "/icons/evaluate.png", NULL);
-#endif
+//#ifdef WIN32
+//  gtk_window_set_icon_from_file(file_browser_window, "../share/icons/evaluate.png", NULL);
+//#else
+  gtk_window_set_icon_from_file(file_browser_window, PLISPDATADIR "/icons/evaluate.png", NULL);
+//#endif
 
   gtk_window_set_title(file_browser_window, "pLisp File Browser");
 

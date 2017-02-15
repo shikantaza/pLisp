@@ -29,6 +29,7 @@
 
 #ifdef WIN32
 #include <errno.h>
+#include <windows.h>
 #else
 #include <sys/errno.h>
 #endif

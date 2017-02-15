@@ -293,7 +293,17 @@ void *open_library(char *fname)
   void *ret;
   
 #ifdef WIN32
+  unsigned int len = strlen(fname) + 5; //four characters for ".dll"
+
+  char *buf = (char *)malloc(len); 
+  memset(buf,'\0', len);
+
+  strcat(buf, fname);
+  strcat(buf, ".dll");
+
   ret= LoadLibrary(fname);
+
+  free(buf);
 #else
 #ifdef __APPLE__
   unsigned int len = strlen(fname) + 7; //six characters for ".dylib"

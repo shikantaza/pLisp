@@ -28,10 +28,14 @@
 
 #include "../hashtable.h"
 
-#ifndef __APPLE__
-#define FONT "DejaVu Sans Mono Bold 9"
-#else
+#ifdef __APPLE__
 #define FONT "Menlo Bold 12"
+#else
+#ifdef WIN32
+#define FONT "Courier Regular 10"
+#else
+#define FONT "DejaVu Sans Mono Bold 9"
+#endif
 #endif
 
 #define DEFAULT_SYSTEM_BROWSER_POSX 650

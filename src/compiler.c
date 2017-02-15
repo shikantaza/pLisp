@@ -668,11 +668,11 @@ int main(int argc, char **argv)
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
-#ifdef WIN32
-    if(build_help_entries("../share/help.json"))
-#else
-    if(build_help_entries( DATADIR "/help.json"))
-#endif
+//#ifdef WIN32
+//    if(build_help_entries("../share/help.json"))
+//#else
+    if(build_help_entries( PLISPDATADIR "/help.json"))
+//#endif
     {
       fprintf(stderr, "Building help entries failed: %s\n", get_string(cdr(exception_object)));
       cleanup();
@@ -962,11 +962,11 @@ int load_core_library()
   reg_accumulator       = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-#ifdef WIN32
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "./plisp.lisp"),
-#else
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : DATADIR "/plisp.lisp"),
-#endif
+//#ifdef WIN32
+//                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "./plisp.lisp"),
+//#else
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : PLISPDATADIR "/plisp.lisp"),
+//#endif
                              NIL));
 
 
@@ -1016,11 +1016,11 @@ int load_core_library()
   debug_window_dbg_stack = NIL;
 
   OBJECT_PTR src = cons(LOAD_FILE, 
-#ifdef WIN32
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "../lib/plisp_full_monty_compiler_windows.lisp"),
-#else
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : DATADIR "/plisp_full_monty_compiler.lisp"),
-#endif
+//#ifdef WIN32
+//                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "../lib/plisp_full_monty_compiler_windows.lisp"),
+//#else
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : PLISPDATADIR "/plisp_full_monty_compiler.lisp"),
+//#endif
                              NIL));
 
   OBJECT_PTR res = full_monty_eval(src);

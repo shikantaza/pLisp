@@ -25,6 +25,10 @@
 
 #include <gtksourceview/gtksource.h>
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include "libtcc.h"
 
 #include "plisp.h"
@@ -2139,7 +2143,8 @@ void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
     //to all functions to make use of uintptr_t in the generated code,
     //second parameter is set to 116 to skip all this preamble
 #ifdef WIN32 //to account for the replacement of #include <stdint.h>' with 'typedef unsigned int uintptr_t;' in Windows
-    char *fname = substring(source, 128, 12);
+    //char *fname = substring(source, 128, 12);
+    char *fname = substring(source, 10, 12);
 #else
     //char *fname = substring(source, 116, 12);
     char *fname = substring(source, 10, 12);

@@ -17,7 +17,7 @@
 
 AM_YFLAGS = -d
 
-all:	${bin_PROGRAMS} ${lib_LTLIBRARIES} help.html
+all:	${bin_PROGRAMS} ${noinst_PROGRAMS} ${lib_LTLIBRARIES} help.html
 
 bin_PROGRAMS = plisp
 
@@ -27,22 +27,22 @@ noinst_PROGRAMS = docgen
 
 docgen_SOURCES = tools/docgen.c src/util.c src/util.h src/json.h src/jsonlib.c src/json.l src/json_parser.y
 
-docgen_LDADD = -ldl
+docgen_LDADD = $(LIBDL)
 
-AM_CFLAGS = -DDATADIR=\"$(pkgdatadir)\" ${gtk_CFLAGS} ${gtksourceview_CFLAGS} ${libffi_CFLAGS}
+AM_CFLAGS = -DPLISPDATADIR=\"$(pkgdatadir)\" ${gtk_CFLAGS} ${gtksourceview_CFLAGS} ${libffi_CFLAGS}
 AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
-plisp_LDADD = ${AM_LIBS} -ltcc -ldl
+plisp_LDADD = ${AM_LIBS} -ltcc $(LIBDL)
 
 lib_LTLIBRARIES = libplisp.la libtest.la
 
 libplisp_la_SOURCES = src/plisp_utils_ffi.c
-libplisp_la_LDFLAGS = -version-info 0:0:0
+libplisp_la_LDFLAGS = -no-undefined -avoid-version
 
 libtest_la_SOURCES = src/test_so.c
-libtest_la_LDFLAGS = -version-info 0:0:0
+libtest_la_LDFLAGS = -no-undefined -avoid-version
 
 pkgdata_DATA = data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
 
