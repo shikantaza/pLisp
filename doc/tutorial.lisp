@@ -671,8 +671,7 @@
 ; output to the shell or the command window.
 
 ; Refer to the file 'unit_tests.lisp' in the 'tests'
-; directory ('unit_tests_windows.lisp' in Windows)
-; for more examples on how to use the foreign
+; directory for more examples on how to use the foreign
 ; functions interface.
 
 ; 8. Working With Raw Memory
