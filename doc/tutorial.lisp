@@ -551,10 +551,10 @@
 ; evaluating the form '(f -2)'. This is useful for executing 
 ; any cleanup code.
 
-; 5. LET, LETREC, and LET1
-; -----------------------
+; 5. LET, LETREC, and LET*
+; ------------------------
 
-; The LET and LETREC special forms and the LET1 macro enable
+; The LET and LETREC special forms and the LET* macro enable
 ; us to use create and use local variables in our expressions:
 
 (let ((a 10)
@@ -566,10 +566,10 @@
 ; initialized to 10, 20, and 30 respectively, and prints
 ; their sum.
 
-; LET1 is similar to LET, but variables defined later in
+; LET* is similar to LET, but variables defined later in
 ; the list can refer to those defined earlier:
 
-(let1 ((a 10)
+(let* ((a 10)
        (b (+ a 1))
        (c (* b 2)))
   (print (+ a b c)))
