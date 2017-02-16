@@ -688,7 +688,7 @@
 ; First, we load the shared library that contains
 ; the functions needed for working with raw memory:
 
-(load-foreign-library "./libplisp")
+(load-foreign-library "libplisp")
 
 ; The ALLOC-EXT-MEM-INT special operator creates
 ; a memory block of the specified number of integers:
