@@ -1114,7 +1114,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <i>Macro</i><b> nconc</b><br/><br/>
 <b>Syntax:</b> (nconc sym &rest lsts) => result<br/><br/>
 <b>Arguments:</b> sym: a symbol; lsts: the rest of the arguments (which are themselves lists) converted into a list; result: a list<br/><br/>
-<b>Description: nconc</b> appends <i>lsts</i> to <i>lst</i><br/><br/>
+<b>Description: nconc</b> appends <i>lsts</i> to the list object bound to the symbol <i>sym</i><br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type EXCEPTION is thrown if <i>sym</i> is undefined. An exception of type INVALID-ARGUMENT is thrown if <i>sym</i> is not bound to a list object or if any of the elements of <i>lsts</i> is not a list<br/><br/>
 <b>Examples:</b><br/><br/>
 (define x '(1 2 3)) => (1 2 3)<br/><br/>x => (1 2 3)<br/><br/>(nconc x '(4 5 6) '(7 8 9)) => (1 2 3 4 5 6 7 8 9)<br/><br/>x => (1 2 3 4 5 6 7 8 9)<br/><br/><b>See Also:</b> 

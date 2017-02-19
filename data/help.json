@@ -964,7 +964,7 @@
    "name" : "nconc", 
    "syntax" : "(nconc sym &rest lsts) => result",
    "args" : "sym: a symbol; lsts: the rest of the arguments (which are themselves lists) converted into a list; result: a list",
-   "desc" : "nconc appends 'lsts' to 'lst'",
+   "desc" : "nconc appends 'lsts' to the list object bound to the symbol 'sym'",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are supplied. An exception of type EXCEPTION is thrown if 'sym' is undefined. An exception of type INVALID-ARGUMENT is thrown if 'sym' is not bound to a list object or if any of the elements of 'lsts' is not a list",
    "examples" : [ "(define x '(1 2 3)) => (1 2 3)", "x => (1 2 3)", "(nconc x '(4 5 6) '(7 8 9)) => (1 2 3 4 5 6 7 8 9)", "x => (1 2 3 4 5 6 7 8 9)" ],
    "see-also" : [ "append", "concat" ]
