@@ -29,6 +29,8 @@
 #include <dlfcn.h>
 #endif
 
+#include "plisp.h"
+
 char *convert_to_upper_case(char *str)
 {
   char *ptr = NULL;
@@ -333,4 +335,15 @@ void *open_library(char *fname)
 #endif
   
   return ret;
+}
+
+int extract_package_index(OBJECT_PTR symbol_obj)
+{
+  return symbol_obj >> (SYMBOL_BITS + OBJECT_SHIFT);
+}
+
+int extract_symbol_index(OBJECT_PTR symbol_obj)
+{
+  //return ((symbol_obj >> OBJECT_SHIFT) << (PACKAGE_BITS + OBJECT_SHIFT)) >> (PACKAGE_BITS + OBJECT_SHIFT);
+  return (symbol_obj >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 }

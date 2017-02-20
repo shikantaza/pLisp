@@ -686,8 +686,9 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
 
   if(IS_SYMBOL_OBJECT(obj_ptr))
   {
-    int package_index = (int)obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+    //int package_index = (int)obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+    int package_index = extract_package_index(obj_ptr);
+    
     if(package_index == current_package)
       length += sprintf(buf+filled_buf_len+length, "%s", get_symbol_name(obj_ptr));
     else
@@ -745,8 +746,9 @@ void print_object(OBJECT_PTR obj_ptr)
 
     if(IS_SYMBOL_OBJECT(obj_ptr))
     {
-      int package_index = (int)obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+      //int package_index = (int)obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+      int package_index = extract_package_index(obj_ptr);
+      
       if(package_index == current_package)
 	length = sprintf(buf+length, "%s", get_symbol_name(obj_ptr));
       else
@@ -794,8 +796,9 @@ void print_object(OBJECT_PTR obj_ptr)
   {
     if(IS_SYMBOL_OBJECT(obj_ptr))
     {
-      int package_index = (int)obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+      //int package_index = (int)obj_ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+      int package_index = extract_package_index(obj_ptr);
+      
       if(package_index == current_package)
 	fprintf(stdout, "%s", get_symbol_name(obj_ptr));
       else
@@ -2392,9 +2395,11 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
 
 void print_qualified_symbol(OBJECT_PTR ptr, char *buf)
 {
-  int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-  int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
+  //int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+  //int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+  int package_index = extract_package_index(ptr);
+  int symbol_index = extract_symbol_index(ptr);
+  
   assert(IS_SYMBOL_OBJECT(ptr));
 
   memset(buf,'\0',SYMBOL_STRING_SIZE);
@@ -2410,9 +2415,11 @@ void print_qualified_symbol(OBJECT_PTR ptr, char *buf)
 
 void print_symbol(OBJECT_PTR ptr, char *buf)
 {
-  int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
-  int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
+  //int package_index = (int)ptr >> (SYMBOL_BITS + OBJECT_SHIFT);
+  //int symbol_index =  ((int)ptr >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+  int package_index = extract_package_index(ptr);
+  int symbol_index = extract_symbol_index(ptr);
+  
   log_function_entry("print_symbol");
 
   assert(IS_SYMBOL_OBJECT(ptr));
@@ -2471,9 +2478,11 @@ char *get_symbol_name(OBJECT_PTR symbol_object)
   if(!IS_SYMBOL_OBJECT(symbol_object))
     assert(false);
 
-  package_index = (int)symbol_object >> (SYMBOL_BITS + OBJECT_SHIFT);
-  symbol_index =  ((int)symbol_object >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
+  //package_index = (int)symbol_object >> (SYMBOL_BITS + OBJECT_SHIFT);
+  //symbol_index =  ((int)symbol_object >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+  package_index = extract_package_index(symbol_object);
+  symbol_index = extract_symbol_index(symbol_object);
+  
   return packages[package_index].symbols[symbol_index];
 }
 
@@ -2810,9 +2819,11 @@ BOOLEAN is_valid_object(OBJECT_PTR obj)
 
   if(IS_SYMBOL_OBJECT(obj))
   {
-    int package_index = (int)obj >> (SYMBOL_BITS + OBJECT_SHIFT);
-    int symbol_index =  ((int)obj >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
+    //int package_index = (int)obj >> (SYMBOL_BITS + OBJECT_SHIFT);
+    //int symbol_index =  ((int)obj >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+    int package_index = extract_package_index(obj);
+    int symbol_index = extract_symbol_index(obj);
+    
     return package_index >= 0 && 
            package_index < nof_packages &&
            symbol_index >= 0 &&
@@ -2983,8 +2994,9 @@ BOOLEAN is_core_package_op(OBJECT_PTR sym)
 
     OBJECT_PTR top_level_sym = top_level_symbols[i].sym;  
 
-    int package_index = (int)top_level_sym >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+    //int package_index = (int)top_level_sym >> (SYMBOL_BITS + OBJECT_SHIFT);
+    int package_index = extract_package_index(top_level_sym);
+    
     if(package_index != 0)
       continue;
 
@@ -3058,8 +3070,9 @@ OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
       if(!strcmp(symbol_name, "NIL") || !strcmp(symbol_name, "T"))
         return exp;
 
-      int package_index = (int)exp >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+      //int package_index = (int)exp >> (SYMBOL_BITS + OBJECT_SHIFT);
+      int package_index = extract_package_index(exp);
+      
       if(package_index != 0 && package_index != current_package)
         return exp;
       else

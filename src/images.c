@@ -1301,7 +1301,8 @@ int load_from_image(char *file_name)
       {
         OBJECT_PTR sym = CAAR(rest);
 
-        if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+        //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+        if(extract_package_index(sym) == id)
         {
           gtk_list_store_append(store2, &iter2);
           gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);
@@ -1320,7 +1321,8 @@ int load_from_image(char *file_name)
 
         OBJECT_PTR sym = top_level_symbols[i].sym;
 
-        if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+        //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+        if(extract_package_index(sym) == id)
         {
           gtk_list_store_append(store2, &iter2);
           gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);

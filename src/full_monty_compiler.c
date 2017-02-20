@@ -4330,9 +4330,11 @@ int location_of_and_rest(OBJECT_PTR lst)
 
   while(rest != NIL)
   {
-    int package_index = (int)car(rest) >> (SYMBOL_BITS + OBJECT_SHIFT);
-    int symbol_index =  ((int)car(rest) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
+    //int package_index = (int)car(rest) >> (SYMBOL_BITS + OBJECT_SHIFT);
+    //int symbol_index =  ((int)car(rest) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+    int package_index = extract_package_index(car(rest));
+    int symbol_index = extract_symbol_index(car(rest));
+    
     char *param_name = packages[package_index].symbols[symbol_index];
 
     if(!strcmp(param_name, "&REST"))
@@ -4353,9 +4355,11 @@ OBJECT_PTR strip_and_rest(OBJECT_PTR lst)
   {
     OBJECT_PTR val = car(rest);
 
-    int package_index = (int)val >> (SYMBOL_BITS + OBJECT_SHIFT);
-    int symbol_index =  ((int)val >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
-
+    //int package_index = (int)val >> (SYMBOL_BITS + OBJECT_SHIFT);
+    //int symbol_index =  ((int)val >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
+    int package_index = extract_package_index(val);
+    int symbol_index = extract_symbol_index(val);
+    
     char *param_name = packages[package_index].symbols[symbol_index];
 
     if(strcmp(param_name, "&REST"))
@@ -5244,8 +5248,9 @@ OBJECT_PTR symbol_to_use(OBJECT_PTR sym)
   OBJECT_PTR symbol_given = sym;
   OBJECT_PTR symbol_to_be_used;
 
-  int package_index = (int)symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+  //int package_index = (int)symbol_given >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int package_index =extract_package_index(symbol_given);
+  
   if(package_index != current_package)
   {
     if(package_index == CORE_PACKAGE_INDEX)

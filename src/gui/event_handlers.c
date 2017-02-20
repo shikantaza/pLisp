@@ -1427,7 +1427,8 @@ void fetch_package_symbols()
     {
       OBJECT_PTR sym = CAAR(rest);
 
-      if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+      //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+      if(extract_package_index(sym) == id)
       {
         gtk_list_store_append(store2, &iter2);
         gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
@@ -1447,7 +1448,8 @@ void fetch_package_symbols()
 
       OBJECT_PTR sym = top_level_symbols[i].sym;
 
-      if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+      //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
+      if(extract_package_index(sym) == id)
       {
         gtk_list_store_append(store2, &iter2);
         gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
@@ -2245,7 +2247,8 @@ void add_auto_complete_words(int package_index)
     if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
       continue;
 
-    if(((int)top_level_symbols[i].sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == package_index)
+    //if(((int)top_level_symbols[i].sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == package_index)
+    if(extract_package_index(top_level_symbols[i].sym) == package_index)
     {
       nof_autocomplete_words++;
 

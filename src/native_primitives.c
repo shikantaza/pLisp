@@ -974,8 +974,9 @@ OBJECT_PTR primitive_unbind(OBJECT_PTR sym)
     return NIL;
   }
 
-  int package_index = (int)sym >> (SYMBOL_BITS + OBJECT_SHIFT);
-
+  //int package_index = (int)sym >> (SYMBOL_BITS + OBJECT_SHIFT);
+  int package_index =extract_package_index(sym);
+  
   if(package_index == 0)
   {
     throw_exception1("ACCESS-VIOLATION", "Cannot unbind CORE package symbol");
@@ -1604,7 +1605,8 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
     OBJECT_PTR sym = top_level_symbols[i].sym;
 
-    if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == index)
+    //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == index)
+    if(extract_package_index(sym) == index)
     {
       if(IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
         continue;

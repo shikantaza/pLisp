@@ -20,6 +20,8 @@
 #ifndef UTIL_H
 #define UTIL_H 
 
+typedef uintptr_t OBJECT_PTR;
+
 char *convert_to_upper_case(char *);
 char *convert_to_lower_case(char *);
 
@@ -42,4 +44,7 @@ unsigned int file_exists(char *);
 
 void *open_library(char *);
 
+int extract_package_index(OBJECT_PTR);
+int extract_symbol_index(OBJECT_PTR);
+  
 #endif
