@@ -4330,6 +4330,15 @@ int location_of_and_rest(OBJECT_PTR lst)
 
   while(rest != NIL)
   {
+    //to handle cases where lst may not be
+    //a  valid list of parameters
+    //e.g. when a closure is defined
+    //indirectly, such as:
+    //(defun q (w) (lambda () w))
+    //(define some-closure (q '(a b c)))
+    if(!IS_SYMBOL_OBJECT(car(rest)))
+      return -2;
+    
     //int package_index = (int)car(rest) >> (SYMBOL_BITS + OBJECT_SHIFT);
     //int symbol_index =  ((int)car(rest) >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
     int package_index = extract_package_index(car(rest));
@@ -5150,10 +5159,12 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
 
       OBJECT_PTR cons_equiv = cons_equivalent(car(top_level_symbols[i].val));
       OBJECT_PTR params = second(car(last_cell(cons_equiv)));
-      
+
       int loc = location_of_and_rest(params);
 
-      if(loc == -1)
+      if(loc == -2)
+        break; //to handle the case where the source may not contain a valid list of parameters
+      else if(loc == -1)
       {
         //to permit invocations of continuations from the top-level
         //(in general, it's OK if more number of arguments are passed
