@@ -46,5 +46,6 @@ void *open_library(char *);
 
 int extract_package_index(OBJECT_PTR);
 int extract_symbol_index(OBJECT_PTR);
-  
+
+OBJECT_PTR build_symbol_object(int, int);
 #endif

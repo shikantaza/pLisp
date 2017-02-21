@@ -347,3 +347,8 @@ int extract_symbol_index(OBJECT_PTR symbol_obj)
   //return ((symbol_obj >> OBJECT_SHIFT) << (PACKAGE_BITS + OBJECT_SHIFT)) >> (PACKAGE_BITS + OBJECT_SHIFT);
   return (symbol_obj >> OBJECT_SHIFT) & TWO_RAISED_TO_SYMBOL_BITS_MINUS_1;
 }
+
+OBJECT_PTR build_symbol_object(int package_index, int symbol_index)
+{
+  return (OBJECT_PTR)(((OBJECT_PTR)package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (symbol_index << OBJECT_SHIFT) + SYMBOL_TAG);
+}

@@ -917,7 +917,8 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   free(arg_values);
   free(arg_types);
 
-  assert(is_valid_object((int)ret_val));
-
+  //assert(is_valid_object((int)ret_val));
+  assert(is_valid_object((OBJECT_PTR)ret_val));
+  
   return (OBJECT_PTR)ret_val;
 }

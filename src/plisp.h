@@ -42,12 +42,21 @@
 
 #define BIT_MASK 15
 
-//the 28 bits are split into six bits
+//the 28 (60) bits are split into six bits
 //for indexing into the package table,
-//and 22 bits for indexing into the
+//and 22 (54) bits for indexing into the
 //symbols table of the chosen package table entry
 #define PACKAGE_BITS         6
+
+#if __x86_64__
+#define SYMBOL_BITS         54
+#else
+#ifdef __APPLE__
+#define SYMBOL_BITS         54
+#else
 #define SYMBOL_BITS         22
+#endif
+#endif
 
 #define OBJECT_SHIFT         4
 
@@ -77,7 +86,16 @@
 #define OK 0
 #define NOT_OK 1
 
-#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
+//#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
+#if __x86_64__
+#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFFFFFFFFFF
+#else
+#ifdef __APPLE__
+#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFFFFFFFFFF
+#else
+#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFF
+#endif
+#endif
 
 #define DEFAULT_TRANSCRIPT_POSX 0
 #define DEFAULT_TRANSCRIPT_POSY 350

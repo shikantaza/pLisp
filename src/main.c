@@ -914,10 +914,12 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   index = find_symbol(symbol_name, package_index);
     
   if(index != NOT_FOUND) //symbol exists in symbol table
-    retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG);
+    //retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG);
+    retval = build_symbol_object(package_index, index);
   else
-    retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
-
+    //retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
+    retval = build_symbol_object(package_index, add_symbol(symbol_name));
+    
   log_function_exit("get_symbol_object");
 
   return retval;
@@ -2159,7 +2161,8 @@ OBJECT_PTR gensym()
 
   sprintf(sym, "#:G%08d", gen_sym_count);
 
-  return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(sym) << OBJECT_SHIFT) + SYMBOL_TAG);
+  //return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(sym) << OBJECT_SHIFT) + SYMBOL_TAG);
+  return build_symbol_object(current_package, add_symbol(sym));
 }
 
 void create_package(char *name)
@@ -2386,10 +2389,12 @@ OBJECT_PTR get_qualified_symbol_object(char *package_name, char *symbol_name)
   symbol_index = find_qualified_symbol(package_index, symbol_name);
 
   if(symbol_index != NOT_FOUND) //symbol exists in symbol table
-    retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (symbol_index << OBJECT_SHIFT) + SYMBOL_TAG);
+    //retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (symbol_index << OBJECT_SHIFT) + SYMBOL_TAG);
+    retval = build_symbol_object(package_index, symbol_index);
   else
-    retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_qualified_symbol(package_name, symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
-
+    //retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_qualified_symbol(package_name, symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
+    retval = build_symbol_object(package_index, add_qualified_symbol(package_name, symbol_name));
+    
   return cons(TRUE, retval);
 }
 
@@ -3080,9 +3085,11 @@ OBJECT_PTR rewrite_symbols(OBJECT_PTR exp)
         int index = find_symbol(symbol_name, current_package);
     
         if(index != NOT_FOUND) //symbol exists in symbol table
-          return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG);
+          //return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (index << OBJECT_SHIFT) + SYMBOL_TAG);
+          return build_symbol_object(current_package, index);
         else
-          return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
+          //return (OBJECT_PTR) ((current_package << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
+          return build_symbol_object(current_package, add_symbol(symbol_name));
       }
     }
   }
