@@ -428,8 +428,16 @@ void initialize_symbols_list(GtkTreeView *list)
   /*                                                    renderer, "text", 1, NULL); */
   /* gtk_tree_view_append_column(GTK_TREE_VIEW (list), column2); */
 
+#if __x86_64__
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT64);
+#else
+#ifdef __APPLE__
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT64);
+#else
   store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
-
+#endif
+#endif  
+  
   gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
                           GTK_TREE_MODEL(store));
 
@@ -1595,8 +1603,16 @@ void initialize_callers_symbols_list(GtkTreeView *list)
                                                      renderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
 
+#if __x86_64__  
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT64);
+#else
+#ifdef __APPLE__  
+  store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT64);
+#else
   store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_INT);
-
+#endif
+#endif
+  
   gtk_tree_view_set_model(GTK_TREE_VIEW (list), 
                           GTK_TREE_MODEL(store));
 

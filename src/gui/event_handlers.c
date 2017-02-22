@@ -1482,8 +1482,16 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
   if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
+#if __x86_64__
+    gint64 ptr;
+#else
+#ifdef __APPLE__
+    gint64 ptr;
+#else
     gint ptr;
-
+#endif
+#endif
+    
     gtk_tree_model_get(model, &iter,
                        0, &symbol_name,
                        -1);
@@ -2023,7 +2031,15 @@ void callers(GtkWidget *widget,
   if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
+#if __x86_64__
+    gint64 ptr;
+#else
+#ifdef __APPLE__
+    gint64 ptr;
+#else
     gint ptr;
+#endif
+#endif
 
     gtk_tree_model_get(model, &iter,
                        0, &symbol_name,
@@ -2466,8 +2482,16 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
   if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
+#if __x86_64__
+    gint64 ptr;
+#else
+#ifdef __APPLE__
+    gint64 ptr;
+#else
     gint ptr;
-
+#endif
+#endif
+    
     gtk_tree_model_get(model, &iter,
                        0, &symbol_name,
                        -1);
@@ -2540,7 +2564,15 @@ void callers_window_accept()
   if(gtk_tree_selection_get_selected(selection, &model, &iter))
   {
     gchar *symbol_name;
+#if __x86_64__
+    gint64 ptr;
+#else
+#ifdef __APPLE__
+    gint64 ptr;
+#else
     gint ptr;
+#endif
+#endif    
 
     gtk_tree_model_get(model, &iter,
                        0, &symbol_name,
