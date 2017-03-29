@@ -20,6 +20,8 @@
 #ifndef UTIL_H
 #define UTIL_H 
 
+#include <stdint.h>
+
 typedef uintptr_t OBJECT_PTR;
 
 char *convert_to_upper_case(char *);

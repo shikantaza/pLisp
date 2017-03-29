@@ -138,12 +138,19 @@ uintptr_t object_alloc(int size, int tag)
 {
   uintptr_t *ret;
 
-  if(tag == FLOAT_TAG)
-    ret = GC_MALLOC(sizeof(double));
-  else
-    ret = GC_MALLOC(size * sizeof(OBJECT_PTR));
+  /* if(tag == FLOAT_TAG) */
+  /*   ret = GC_MALLOC(sizeof(double)); */
+  /* else */
+  /*   ret = GC_MALLOC(size * sizeof(OBJECT_PTR)); */
 
-  if(!ret)
+  int err;
+
+  if(tag == FLOAT_TAG)
+    err = GC_posix_memalign((void **)&ret, 16, sizeof(double));
+  else
+    err = GC_posix_memalign((void **)&ret, 16, size * sizeof(OBJECT_PTR));
+
+  if(err)
   {
     if(!console_mode && !single_expression_mode && !pipe_mode)
     {
