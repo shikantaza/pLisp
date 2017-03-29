@@ -113,18 +113,18 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   int nof_args = cons_length(args);
 
-  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  ffi_type **arg_types = (ffi_type **)GC_MALLOC(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
     throw_generic_exception("Unable to allocate memory for argument types buffer");
     return NIL;
   }
 
-  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  void **arg_values = (void **)GC_MALLOC(nof_args * sizeof(void *));
   if(!arg_values)
   {
     throw_generic_exception("Unable to allocate memory for argument values buffer");
-    free(arg_types);
+    //free(arg_types);
     return NIL;
   }
   
@@ -180,7 +180,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       arg_types[i] = &ffi_type_sint;
       i_val = get_int_value(val);
-      arg_values[i] = (int *)malloc(sizeof(int));
+      arg_values[i] = (int *)GC_MALLOC(sizeof(int));
       *(int *)arg_values[i] = i_val;
     }
     //else if(type == FLOT) //FLOAT spelt wrongly because it's already bean #define'd
@@ -188,9 +188,9 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       arg_types[i] = &ffi_type_double;
       f_val = get_float_value(val);
-      /* arg_values[i] = (float *)malloc(sizeof(float)); */
+      /* arg_values[i] = (float *)GC_MALLOC(sizeof(float)); */
       /* *(float *)arg_values[i] = f_val; */
-      arg_values[i] = (double *)malloc(sizeof(double));
+      arg_values[i] = (double *)GC_MALLOC(sizeof(double));
       *(double *)arg_values[i] = f_val;
     }
 //#ifdef WIN32
@@ -202,7 +202,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       arg_types[i] = &ffi_type_schar;
       c_val = (int)val >> OBJECT_SHIFT;
-      arg_values[i] = (char *)malloc(sizeof(char));
+      arg_values[i] = (char *)GC_MALLOC(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
     //else if(type == CHAR_POINTER)
@@ -210,29 +210,29 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     {
       arg_types[i] = &ffi_type_pointer;
       c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
-      arg_values[i] = (char **)malloc(sizeof(char *));
+      arg_values[i] = (char **)GC_MALLOC(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
     //else if(type == INT_POINTER)
     else if(s && !strcmp(s, "INTEGER-POINTER"))
     {
       arg_types[i] = &ffi_type_pointer;
-      i_val_ptr = (int *)malloc(sizeof(int));
+      i_val_ptr = (int *)GC_MALLOC(sizeof(int));
       *i_val_ptr = get_int_value(val);
-      arg_values[i] = (int **)malloc(sizeof(int *));
+      arg_values[i] = (int **)GC_MALLOC(sizeof(int *));
       *(int **)arg_values[i] = i_val_ptr;
     }
     //else if(type == FLOAT_POINTER)
     else if(s && !strcmp(s, "FLOAT-POINTER"))
     {
       arg_types[i] = &ffi_type_pointer;
-      /* f_val_ptr = (float *)malloc(sizeof(float)); */
+      /* f_val_ptr = (float *)GC_MALLOC(sizeof(float)); */
       /* *f_val_ptr = get_float_value(val); */
-      /* arg_values[i] = (float **)malloc(sizeof(float *)); */
+      /* arg_values[i] = (float **)GC_MALLOC(sizeof(float *)); */
       /* *(float **)arg_values[i] = f_val_ptr; */
-      f_val_ptr = (double *)malloc(sizeof(double));
+      f_val_ptr = (double *)GC_MALLOC(sizeof(double));
       *f_val_ptr = get_float_value(val);
-      arg_values[i] = (double **)malloc(sizeof(double *));
+      arg_values[i] = (double **)GC_MALLOC(sizeof(double *));
       *(double **)arg_values[i] = f_val_ptr;
     }
 
@@ -278,8 +278,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
   {
     throw_generic_exception("call_foreign_function(): ffi_prep_cif() failed");
     free_arg_values(arg_types, arg_values, args, nof_args);
-    free(arg_values);
-    free(arg_types);
+    //free(arg_values);
+    //free(arg_types);
     return NIL;
   }
 
@@ -324,8 +324,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
         throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
-        free(arg_values);
-        free(arg_types);
+        //free(arg_values);
+        //free(arg_types);
         return NIL;
       }
 #else
@@ -349,8 +349,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
         throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
-        free(arg_values);
-        free(arg_types);
+        //free(arg_values);
+        //free(arg_types);
         return NIL;
       }
 #else
@@ -380,8 +380,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
         throw_generic_exception("update_environment failed");
         free_arg_values(arg_types, arg_values, args, nof_args);
-        free(arg_values);
-        free(arg_types);
+        //free(arg_values);
+        //free(arg_types);
         return NIL;
       }
     }
@@ -397,8 +397,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
         throw_exception1("EXCEPTION", "Maximum string length permitted for FFI parameters exceeded");
         free_arg_values(arg_types, arg_values, args, nof_args);
-        free(arg_values);
-        free(arg_types);
+        //free(arg_values);
+        //free(arg_types);
         return NIL;        
       }
 
@@ -406,8 +406,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
         throw_exception1("EXCEPTION", "Argument indicated as CHAR-POINTER is not a string");
         free_arg_values(arg_types, arg_values, args, nof_args);
-        free(arg_values);
-        free(arg_types);
+        //free(arg_values);
+        //free(arg_types);
         return NIL;        
       }
 
@@ -419,8 +419,8 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       {
         throw_exception1("EXCEPTION", "Attempting to write beyond the size of the string");
         free_arg_values(arg_types, arg_values, args, nof_args);
-        free(arg_values);
-        free(arg_types);
+        //free(arg_values);
+        //free(arg_types);
         return NIL;
       }
 
@@ -430,12 +430,12 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       for(j=0; j< sz; j++)
         set_heap(ptr, j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
 
-      for(j=sz+1; j<orig_len+1; j++)
-      {
-        OBJECT_PTR temp = get_heap(extract_ptr(sym), j);
-        if(is_dynamic_memory_object(temp))
-          dealloc(temp);
-      }
+      /* for(j=sz+1; j<orig_len+1; j++) */
+      /* { */
+      /*   OBJECT_PTR temp = get_heap(extract_ptr(sym), j); */
+      /*   if(is_dynamic_memory_object(temp)) */
+      /*     dealloc(temp); */
+      /* } */
     }
 #endif
 
@@ -487,7 +487,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       //heap[ptr + i + 1] = (str[i] << OBJECT_SHIFT) + CHAR_TAG;
       set_heap(ptr, i + 1, (OBJECT_PTR)((str[i] << OBJECT_SHIFT) + CHAR_TAG));
 
-    free(str);
+    //free(str);
 
     ret = ptr + ARRAY_TAG;
 
@@ -502,52 +502,52 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
   free_arg_values(arg_types, arg_values, args, nof_args);
 
-  free(arg_values);
-  free(arg_types);
+  //free(arg_values);
+  //free(arg_types);
 
   return ret;
 }
 
 void free_arg_values(ffi_type **types, void **values, OBJECT_PTR args, int nargs)
 {
-  OBJECT_PTR rest = args;
+  /* OBJECT_PTR rest = args; */
 
-  int i;
+  /* int i; */
 
-  for(i=0; i<nargs; i++)
-  {    
-    OBJECT_PTR type = CADAR(rest);
+  /* for(i=0; i<nargs; i++) */
+  /* {     */
+  /*   OBJECT_PTR type = CADAR(rest); */
 
-    char *s;
+  /*   char *s; */
 
-    if(IS_SYMBOL_OBJECT(type))
-      s = get_symbol_name(type);
-    else
-      s = NULL;
+  /*   if(IS_SYMBOL_OBJECT(type)) */
+  /*     s = get_symbol_name(type); */
+  /*   else */
+  /*     s = NULL; */
 
-    if(types[i] == &ffi_type_pointer)
-    {
-      //if(type == INT_POINTER)
-      if(s && !strcmp(s, "INTEGER-POINTER"))
-        free(*(int **)values[i]);
-      //else if(type  == FLOAT_POINTER)
-      else if(s && !strcmp(s, "FLOAT-POINTER"))
-        //free(*(float **)values[i]);
-        free(*(double **)values[i]);
-      //else if(type == CHAR_POINTER)
-      else if(s && !strcmp(s, "CHARACTER-POINTER"))
-        free(*(char **)values[i]);
-    }
-    else if(types[i] == &ffi_type_sint)
-      free((int *)values[i]);
-    else if(types[i] == &ffi_type_double)
-      //free((float *)values[i]);
-      free((double *)values[i]);
-    else if(types[i] == &ffi_type_schar)
-      free((char *)values[i]);
+  /*   if(types[i] == &ffi_type_pointer) */
+  /*   { */
+  /*     //if(type == INT_POINTER) */
+  /*     if(s && !strcmp(s, "INTEGER-POINTER")) */
+  /*       free(*(int **)values[i]); */
+  /*     //else if(type  == FLOAT_POINTER) */
+  /*     else if(s && !strcmp(s, "FLOAT-POINTER")) */
+  /*       //free(*(float **)values[i]); */
+  /*       free(*(double **)values[i]); */
+  /*     //else if(type == CHAR_POINTER) */
+  /*     else if(s && !strcmp(s, "CHARACTER-POINTER")) */
+  /*       free(*(char **)values[i]); */
+  /*   } */
+  /*   else if(types[i] == &ffi_type_sint) */
+  /*     free((int *)values[i]); */
+  /*   else if(types[i] == &ffi_type_double) */
+  /*     //free((float *)values[i]); */
+  /*     free((double *)values[i]); */
+  /*   else if(types[i] == &ffi_type_schar) */
+  /*     free((char *)values[i]); */
 
-    rest = cdr(rest);
-  }
+  /*   rest = cdr(rest); */
+  /* } */
 }
 
 //for handling FORMAT statements. Floats
@@ -562,18 +562,18 @@ int format(OBJECT_PTR args)
   unsigned int nof_args = cons_length(args);
   int i;
 
-  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  ffi_type **arg_types = (ffi_type **)GC_MALLOC(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
     throw_generic_exception("Unable to allocate memory for argument types buffer");
     return -1;
   }
 
-  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  void **arg_values = (void **)GC_MALLOC(nof_args * sizeof(void *));
   if(!arg_values)
   {
     throw_generic_exception("Unable to allocate memory for argument values buffer");
-    free(arg_types);
+    //free(arg_types);
     return -1;
   }
 
@@ -588,7 +588,7 @@ int format(OBJECT_PTR args)
 #else
   arg_types[i] = &ffi_type_sint;
 #endif
-  arg_values[i] = (int *)malloc(sizeof(int));
+  arg_values[i] = (int *)GC_MALLOC(sizeof(int));
 
   if(car(args) == NIL)
     i_val = stdout;
@@ -610,28 +610,28 @@ int format(OBJECT_PTR args)
     {
       arg_types[i] = &ffi_type_sint;
       i_val = get_int_value(val);
-      arg_values[i] = (int *)malloc(sizeof(int));
+      arg_values[i] = (int *)GC_MALLOC(sizeof(int));
       *(int *)arg_values[i] = i_val;
     }
     else if(IS_FLOAT_OBJECT(val))
     {
       arg_types[i] = &ffi_type_double;
       d_val = get_float_value(val);
-      arg_values[i] = (double *)malloc(sizeof(double));
+      arg_values[i] = (double *)GC_MALLOC(sizeof(double));
       *(double *)arg_values[i] = d_val;
     }
     else if(IS_CHAR_OBJECT(val))
     {
       arg_types[i] = &ffi_type_schar;
       c_val = (int)val >> OBJECT_SHIFT;
-      arg_values[i] = (char *)malloc(sizeof(char));
+      arg_values[i] = (char *)GC_MALLOC(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
     else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
     {
       arg_types[i] = &ffi_type_pointer;
       c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
-      arg_values[i] = (char **)malloc(sizeof(char *));
+      arg_values[i] = (char **)GC_MALLOC(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
 
@@ -648,8 +648,8 @@ int format(OBJECT_PTR args)
   {
     throw_generic_exception("format(): ffi_prep_cif() failed");
     free_arg_values(arg_types, arg_values, args, nof_args);
-    free(arg_values);
-    free(arg_types);
+    //free(arg_values);
+    //free(arg_types);
     return -1;
   }
 
@@ -659,37 +659,37 @@ int format(OBJECT_PTR args)
 
   free_arg_values_for_format(arg_types, arg_values, args, nof_args);
 
-  free(arg_values);
-  free(arg_types);
+  //free(arg_values);
+  //free(arg_types);
 
   return 0;
 }
 
 void free_arg_values_for_format(ffi_type **types, void **values, OBJECT_PTR args, int nargs)
 {
-  OBJECT_PTR rest = args;
+  /* OBJECT_PTR rest = args; */
 
-  int i;
+  /* int i; */
 
-  for(i=0; i<nargs; i++)
-  {
-    OBJECT_PTR val = car(rest);
+  /* for(i=0; i<nargs; i++) */
+  /* { */
+  /*   OBJECT_PTR val = car(rest); */
 
-    if(types[i] == &ffi_type_pointer)
-    {
-      if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
-        free(*(char **)values[i]);
-    }
-    else if(types[i] == &ffi_type_sint)
-      free((int *)values[i]);
-    else if(types[i] == &ffi_type_double)
-      //free((float *)values[i]);
-      free((double *)values[i]);
-    else if(types[i] == &ffi_type_schar)
-      free((char *)values[i]);
+  /*   if(types[i] == &ffi_type_pointer) */
+  /*   { */
+  /*     if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val)) */
+  /*       free(*(char **)values[i]); */
+  /*   } */
+  /*   else if(types[i] == &ffi_type_sint) */
+  /*     free((int *)values[i]); */
+  /*   else if(types[i] == &ffi_type_double) */
+  /*     //free((float *)values[i]); */
+  /*     free((double *)values[i]); */
+  /*   else if(types[i] == &ffi_type_schar) */
+  /*     free((char *)values[i]); */
 
-    rest = cdr(rest);
-  }
+  /*   rest = cdr(rest); */
+  /* } */
 }
 
 int format_for_gui(OBJECT_PTR args)
@@ -697,18 +697,18 @@ int format_for_gui(OBJECT_PTR args)
   int nof_args = cons_length(args);
   int i;
 
-  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  ffi_type **arg_types = (ffi_type **)GC_MALLOC(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
     throw_generic_exception("Unable to allocate memory for argument types buffer");
     return -1;
   }
 
-  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  void **arg_values = (void **)GC_MALLOC(nof_args * sizeof(void *));
   if(!arg_values)
   {
     throw_generic_exception("Unable to allocate memory for argument values buffer");
-    free(arg_types);
+    //free(arg_types);
     return -1;
   }
 
@@ -722,13 +722,13 @@ int format_for_gui(OBJECT_PTR args)
   if(car(args) == NIL)
   {
     arg_types[0] = &ffi_type_pointer;
-    arg_values[0] = (char **)malloc(sizeof(char *));
+    arg_values[0] = (char **)GC_MALLOC(sizeof(char *));
     *(char **)arg_values[0] = buf;
   }
   else
   {
     arg_types[0] = &ffi_type_sint;
-    arg_values[0] = (int *)malloc(sizeof(int));
+    arg_values[0] = (int *)GC_MALLOC(sizeof(int));
 
     //i_val = get_int_value(car(args));
     i_val = fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
@@ -747,28 +747,28 @@ int format_for_gui(OBJECT_PTR args)
     {
       arg_types[i] = &ffi_type_sint;
       i_val = get_int_value(val);
-      arg_values[i] = (int *)malloc(sizeof(int));
+      arg_values[i] = (int *)GC_MALLOC(sizeof(int));
       *(int *)arg_values[i] = i_val;
     }
     else if(IS_FLOAT_OBJECT(val))
     {
       arg_types[i] = &ffi_type_double;
       d_val = get_float_value(val);
-      arg_values[i] = (double *)malloc(sizeof(double));
+      arg_values[i] = (double *)GC_MALLOC(sizeof(double));
       *(double *)arg_values[i] = d_val;
     }
     else if(IS_CHAR_OBJECT(val))
     {
       arg_types[i] = &ffi_type_schar;
       c_val = (int)val >> OBJECT_SHIFT;
-      arg_values[i] = (char *)malloc(sizeof(char));
+      arg_values[i] = (char *)GC_MALLOC(sizeof(char));
       *(char *)arg_values[i] = c_val;
     }
     else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
     {
       arg_types[i] = &ffi_type_pointer;
       c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
-      arg_values[i] = (char **)malloc(sizeof(char *));
+      arg_values[i] = (char **)GC_MALLOC(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
 
@@ -785,8 +785,8 @@ int format_for_gui(OBJECT_PTR args)
   {
     throw_generic_exception("format(): ffi_prep_cif() failed");
     free_arg_values(arg_types, arg_values, args, nof_args);
-    free(arg_values);
-    free(arg_types);
+    //free(arg_values);
+    //free(arg_types);
     return -1;
   }
 
@@ -799,8 +799,8 @@ int format_for_gui(OBJECT_PTR args)
 
   free_arg_values_for_format(arg_types+1, arg_values+1, args, nof_args-1);
 
-  free(arg_values);
-  free(arg_types);
+  //free(arg_values);
+  //free(arg_types);
 
   if(car(args) == NIL)
     print_to_transcript(buf);
@@ -816,18 +816,18 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   unsigned int nof_args = cons_length(args) + 2; //since the closure (macro object) will be the first argument, and the id closure will be the last argument
   int i;
 
-  ffi_type **arg_types = (ffi_type **)malloc(nof_args * sizeof(ffi_type *));
+  ffi_type **arg_types = (ffi_type **)GC_MALLOC(nof_args * sizeof(ffi_type *));
   if(!arg_types)
   {
-    raise_error("Error in invoking macro - malloc() failed (1)");
+    raise_error("Error in invoking macro - GC_MALLOC() failed (1)");
     return NIL;
   }
 
-  void **arg_values = (void **)malloc(nof_args * sizeof(void *));
+  void **arg_values = (void **)GC_MALLOC(nof_args * sizeof(void *));
   if(!arg_values)
   {
-    raise_error("Error in invoking macro - malloc() failed (2)");
-    free(arg_types);
+    raise_error("Error in invoking macro - GC_MALLOC() failed (2)");
+    //free(arg_types);
     return NIL;
   }
 
@@ -838,7 +838,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 #else
   arg_types[i] = &ffi_type_uint;
 #endif
-  arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
+  arg_values[i] = (OBJECT_PTR *)GC_MALLOC(sizeof(OBJECT_PTR));
 
   //the first parameter to the native function is
   //the closure (macro object) itself
@@ -855,7 +855,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 #else
     arg_types[i] = &ffi_type_uint;
 #endif
-    arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
+    arg_values[i] = (OBJECT_PTR *)GC_MALLOC(sizeof(OBJECT_PTR));
     *(OBJECT_PTR *)arg_values[i] = car(rest_args);
 
     i++;
@@ -867,7 +867,7 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 #else
   arg_types[i] = &ffi_type_uint;
 #endif
-  arg_values[i] = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR));
+  arg_values[i] = (OBJECT_PTR *)GC_MALLOC(sizeof(OBJECT_PTR));
   *(OBJECT_PTR *)arg_values[i] = idclo;
   
   ffi_cif cif;
@@ -883,11 +883,11 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   {
     raise_error("Error in invoking macro - ffi_prep_cif() failed");
 
-    for(i=0; i<nof_args; i++)
-      free(arg_values[i]);
+    /* for(i=0; i<nof_args; i++) */
+    /*   free(arg_values[i]); */
 
-    free(arg_values);
-    free(arg_types);
+    /* free(arg_values); */
+    /* free(arg_types); */
 
     return NIL;
   }
@@ -898,11 +898,11 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   {
     raise_error("Error in invoking macro/function - extracting native function failed");
 
-    for(i=0; i<nof_args; i++)
-      free(arg_values[i]);
+    /* for(i=0; i<nof_args; i++) */
+    /*   free(arg_values[i]); */
 
-    free(arg_values);
-    free(arg_types);
+    /* free(arg_values); */
+    /* free(arg_types); */
 
     return NIL;
   }
@@ -911,11 +911,11 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
   ffi_call(&cif, (void *)nf, &ret_val, arg_values);
 
-  for(i=0; i<nof_args; i++)
-    free(arg_values[i]);
+  /* for(i=0; i<nof_args; i++) */
+  /*   free(arg_values[i]); */
 
-  free(arg_values);
-  free(arg_types);
+  /* free(arg_values); */
+  /* free(arg_types); */
 
   //assert(is_valid_object((int)ret_val));
   assert(is_valid_object((OBJECT_PTR)ret_val));

@@ -1951,9 +1951,9 @@ unsigned int load_foreign_library_compiled()
   nof_dl_handles++;
 
 #ifdef WIN32
-  temp = (HMODULE *)realloc(dl_handles, nof_dl_handles * sizeof(HMODULE));
+  temp = (HMODULE *)GC_REALLOC(dl_handles, nof_dl_handles * sizeof(HMODULE));
 #else  
-  temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
+  temp = (void **)GC_REALLOC(dl_handles, nof_dl_handles * sizeof(void *));
 #endif
 
   if(temp == NULL)
@@ -2318,7 +2318,7 @@ unsigned int profile()
 
   wall_time_var = get_wall_time();
   cpu_time_var = clock();
-  mem_alloc_var = memory_allocated();
+  //mem_alloc_var = memory_allocated();
 
   initial_wall_time = wall_time_var;
   initial_cpu_time = cpu_time_var;
@@ -2359,9 +2359,9 @@ unsigned int profile()
     count = pd->count + 1;
     elapsed_wall_time = pd->elapsed_wall_time + get_wall_time() - wall_time_var;
     elapsed_cpu_time = pd->elapsed_cpu_time + (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-    mem_alloc = pd->mem_allocated + memory_allocated() - mem_alloc_var;
+    //mem_alloc = pd->mem_allocated + memory_allocated() - mem_alloc_var;
 
-    free(pd);
+    //free(pd);
     hashtable_remove(profiling_tab, (void *)operator_to_be_used);
   }
   else
@@ -2369,10 +2369,10 @@ unsigned int profile()
     count = 1;
     elapsed_wall_time = get_wall_time() - wall_time_var;
     elapsed_cpu_time = (clock() - cpu_time_var) * 1.0 / CLOCKS_PER_SEC;
-    mem_alloc = memory_allocated() - mem_alloc_var;
+    //mem_alloc = memory_allocated() - mem_alloc_var;
   }
 
-  pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+  pd = (profiling_datum_t *)GC_MALLOC(sizeof(profiling_datum_t));
   pd->count = count;
   pd->elapsed_wall_time = elapsed_wall_time;
   pd->elapsed_cpu_time = elapsed_cpu_time;
@@ -2382,7 +2382,7 @@ unsigned int profile()
 
   final_wall_time = get_wall_time();
   final_cpu_time = clock();
-  final_mem_alloc = memory_allocated();
+  //final_mem_alloc = memory_allocated();
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
@@ -4214,7 +4214,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	  /* { */
 	  /*   if(*called_closures == NULL) */
 	  /*   { */
-	  /*     *called_closures = (OBJECT_PTR *)malloc(sizeof(OBJECT_PTR)); */
+	  /*     *called_closures = (OBJECT_PTR *)GC_MALLOC(sizeof(OBJECT_PTR)); */
 	  /*     assert(*called_closures != NULL); */
 	  /*     *nof_called_closures = 1; */
 	  /*     (*called_closures)[0] = fn_object; */
@@ -4222,7 +4222,7 @@ unsigned int compile_to_c(OBJECT_PTR closure,
 	  /*   else */
 	  /*   { */
 	  /*     (*nof_called_closures)++; */
-	  /*     *called_closures = (OBJECT_PTR *)realloc(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR)); */
+	  /*     *called_closures = (OBJECT_PTR *)GC_REALLOC(*called_closures, *nof_called_closures * sizeof(OBJECT_PTR)); */
 	  /*     assert(*called_closures != NULL); */
 	  /*     (*called_closures)[*nof_called_closures-1] = fn_object; */
 	  /*   } */
@@ -4532,8 +4532,8 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
   temp = compile_to_c(fn, get_body_object(fn), buf, len, err_buf, &called_closures, &nof_called_closures);
   if(temp == -1)
   {
-    if(called_closures)
-      free(called_closures);
+    /* if(called_closures) */
+    /*   free(called_closures); */
     return NULL;
   }
   len += temp;
@@ -4565,16 +4565,16 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
   if(tcc_compile_string(tcc_state, buf) == -1)
   {
     sprintf(err_buf, "tcc_compile_string() failed");
-    if(called_closures)
-      free(called_closures);
+    /* if(called_closures) */
+    /*   free(called_closures); */
     return NULL;
   }
 
   if(tcc_relocate(tcc_state, TCC_RELOCATE_AUTO) < 0)
   {
     sprintf(err_buf, "tcc_relocate() failed");
-    if(called_closures)
-      free(called_closures);
+    /* if(called_closures) */
+    /*   free(called_closures); */
     return NULL;
   }
 
@@ -4595,8 +4595,8 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
 
       if(!fn1)
       {
-	if(called_closures)
-	  free(called_closures);
+	/* if(called_closures) */
+	/*   free(called_closures); */
 	return NULL;      
       }
 
@@ -4613,8 +4613,8 @@ cmpfn compile_closure(OBJECT_PTR fn, char *err_buf)
     }
   }
 
-  if(called_closures)
-    free(called_closures);
+  /* if(called_closures) */
+  /*   free(called_closures); */
 
   cmpfn ret = tcc_get_symbol(tcc_state, fname);
 

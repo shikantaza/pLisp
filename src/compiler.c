@@ -505,7 +505,7 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
     	return -1;
     }
     if (bufptr == NULL) {
-    	bufptr = malloc(128);
+    	bufptr = GC_MALLOC(128);
     	if (bufptr == NULL) {
     		return -1;
     	}
@@ -515,7 +515,7 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
     while(c != EOF) {
     	if ((p - bufptr) > (size - 1)) {
     		size = size + 128;
-    		bufptr = realloc(bufptr, size);
+    		bufptr = GC_REALLOC(bufptr, size);
     		if (bufptr == NULL) {
     			return -1;
     		}
@@ -687,10 +687,10 @@ int main(int argc, char **argv)
 
     while(1)
     {
-      if(cmd)
-	free(cmd);
+      //if(cmd)
+      //  ifree(cmd);
 
-      cmd = (char *)malloc((nbytes + 1) * sizeof(char));
+      cmd = (char *)GC_MALLOC((nbytes + 1) * sizeof(char));
       getline(&cmd, &nbytes, stdin);
 
       if(!strcmp(cmd, "(quit)\n"))
@@ -705,8 +705,8 @@ int main(int argc, char **argv)
 #endif
     }
 
-    if(cmd)
-      free(cmd);
+    //if(cmd)
+    //  free(cmd);
 
     cleanup();
     exit(0);    

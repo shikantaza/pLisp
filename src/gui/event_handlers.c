@@ -900,7 +900,7 @@ void handle_cursor_move(GtkWidget *widget,
     gtk_statusbar_push(statusbar, 0, convert_to_lower_case(buf1));
   }
 
-  free(s);
+  //free(s);
 }
 
 gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
@@ -1011,7 +1011,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     {
       char *s1 = substring(s, 0, strlen(s)-1);
       entry = find_help_entry(s1);
-      free(s1);
+      //free(s1);
     }
     else
       entry = find_help_entry(s);
@@ -1170,7 +1170,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 
     gtk_widget_show_all((GtkWidget *)help_window);
 
-    free(s);
+    //free(s);
     return TRUE;
   }
   else if(widget == (GtkWidget *)help_window && event->keyval == GDK_KEY_Escape)
@@ -2241,15 +2241,15 @@ char *get_current_word(GtkTextBuffer *buffer)
   else
     right = strndup(str2, idx2);
 
-  char *ret = (char *)malloc((strlen(left) + strlen(right) + 1) * sizeof(char));
+  char *ret = (char *)GC_MALLOC((strlen(left) + strlen(right) + 1) * sizeof(char));
   assert(ret);
 
   memset(ret, '\0', strlen(left) + strlen(right) + 1);
 
   sprintf(ret,"%s%s", left, right);
 
-  free(left);
-  free(right);
+  //free(left);
+  //free(right);
 
   return ret;
 }
@@ -2268,7 +2268,7 @@ void add_auto_complete_words(int package_index)
     {
       nof_autocomplete_words++;
 
-      char **temp = realloc(autocomplete_words, nof_autocomplete_words * sizeof(char *));
+      char **temp = GC_REALLOC(autocomplete_words, nof_autocomplete_words * sizeof(char *));
       assert(temp);
       autocomplete_words = temp;
 
@@ -2281,9 +2281,9 @@ void build_autocomplete_words()
 {
   int i;
 
-  for(i=0; i<nof_autocomplete_words; i++)
-    free(autocomplete_words[i]);
-  free(autocomplete_words); 
+  /* for(i=0; i<nof_autocomplete_words; i++) */
+  /*   free(autocomplete_words[i]); */
+  /* free(autocomplete_words);  */
 
   //skipping some special operators if there is no pay-off in autocomplete
   //e.g. operators that are one- or two characters long
@@ -2303,7 +2303,7 @@ void build_autocomplete_words()
 
 
   nof_autocomplete_words = 66;
-  autocomplete_words = (char **)malloc(nof_autocomplete_words * sizeof(char *));
+  autocomplete_words = (char **)GC_MALLOC(nof_autocomplete_words * sizeof(char *));
   
   assert(autocomplete_words);
 
@@ -2337,10 +2337,10 @@ void do_auto_complete(GtkTextBuffer *buffer)
       nof_matches++;
 
       if(nof_matches == 1)
-        matches = (char **)malloc(nof_matches * sizeof(char *));
+        matches = (char **)GC_MALLOC(nof_matches * sizeof(char *));
       else
       {
-        char **temp = (char **)realloc(matches, nof_matches * sizeof(char *));
+        char **temp = (char **)GC_REALLOC(matches, nof_matches * sizeof(char *));
         assert(temp);
         matches = temp;
       }
@@ -2361,19 +2361,19 @@ void do_auto_complete(GtkTextBuffer *buffer)
     if(n==0)
       return;
 
-    buf = (char *)malloc(n * sizeof(char) + 2);
+    buf = (char *)GC_MALLOC(n * sizeof(char) + 2);
     memset(buf, '\0', n+2);
 
     for(i=len; i<len+n; i++)
       buf[i-len] = s1[i];
 
-    free(s1);
+    /* free(s1); */
 
-    for(i=0; i<nof_matches; i++)
-      free(matches[i]);
+    /* for(i=0; i<nof_matches; i++) */
+    /*   free(matches[i]); */
 
-    if(matches)
-      free(matches);
+    /* if(matches) */
+    /*   free(matches); */
   }
   else
     return;
@@ -2408,16 +2408,16 @@ void do_auto_complete(GtkTextBuffer *buffer)
   for(i=0; i<n; i++)
     gtk_text_iter_forward_char(&curr_iter);
 
-  free(buf);
+  //free(buf);
 
-  free(s);
+  //free(s);
 }
 
 void add_to_autocomplete_list(char *word)
 {
   nof_autocomplete_words++;
 
-  char **temp = realloc(autocomplete_words, nof_autocomplete_words * sizeof(char *));
+  char **temp = GC_REALLOC(autocomplete_words, nof_autocomplete_words * sizeof(char *));
   assert(temp);
   autocomplete_words = temp;
 
@@ -2546,7 +2546,7 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
 
     char *text = strdup(get_symbol_name(callers_sym));
     highlight_text(callers_source_buffer, convert_to_lower_case(text));
-    free(text);
+    //free(text);
   }
 }
 
@@ -2604,7 +2604,7 @@ void callers_window_accept()
 
     sprintf(buf1, "(in-package \"%s\")", res);
 
-    free(temp);    
+    //free(temp);    
 
     if(call_repl(buf1))
     {

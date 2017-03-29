@@ -21,13 +21,15 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "gc.h"
+
 #include "json.h"
 
 struct JSONObject *root_obj;
 
 struct JSONObject *JSON_create_string_object(char *str)
 {
-  struct JSONObject *obj = (struct JSONObject *)malloc(sizeof(struct JSONObject));
+  struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_STRING;
   obj->strvalue = strdup(str);
 
@@ -36,7 +38,7 @@ struct JSONObject *JSON_create_string_object(char *str)
 
 struct JSONObject *JSON_create_int_object(int ival)
 {
-  struct JSONObject *obj = (struct JSONObject *)malloc(sizeof(struct JSONObject));
+  struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_INT;
   obj->ivalue = ival;
 
@@ -45,7 +47,7 @@ struct JSONObject *JSON_create_int_object(int ival)
 
 struct JSONObject *JSON_create_float_object(double fval)
 {
-  struct JSONObject *obj = (struct JSONObject *)malloc(sizeof(struct JSONObject));
+  struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_FLOAT;
   obj->fvalue = fval;
 
@@ -54,7 +56,7 @@ struct JSONObject *JSON_create_float_object(double fval)
 
 struct JSONObject *JSON_create_pairs_object(struct name_value_pairs *pairs)
 {
-  struct JSONObject *obj = (struct JSONObject *)malloc(sizeof(struct JSONObject));
+  struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_NAME_VALUE_PAIRS;
   obj->pairs = pairs;
 
@@ -63,7 +65,7 @@ struct JSONObject *JSON_create_pairs_object(struct name_value_pairs *pairs)
 
 struct name_value_pair *JSON_create_name_value_pair(char *name, struct JSONObject * obj)
 {
-  struct name_value_pair *pair = (struct name_value_pair *)malloc(sizeof(struct name_value_pair));
+  struct name_value_pair *pair = (struct name_value_pair *)GC_MALLOC(sizeof(struct name_value_pair));
 
   pair->name = strdup(name);
   pair->value = obj;
@@ -73,7 +75,7 @@ struct name_value_pair *JSON_create_name_value_pair(char *name, struct JSONObjec
 
 struct JSONObject *JSON_create_array_object(struct JSONArray *array)
 {
-  struct JSONObject *obj = (struct JSONObject *)malloc(sizeof(struct JSONObject));
+  struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_ARRAY;
   obj->array = array;
 
@@ -123,38 +125,38 @@ void JSON_print_object(struct JSONObject *obj)
 
 void JSON_delete_object(struct JSONObject *obj)
 {
-  if(obj->type == JSON_NAME_VALUE_PAIRS)
-  {
-    struct name_value_pairs *pairs = obj->pairs;
-    int i;
-    for(i=0; i<pairs->count; i++)
-    {
-      free(pairs->elements[i]->name);
-      JSON_delete_object(pairs->elements[i]->value);
-      free(pairs->elements[i]);
-    }
+  /* if(obj->type == JSON_NAME_VALUE_PAIRS) */
+  /* { */
+  /*   struct name_value_pairs *pairs = obj->pairs; */
+  /*   int i; */
+  /*   for(i=0; i<pairs->count; i++) */
+  /*   { */
+  /*     free(pairs->elements[i]->name); */
+  /*     JSON_delete_object(pairs->elements[i]->value); */
+  /*     free(pairs->elements[i]); */
+  /*   } */
 
-    if(pairs->count > 0)
-      free(pairs->elements);
+  /*   if(pairs->count > 0) */
+  /*     free(pairs->elements); */
 
-    free(pairs);
-  }
-  else if(obj->type == JSON_ARRAY)
-  {
-    struct JSONArray *array = obj->array;
-    int i;
-    for(i=0; i<array->count; i++)
-      JSON_delete_object(array->elements[i]);
+  /*   free(pairs); */
+  /* } */
+  /* else if(obj->type == JSON_ARRAY) */
+  /* { */
+  /*   struct JSONArray *array = obj->array; */
+  /*   int i; */
+  /*   for(i=0; i<array->count; i++) */
+  /*     JSON_delete_object(array->elements[i]); */
 
-    if(array->count > 0)
-      free(array->elements);
+  /*   if(array->count > 0) */
+  /*     free(array->elements); */
 
-    free(array);
-  }
-  else if(obj->type == JSON_STRING)
-    free(obj->strvalue);
+  /*   free(array); */
+  /* } */
+  /* else if(obj->type == JSON_STRING) */
+  /*   free(obj->strvalue); */
 
-  free(obj);
+  /* free(obj); */
 }
 
 struct JSONObject *JSON_get_object_item(struct JSONObject *obj, char *name)

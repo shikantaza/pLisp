@@ -222,7 +222,7 @@ array_reference:
       //we shouldn't call delete_expression(exps) because
       //this will delete the expression_t objects
       //referred to by e too.
-      free(exps);
+      //free(exps);
 
       $$ = e;
       

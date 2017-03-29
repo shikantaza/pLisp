@@ -75,7 +75,7 @@ char *strndup(const char *s, size_t n)
     char *result;
     size_t len = strlen (s);
     if (n < len) len = n;
-    result = (char *) malloc (len + 1);
+    result = (char *) GC_MALLOC (len + 1);
     if (!result) return 0;
     result[len] = '\0';
     return (char *) strncpy (result, s, len);
@@ -182,8 +182,9 @@ char *get_file_contents(char *file_name)
   rewind(fp);
 
   /* allocate memory for entire content */
-  buffer = calloc(1, lSize+1);
-
+  //buffer = calloc(1, lSize+1);
+  buffer = GC_MALLOC(lSize+1);
+  
   if(!buffer)
   {
     fclose(fp);
@@ -195,7 +196,7 @@ char *get_file_contents(char *file_name)
   if(bytes_read != 1)
   {
     fclose(fp);
-    free(buffer);
+    //free(buffer);
     return NULL;
   }
 
@@ -271,7 +272,7 @@ char *convert_identifier(char *id)
     return NULL;
   }
 
-  char *s = (char *)malloc((MAX_IDENTIFIER_LENGTH + 1) * sizeof(char));
+  char *s = (char *)GC_MALLOC((MAX_IDENTIFIER_LENGTH + 1) * sizeof(char));
 
   memset(s, MAX_IDENTIFIER_LENGTH + 1, '\0');
 
@@ -297,7 +298,7 @@ void *open_library(char *fname)
 #ifdef WIN32
   unsigned int len = strlen(fname) + 5; //four characters for ".dll"
 
-  char *buf = (char *)malloc(len); 
+  char *buf = (char *)GC_MALLOC(len); 
   memset(buf,'\0', len);
 
   strcat(buf, fname);
@@ -305,12 +306,12 @@ void *open_library(char *fname)
 
   ret= LoadLibrary(fname);
 
-  free(buf);
+  //free(buf);
 #else
 #ifdef __APPLE__
   unsigned int len = strlen(fname) + 7; //six characters for ".dylib"
 
-  char *buf = (char *)malloc(len); 
+  char *buf = (char *)GC_MALLOC(len); 
   memset(buf,'\0', len);
 
   strcat(buf, fname);
@@ -318,11 +319,11 @@ void *open_library(char *fname)
 
   ret = dlopen(buf, RTLD_LAZY);
 
-  free(buf);
+  //free(buf);
 #else
   unsigned int len = strlen(fname) + 4; //three characters for ".so"
 
-  char *buf = (char *)malloc(len); 
+  char *buf = (char *)GC_MALLOC(len); 
   memset(buf,'\0', len);
 
   strcat(buf, fname);
@@ -330,7 +331,7 @@ void *open_library(char *fname)
 
   ret = dlopen(buf, RTLD_LAZY);
 
-  free(buf);  
+  //free(buf);  
 #endif
 #endif
   

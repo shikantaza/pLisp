@@ -70,8 +70,9 @@ You will need GCC and the make utility to install pLisp. In addition, the follow
 * The link:https://wiki.gnome.org/Projects/GtkSourceView[GtkSourceView] development package (libgtksourceview-3.0-dev)
 * link:http://bellard.org/tcc/[Tiny C Compiler] (tcc and libtcc-dev)
 * The link:https://sourceware.org/libffi/[libffi] package (libffi6)
+* The link:https://www.hboehm.info/gc/gc_source/[Boehm Garbage Collector]
 
-All these packages can be installed using the package manager that comes with your distro.
+All these packages can be installed using the package manager that comes with your distro or from the package's home page.
 
 OS X
 ~~~~
@@ -90,6 +91,8 @@ OS X
 
 * Install the link:http://bellard.org/tcc/[Tiny C Compiler]. You will have to do it the './configure; make; sudo make install' way.
 
+* Install the link:https://www.hboehm.info/gc/gc_source/[Boehm Garbage Collector]  using './configure; make; sudo make install'.
+
 * Install pLisp by entering into a jhbuild shell and typing './configure', 'make' and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
 
 Note: tcc on OS X throws up a lot of warnings when running pLisp. These warnings can be ignored. One option is to redirect them to /dev/null (plisp 2>/dev/null). I'm working on this.
@@ -104,9 +107,11 @@ Windows
 
 * Install the link:http://bellard.org/tcc/[Tiny C Compiler]. You will have to do it the './configure; make; sudo make install' way.
 
+* Install the link:https://www.hboehm.info/gc/gc_source/[Boehm Garbage Collector]  using './configure; make; sudo make install'.
+
 * Install pLisp from the MSYS2 shell by './configure', 'make' and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
 
-Note: pLisp can be installed on Cygwin; however, issues with compiling TCC on Cygwin 	make this quite cumbersome.
+Note: pLisp can be installed on Cygwin; however, issues with compiling TCC on Cygwin make this quite cumbersome.
 
 How do I report bugs and other issues?
 --------------------------------------

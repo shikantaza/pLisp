@@ -231,7 +231,7 @@ extern OBJECT_PTR debug_window_dbg_stack;
 
 extern BOOLEAN debug_mode;
 
-extern BOOLEAN can_do_gc;
+//extern BOOLEAN can_do_gc;
 //end of external variables
 
 //external functions
@@ -473,7 +473,7 @@ unsigned int build_fn_prototypes(char *, unsigned int);
 
 binding_env_t *create_binding_env()
 {
-  binding_env_t *env = (binding_env_t *)malloc(sizeof(binding_env_t));
+  binding_env_t *env = (binding_env_t *)GC_MALLOC(sizeof(binding_env_t));
   env->count = 0;
   env->bindings = NULL;
 
@@ -510,7 +510,7 @@ void put_binding_val(binding_env_t *env, OBJECT_PTR key, OBJECT_PTR val)
   {
     env->count++;
 
-    binding_t *temp = (binding_t *)realloc(env->bindings, env->count * sizeof(binding_t));
+    binding_t *temp = (binding_t *)GC_REALLOC(env->bindings, env->count * sizeof(binding_t));
 
     assert(temp);
 
@@ -1266,7 +1266,7 @@ OBJECT_PTR temp13(OBJECT_PTR x)
 
 /* OBJECT_PTR *generate_fresh_ids(unsigned int count) */
 /* { */
-/*   OBJECT_PTR *syms = (OBJECT_PTR *)malloc(count * sizeof(OBJECT_PTR)); */
+/*   OBJECT_PTR *syms = (OBJECT_PTR *)GC_MALLOC(count * sizeof(OBJECT_PTR)); */
 
 /*   assert(syms); */
 
@@ -2187,9 +2187,9 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   binding_env_t *env = create_binding_env();
   res = ren_transform(res, env);
 
-  free(env->bindings);
+  //free(env->bindings);
   env->bindings = NULL;
-  free(env);
+  //free(env);
 
   res = simplify_il(res);
 
@@ -2228,10 +2228,10 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
                          source);
 
     lambdas = cdr(lambdas);
-    free(fname);
+    //free(fname);
   }
 
-  free(tcc_state1);
+  //free(tcc_state1);
 
   OBJECT_PTR closure_components = CDDR(first(res));
   OBJECT_PTR out;
@@ -2296,11 +2296,11 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   //to protect from GC (which will be triggered
   //during the native function call below)
 
-  can_do_gc = false;
+  //can_do_gc = false;
 
   OBJECT_PTR ret1 = tt(ret, idclo);
 
-  can_do_gc = true;
+  //can_do_gc = true;
 
   if(macro_flag)
     ret1 = extract_ptr(ret1) + MACRO2_TAG;
@@ -2816,7 +2816,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
     /* else if(primop(var)) */
     if(primop(var))
     {
-      char *s = (char *)malloc(40*sizeof(char));
+      char *s = (char *)GC_MALLOC(40*sizeof(char));
       if(var == ADD)
         sprintf(s,"primitive_add");
       else if(var == SUB)
@@ -2971,7 +2971,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         assert(false);
       }
 
-      free(raw_name);
+      //free(raw_name);
 
       return s;
     }
@@ -2985,7 +2985,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       //two underscores to prevent
       //conflicts with C keywords
 
-      /* char *name = (char *)malloc(3 + strlen(raw_name)); */
+      /* char *name = (char *)GC_MALLOC(3 + strlen(raw_name)); */
       /* name[0] = '-'; */
       /* name[1] = '-'; */
 
@@ -3003,7 +3003,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
   {
     /* if(serialize_flag) */
     /* { */
-      char *s = (char *)malloc(50*sizeof(char));
+      char *s = (char *)GC_MALLOC(50*sizeof(char));
       memset(s,50,'\0');
 
       if(IS_INTEGER_OBJECT(var))
@@ -3021,7 +3021,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
     /* } */
     /* else */
     /* { */
-    /*   char *s = (char *)malloc(10*sizeof(char)); */
+    /*   char *s = (char *)GC_MALLOC(10*sizeof(char)); */
     /*   memset(s,10,'\0'); */
     /*   sprintf(s, "%d", var); */
     /*   return s; */
@@ -3080,7 +3080,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
     rest = cdr(rest);
     first_time = false;
 
-    free(pname);
+    //free(pname);
   }
 
   len += sprintf(buf+len, ")\n{\n");
@@ -3104,23 +3104,23 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   
   //GC enhancement code begin
-  rest = params;
+  /* rest = params; */
 
-  while(rest != NIL)
-  {
-    char *pname = extract_variable_string(car(rest), serialize_flag);
+  /* while(rest != NIL) */
+  /* { */
+  /*   char *pname = extract_variable_string(car(rest), serialize_flag); */
 
-    len += sprintf(buf+len, "if(is_dynamic_memory_object(%s))insert_node(1, %s);\n", pname, pname);
+  /*   len += sprintf(buf+len, "if(is_dynamic_memory_object(%s))insert_node(1, %s);\n", pname, pname); */
 
-    //uncomment for debugging
-    //len += sprintf(buf+len, "print_object(%s);printf(\"\\n\");\n", pname);
+  /*   //uncomment for debugging */
+  /*   //len += sprintf(buf+len, "print_object(%s);printf(\"\\n\");\n", pname); */
 
-    rest = cdr(rest);
+  /*   rest = cdr(rest); */
 
-    free(pname);
-  }
+  /*   free(pname); */
+  /* } */
 
-  len += sprintf(buf+len, "gc(0,1);\n");
+  /* len += sprintf(buf+len, "gc(0,1);\n"); */
   //GC enhancement code end
 
   //debug information
@@ -3140,7 +3140,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
     rest = cdr(rest);
     first_time = false;
-    free(pname);
+    //free(pname);
   }
 
   len += sprintf(buf+len, "));\n");
@@ -3150,7 +3150,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   len += sprintf(buf+len, "set_most_recent_closure(%s);\n", closure_name);
 
-  free(closure_name);
+  //free(closure_name);
 
   //len += sprintf(buf+len, "printf(\"%s\\n\");\n", fname);
 
@@ -3173,7 +3173,7 @@ unsigned int build_c_string(OBJECT_PTR lambda_form, char *buf, BOOLEAN serialize
 
   len += sprintf(buf+len, "\n}\n");
 
-  free(fname);
+  //free(fname);
 
   //uncomment for debugging
   //printf("%s\n", buf);
@@ -3191,7 +3191,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
   {
     char *var = extract_variable_string(exp, serialize_flag);
     len += sprintf(buf+len, "%s;\n", var);
-    free(var);
+    //free(var);
   }
   else if(car(exp) == IF)
   {
@@ -3200,7 +3200,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
     len += build_c_fragment(third(exp), buf+len, false, serialize_flag);
     len += sprintf(buf+len, "else\n");
     len += build_c_fragment(fourth(exp), buf+len, false, serialize_flag);
-    free(test_var);
+    //free(test_var);
   }
   else if(car(exp) == LET || car(exp) == LET1)
   {
@@ -3228,7 +3228,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       }
 
       rest = cdr(rest);
-      free(var);
+      //free(var);
     }
 
     if(first(third(exp)) != LET && first(third(exp)) != LET1 && first(third(exp)) != IF)
@@ -3248,13 +3248,13 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       {
         char* var = extract_variable_string(second(exp), serialize_flag);
         len += sprintf(buf+len, "%s", var);
-        free(var);
+        //free(var);
       }
       else if(IS_CONS_OBJECT(second(exp)))
       {
         char *v = generate_lst_construct(second(exp));
         len += sprintf(buf+len, "%s", v);
-        free(v);
+        //free(v);
       }
       else
       {
@@ -3311,7 +3311,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
           {
             char *arg_name = extract_variable_string(car(rest), serialize_flag);
             len += sprintf(buf+len, "%s%s", (i == 1 && !strcmp(var, "create_fn_closure")) ? "(nativefn)" : "", arg_name);
-            free(arg_name);
+            //free(arg_name);
           }
           else
             len += build_c_fragment(car(rest), buf+len, true, serialize_flag);
@@ -3323,7 +3323,7 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
 
         len += sprintf(buf+len, ")");
       }
-      free(var);
+      //free(var);
     }
 
     if(!nested_call)
@@ -3532,9 +3532,9 @@ TCCState *create_tcc_state1()
 
   tcc_add_symbol(tcc_state, "save_cont_to_resume",      save_continuation_to_resume);
 
-  tcc_add_symbol(tcc_state, "insert_node",              insert_node);
-  tcc_add_symbol(tcc_state, "gc",                       gc);
-  tcc_add_symbol(tcc_state, "is_dynamic_memory_object", is_dynamic_memory_object);
+  /* tcc_add_symbol(tcc_state, "insert_node",              insert_node); */
+  /* tcc_add_symbol(tcc_state, "gc",                       gc); */
+  /* tcc_add_symbol(tcc_state, "is_dynamic_memory_object", is_dynamic_memory_object); */
 
   //uncomment for debugging
   //tcc_add_symbol(tcc_state, "print_object",             print_object);
@@ -3751,8 +3751,15 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
   {
     nof_global_vars++;
 
-    global_var_mapping_t *temp = (global_var_mapping_t *)realloc(top_level_symbols, nof_global_vars*sizeof(global_var_mapping_t));
+    //global_var_mapping_t *temp = (global_var_mapping_t *)realloc(top_level_symbols, nof_global_vars*sizeof(global_var_mapping_t));
 
+    global_var_mapping_t *temp;
+    
+    if(!top_level_symbols)
+      temp = (global_var_mapping_t *)GC_MALLOC(nof_global_vars*sizeof(global_var_mapping_t));
+    else
+      temp = (global_var_mapping_t *)GC_REALLOC(top_level_symbols, nof_global_vars*sizeof(global_var_mapping_t));
+    
     assert(temp);
 
     top_level_symbols = temp;
@@ -3813,7 +3820,7 @@ int remove_top_level_sym(OBJECT_PTR sym)
         {
           nof_unmet_dependencies++;
 
-          unmet_dependency_t *temp = (unmet_dependency_t *)realloc(global_unmet_dependencies,
+          unmet_dependency_t *temp = (unmet_dependency_t *)GC_REALLOC(global_unmet_dependencies,
                                                                    nof_unmet_dependencies * sizeof(unmet_dependency_t));
 
           assert(temp);
@@ -4046,14 +4053,14 @@ OBJECT_PTR expand_macro_full(OBJECT_PTR exp, BOOLEAN full)
 
       OBJECT_PTR temp2 = expand_bodies(handle_and_rest_applications_for_macros(temp1));
 
-      can_do_gc = false;
+      //can_do_gc = false;
 
       if(full)
         ret = expand_macro_full(apply_macro_or_fn(car(out), cdr(temp2)), true);
       else
         ret = apply_macro_or_fn(car(out), cdr(temp2));
 
-      can_do_gc = true;
+      //can_do_gc = true;
     }
     else
     {
@@ -4139,7 +4146,7 @@ int add_reference_to_top_level_sym(OBJECT_PTR sym, int pos, OBJECT_PTR clo)
       if(top_level_symbols[i].ref_count == 0)
       {
         top_level_symbols[i].ref_count++;
-        top_level_symbols[i].references = (global_var_ref_detail_t *)malloc(sizeof(global_var_ref_detail_t));
+        top_level_symbols[i].references = (global_var_ref_detail_t *)GC_MALLOC(sizeof(global_var_ref_detail_t));
         assert(top_level_symbols[i].references);
         top_level_symbols[i].references[top_level_symbols[i].ref_count-1].referrer = clo;
         top_level_symbols[i].references[top_level_symbols[i].ref_count-1].pos = pos;
@@ -4148,7 +4155,7 @@ int add_reference_to_top_level_sym(OBJECT_PTR sym, int pos, OBJECT_PTR clo)
       {
         global_var_ref_detail_t *temp;
         top_level_symbols[i].ref_count++;
-        temp = (global_var_ref_detail_t *)realloc(top_level_symbols[i].references, 
+        temp = (global_var_ref_detail_t *)GC_REALLOC(top_level_symbols[i].references, 
                                                   top_level_symbols[i].ref_count * sizeof(global_var_ref_detail_t));
         assert(temp);
 
@@ -4230,7 +4237,7 @@ void add_unmet_dependency(OBJECT_PTR clo, OBJECT_PTR sym, int pos)
 
   nof_unmet_dependencies++;
 
-  unmet_dependency_t *temp = (unmet_dependency_t *)realloc(global_unmet_dependencies,
+  unmet_dependency_t *temp = (unmet_dependency_t *)GC_REALLOC(global_unmet_dependencies,
                                                            nof_unmet_dependencies * sizeof(unmet_dependency_t));
 
   assert(temp);
@@ -4406,7 +4413,7 @@ void record_and_rest_closure(OBJECT_PTR sym, int pos_of_and_rest)
 
   nof_and_rest_mappings++;
 
-  and_rest_mapping_t *temp = (and_rest_mapping_t *)realloc(and_rest_mappings, nof_and_rest_mappings * sizeof(and_rest_mapping_t));
+  and_rest_mapping_t *temp = (and_rest_mapping_t *)GC_REALLOC(and_rest_mappings, nof_and_rest_mappings * sizeof(and_rest_mapping_t));
 
   assert(temp);
 
@@ -5554,28 +5561,28 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp1)
 
 void cleanup_full_monty_global_vars()
 {
-  int i;
+  /* int i; */
 
-  for(i=0; i<nof_global_vars; i++)
-    free(top_level_symbols[i].references);
+  /* for(i=0; i<nof_global_vars; i++) */
+  /*   free(top_level_symbols[i].references); */
 
-  free(top_level_symbols);
+  /* free(top_level_symbols); */
 
-  free(global_unmet_dependencies);
+  /* free(global_unmet_dependencies); */
 
-  free(and_rest_mappings);
+  /* free(and_rest_mappings); */
 
-  for(i=0; i<nof_native_fns; i++)
-    free(native_fn_sources[i].source);
+  /* for(i=0; i<nof_native_fns; i++) */
+  /*   free(native_fn_sources[i].source); */
 
-  free(native_fn_sources);
+  /* free(native_fn_sources); */
 }
 
 void add_native_fn_source(nativefn fn, char *source)
 {
   nof_native_fns++;
 
-  native_fn_src_mapping_t *temp = (native_fn_src_mapping_t *)realloc(native_fn_sources, nof_native_fns * sizeof(native_fn_src_mapping_t));
+  native_fn_src_mapping_t *temp = (native_fn_src_mapping_t *)GC_REALLOC(native_fn_sources, nof_native_fns * sizeof(native_fn_src_mapping_t));
 
   assert(temp);
 
@@ -5756,7 +5763,7 @@ char *generate_lst_construct(OBJECT_PTR exp)
   assert(IS_CONS_OBJECT(exp) || exp == NIL);
 
   char *buf;
-  buf = malloc(1000 * sizeof(char));
+  buf = GC_MALLOC(1000 * sizeof(char));
   assert(buf);
   memset(buf, 1000, '\0');
 
@@ -5786,7 +5793,7 @@ char *generate_lst_construct(OBJECT_PTR exp)
       {
         char *name = extract_variable_string(obj, true);
         len += sprintf(buf+len, "%s", name);
-        free(name);
+        //free(name);
       }
       else
 #if __x86_64__
@@ -5799,7 +5806,7 @@ char *generate_lst_construct(OBJECT_PTR exp)
     {
       char *var = generate_lst_construct(obj);
       len += sprintf(buf+len, "%s", var);
-      free(var);
+      //free(var);
     }
 
     rest = cdr(rest);
@@ -6114,7 +6121,7 @@ char *get_signature_for_core_symbol(char *symbol_name)
   else if(!strcmp(s,"EXPORT-PACKAGE"))
     ret = "(export-package package-name str)";
 
-  free(s);
+  //free(s);
   
   return ret;
 }
@@ -6439,9 +6446,9 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
 
   len += sprintf(buf+len, "uintptr_t save_cont_to_resume(uintptr_t);\n");
 
-  len += sprintf(buf+len, "void insert_node(unsigned int, uintptr_t);\n");
-  len += sprintf(buf+len, "void gc(int, int);\n");
-  len += sprintf(buf+len, "int is_dynamic_memory_object(uintptr_t);\n");
+  /* len += sprintf(buf+len, "void insert_node(unsigned int, uintptr_t);\n"); */
+  /* len += sprintf(buf+len, "void gc(int, int);\n"); */
+  /* len += sprintf(buf+len, "int is_dynamic_memory_object(uintptr_t);\n"); */
 
   return len;
 }

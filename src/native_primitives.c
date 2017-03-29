@@ -1316,9 +1316,9 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
   nof_dl_handles++;
 
 #ifdef WIN32
-  temp = (HMODULE *)realloc(dl_handles, nof_dl_handles * sizeof(HMODULE));
+  temp = (HMODULE *)GC_REALLOC(dl_handles, nof_dl_handles * sizeof(HMODULE));
 #else  
-  temp = (void **)realloc(dl_handles, nof_dl_handles * sizeof(void *));
+  temp = (void **)GC_REALLOC(dl_handles, nof_dl_handles * sizeof(void *));
 #endif
 
   if(temp == NULL)
@@ -1699,8 +1699,8 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
 
   initial_wall_time = get_wall_time();
   initial_cpu_time = clock();
-  initial_mem_alloc = memory_allocated();
-  initial_mem_dealloc = memory_deallocated();
+  //initial_mem_alloc = memory_allocated();
+  //initial_mem_dealloc = memory_deallocated();
 
   OBJECT_PTR res = full_monty_eval(exp);
 
@@ -1717,8 +1717,8 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
 
   final_wall_time = get_wall_time();
   final_cpu_time = clock();
-  final_mem_alloc = memory_allocated();
-  final_mem_dealloc = memory_deallocated();
+  //final_mem_alloc = memory_allocated();
+  //final_mem_dealloc = memory_deallocated();
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
@@ -1887,7 +1887,7 @@ OBJECT_PTR prim_create_image(OBJECT_PTR file_name)
   {
     char *s = get_string(file_name);
     create_image(s);
-    free(s);
+    //free(s);
   }
   else
     create_image(strings[(int)file_name >> OBJECT_SHIFT]);

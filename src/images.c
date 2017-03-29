@@ -370,7 +370,7 @@ void print_heap_representation(FILE *fp,
 /* void dofile(char *filename) */
 /* { */
 /*   FILE *f=fopen(filename,"rb");fseek(f,0,SEEK_END);long len=ftell(f);fseek(f,0,SEEK_SET); */
-/*   char *data=(char*)malloc(len+1);fread(data,1,len,f);fclose(f); */
+/*   char *data=(char*)GC_MALLOC(len+1);fread(data,1,len,f);fclose(f); */
 /*   doit(data); */
 /*   free(data); */
 /* } */
@@ -540,7 +540,7 @@ void create_image(char *file_name)
 
   FILE *fp = fopen(file_name, "w");  
 
-  unsigned int *obj_count = (unsigned int *)malloc(sizeof(unsigned int));
+  unsigned int *obj_count = (unsigned int *)GC_MALLOC(sizeof(unsigned int));
 
   *obj_count = 0;
 
@@ -724,7 +724,7 @@ void create_image(char *file_name)
     print_heap_representation(fp, obj, print_queue, obj_count, hashtable, printed_objects, false);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
 
-    free(queue_item);
+    //free(queue_item);
   }
 
   queue_delete(print_queue);
@@ -778,7 +778,7 @@ void create_image(char *file_name)
             ", \"workspace\" : [ %d, %d, %d, %d, \"%s\" ]", 
             posx, posy, width, height, text);
 
-    free(workspace_text);
+    //free(workspace_text);
   }
 
   if(serialize_gui_elements && debugger_window)
@@ -842,7 +842,7 @@ void create_image(char *file_name)
 	    ", \"transcript\" : [ %d, %d, %d, %d, \"%s\" ]", 
 	    posx, posy, width, height, text);
 
-    free(transcript_text);
+    //free(transcript_text);
     //end transcript window serialization
   }
 
@@ -865,7 +865,7 @@ void create_image(char *file_name)
 
   fclose(fp);
 
-  free(obj_count);
+  //free(obj_count);
 
   //#ifdef DEBUG
   //dofile(file_name);
@@ -977,7 +977,7 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
   temp = JSON_get_object_item(root, "global_vars");
   nof_global_vars = JSON_get_array_size(temp);
 
-  top_level_symbols = (global_var_mapping_t *)malloc(nof_global_vars *
+  top_level_symbols = (global_var_mapping_t *)GC_MALLOC(nof_global_vars *
                                                      sizeof(global_var_mapping_t));
 
   for(i=0; i<nof_global_vars; i++)
@@ -1002,7 +1002,7 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
 
     top_level_symbols[i].ref_count = JSON_get_array_size(ref_obj);
 
-    top_level_symbols[i].references = (global_var_ref_detail_t *)malloc(top_level_symbols[i].ref_count *
+    top_level_symbols[i].references = (global_var_ref_detail_t *)GC_MALLOC(top_level_symbols[i].ref_count *
                                                                         sizeof(global_var_ref_detail_t));
 
     for(j=0; j<top_level_symbols[i].ref_count;j++)
@@ -1042,7 +1042,7 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
   temp = JSON_get_object_item(root, "unmet_dependencies");
   nof_unmet_dependencies = JSON_get_array_size(temp);
 
-  global_unmet_dependencies = (unmet_dependency_t *)malloc(nof_unmet_dependencies *
+  global_unmet_dependencies = (unmet_dependency_t *)GC_MALLOC(nof_unmet_dependencies *
                                                      sizeof(unmet_dependency_t));
 
   for(i=0; i<nof_unmet_dependencies; i++)
@@ -1071,7 +1071,7 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
   temp = JSON_get_object_item(root, "and_rest_mappings");
   nof_and_rest_mappings = JSON_get_array_size(temp);
 
-  and_rest_mappings = (and_rest_mapping_t *)malloc(nof_and_rest_mappings *
+  and_rest_mappings = (and_rest_mapping_t *)GC_MALLOC(nof_and_rest_mappings *
                                                    sizeof(and_rest_mapping_t));
 
   for(i=0; i<nof_and_rest_mappings; i++)
@@ -1113,7 +1113,7 @@ int load_from_image(char *file_name)
   temp = JSON_get_object_item(root, "strings");
   nof_strings = JSON_get_array_size(temp);
 
-  strings = (char **)malloc(nof_strings * sizeof(char *));
+  strings = (char **)GC_MALLOC(nof_strings * sizeof(char *));
 
   for(i=0; i<nof_strings; i++)
   {
@@ -1125,9 +1125,9 @@ int load_from_image(char *file_name)
   nof_dl_handles = JSON_get_array_size(temp);
 
 #ifdef WIN32
-  dl_handles = (HMODULE *)malloc(nof_dl_handles * sizeof(HMODULE));
+  dl_handles = (HMODULE *)GC_MALLOC(nof_dl_handles * sizeof(HMODULE));
 #else
-  dl_handles = (void **)malloc(nof_dl_handles * sizeof(void *));
+  dl_handles = (void **)GC_MALLOC(nof_dl_handles * sizeof(void *));
 #endif
 
   for(i=0; i<nof_dl_handles; i++)
@@ -1142,7 +1142,7 @@ int load_from_image(char *file_name)
   temp = JSON_get_object_item(root, "packages");
   nof_packages = JSON_get_array_size(temp);
 
-  packages = (package_t *)malloc(nof_packages * sizeof(package_t));
+  packages = (package_t *)GC_MALLOC(nof_packages * sizeof(package_t));
 
   for(i=0; i<nof_packages; i++)
   {
@@ -1156,7 +1156,7 @@ int load_from_image(char *file_name)
     packages[i].name = strdup(pkg_name->strvalue);
     packages[i].nof_symbols = nof_symbols;
 
-    packages[i].symbols = (char **)malloc(packages[i].nof_symbols * sizeof(char *));
+    packages[i].symbols = (char **)GC_MALLOC(packages[i].nof_symbols * sizeof(char *));
 
     for(j=0; j<nof_symbols; j++)
     {
@@ -1235,7 +1235,7 @@ int load_from_image(char *file_name)
       struct JSONObject *entry = JSON_get_array_item(entries, i);
       OBJECT_PTR operator = deserialize_internal(heap, JSON_get_array_item(entry, 0)->ivalue, hashtable, q, false);
 
-      profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+      profiling_datum_t *pd = (profiling_datum_t *)GC_MALLOC(sizeof(profiling_datum_t));
 
       pd->count             = JSON_get_array_item(entry, 1)->ivalue;
       pd->elapsed_wall_time = JSON_get_array_item(entry, 2)->fvalue;
@@ -1567,7 +1567,7 @@ int load_from_image(char *file_name)
 /*   int i, j; */
 
 /*   FILE *f=fopen(file_name,"rb");fseek(f,0,SEEK_END);long len=ftell(f);fseek(f,0,SEEK_SET); */
-/*   char *data=(char*)malloc(len+1);fread(data,1,len,f);fclose(f); */
+/*   char *data=(char*)GC_MALLOC(len+1);fread(data,1,len,f);fclose(f); */
 
 /*   cJSON *root = cJSON_Parse(data); */
 /*   cJSON *heap = cJSON_GetObjectItem(root, "heap"); */
@@ -1585,7 +1585,7 @@ int load_from_image(char *file_name)
 /*   temp = cJSON_GetObjectItem(root, "strings"); */
 /*   nof_strings = cJSON_GetArraySize(temp); */
 
-/*   strings = (char **)malloc(nof_strings * sizeof(char *)); */
+/*   strings = (char **)GC_MALLOC(nof_strings * sizeof(char *)); */
 
 /*   for(i=0; i<nof_strings; i++) */
 /*   { */
@@ -1596,7 +1596,7 @@ int load_from_image(char *file_name)
 /*   temp = cJSON_GetObjectItem(root, "foreign_libraries"); */
 /*   nof_dl_handles = cJSON_GetArraySize(temp); */
 
-/*   dl_handles = (void **)malloc(nof_dl_handles * sizeof(void *)); */
+/*   dl_handles = (void **)GC_MALLOC(nof_dl_handles * sizeof(void *)); */
 
 /*   for(i=0; i<nof_dl_handles; i++) */
 /*   { */
@@ -1608,7 +1608,7 @@ int load_from_image(char *file_name)
 /*   temp = cJSON_GetObjectItem(root, "packages"); */
 /*   nof_packages = cJSON_GetArraySize(temp); */
 
-/*   packages = (package_t *)malloc(nof_packages * sizeof(package_t)); */
+/*   packages = (package_t *)GC_MALLOC(nof_packages * sizeof(package_t)); */
 
 /*   for(i=0; i<nof_packages; i++) */
 /*   { */
@@ -1622,7 +1622,7 @@ int load_from_image(char *file_name)
 /*     packages[i].name = strdup(pkg_name->valuestring); */
 /*     packages[i].nof_symbols = nof_symbols; */
 
-/*     packages[i].symbols = (char **)malloc(packages[i].nof_symbols * sizeof(char *)); */
+/*     packages[i].symbols = (char **)GC_MALLOC(packages[i].nof_symbols * sizeof(char *)); */
 
 /*     for(j=0; j<nof_symbols; j++) */
 /*     { */
@@ -1701,7 +1701,7 @@ BOOLEAN is_dynamic_reference(OBJECT_PTR ref)
 
 void add_to_deserialization_queue(struct JSONObject *heap, queue_t *q, OBJECT_PTR ref, uintptr_t ptr, unsigned int index)
 {
-  struct slot *s = (struct slot *)malloc(sizeof(struct slot));
+  struct slot *s = (struct slot *)GC_MALLOC(sizeof(struct slot));
   s->ref = ref;
   s->ptr = ptr;
   s->index = index;
@@ -1740,7 +1740,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtab
           {
             create_package(package_name);
             packages[nof_packages-1].nof_symbols = 1;
-            packages[nof_packages-1].symbols = (char **)malloc(sizeof(char *));
+            packages[nof_packages-1].symbols = (char **)GC_MALLOC(sizeof(char *));
             packages[nof_packages-1].symbols[0] = strdup(sym_name);
           }            
             
@@ -1972,8 +1972,8 @@ void convert_heap(struct JSONObject *heap, hashtable_t *ht, queue_t *q, BOOLEAN 
       set_heap(slot_obj->ptr, slot_obj->index, obj);
     }
 
-    free(slot_obj);
-    free(queue_item);
+    //free(slot_obj);
+    //free(queue_item);
   }
 }
 
@@ -1987,7 +1987,7 @@ int serialize(OBJECT_PTR obj, char *file_name)
     return -1;
   }
 
-  unsigned int *obj_count = (unsigned int *)malloc(sizeof(unsigned int));
+  unsigned int *obj_count = (unsigned int *)GC_MALLOC(sizeof(unsigned int));
 
   *obj_count = 0;
 
@@ -2021,14 +2021,14 @@ int serialize(OBJECT_PTR obj, char *file_name)
     print_heap_representation(fp, obj1, print_queue, obj_count, hashtable, printed_objects, true);
     if(!queue_is_empty(print_queue))fprintf(fp, ", ");
 
-    free(queue_item);
+    //free(queue_item);
   }
 
   fprintf(fp, "]}");
 
   fclose(fp);
 
-  free(obj_count);
+  //free(obj_count);
 
   queue_delete(print_queue);
   hashtable_delete(hashtable);
@@ -2106,7 +2106,7 @@ void json_add_native_fn_source(OBJECT_PTR nativefn_obj, char *source)
 {
   nof_json_native_fns++;
 
-  json_native_fn_src_mapping_t *temp = (json_native_fn_src_mapping_t *)realloc(json_native_fns, nof_json_native_fns * sizeof(json_native_fn_src_mapping_t));
+  json_native_fn_src_mapping_t *temp = (json_native_fn_src_mapping_t *)GC_REALLOC(json_native_fns, nof_json_native_fns * sizeof(json_native_fn_src_mapping_t));
 
   assert(temp);
 
@@ -2194,7 +2194,7 @@ void recreate_native_fn_objects()
   int i, len=0;
   char *buf;
 
-  buf = (char *)malloc(nof_json_native_fns * 2000);
+  buf = (char *)GC_MALLOC(nof_json_native_fns * 2000);
   assert(buf);
 
   memset(buf, nof_json_native_fns * 2000, '\0');
@@ -2213,7 +2213,7 @@ void recreate_native_fn_objects()
   if(tcc_relocate(tcc_state1, TCC_RELOCATE_AUTO) < 0)
     assert(false);
 
-  free(buf);
+  //free(buf);
 
   for(i=0; i<nof_global_vars; i++)
   {
@@ -2234,12 +2234,12 @@ void recreate_native_fn_objects()
   if(is_dynamic_memory_object(continuation_to_resume))
     replace_native_fn(continuation_to_resume, tcc_state1);
 
-  free(tcc_state1);
+  //free(tcc_state1);
 
-  for(i=0; i<nof_json_native_fns; i++)
-    free(json_native_fns[i].source);
+  /* for(i=0; i<nof_json_native_fns; i++) */
+  /*   free(json_native_fns[i].source); */
 
-  free(json_native_fns);
+  /* free(json_native_fns); */
 
   //not really needed as load_from_image() will be called only once on startup
   nof_json_native_fns = 0;

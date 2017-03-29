@@ -366,7 +366,7 @@ int add_string(char *str)
 
   nof_strings++;
 
-  temp = (char **)realloc(strings, nof_strings * sizeof(char *));
+  temp = (char **)GC_REALLOC(strings, nof_strings * sizeof(char *));
 
   if(temp != NULL)
     strings = temp;
@@ -393,7 +393,7 @@ int add_symbol(char *sym)
 
   packages[current_package].nof_symbols++;
   
-  temp = (char **)realloc(packages[current_package].symbols, packages[current_package].nof_symbols * sizeof(char *));
+  temp = (char **)GC_REALLOC(packages[current_package].symbols, packages[current_package].nof_symbols * sizeof(char *));
 
   if(temp != NULL)
     packages[current_package].symbols = temp;
@@ -452,7 +452,7 @@ int find_symbol(char *sym, int package_index)
 
 expression_t *create_expression(int type, char *char_val, int int_val, float float_val, int nof_elements)
 {
-  expression_t *e = (expression_t *)malloc(sizeof(expression_t));
+  expression_t *e = (expression_t *)GC_MALLOC(sizeof(expression_t));
 
   e->type = type;
 
@@ -478,7 +478,7 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
 	e->package_name = strdup(res);
 	e->atom_value = strdup(strtok(NULL, ":"));
       }
-      free(temp);
+      //free(temp);
     }
   }
   else if(type == INTEGER)
@@ -493,7 +493,7 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
   {
     e->nof_elements = nof_elements;
     if(nof_elements > 0)
-      e->elements = (expression_t **)malloc(nof_elements * sizeof(expression_t *));
+      e->elements = (expression_t **)GC_MALLOC(nof_elements * sizeof(expression_t *));
     else
       e->elements = NULL;
   }
@@ -509,37 +509,37 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
 
 void delete_expression(expression_t *e)
 {
-  int i;
+/*   int i; */
 
-  log_function_entry("delete_expression");
+/*   log_function_entry("delete_expression"); */
 
-  if(!e)
-    return;
+/*   if(!e) */
+/*     return; */
 
-#ifdef DEBUG
-  print_expression(e);
-  fprintf(stdout, "\n");
-#endif
+/* #ifdef DEBUG */
+/*   print_expression(e); */
+/*   fprintf(stdout, "\n"); */
+/* #endif */
 
-  if(e->type == SYMBOL)
-  {
-    free(e->atom_value);
-    if(e->package_name != NULL)
-      free(e->package_name);
-  }
-  else if(e->type == STRING_LITERAL)
-    free(e->atom_value);
-  else if(e->type == LIST)
-  {
-    for(i=0; i<e->nof_elements; i++)
-      delete_expression(e->elements[i]);
+/*   if(e->type == SYMBOL) */
+/*   { */
+/*     free(e->atom_value); */
+/*     if(e->package_name != NULL) */
+/*       free(e->package_name); */
+/*   } */
+/*   else if(e->type == STRING_LITERAL) */
+/*     free(e->atom_value); */
+/*   else if(e->type == LIST) */
+/*   { */
+/*     for(i=0; i<e->nof_elements; i++) */
+/*       delete_expression(e->elements[i]); */
 
-    free(e->elements);
-  }
+/*     free(e->elements); */
+/*   } */
 
-  free(e);
+/*   free(e); */
 
-  log_function_exit("delete_expression");
+/*   log_function_exit("delete_expression"); */
 
 }
 
@@ -621,17 +621,17 @@ void cleanup()
 
   delete_expression(g_expr);
 
-  for(i=0; i<nof_packages; i++)
-  {
-    free(packages[i].name);
+  /* for(i=0; i<nof_packages; i++) */
+  /* { */
+  /*   free(packages[i].name); */
 
-    for(j=0; j<packages[i].nof_symbols; j++)
-      free(packages[i].symbols[j]);
+  /*   for(j=0; j<packages[i].nof_symbols; j++) */
+  /*     free(packages[i].symbols[j]); */
 
-    free(packages[i].symbols);
-  }
+  /*   free(packages[i].symbols); */
+  /* } */
 
-  free(dl_handles);
+  //free(dl_handles);
 
   cleanup_memory();
 
@@ -639,16 +639,16 @@ void cleanup()
 
   cleanup_full_monty_global_vars();
 
-  for(i=0; i<nof_autocomplete_words; i++)
-    free(autocomplete_words[i]);
-  free(autocomplete_words); 
+  /* for(i=0; i<nof_autocomplete_words; i++) */
+  /*   free(autocomplete_words[i]); */
+  /* free(autocomplete_words);  */
 
   cleanup_help_entries();
 
-  for(i=0;i<nof_strings; i++)
-    free(strings[i]);
+  /* for(i=0;i<nof_strings; i++) */
+  /*   free(strings[i]); */
 
-  free(strings);
+  /* free(strings); */
 
   log_function_exit("cleanup");
 }
@@ -2171,7 +2171,7 @@ void create_package(char *name)
 
   nof_packages++;
 
-  temp = (package_t *)realloc(packages, nof_packages * sizeof(package_t));
+  temp = (package_t *)GC_REALLOC(packages, nof_packages * sizeof(package_t));
 
   if(temp != NULL)
     packages = temp;
@@ -2195,7 +2195,7 @@ void initialize_core_package()
      that are defined for convenience in addtion to the special symbols. These 
      mnemonics are not special, i.e., it doesn't matter if the user source code uses them */
   packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS + NOF_NON_SPECIAL_SYMBOLS; 
-  packages[CORE_PACKAGE_INDEX].symbols = (char **)malloc(packages[CORE_PACKAGE_INDEX].nof_symbols * sizeof(char *));
+  packages[CORE_PACKAGE_INDEX].symbols = (char **)GC_MALLOC(packages[CORE_PACKAGE_INDEX].nof_symbols * sizeof(char *));
 
   packages[CORE_PACKAGE_INDEX].symbols[0]  = strdup("T");
   packages[CORE_PACKAGE_INDEX].symbols[1]  = strdup("NIL");
@@ -2457,7 +2457,7 @@ int add_qualified_symbol(char *package_name, char *sym)
 
   packages[package_index].nof_symbols++;
 
-  temp = (char **)realloc(packages[package_index].symbols, packages[package_index].nof_symbols * sizeof(char *));
+  temp = (char **)GC_REALLOC(packages[package_index].symbols, packages[package_index].nof_symbols * sizeof(char *));
 
   if(temp != NULL)
     packages[package_index].symbols = temp;
@@ -2524,12 +2524,12 @@ OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)
     if(!strcmp(get_symbol_name(key), temp2))
     {
       ret = CADR(rest);
-      free(temp2);
+      //free(temp2);
       found = true;
       break;
     }
 
-    free(temp2); //temp1 need not be freed
+    //free(temp2); //temp1 need not be freed
     rest = CDDR(rest); //need to skip the values and only consider :a, :b, ...
   }
 
@@ -2794,7 +2794,7 @@ char *get_string(OBJECT_PTR string_object)
   //len = get_int_value(get_heap(ptr, 0));
   len = *((OBJECT_PTR *)ptr);
 
-  ret = (char *)malloc(len * sizeof(char) + 1);
+  ret = (char *)GC_MALLOC(len * sizeof(char) + 1);
 
   for(i=1; i<=len; i++)
     ret[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;

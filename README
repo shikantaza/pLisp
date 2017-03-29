@@ -50,8 +50,9 @@ You will need GCC and the make utility to install pLisp. In addition, the follow
 * The GtkSourceview3 (https://wiki.gnome.org/Projects/GtkSourceView) development package (libgtksourceview-3.0-dev)
 * Tiny C Compiler (http://bellard.org/tcc/) (tcc and libtcc-dev)
 * The libffi (https://sourceware.org/libffi/) package (libffi6)
+* The Boehm Garbage Collector (https://www.hboehm.info/gc/gc_source/)
 
-All these packages can be installed using the package manager that comes with your distro.
+All these packages can be installed using the package manager that comes with your distro or from the package's home page.
 
 OS X
 ~~~~
@@ -70,6 +71,8 @@ OS X
 
 * Install the  Tiny C Compiler (http://bellard.org/tcc/). You will have to do it the './configure; make; sudo make install' way.
 
+* Install the Boehm Garbage Collector (https://www.hboehm.info/gc/gc_source/) using './configure; make; sudo make install'.
+
 * Install pLisp by entering into a jhbuild shell and typing './configure', 'make' and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
 
 Windows
@@ -81,6 +84,8 @@ Windows
     pacman -S <package name>
 
 * Install the  Tiny C Compiler (http://bellard.org/tcc/). You will have to do it the './configure; make; sudo make install' way.
+
+* Install the Boehm Garbage Collector (https://www.hboehm.info/gc/gc_source/) using './configure; make; sudo make install'.
 
 * Install pLisp from the MSYS2 shell by './configure', 'make' and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
 

@@ -292,7 +292,7 @@ void eval(BOOLEAN do_gc)
 
   OBJECT_PTR opcode = car(exp);
 
-  pin_globals();
+  //pin_globals();
 
   if(do_gc)
   {
@@ -322,9 +322,9 @@ void eval(BOOLEAN do_gc)
 
       double temp1 = get_wall_time();
       clock_t temp2 = clock();
-      unsigned int temp3 = memory_allocated();
+      unsigned int temp3 = 0; //memory_allocated();
 
-      profiling_datum_t *pd = (profiling_datum_t *)malloc(sizeof(profiling_datum_t));
+      profiling_datum_t *pd = (profiling_datum_t *)GC_MALLOC(sizeof(profiling_datum_t));
 
       if(IS_SYMBOL_OBJECT(prev_operator))
          operator_to_be_used = prev_operator;
@@ -353,7 +353,7 @@ void eval(BOOLEAN do_gc)
         mem_alloc = pd->mem_allocated + temp3 - mem_alloc_var;
 
         hashtable_remove(profiling_tab, (void *)operator_to_be_used);
-        free(pd);
+        //free(pd);
       }
       else
       {
@@ -373,7 +373,7 @@ void eval(BOOLEAN do_gc)
 
     wall_time_var = get_wall_time();
     cpu_time_var = clock();
-    mem_alloc_var = memory_allocated();
+    //mem_alloc_var = memory_allocated();
 
     prev_operator = reg_accumulator;
   }

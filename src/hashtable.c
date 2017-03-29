@@ -22,6 +22,8 @@
 #include <assert.h>
 #include <time.h>
 
+#include "gc.h"
+
 #include "hashtable.h"
 
 //#define HASHSIZE 1000001
@@ -53,7 +55,7 @@ hashtable_entry_t *hashtable_put(hashtable_t *hashtab, void *ptr, void *value)
 
   if((np = hashtable_get(hashtab, ptr)) == NULL)
   {
-    np = (hashtable_entry_t *) malloc(sizeof(*np));
+    np = (hashtable_entry_t *) GC_MALLOC(sizeof(*np));
     if(np == NULL)
       return NULL;
 
@@ -103,7 +105,7 @@ void hashtable_remove(hashtable_t *hashtab, void *ptr)
         }
       }
 
-      free(np);
+      //free(np);
       hashtab->count--;
 
       return;
@@ -116,11 +118,11 @@ void hashtable_remove(hashtable_t *hashtab, void *ptr)
 
 hashtable_t *hashtable_create(unsigned int hash_size)
 {
-  hashtable_t *ret = (hashtable_t *)malloc(sizeof(hashtable_t));
+  hashtable_t *ret = (hashtable_t *)GC_MALLOC(sizeof(hashtable_t));
 
   ret->count = 0;
 
-  ret->entries = (hashtable_entry_t **)malloc(hash_size * sizeof(hashtable_entry_t *));
+  ret->entries = (hashtable_entry_t **)GC_MALLOC(hash_size * sizeof(hashtable_entry_t *));
   ret->hash_size = hash_size;
 
   int i;
@@ -143,14 +145,14 @@ void hashtable_delete(hashtable_t *tab)
     while(np != NULL)
     {
       hashtable_entry_t *temp = np->next;
-      free(np);
+      //free(np);
       np = temp;
     }
   }
 
-  free(tab->entries);
+  //free(tab->entries);
 
-  free(tab);
+  //free(tab);
 }
 
 hashtable_entry_t *clone_entries(hashtable_entry_t *np)
@@ -159,7 +161,7 @@ hashtable_entry_t *clone_entries(hashtable_entry_t *np)
 
   while(np)
   {
-    hashtable_entry_t *temp = (hashtable_entry_t *)malloc(sizeof(hashtable_entry_t));
+    hashtable_entry_t *temp = (hashtable_entry_t *)GC_MALLOC(sizeof(hashtable_entry_t));
 
     temp->ptr = np->ptr;
     temp->value = np->value;
@@ -184,7 +186,7 @@ hashtable_entry_t *clone_entries(hashtable_entry_t *np)
 
 hashtable_entry_t *hashtable_entries(hashtable_t *tab)
 {
-  hashtable_entry_t **replica = (hashtable_entry_t **)malloc(tab->hash_size * sizeof(hashtable_entry_t *));
+  hashtable_entry_t **replica = (hashtable_entry_t **)GC_MALLOC(tab->hash_size * sizeof(hashtable_entry_t *));
 
   int i;
 
@@ -237,7 +239,7 @@ hashtable_entry_t *hashtable_get_any_element(hashtable_t *tab)
 
 int main(int argc, char **argv)
 {
-  int *vals = (int *)malloc(SIZE * sizeof(int));
+  int *vals = (int *)GC_MALLOC(SIZE * sizeof(int));
 
   int i;
 
@@ -304,7 +306,7 @@ int main(int argc, char **argv)
 
   hashtable_delete(tab);
 
-  free(vals);
+  //free(vals);
 }
 
 #endif

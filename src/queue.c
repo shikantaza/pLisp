@@ -21,11 +21,13 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include "gc.h"
+
 #include "queue.h"
 
 queue_t *queue_create()
 {
-  queue_t *q = (queue_t *)malloc(sizeof(queue_t));
+  queue_t *q = (queue_t *)GC_MALLOC(sizeof(queue_t));
 
   q->count = 0;
   q->first = NULL;
@@ -41,11 +43,11 @@ void queue_delete(queue_t *q)
   while(np != NULL)
   {
     queue_item_t *temp = np->next;
-    free(np);
+    //free(np);
     np = temp;
   }
 
-  free(q);
+  //free(q);
 }
 
 unsigned int queue_count(queue_t *q)
@@ -65,14 +67,14 @@ void queue_enqueue(queue_t *q, void *value)
 {
   if(!q->first)
   {
-    q->first = (queue_item_t *)malloc(sizeof(queue_item_t));
+    q->first = (queue_item_t *)GC_MALLOC(sizeof(queue_item_t));
     q->first->data = value;
     q->first->next = NULL;
     q->last = q->first;
   }
   else
   {
-    queue_item_t *new = (queue_item_t *)malloc(sizeof(queue_item_t));
+    queue_item_t *new = (queue_item_t *)GC_MALLOC(sizeof(queue_item_t));
     new->data = value;
     new->next = NULL;
     q->last->next = new;
@@ -120,7 +122,7 @@ int main(int argc, char **argv)
   {
     queue_item_t *item = queue_dequeue(q);
     assert((int)item->data == i);
-    free(item);
+    //free(item);
   }
 
   assert(queue_is_empty(q));

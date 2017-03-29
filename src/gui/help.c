@@ -48,7 +48,7 @@ int build_help_entries(char *file_name)
   
   nof_help_entries = JSON_get_array_size(entries);
 
-  help_entries = (help_entry_t *)malloc(nof_help_entries * sizeof(help_entry_t));
+  help_entries = (help_entry_t *)GC_MALLOC(nof_help_entries * sizeof(help_entry_t));
 
   if(!help_entries)
   {
@@ -69,7 +69,7 @@ int build_help_entries(char *file_name)
     {
       throw_exception1("EXCEPTION", "Invalid help entry type");
       JSON_delete_object(root);
-      free(help_entries);
+      //free(help_entries);
       return 1;      
     }
     
@@ -85,13 +85,13 @@ int build_help_entries(char *file_name)
 
     if(help_entries[i].examples_count > 0)
     {
-      help_entries[i].examples = (char **)malloc(help_entries[i].examples_count * sizeof(char *));
+      help_entries[i].examples = (char **)GC_MALLOC(help_entries[i].examples_count * sizeof(char *));
 
       if(!help_entries[i].examples)
       {
         throw_exception1("EXCEPTION", "Unable to allocate memory for examples");
         JSON_delete_object(root);
-        free(help_entries);
+        //free(help_entries);
         return 1;      
       }
     }
@@ -103,13 +103,13 @@ int build_help_entries(char *file_name)
 
     if(help_entries[i].see_also_count > 0)
     {
-      help_entries[i].see_also = (char **)malloc(help_entries[i].see_also_count * sizeof(char *));
+      help_entries[i].see_also = (char **)GC_MALLOC(help_entries[i].see_also_count * sizeof(char *));
 
       if(!help_entries[i].see_also)
       {
         throw_exception1("EXCEPTION", "Unable to allocate memory for see-also-count");
         JSON_delete_object(root);
-        free(help_entries);
+        //free(help_entries);
         return 1;      
       }
     }
@@ -138,28 +138,28 @@ help_entry_t *find_help_entry(char *name)
 
 void cleanup_help_entries()
 {
-  int i,j;
+  /* int i,j; */
 
-  for(i=0; i<nof_help_entries; i++)
-  {
-    free(help_entries[i].name);
-    free(help_entries[i].syntax);
-    free(help_entries[i].args);
-    free(help_entries[i].desc);
-    free(help_entries[i].exceptions);
+  /* for(i=0; i<nof_help_entries; i++) */
+  /* { */
+  /*   free(help_entries[i].name); */
+  /*   free(help_entries[i].syntax); */
+  /*   free(help_entries[i].args); */
+  /*   free(help_entries[i].desc); */
+  /*   free(help_entries[i].exceptions); */
 
-    for(j=0; j<help_entries[i].examples_count; j++)
-      free(help_entries[i].examples[j]);
+  /*   for(j=0; j<help_entries[i].examples_count; j++) */
+  /*     free(help_entries[i].examples[j]); */
 
-    if(help_entries[i].examples_count > 0)
-      free(help_entries[i].examples);
+  /*   if(help_entries[i].examples_count > 0) */
+  /*     free(help_entries[i].examples); */
 
-    for(j=0; j<help_entries[i].see_also_count; j++)
-      free(help_entries[i].see_also[j]);
+  /*   for(j=0; j<help_entries[i].see_also_count; j++) */
+  /*     free(help_entries[i].see_also[j]); */
 
-    if(help_entries[i].see_also_count > 0)
-      free(help_entries[i].see_also);
-  }
+  /*   if(help_entries[i].see_also_count > 0) */
+  /*     free(help_entries[i].see_also); */
+  /* } */
 
-  free(help_entries);
+  /* free(help_entries); */
 }

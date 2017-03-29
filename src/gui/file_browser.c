@@ -87,8 +87,8 @@ GtkTextIter last_find_iter;
 void cleanup_file_name_widgets()
 {
   int i;
-  for(i=0; i<nof_fnws; i++)
-    free(fnws[i]);
+  /* for(i=0; i<nof_fnws; i++) */
+  /*   free(fnws[i]); */
   nof_fnws = 0;
 }
 
@@ -96,13 +96,13 @@ void add_file_name_and_widget(file_name_and_widget_t *fnw)
 {
   if(!fnws)
   {
-    fnws = (file_name_and_widget_t **)malloc(sizeof(file_name_and_widget_t *));
+    fnws = (file_name_and_widget_t **)GC_MALLOC(sizeof(file_name_and_widget_t *));
     assert(fnws);
     fnws[0] = fnw;
   }
   else
   {
-    file_name_and_widget_t **temp = (file_name_and_widget_t **)realloc(fnws, (nof_fnws+1) * sizeof(file_name_and_widget_t *));
+    file_name_and_widget_t **temp = (file_name_and_widget_t **)GC_REALLOC(fnws, (nof_fnws+1) * sizeof(file_name_and_widget_t *));
     assert(temp);
     fnws = temp;
     fnws[nof_fnws] = fnw;
@@ -126,8 +126,8 @@ BOOLEAN quit_file_browser()
     {
       gtk_widget_destroy((GtkWidget *)dialog1);    
 
-      if(current_file_name)
-        free(current_file_name);
+      /* if(current_file_name) */
+      /*   free(current_file_name); */
 
       cleanup_file_name_widgets();
 
@@ -161,8 +161,8 @@ void fb_select_file(GtkWidget *widget, gpointer data)
 {
   file_name_and_widget_t *fnw = (file_name_and_widget_t *)data;
 
-  free(current_file_name);
-  current_file_name = (char *)malloc(strlen(fnw->file_name) + 1);
+  //free(current_file_name);
+  current_file_name = (char *)GC_MALLOC(strlen(fnw->file_name) + 1);
   memset(current_file_name, '\0', strlen(current_file_name) + 1);
   strcpy(current_file_name, fnw->file_name);
 
@@ -271,7 +271,7 @@ void new_source_file()
 
   GtkWidget *label = gtk_label_new(opened_source_file_name);
 
-  file_name_and_widget_t *fnw = (file_name_and_widget_t *)malloc(sizeof(file_name_and_widget_t));
+  file_name_and_widget_t *fnw = (file_name_and_widget_t *)GC_MALLOC(sizeof(file_name_and_widget_t));
   fnw->widget = scrolled_win;
   fnw->file_name = opened_source_file_name;
   fnw->buffer = buffer;
@@ -280,8 +280,8 @@ void new_source_file()
   add_file_name_and_widget(fnw);
 
   //to work around focus not being set to the newly-created view/scrolled window
-  free(current_file_name);
-  current_file_name = (char *)malloc(strlen(fnw->file_name) + 1);
+  //free(current_file_name);
+  current_file_name = (char *)GC_MALLOC(strlen(fnw->file_name) + 1);
   memset(current_file_name, '\0', strlen(current_file_name) + 1);
   strcpy(current_file_name, fnw->file_name);
   current_scrolled_win = fnw->widget;    
@@ -347,7 +347,7 @@ void fb_load_source_file()
 
     GtkWidget *label = gtk_label_new(opened_source_file_name);
 
-    file_name_and_widget_t *fnw = (file_name_and_widget_t *)malloc(sizeof(file_name_and_widget_t));
+    file_name_and_widget_t *fnw = (file_name_and_widget_t *)GC_MALLOC(sizeof(file_name_and_widget_t));
     fnw->widget = scrolled_win;
     fnw->file_name = opened_source_file_name;
     fnw->buffer = buffer;
@@ -356,8 +356,8 @@ void fb_load_source_file()
     add_file_name_and_widget(fnw);
 
     //to work around focus not being set to the newly-created view/scrolled window
-    free(current_file_name);
-    current_file_name = (char *)malloc(strlen(fnw->file_name) + 1);
+    //free(current_file_name);
+    current_file_name = (char *)GC_MALLOC(strlen(fnw->file_name) + 1);
     memset(current_file_name, '\0', strlen(current_file_name) + 1);
     strcpy(current_file_name, fnw->file_name);
     current_scrolled_win = fnw->widget;    
@@ -375,8 +375,8 @@ void fb_load_source_file()
     }
 
     gtk_text_buffer_set_text(buffer, file_contents == -1 ? "" : file_contents, -1);
-    if(file_contents && file_contents != -1)
-      free(file_contents);
+    /* if(file_contents && file_contents != -1) */
+    /*   free(file_contents); */
 
     gtk_notebook_append_page(fb_notebook, scrolled_win, label);
     gtk_widget_show_all(file_browser_window);
@@ -556,7 +556,7 @@ void reload_file()
         }
 
         gtk_text_buffer_set_text(curr_file_browser_buffer, file_contents, -1);
-        free(file_contents);
+        //free(file_contents);
 
         gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);
 
@@ -859,7 +859,7 @@ void add_file_to_file_browser(char *file_name)
 
   GtkWidget *label = gtk_label_new(file_name);
 
-  file_name_and_widget_t *fnw = (file_name_and_widget_t *)malloc(sizeof(file_name_and_widget_t));
+  file_name_and_widget_t *fnw = (file_name_and_widget_t *)GC_MALLOC(sizeof(file_name_and_widget_t));
   fnw->widget = scrolled_win;
   fnw->file_name = file_name;
   fnw->buffer = buffer;
@@ -868,8 +868,8 @@ void add_file_to_file_browser(char *file_name)
   add_file_name_and_widget(fnw);
 
   //to work around focus not being set to the newly-created view/scrolled window
-  free(current_file_name);
-  current_file_name = (char *)malloc(strlen(fnw->file_name) + 1);
+  //free(current_file_name);
+  current_file_name = (char *)GC_MALLOC(strlen(fnw->file_name) + 1);
   memset(current_file_name, '\0', strlen(current_file_name) + 1);
   strcpy(current_file_name, fnw->file_name);
   current_scrolled_win = fnw->widget;    
@@ -890,8 +890,8 @@ void add_file_to_file_browser(char *file_name)
   }
 
   gtk_text_buffer_set_text(buffer, file_contents == -1 ? "" : file_contents, -1);
-  if(file_contents && file_contents != -1)
-    free(file_contents);
+  /* if(file_contents && file_contents != -1) */
+  /*   free(file_contents); */
 
   gtk_notebook_append_page(fb_notebook, scrolled_win, label);
   gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);  

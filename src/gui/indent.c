@@ -214,7 +214,7 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
             corrected_i++;
           }
 
-          char *tempstr = malloc((i-pos+1) * sizeof(char));
+          char *tempstr = GC_MALLOC((i-pos+1) * sizeof(char));
           memset(tempstr, '\0', i-pos+1);
       
           strncpy(tempstr, str+pos, i-pos);
@@ -248,7 +248,7 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
           else
             form_type = FORM;
 
-          free(tempstr);
+          //free(tempstr);
 
           new_form_encountered = true;
         }
@@ -273,10 +273,10 @@ form_position_t *convert_to_form_position(char *str, unsigned int *count)
     {
       (*count)++;
       if(!fp)
-        fp = (form_position_t *)malloc(sizeof(form_position_t));
+        fp = (form_position_t *)GC_MALLOC(sizeof(form_position_t));
       else
       {
-        temp = realloc(fp, (*count) * (sizeof(form_position_t)));
+        temp = GC_REALLOC(fp, (*count) * (sizeof(form_position_t)));
         fp = temp;
       }
 
@@ -338,17 +338,17 @@ form_position_t *convert_to_form_position_old(char *str, unsigned int *count)
 
       (*count)++;
       if(!fp)
-        fp = (form_position_t *)malloc(sizeof(form_position_t));
+        fp = (form_position_t *)GC_MALLOC(sizeof(form_position_t));
       else
       {
-        temp = realloc(fp, (*count) * (sizeof(form_position_t)));
+        temp = GC_REALLOC(fp, (*count) * (sizeof(form_position_t)));
         fp = temp;
       }
 
       while(str[index] != ' ' && str[index] != '\n' && str[index] != '(' && index < strlen(str))
         index++;
 
-      char *tempstr = malloc((index-i+1) * sizeof(char));
+      char *tempstr = GC_MALLOC((index-i+1) * sizeof(char));
       memset(tempstr, '\0', index-i+1);
       
       strncpy(tempstr, str+i, index-i);
@@ -370,7 +370,7 @@ form_position_t *convert_to_form_position_old(char *str, unsigned int *count)
         
       fp[(*count)-1].pos = i;
 
-      free(tempstr);
+      //free(tempstr);
     }
     else if(str[index] == '(' && !in_string_literal)
     {
@@ -378,10 +378,10 @@ form_position_t *convert_to_form_position_old(char *str, unsigned int *count)
 
       (*count)++;
       if(!fp)
-        fp = (form_position_t *)malloc(sizeof(form_position_t));
+        fp = (form_position_t *)GC_MALLOC(sizeof(form_position_t));
       else
       {
-        temp = realloc(fp, (*count) * (sizeof(form_position_t)));
+        temp = GC_REALLOC(fp, (*count) * (sizeof(form_position_t)));
         fp = temp;
       }
 
@@ -604,6 +604,6 @@ void indent(GtkTextBuffer *buffer)
 
   g_free(text);
   g_free(str);
-  free(fp);
+  //free(fp);
 }
 

@@ -21,6 +21,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "gc.h"
+
 #define SYMBOL_STRING_SIZE 100
 
 #define MAX_STRING_LENGTH 16192

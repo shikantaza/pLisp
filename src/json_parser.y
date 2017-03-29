@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "gc.h"
+  
 #include "json.h"
 
 int yyerror(char *s);
@@ -86,15 +88,15 @@ array:
 name_value_pairs:
     /* empty */
     {
-      $$ = (struct name_value_pairs *)malloc(sizeof(struct name_value_pairs));
+      $$ = (struct name_value_pairs *)GC_MALLOC(sizeof(struct name_value_pairs));
       $$->count = 0;
     }
     |
     name_value_pair
     {
-      $$ = (struct name_value_pairs *)malloc(sizeof(struct name_value_pairs));
+      $$ = (struct name_value_pairs *)GC_MALLOC(sizeof(struct name_value_pairs));
       $$->count = 1;
-      $$->elements = (struct name_value_pair **)malloc(sizeof(struct name_value_pair *));
+      $$->elements = (struct name_value_pair **)GC_MALLOC(sizeof(struct name_value_pair *));
       $$->elements[0] = $1;
     }
     |
@@ -102,7 +104,7 @@ name_value_pairs:
     {
       $1->count++;
 
-      $1->elements = (struct name_value_pair **)realloc($1->elements,
+      $1->elements = (struct name_value_pair **)GC_REALLOC($1->elements,
                                               $1->count * sizeof(struct name_value_pair *));
 
       $1->elements[$1->count - 1] = $3;
@@ -114,14 +116,14 @@ name_value_pair:
     T_STRING_LITERAL T_COLON value
     {
       $$ = JSON_create_name_value_pair($1, $3);
-      free($1);
+      //free($1);
     };
 
 value:
     T_STRING_LITERAL 
     {
       $$ = JSON_create_string_object($1);
-      free($1);
+      //free($1);
     }
     |
     T_INTEGER
@@ -147,15 +149,15 @@ value:
 values:
     /* empty */
     {
-      $$ = (struct JSONArray *)malloc(sizeof(struct JSONArray));
+      $$ = (struct JSONArray *)GC_MALLOC(sizeof(struct JSONArray));
       $$->count = 0;
     }
     |
     value
     {
-      $$ = (struct JSONArray *)malloc(sizeof(struct JSONArray));
+      $$ = (struct JSONArray *)GC_MALLOC(sizeof(struct JSONArray));
       $$->count = 1;
-      $$->elements = (struct JSONObject **)malloc(sizeof(struct JSONObject *));
+      $$->elements = (struct JSONObject **)GC_MALLOC(sizeof(struct JSONObject *));
       $$->elements[0] = $1;
     }
     |
@@ -163,7 +165,7 @@ values:
     {
       $1->count++;
 
-      $1->elements = (struct JSONObject **)realloc($1->elements,
+      $1->elements = (struct JSONObject **)GC_REALLOC($1->elements,
                                             $1->count * sizeof(struct JSONObject *));
 
       $1->elements[$1->count - 1] = $3;
