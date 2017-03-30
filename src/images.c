@@ -95,7 +95,7 @@ extern GtkStatusbar *system_browser_statusbar;
 
 extern GtkWindow *profiler_window;
 
-extern hashtable_t *profiling_tab;
+//extern hashtable_t *profiling_tab;
 
 extern GtkTreeView *packages_list;
 extern GtkTreeView *symbols_list;
@@ -620,60 +620,60 @@ void create_image(char *file_name)
 
   fprintf(fp, ", ");
   
-  if(serialize_gui_elements && profiler_window)
-  {
-    int posx, posy, width, height;
+  /* if(serialize_gui_elements && profiler_window) */
+  /* { */
+  /*   int posx, posy, width, height; */
 
-    gtk_window_get_position(profiler_window, &posx, &posy);
-    gtk_window_get_size(profiler_window, &width, &height);
+  /*   gtk_window_get_position(profiler_window, &posx, &posy); */
+  /*   gtk_window_get_size(profiler_window, &width, &height); */
 
-    fprintf(fp, 
-            "\"profiler\" : [ %d, %d, %d, %d, [", 
-            posx, posy, width, height);
+  /*   fprintf(fp,  */
+  /*           "\"profiler\" : [ %d, %d, %d, %d, [",  */
+  /*           posx, posy, width, height); */
 
-    hashtable_entry_t **entries = profiling_tab->entries;
+  /*   hashtable_entry_t **entries = profiling_tab->entries; */
 
-    int i, count = profiling_tab->hash_size;
+  /*   int i, count = profiling_tab->hash_size; */
 
-    BOOLEAN first_printed = false;
+  /*   BOOLEAN first_printed = false; */
 
-    for(i=0; i<count; i++)
-    {
-      if(profiling_tab->entries[i])
-      {
-        if(first_printed)
-          fprintf(fp, ", ");
+  /*   for(i=0; i<count; i++) */
+  /*   { */
+  /*     if(profiling_tab->entries[i]) */
+  /*     { */
+  /*       if(first_printed) */
+  /*         fprintf(fp, ", "); */
 
-        hashtable_entry_t *e = profiling_tab->entries[i];
+  /*       hashtable_entry_t *e = profiling_tab->entries[i]; */
 
-        while(e)
-        {
-          OBJECT_PTR operator = (OBJECT_PTR)e->ptr;
+  /*       while(e) */
+  /*       { */
+  /*         OBJECT_PTR operator = (OBJECT_PTR)e->ptr; */
 
-          profiling_datum_t *pd = (profiling_datum_t *)e->value;
+  /*         profiling_datum_t *pd = (profiling_datum_t *)e->value; */
 
-          fprintf(fp, "[ ");
-          print_json_object(fp, operator, print_queue, obj_count, hashtable, printed_objects, false);
-          fprintf(fp, ", %d, %f, %f, %d, %d", 
-                  pd->count,
-                  (float)pd->elapsed_wall_time,
-                  (float)pd->elapsed_cpu_time,
-                  pd->mem_allocated,
-                  pd->mem_deallocated);
-          fprintf(fp, " ]");
+  /*         fprintf(fp, "[ "); */
+  /*         print_json_object(fp, operator, print_queue, obj_count, hashtable, printed_objects, false); */
+  /*         fprintf(fp, ", %d, %f, %f, %d, %d",  */
+  /*                 pd->count, */
+  /*                 (float)pd->elapsed_wall_time, */
+  /*                 (float)pd->elapsed_cpu_time, */
+  /*                 pd->mem_allocated, */
+  /*                 pd->mem_deallocated); */
+  /*         fprintf(fp, " ]"); */
 
-          e = e->next;
+  /*         e = e->next; */
 
-          if(e)
-            fprintf(fp, ",");
-        }
+  /*         if(e) */
+  /*           fprintf(fp, ","); */
+  /*       } */
 
-        if(!first_printed)
-          first_printed = true;
-      }
-    }
-    fprintf(fp, "]], ");
-  }
+  /*       if(!first_printed) */
+  /*         first_printed = true; */
+  /*     } */
+  /*   } */
+  /*   fprintf(fp, "]], "); */
+  /* } */
 
   if(serialize_gui_elements && system_browser_window)
   {
@@ -1220,33 +1220,33 @@ int load_from_image(char *file_name)
 
   struct JSONObject *profiler = JSON_get_object_item(root, "profiler");
 
-  if(profiler)
-  {
-    profiling_tab = hashtable_create(1000001);
+  /* if(profiler) */
+  /* { */
+  /*   profiling_tab = hashtable_create(1000001); */
 
-    struct JSONObject *entries = JSON_get_array_item(profiler, 4);
+  /*   struct JSONObject *entries = JSON_get_array_item(profiler, 4); */
 
-    int size = JSON_get_array_size(entries);
+  /*   int size = JSON_get_array_size(entries); */
 
-    int i;
+  /*   int i; */
 
-    for(i=0; i<size; i++)
-    {
-      struct JSONObject *entry = JSON_get_array_item(entries, i);
-      OBJECT_PTR operator = deserialize_internal(heap, JSON_get_array_item(entry, 0)->ivalue, hashtable, q, false);
+  /*   for(i=0; i<size; i++) */
+  /*   { */
+  /*     struct JSONObject *entry = JSON_get_array_item(entries, i); */
+  /*     OBJECT_PTR operator = deserialize_internal(heap, JSON_get_array_item(entry, 0)->ivalue, hashtable, q, false); */
 
-      profiling_datum_t *pd = (profiling_datum_t *)GC_MALLOC(sizeof(profiling_datum_t));
+  /*     profiling_datum_t *pd = (profiling_datum_t *)GC_MALLOC(sizeof(profiling_datum_t)); */
 
-      pd->count             = JSON_get_array_item(entry, 1)->ivalue;
-      pd->elapsed_wall_time = JSON_get_array_item(entry, 2)->fvalue;
-      pd->elapsed_cpu_time  = JSON_get_array_item(entry, 3)->fvalue;
-      pd->mem_allocated     = JSON_get_array_item(entry, 4)->ivalue;
-      pd->mem_deallocated   = JSON_get_array_item(entry, 5)->ivalue;
+  /*     pd->count             = JSON_get_array_item(entry, 1)->ivalue; */
+  /*     pd->elapsed_wall_time = JSON_get_array_item(entry, 2)->fvalue; */
+  /*     pd->elapsed_cpu_time  = JSON_get_array_item(entry, 3)->fvalue; */
+  /*     pd->mem_allocated     = JSON_get_array_item(entry, 4)->ivalue; */
+  /*     pd->mem_deallocated   = JSON_get_array_item(entry, 5)->ivalue; */
 
-      hashtable_put(profiling_tab, (void *)operator, (void *)pd);
+  /*     hashtable_put(profiling_tab, (void *)operator, (void *)pd); */
       
-    }
-  }
+  /*   } */
+  /* } */
 
   struct JSONObject *system_browser = JSON_get_object_item(root, "system_browser");
   OBJECT_PTR obj1;

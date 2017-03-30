@@ -1384,48 +1384,48 @@ void initialize_operators_list(GtkTreeView *list)
 
 void populate_operators_list(GtkTreeView *list)
 {
-  GtkListStore *store;
-  GtkTreeIter  iter;
+  /* GtkListStore *store; */
+  /* GtkTreeIter  iter; */
 
-  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
+  /* store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list))); */
 
-  hashtable_entry_t **entries = profiling_tab->entries;
+  /* hashtable_entry_t **entries = profiling_tab->entries; */
 
-  int i, count = profiling_tab->hash_size;
+  /* int i, count = profiling_tab->hash_size; */
 
-  for(i=0; i<count; i++)
-  {
-    if(profiling_tab->entries[i])
-    {
-      hashtable_entry_t *e = profiling_tab->entries[i];
+  /* for(i=0; i<count; i++) */
+  /* { */
+  /*   if(profiling_tab->entries[i]) */
+  /*   { */
+  /*     hashtable_entry_t *e = profiling_tab->entries[i]; */
 
-      while(e)
-      {
-        OBJECT_PTR operator = (OBJECT_PTR)e->ptr;
+  /*     while(e) */
+  /*     { */
+  /*       OBJECT_PTR operator = (OBJECT_PTR)e->ptr; */
 
-        profiling_datum_t *pd = (profiling_datum_t *)e->value;
+  /*       profiling_datum_t *pd = (profiling_datum_t *)e->value; */
 
-        gtk_list_store_append(store, &iter);
+  /*       gtk_list_store_append(store, &iter); */
 
-        char buf1[MAX_STRING_LENGTH];
-        memset(buf1, '\0', MAX_STRING_LENGTH);
+  /*       char buf1[MAX_STRING_LENGTH]; */
+  /*       memset(buf1, '\0', MAX_STRING_LENGTH); */
 
-        OBJECT_PTR temp_obj = operator;
+  /*       OBJECT_PTR temp_obj = operator; */
 
-        print_object_to_string(temp_obj, buf1, 0);
+  /*       print_object_to_string(temp_obj, buf1, 0); */
 
-        unsigned int count = pd->count;
-        double elapsed_wall_time = pd->elapsed_wall_time;
-        double elapsed_cpu_time = pd->elapsed_cpu_time;
-        unsigned int mem_alloc = pd->mem_allocated;
-        unsigned int mem_dealloc = pd->mem_deallocated;
+  /*       unsigned int count = pd->count; */
+  /*       double elapsed_wall_time = pd->elapsed_wall_time; */
+  /*       double elapsed_cpu_time = pd->elapsed_cpu_time; */
+  /*       unsigned int mem_alloc = pd->mem_allocated; */
+  /*       unsigned int mem_dealloc = pd->mem_deallocated; */
         
-        gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem_alloc, 5, mem_dealloc, -1);
+  /*       gtk_list_store_set(store, &iter, 0, buf1, 1, count, 2, elapsed_wall_time, 3, elapsed_cpu_time, 4, mem_alloc, 5, mem_dealloc, -1); */
 
-        e = e->next;
-      }
-    }
-  }
+  /*       e = e->next; */
+  /*     } */
+  /*   } */
+  /* } */
 
   /* hashtable_entry_t *e = hashtable_entries(profiling_tab); */
 

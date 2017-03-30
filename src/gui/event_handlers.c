@@ -134,7 +134,7 @@ extern void refresh_system_browser();
 
 extern BOOLEAN system_changed;
 
-extern hashtable_t *profiling_tab;
+//extern hashtable_t *profiling_tab;
 
 void evaluate();
 void close_application_window(GtkWidget **);
@@ -316,12 +316,12 @@ gboolean delete_event( GtkWidget *widget,
       call_repl("(ABORT)");
 #endif
   }
-  else if(widget == (GtkWidget *)profiler_window)
-  {
-    close_application_window((GtkWidget **)&profiler_window);
-    hashtable_delete(profiling_tab);
-    profiling_tab = NULL;
-  }
+  /* else if(widget == (GtkWidget *)profiler_window) */
+  /* { */
+  /*   close_application_window((GtkWidget **)&profiler_window); */
+  /*   hashtable_delete(profiling_tab); */
+  /*   profiling_tab = NULL; */
+  /* } */
   else if(widget == (GtkWidget *)help_window)
     close_application_window(&help_window);
   else if(widget == (GtkWidget *)callers_window)

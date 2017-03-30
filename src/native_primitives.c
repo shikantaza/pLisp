@@ -1920,3 +1920,144 @@ OBJECT_PTR primitive_throw(OBJECT_PTR excp)
   exception_object = excp;
   return handle_exception();
 }
+
+OBJECT_PTR eval_string(OBJECT_PTR literal)
+{
+  char *str_val = strings[(int)literal >> OBJECT_SHIFT];
+
+  char *ptr = NULL;
+
+  unsigned int len = strlen(str_val);
+
+  uintptr_t *raw_ptr1;
+
+  uintptr_t raw_ptr;
+
+  int i=1;
+
+  assert(IS_STRING_LITERAL_OBJECT(literal));
+
+  //see comment in main.c for why we're not using object_alloc()
+  //posix_memalign((void **)&raw_ptr1, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr1) = len;
+
+  raw_ptr = object_alloc(len + 1, ARRAY_TAG);
+
+  //set_heap(raw_ptr, 0, convert_int_to_object(len));
+  //set_heap(raw_ptr, 0, (uintptr_t)raw_ptr1 + INTEGER_TAG);
+  *((uintptr_t *)raw_ptr) = len;
+
+  for(ptr=str_val;*ptr;ptr++) 
+  { 
+    set_heap(raw_ptr, i, (OBJECT_PTR)((*ptr << OBJECT_SHIFT) + CHAR_TAG));
+    i++;
+  }
+
+  return raw_ptr + ARRAY_TAG;
+}
+
+OBJECT_PTR eval_make_array(OBJECT_PTR size, OBJECT_PTR default_value)
+{
+  int sz = get_int_value(size);
+
+  uintptr_t *raw_ptr;
+
+  uintptr_t ptr;
+
+  int i;
+
+  assert(IS_INTEGER_OBJECT(size));
+
+  //see comment in main.c for why we're not using object_alloc()
+  //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr) = sz;
+
+  ptr = object_alloc(sz+1, ARRAY_TAG);
+
+  //set_heap(ptr, 0, size);
+  //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  *((uintptr_t *)ptr) = sz;
+
+  for(i=0; i<sz; i++)
+    set_heap(ptr, i + 1, clone_object(default_value));
+
+  return ptr + ARRAY_TAG;
+}
+
+OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
+{
+  OBJECT_PTR ret;
+  int st = get_int_value(start);
+  int len = get_int_value(length);
+
+  uintptr_t *raw_ptr;
+
+  uintptr_t orig_ptr, ptr;
+
+  int i;
+
+  //see comment in main.c for why we're not using object_alloc()
+  //posix_memalign((void **)&raw_ptr, 16, sizeof(unsigned int *));
+  //*((int *)raw_ptr) = len;
+
+  orig_ptr = extract_ptr(array);
+
+  ptr = object_alloc(len + 1, ARRAY_TAG);
+
+  //set_heap(ptr, 0, convert_int_to_object(len));
+  //set_heap(ptr, 0, (uintptr_t)raw_ptr + INTEGER_TAG);
+  *((uintptr_t *)ptr) = len;
+
+  for(i=1; i<=len; i++)
+    set_heap(ptr, i, get_heap(orig_ptr, st + i));
+
+  ret = ptr;
+
+  log_function_exit("eval_sub_array");
+
+  return ret + ARRAY_TAG;
+}
+
+void raise_error(char *err_str)
+{
+  if(!console_mode && !single_expression_mode && !pipe_mode)
+  {
+    show_error_dialog(err_str);
+
+#ifdef INTERPRETER_MODE
+    debug_mode = true;
+    debug_continuation = create_current_continuation();
+    debug_env = reg_current_env;
+    reg_next_expression = NIL;
+
+    debug_execution_stack = reg_current_stack;
+
+    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+			DEFAULT_DEBUG_WINDOW_POSY,
+			DEFAULT_DEBUG_WINDOW_WIDTH,
+			DEFAULT_DEBUG_WINDOW_HEIGHT);
+#endif
+  }
+  else
+    fprintf(stdout, "%s\n", err_str);
+
+  //to stay commented out till we are
+  //able to prpvide a meaningful backtrace
+  //fprintf(stdout, "Begin backtrace\n");
+  //print_backtrace();
+  //fprintf(stdout, "End backtrace\n");
+
+#ifdef INTERPRETER_MODE
+  reg_accumulator = NIL;
+  reg_current_value_rib = NIL;
+  reg_next_expression = NIL;
+#endif
+
+  in_error = true;
+  exception_object = cons(get_symbol_object("EXCEPTION"), get_string_object(err_str));
+}
+
+void throw_generic_exception(char *err_str)
+{
+  throw_exception1("EXCEPTION", err_str);
+}

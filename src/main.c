@@ -287,9 +287,9 @@ extern void print_stack();
 
 BOOLEAN system_changed;
 
-extern OBJECT_PTR debug_execution_stack;
-extern OBJECT_PTR debug_continuation;
-extern OBJECT_PTR debug_env;
+//extern OBJECT_PTR debug_execution_stack;
+//extern OBJECT_PTR debug_continuation;
+//extern OBJECT_PTR debug_env;
 
 extern uintptr_t POINTER_MASK;
 
@@ -332,7 +332,7 @@ void initialize()
     exit(1);
   }
 
-  initialize_tcc();
+  //initialize_tcc();
 
   nof_packages = 0;
 
@@ -342,9 +342,9 @@ void initialize()
 
   top_level_env = NIL;
 
-  debug_execution_stack = NIL;
-  debug_continuation = NIL;
-  debug_env = NIL;
+  //debug_execution_stack = NIL;
+  //debug_continuation = NIL;
+  //debug_env = NIL;
 
 #ifdef INTERPRETER_MODE
   CONS_NIL_NIL = cons(NIL, NIL);
@@ -635,7 +635,7 @@ void cleanup()
 
   cleanup_memory();
 
-  cleanup_tcc();
+  //cleanup_tcc();
 
   cleanup_full_monty_global_vars();
 
