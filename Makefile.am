@@ -21,7 +21,7 @@ all:	${bin_PROGRAMS} ${noinst_PROGRAMS} ${lib_LTLIBRARIES} help.html
 
 bin_PROGRAMS = plisp
 
-plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/full_monty_compiler.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c
+plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c
 
 noinst_PROGRAMS = docgen
 
