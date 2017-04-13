@@ -3285,7 +3285,8 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       if(primop(car(exp)))
         primitive_call = true;
 
-      if(car(exp) == THROW || car(exp) == SAVE_CONTINUATION_TO_RESUME)
+      //if(car(exp) == THROW || car(exp) == SAVE_CONTINUATION_TO_RESUME)
+      if(car(exp) == THROW)
         len += sprintf(buf+len, "return ");
 
       char *var = extract_variable_string(car(exp), serialize_flag);
