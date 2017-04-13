@@ -3301,6 +3301,33 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 }
 #endif
 
+extern OBJECT_PTR cps_transform(OBJECT_PTR);
+extern OBJECT_PTR mcps_transform(OBJECT_PTR);
+
+int main1(int argc, char **argv)
+{
+  OBJECT_PTR exp;
+
+  console_mode = true;
+  
+  initialize();
+  
+  prompt();
+  yyparse();
+
+  convert_expression_to_object(g_expr, &exp);
+
+  printf("Metacontinuation Passing Style:\n");
+  print_object(mcps_transform(exp));
+  printf("\n");
+
+  printf("Simple Continuation Passing Style:\n");
+  print_object(cps_transform(exp));
+  printf("\n");
+  
+  return 0;
+}
+
 int main(int argc, char **argv)
 {
   int opt, i;

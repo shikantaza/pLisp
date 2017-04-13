@@ -349,6 +349,8 @@ extern OBJECT_PTR get_string_object(char *);
 
 extern void print_object(OBJECT_PTR);
 
+extern OBJECT_PTR mcps_transform(OBJECT_PTR);
+
 //end of external functions
 
 //forward declarations
@@ -2193,7 +2195,8 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
 
   res = simplify_il(res);
 
-  res = cps_transform(res);
+  //res = cps_transform(res);
+  res = mcps_transform(res);
 
   res = closure_conv_transform(res);
 
