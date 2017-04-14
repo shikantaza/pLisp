@@ -132,6 +132,7 @@ int plisp_read(int *int_val,
 
 }
 
+/*
 int alloc_memory_int(int size)
 {
   return (int)malloc(size * sizeof(int));
@@ -211,6 +212,7 @@ void free_memory(void *ptr)
 {
   free(ptr);
 }
+*/
 
 int open_file(char *file_name, char *mode)
 {

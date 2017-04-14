@@ -20,36 +20,6 @@
    "see-also" : [ "define" ]
   },
 
-  {"type" : 0, 
-   "name" : "alloc-ext-mem-char", 
-   "syntax" : "(alloc-ext-mem-char n) => (ptr, len, type)",
-   "args" : "n: integer, ptr: integer, len: integer, type: integer",
-   "desc" : "alloc-ext-mem-char allocates raw memory corresponding to 'n' characters. Equivalent to malloc(n*sizeof(char)). Returns the pointer to the allocated memory via a list that also contains the number of characters allocated (i.e. 'n') and the type of the memory block (integer 3 signifying a character array)",
-   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above",
-   "examples" : [],
-   "see-also" : [ "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
-  },
-
-  {"type" : 0, 
-   "name" : "alloc-ext-mem-float", 
-   "syntax" : "(alloc-ext-mem-float n) => (ptr, len, type)",
-   "args" : "n: integer, ptr: integer, len: integer, type: integer",
-   "desc" : "alloc-ext-mem-float allocates raw memory corresponding to 'n' floats. Equivalent to malloc(n*sizeof(float)). Returns the pointer to the allocated memory via a list that also contains the number of floats allocated (i.e. 'n') and the type of the memory block (integer 2 signifying a float array)",
-   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above",
-   "examples" : [],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
-  },
-
-  {"type" : 0, 
-   "name" : "alloc-ext-mem-int", 
-   "syntax" : "(alloc-ext-mem-int n) => (ptr, len, type)",
-   "args" : "n: integer, ptr: integer, len: integer, type: integer",
-   "desc" : "alloc-ext-mem-int allocates raw memory corresponding to 'n' integers. Equivalent to malloc(n*sizeof(int)). Returns the pointer to the allocated memory via a list that also contains the number of integers allocated (i.e. 'n') and the type of the memory block (integer 1 signifying an integer array)",
-   "exceptions" : "Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above",
-   "examples" : [],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
-  },
-
   {"type" : 1, 
    "name" : "and", 
    "syntax" : "(and form*) => result",
@@ -651,16 +621,6 @@
   },
 
   {"type" : 0, 
-   "name" : "free-ext-mem", 
-   "syntax" : "(free-ext-mem blk) => NIL",
-   "args" : "blk: a list",
-   "desc" : "free-ext-mem frees the native memory block specified by 'blk' that was allocated by one of the alloc-ext-mem-* functions",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type EXCEPTION is thrown if 'blk' is not a valid native memory block",
-   "examples" : [  ],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell" ]
-  },
-
-  {"type" : 0, 
    "name" : "funcall", 
    "syntax" : "(funcall function &rest args) => result",
    "args" : "function: a form that evaluates to a function or a continuation, args: the rest of the arguments converted into a list; result: an object",
@@ -678,16 +638,6 @@
    "exceptions" : "None",
    "examples" : [ "(gensym) => #:G00027194" ],
    "see-also" : [  ]
-  },
-
-  {"type" : 0, 
-   "name" : "get-ext-mem-cell", 
-   "syntax" : "(get-ext-mem-cell blk pos) => result",
-   "args" : "blk: a list; pos: an integer; result: an object",
-   "desc" : "get-ext-mem-cell returns the integer, float or character stored in position pos of a native memory block blk that was allocated by one of the alloc-ext-mem-* functions",
-   "exceptions" : "Throws an exception of type INVALID-INDEX if pos not greater than or equal to zero or less than the size of blk. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively).",
-   "examples" : [],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "inspect-ext-mem", "set-ext-mem", "set-ext-mem-cell"]
   },
 
   {"type" : 2, 
@@ -718,16 +668,6 @@
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception INVALID-ARGUMENT if 'var' is not a symbol or if it is not bound to an integer or a float",
    "examples" : [ "(define x 0) => 0", "(incf x) => 1", "X => 1" ],
    "see-also" : [  ]
-  },
-
-  {"type" : 0, 
-   "name" : "inspect-ext-mem", 
-   "syntax" : "(inspect-ext-mem blk ) => NIL",
-   "args" : "blk: a list",
-   "desc" : "inspect-ext-mem prints the contents of a native memory block 'blk' that was allocated by one of the alloc-ext-mem-* functions",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required no parameters are supplied. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively)",
-   "examples" : [  ],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "set-ext-mem", "set-ext-mem-cell" ]
   },
 
   {"type" : 2, 
@@ -1278,26 +1218,6 @@
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are passed. An exception of type NOT-A-CONS is thrown if 'lst' is not a list. Throws an exception of type EXCEPTION if 'pred' is not a function object",
    "examples" : [ "(select (lambda (x) (numberp x)) '(1 2 #\\a \"abc\" 'x)) => (1 2)" ],
    "see-also" : [ "find", "find-if" ]
-  },
-
-  {"type" : 0, 
-   "name" : "set-ext-mem", 
-   "syntax" : "(set-ext-mem blk arr) => NIL",
-   "args" : "blk: a list; arr: an array",
-   "desc" : "set-ext-mem populates 'blk', that was allocated by one of the alloc-ext-mem-* functions, with the values in 'arr'",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type INVALID-ARGUMENT if the second argument is not an array, if the length of 'arr' does not match the size of 'blk', if 'blk' is not a valid object created from an earlier call to alloc-ext-mem* or if the contents of the array do not match the definition of 'blk'. An exception of type NOT-A-CONS is thrown if 'blk' is not a list",
-   "examples" : [  ],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem-cell" ]
-  },
-
-  {"type" : 0, 
-   "name" : "set-ext-mem-cell", 
-   "syntax" : "(set-ext-mem-cell blk pos val) => NIL",
-   "args" : "blk: a list; pos: an integer; val: an integer, float or a character",
-   "desc" : "set-ext-mem-cell populates position 'pos' in 'blk', that was allocated by one of the alloc-ext-mem-* functions, with the value 'val'",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if 'blk' is not a list. Throws an exception of type INVALID-INDEX if 'pos' does not fall within the bounds of 'blk', and an exception of type INVALID-ARGUMENT if the type of blk does not match that of 'val'",
-   "examples" : [  ],
-   "see-also" : [ "alloc-ext-mem-char", "alloc-ext-mem-float", "alloc-ext-mem-int", "free-ext-mem", "get-ext-mem-cell", "inspect-ext-mem", "set-ext-mem" ]
   },
 
   {"type" : 2, 

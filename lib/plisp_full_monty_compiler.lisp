@@ -787,6 +787,7 @@
 (defun read-character ()
   (array-get (read-string) 0))
 
+#|
 (defun alloc-ext-mem-int (n)
   (list (call-foreign-function "alloc_memory_int" integer ((n integer)))
         n
@@ -887,6 +888,7 @@
 (defun free-ext-mem (memory-block)
   (let ((ptr (car memory-block)))
     (call-foreign-function "free_memory" void ((ptr integer)))))
+|#
 
 (create-package "user")
 

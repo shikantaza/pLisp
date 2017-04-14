@@ -674,50 +674,6 @@
 ; directory for more examples on how to use the foreign
 ; functions interface.
 
-; 8. Working With Raw Memory
-; --------------------------
-
-; pLisp also provides a way to work directly
-; with raw memory, i.e. blocks of integer, double
-; or character values.
-
-; The following code snippets will demonstrate working
-; with blocks of integers, similar code can be used
-; for floating point numbers and characters.
-
-; First, we load the shared library that contains
-; the functions needed for working with raw memory:
-
-(load-foreign-library "libplisp")
-
-; The ALLOC-EXT-MEM-INT special operator creates
-; a memory block of the specified number of integers:
-
-(define my-blk (alloc-ext-mem-int 5))
-
-; Once created, we can store values in the memory
-; block either on an individual cell basis:
-
-(set-ext-mem-cell my-blk 0 100)
-
-; or in one go from an existing array:
-
-(define a (make-array 5 1))
-
-(set-ext-mem my-blk a)
-
-; The values stored in the array can be
-; read using GET-EXT-MEM-CELL
-
-(get-ext-mem-cell my-blk 0)
-
-; (Note that the indexing is zero-based)
-
-; Finally, the memory block is freed using the
-; FREE-EXT-MEM special operator:
-
-(free-ext-mem my-blk)
-
 ; That brings us to the end of this brief tutorial. Drop me
 ; an email at rajesh.jayaprakash@gmail.com if you have
 ; any comments or questions.
