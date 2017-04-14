@@ -24,9 +24,6 @@
 <ul style="padding-left:40px">
 <li><a href="#abort">abort</a></li><br/>
 <li><a href="#alias">alias</a></li><br/>
-<li><a href="#alloc-ext-mem-char">alloc-ext-mem-char</a></li><br/>
-<li><a href="#alloc-ext-mem-float">alloc-ext-mem-float</a></li><br/>
-<li><a href="#alloc-ext-mem-int">alloc-ext-mem-int</a></li><br/>
 <li><a href="#and">and</a></li><br/>
 <li><a href="#append">append</a></li><br/>
 <li><a href="#apply">apply</a></li><br/>
@@ -102,20 +99,17 @@
 <li><a href="#for">for</a></li><br/>
 <li><a href="#format">format</a></li><br/>
 <li><a href="#fourth">fourth</a></li><br/>
-<li><a href="#free-ext-mem">free-ext-mem</a></li><br/>
 <li><a href="#funcall">funcall</a></li><br/>
 </ul>
 <br/><b><a name="G">G</a></b><br/>
 <ul style="padding-left:40px">
 <li><a href="#gensym">gensym</a></li><br/>
-<li><a href="#get-ext-mem-cell">get-ext-mem-cell</a></li><br/>
 </ul>
 <br/><b><a name="I">I</a></b><br/>
 <ul style="padding-left:40px">
 <li><a href="#if">if</a></li><br/>
 <li><a href="#in-package">in-package</a></li><br/>
 <li><a href="#incf">incf</a></li><br/>
-<li><a href="#inspect-ext-mem">inspect-ext-mem</a></li><br/>
 <li><a href="#integerp">integerp</a></li><br/>
 </ul>
 <br/><b><a name="L">L</a></b><br/>
@@ -192,8 +186,6 @@
 <li><a href="#save-object">save-object</a></li><br/>
 <li><a href="#second">second</a></li><br/>
 <li><a href="#select">select</a></li><br/>
-<li><a href="#set-ext-mem">set-ext-mem</a></li><br/>
-<li><a href="#set-ext-mem-cell">set-ext-mem-cell</a></li><br/>
 <li><a href="#setcar">setcar</a></li><br/>
 <li><a href="#setcdr">setcdr</a></li><br/>
 <li><a href="#set">set</a></li><br/>
@@ -264,33 +256,6 @@
 <b>Examples:</b><br/><br/>
 (define x 100)<br/><br/>(alias y x)<br/><br/>y=>100<br/><br/><b>See Also:</b> 
 <a href="#define">define</a><hr/>
-<a name="alloc-ext-mem-char"></a>
-<i>Function</i><b> alloc-ext-mem-char</b><br/><br/>
-<b>Syntax:</b> (alloc-ext-mem-char n) => (ptr, len, type)<br/><br/>
-<b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
-<b>Description: alloc-ext-mem-char</b> allocates raw memory corresponding to <i>n</i> characters. Equivalent to malloc(n*sizeof(char)). Returns the pointer to the allocated memory via a list that also contains the number of characters allocated (i.e. <i>n</i>) and the type of the memory block (integer 3 signifying a character array)<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
-<a name="alloc-ext-mem-float"></a>
-<i>Function</i><b> alloc-ext-mem-float</b><br/><br/>
-<b>Syntax:</b> (alloc-ext-mem-float n) => (ptr, len, type)<br/><br/>
-<b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
-<b>Description: alloc-ext-mem-float</b> allocates raw memory corresponding to <i>n</i> floats. Equivalent to malloc(n*sizeof(float)). Returns the pointer to the allocated memory via a list that also contains the number of floats allocated (i.e. <i>n</i>) and the type of the memory block (integer 2 signifying a float array)<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
-<a name="alloc-ext-mem-int"></a>
-<i>Function</i><b> alloc-ext-mem-int</b><br/><br/>
-<b>Syntax:</b> (alloc-ext-mem-int n) => (ptr, len, type)<br/><br/>
-<b>Arguments:</b> n: integer, ptr: integer, len: integer, type: integer<br/><br/>
-<b>Description: alloc-ext-mem-int</b> allocates raw memory corresponding to <i>n</i> integers. Equivalent to malloc(n*sizeof(int)). Returns the pointer to the allocated memory via a list that also contains the number of integers allocated (i.e. <i>n</i>) and the type of the memory block (integer 1 signifying an integer array)<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-ARGUMENT if the number of arguments and their types are not as indicated above<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
 <a name="and"></a>
 <i>Macro</i><b> and</b><br/><br/>
 <b>Syntax:</b> (and form*) => result<br/><br/>
@@ -831,15 +796,6 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Examples:</b><br/><br/>
 (fourth '(1 2 3 4 5 6)) => 4<br/><br/><b>See Also:</b> 
 <a href="#caar">caar</a>, <a href="#cadar">cadar</a>, <a href="#cadddr">cadddr</a>, <a href="#caddr">caddr</a>, <a href="#cadr">cadr</a>, <a href="#car">car</a>, <a href="#cdar">cdar</a>, <a href="#cddr">cddr</a>, <a href="#cdr">cdr</a>, <a href="#first">first</a>, <a href="#second">second</a>, <a href="#third">third</a>, <a href="#fifth">fifth</a><hr/>
-<a name="free-ext-mem"></a>
-<i>Function</i><b> free-ext-mem</b><br/><br/>
-<b>Syntax:</b> (free-ext-mem blk) => NIL<br/><br/>
-<b>Arguments:</b> blk: a list<br/><br/>
-<b>Description: free-ext-mem</b> frees the native memory block specified by <i>blk</i> that was allocated by one of the alloc-ext-mem-* functions<br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. An exception of type EXCEPTION is thrown if <i>blk</i> is not a valid native memory block<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
 <a name="funcall"></a>
 <i>Function</i><b> funcall</b><br/><br/>
 <b>Syntax:</b> (funcall function &rest args) => result<br/><br/>
@@ -858,15 +814,6 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Examples:</b><br/><br/>
 (gensym) => #:G00027194<br/><br/><b>See Also:</b> 
 <hr/>
-<a name="get-ext-mem-cell"></a>
-<i>Function</i><b> get-ext-mem-cell</b><br/><br/>
-<b>Syntax:</b> (get-ext-mem-cell blk pos) => result<br/><br/>
-<b>Arguments:</b> blk: a list; pos: an integer; result: an object<br/><br/>
-<b>Description: get-ext-mem-cell</b> returns the integer, float or character stored in position pos of a native memory block blk that was allocated by one of the alloc-ext-mem-* functions<br/><br/>
-<b>Exceptions: </b>Throws an exception of type INVALID-INDEX if pos not greater than or equal to zero or less than the size of blk. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively).<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
 <a name="if"></a>
 <i>Special Operator</i><b> if</b><br/><br/>
 <b>Syntax:</b> (if cond then else) => result<br/><br/>
@@ -894,15 +841,6 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Examples:</b><br/><br/>
 (define x 0) => 0<br/><br/>(incf x) => 1<br/><br/>X => 1<br/><br/><b>See Also:</b> 
 <hr/>
-<a name="inspect-ext-mem"></a>
-<i>Function</i><b> inspect-ext-mem</b><br/><br/>
-<b>Syntax:</b> (inspect-ext-mem blk ) => NIL<br/><br/>
-<b>Arguments:</b> blk: a list<br/><br/>
-<b>Description: inspect-ext-mem</b> prints the contents of a native memory block <i>blk</i> that was allocated by one of the alloc-ext-mem-* functions<br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required no parameters are supplied. Throws an exception of type EXCEPTION if the block has an invalid type (i. e. not 1, 2 or 3 signifying integer, float or character respectively)<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#set-ext-mem">set-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
 <a name="integerp"></a>
 <i>Special Operator</i><b> integerp</b><br/><br/>
 <b>Syntax:</b> (integerp form) => result<br/><br/>
@@ -1398,24 +1336,6 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Examples:</b><br/><br/>
 (select (lambda (x) (numberp x)) '(1 2 #\a "abc" 'x)) => (1 2)<br/><br/><b>See Also:</b> 
 <a href="#find">find</a>, <a href="#find-if">find-if</a><hr/>
-<a name="set-ext-mem"></a>
-<i>Function</i><b> set-ext-mem</b><br/><br/>
-<b>Syntax:</b> (set-ext-mem blk arr) => NIL<br/><br/>
-<b>Arguments:</b> blk: a list; arr: an array<br/><br/>
-<b>Description: set-ext-mem</b> populates <i>blk</i>, that was allocated by one of the alloc-ext-mem-* functions, with the values in <i>arr</i><br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. Throws an exception of type INVALID-ARGUMENT if the second argument is not an array, if the length of <i>arr</i> does not match the size of <i>blk</i>, if <i>blk</i> is not a valid object created from an earlier call to alloc-ext-mem* or if the contents of the array do not match the definition of <i>blk</i>. An exception of type NOT-A-CONS is thrown if <i>blk</i> is not a list<br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem-cell">set-ext-mem-cell</a><hr/>
-<a name="set-ext-mem-cell"></a>
-<i>Function</i><b> set-ext-mem-cell</b><br/><br/>
-<b>Syntax:</b> (set-ext-mem-cell blk pos val) => NIL<br/><br/>
-<b>Arguments:</b> blk: a list; pos: an integer; val: an integer, float or a character<br/><br/>
-<b>Description: set-ext-mem-cell</b> populates position <i>pos</i> in <i>blk</i>, that was allocated by one of the alloc-ext-mem-* functions, with the value <i>val</i><br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of arguments is not supplied. An exception of type NOT-A-CONS is thrown if <i>blk</i> is not a list. Throws an exception of type INVALID-INDEX if <i>pos</i> does not fall within the bounds of <i>blk</i>, and an exception of type INVALID-ARGUMENT if the type of blk does not match that of <i>val</i><br/><br/>
-<b>Examples:</b><br/><br/>
-<b>See Also:</b> 
-<a href="#alloc-ext-mem-char">alloc-ext-mem-char</a>, <a href="#alloc-ext-mem-float">alloc-ext-mem-float</a>, <a href="#alloc-ext-mem-int">alloc-ext-mem-int</a>, <a href="#free-ext-mem">free-ext-mem</a>, <a href="#get-ext-mem-cell">get-ext-mem-cell</a>, <a href="#inspect-ext-mem">inspect-ext-mem</a>, <a href="#set-ext-mem">set-ext-mem</a><hr/>
 <a name="setcar"></a>
 <i>Special Operator</i><b> setcar</b><br/><br/>
 <b>Syntax:</b> (setcar lst obj) => obj<br/><br/>

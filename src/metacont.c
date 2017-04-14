@@ -53,7 +53,12 @@ extern OBJECT_PTR IF;
 extern OBJECT_PTR LET;
 extern OBJECT_PTR LET1;
 extern OBJECT_PTR NIL;
+
+#ifdef WIN32
+extern OBJECT_PTR ERROR1;
+#else
 extern OBJECT_PTR ERROR;
+#endif
 
 extern OBJECT_PTR RETURN_FROM;
 extern OBJECT_PTR THROW;
@@ -298,7 +303,11 @@ OBJECT_PTR lambda_metacont_fn(metacont_closure_t *mcls, reg_closure_t *cls)
 
 OBJECT_PTR error_metacont_fn(metacont_closure_t *mcls, reg_closure_t *cls)
 {
+#ifdef WIN32
+  return list(2, ERROR1, mcls->closed_vals[0]);
+#else  
   return list(2, ERROR, mcls->closed_vals[0]);
+#endif
 }
 
 OBJECT_PTR let_metacont_fn(metacont_closure_t *mcls, reg_closure_t *cls)
@@ -728,8 +737,12 @@ metacont_closure_t *mcps(OBJECT_PTR exp)
     
     return mcls;    
   }
-  
+
+#ifdef WIN32
+  if(car_exp == ERROR1)
+#else
   if(car_exp == ERROR)
+#endif    
   {
     metacont_closure_t *mcls = (metacont_closure_t *)GC_MALLOC(sizeof(metacont_closure_t));
 
