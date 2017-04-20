@@ -235,19 +235,19 @@ GtkToolbar *create_workspace_toolbar()
 {
   GtkWidget *toolbar;
 
-//#ifdef WIN32
-//  GtkWidget *load_icon = gtk_image_new_from_file ("../share/icons/load_file.png");
-//  GtkWidget *fb_icon = gtk_image_new_from_file ("../share/icons/file_browser.png");
-//  GtkWidget *eval_icon = gtk_image_new_from_file ("../share/icons/evaluate.png");
-//  GtkWidget *clear_icon = gtk_image_new_from_file ("../share/icons/clear32x32.png");
-//  GtkWidget *exit_icon = gtk_image_new_from_file ("../share/icons/exit32x32.png");
-//#else
+#ifdef WIN_BUILD
+  GtkWidget *load_icon = gtk_image_new_from_file ("../share/icons/load_file.png");
+  GtkWidget *fb_icon = gtk_image_new_from_file ("../share/icons/file_browser.png");
+  GtkWidget *eval_icon = gtk_image_new_from_file ("../share/icons/evaluate.png");
+  GtkWidget *clear_icon = gtk_image_new_from_file ("../share/icons/clear32x32.png");
+  GtkWidget *exit_icon = gtk_image_new_from_file ("../share/icons/exit32x32.png");
+#else
   GtkWidget *load_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/load_file.png");
   GtkWidget *fb_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/file_browser.png");
   GtkWidget *eval_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/evaluate.png");
   GtkWidget *clear_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/clear32x32.png");
   GtkWidget *exit_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/exit32x32.png");
-//#endif
+#endif
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -312,11 +312,11 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
 
   workspace_window = (GtkWindow *)win;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(workspace_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(workspace_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(workspace_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   gtk_window_set_default_size((GtkWindow *)win, width, height);
   gtk_window_move((GtkWindow *)win, posx, posy); 
@@ -482,16 +482,16 @@ GtkToolbar *create_system_browser_toolbar()
 {
   GtkWidget *toolbar;
 
-//#ifdef WIN32
-//  GtkWidget *new_package_icon = gtk_image_new_from_file ("../share/icons/new_package.png");
-//  GtkWidget *new_symbol_icon = gtk_image_new_from_file ("../share/icons/new_symbol.png");
-//  GtkWidget *accept_icon = gtk_image_new_from_file ("../share/icons/accept.png");
-//  GtkWidget *delete_icon = gtk_image_new_from_file ("../share/icons/delete.png");
-//  GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
-//  GtkWidget *export_pkg_icon = gtk_image_new_from_file ("../share/icons/export_package.png");
-//  GtkWidget *callers_icon = gtk_image_new_from_file ("../share/icons/callers.png");
-//  GtkWidget *exit_icon = gtk_image_new_from_file ("../share/icons/exit32x32.png");
-//#else
+#ifdef WIN_BUILD
+  GtkWidget *new_package_icon = gtk_image_new_from_file ("../share/icons/new_package.png");
+  GtkWidget *new_symbol_icon = gtk_image_new_from_file ("../share/icons/new_symbol.png");
+  GtkWidget *accept_icon = gtk_image_new_from_file ("../share/icons/accept.png");
+  GtkWidget *delete_icon = gtk_image_new_from_file ("../share/icons/delete.png");
+  GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
+  GtkWidget *export_pkg_icon = gtk_image_new_from_file ("../share/icons/export_package.png");
+  GtkWidget *callers_icon = gtk_image_new_from_file ("../share/icons/callers.png");
+  GtkWidget *exit_icon = gtk_image_new_from_file ("../share/icons/exit32x32.png");
+#else
   GtkWidget *new_package_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/new_package.png");
   GtkWidget *new_symbol_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/new_symbol.png");
   GtkWidget *accept_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/accept.png");
@@ -500,7 +500,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkWidget *export_pkg_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/export_package.png");
   GtkWidget *callers_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/callers.png");
   GtkWidget *exit_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/exit32x32.png");
-//#endif
+#endif
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -599,11 +599,11 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   system_browser_window = (GtkWindow *)win;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(system_browser_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(system_browser_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(system_browser_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   GtkWidget *scrolled_win1, *scrolled_win2;
   GtkWidget *vbox, *hbox;
@@ -716,21 +716,21 @@ GtkToolbar *create_transcript_toolbar()
 {
   GtkWidget *toolbar;
 
-//#ifdef WIN32
-//  GtkWidget *load_icon = gtk_image_new_from_file ("../share/icons/load_image.png");
-//  GtkWidget *save_icon = gtk_image_new_from_file ("../share/icons/save_image.png");
-//  GtkWidget *workspace_icon = gtk_image_new_from_file ("../share/icons/workspace.png");
-//  GtkWidget *browser_icon = gtk_image_new_from_file ("../share/icons/browser.png");
-//  GtkWidget *clear_icon = gtk_image_new_from_file ("../share/icons/clear.png");
-//  GtkWidget *exit_icon = gtk_image_new_from_file ("../share/icons/exit.png");
-//#else
+#ifdef WIN_BUILD
+  GtkWidget *load_icon = gtk_image_new_from_file ("../share/icons/load_image.png");
+  GtkWidget *save_icon = gtk_image_new_from_file ("../share/icons/save_image.png");
+  GtkWidget *workspace_icon = gtk_image_new_from_file ("../share/icons/workspace.png");
+  GtkWidget *browser_icon = gtk_image_new_from_file ("../share/icons/browser.png");
+  GtkWidget *clear_icon = gtk_image_new_from_file ("../share/icons/clear.png");
+  GtkWidget *exit_icon = gtk_image_new_from_file ("../share/icons/exit.png");
+#else
   GtkWidget *load_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/load_image.png");
   GtkWidget *save_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/save_image.png");
   GtkWidget *workspace_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/workspace.png");
   GtkWidget *browser_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/browser.png");
   GtkWidget *clear_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/clear.png");
   GtkWidget *exit_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/exit.png");
-//#endif
+#endif
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -821,11 +821,11 @@ void setup_language_manager_path(GtkSourceLanguageManager *lm)
   for (i = 0; lang_files[i]; i++)
     new_langs[i] = lang_files[i];
  
-//#ifdef WIN32
-//  new_langs[lang_files_count] = g_strdup ("../share/");
-//#else
+#ifdef WIN_BUILD
+  new_langs[lang_files_count] = g_strdup ("../share/");
+#else
   new_langs[lang_files_count] = g_strdup (PLISPDATADIR);
-//#endif
+#endif
 
   new_langs[lang_files_count+1] = NULL;
  
@@ -842,11 +842,11 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
 
   transcript_window = (GtkWindow *)gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(transcript_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(transcript_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(transcript_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   //gtk_window_set_title((GtkWindow *)transcript_window, "pLisp Transcript");
   update_transcript_title();
@@ -941,11 +941,11 @@ void error_window(char *msg)
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   gtk_window_set_title (GTK_WINDOW (window), "Error");
   gtk_container_set_border_width (GTK_CONTAINER (window), 10);
@@ -1134,13 +1134,13 @@ GtkToolbar *create_debugger_toolbar()
 {
   GtkWidget *toolbar;
 
-//#ifdef WIN32
-//  GtkWidget *resume_icon = gtk_image_new_from_file ("../share/icons/resume.png");
-//  GtkWidget *abort_icon = gtk_image_new_from_file ("../share/icons/abort.png");
-//#else
+#ifdef WIN_BUILD
+  GtkWidget *resume_icon = gtk_image_new_from_file ("../share/icons/resume.png");
+  GtkWidget *abort_icon = gtk_image_new_from_file ("../share/icons/abort.png");
+#else
   GtkWidget *resume_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/resume.png");
   GtkWidget *abort_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/abort.png");
-//#endif
+#endif
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -1180,11 +1180,11 @@ void create_debug_window(int posx, int posy, int width, int height)
 
   debugger_window = (GtkWindow *)win;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(debugger_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(debugger_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(debugger_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   GtkWidget *scrolled_win1, *scrolled_win2;
   GtkWidget *vbox, *hbox1, *hbox2;
@@ -1264,11 +1264,11 @@ void create_debug_window(int posx, int posy, int width, int height)
 
   debugger_window = (GtkWindow *)win;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(debugger_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(debugger_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(debugger_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   GtkWidget *scrolled_win1;
   GtkWidget *vbox, *hbox1;
@@ -1472,11 +1472,11 @@ void create_profiler_window(int posx, int posy, int width, int height)
 
   profiler_window = (GtkWindow *)win;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(profiler_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(profiler_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(profiler_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   GtkWidget *scrolled_win1;
   GtkWidget *vbox, *hbox1;
@@ -1538,11 +1538,11 @@ void create_help_window()
 
   help_window = win;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(help_window, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(help_window, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(help_window, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   //gtk_window_set_decorated((GtkWindow *)win, FALSE);
 
@@ -1677,11 +1677,11 @@ void create_callers_window(int posx, int posy, int width, int height)
   GtkWidget *scrolled_win1, *scrolled_win2;
   GtkWidget *vbox, *hbox;
 
-//#ifdef WIN32
-//  gtk_window_set_icon_from_file(win, "../share/icons/evaluate.png", NULL);
-//#else
+#ifdef WIN_BUILD
+  gtk_window_set_icon_from_file(win, "../share/icons/evaluate.png", NULL);
+#else
   gtk_window_set_icon_from_file(win, PLISPDATADIR "/icons/evaluate.png", NULL);
-//#endif
+#endif
 
   gtk_window_set_title((GtkWindow *)win, "pLisp Callers");
 
