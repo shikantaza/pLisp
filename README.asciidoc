@@ -49,7 +49,7 @@ My current objective with pLisp is for it to serve as a) a friendly Lisp environ
 
 What platforms is pLisp available on?
 -------------------------------------
-pLisp is available for Linux, OS X and Windows (using MSYS2).
+pLisp is available for Linux, Windows and OS X.
 
 What about the license?
 -----------------------
@@ -57,10 +57,37 @@ pLisp is licensed under GPL v3.
 
 How do I install pLisp?
 -----------------------
-pLisp is installed by the standard './configure', 'make' and 'sudo make install' commands in the directory where you downloaded/extracted the pLisp files.
 
-What do I need to install pLisp?
---------------------------------
+Linux
+~~~~~
+
+pLisp can be installed using the 'dpkg' command (sudo dpkg -i <plisp deb file>). The following dependencies need to be satisfied first (you can install these packages using the package manager of your choice):
+
+	libgtk-3-0
+	libgtksourceview-3.0-0
+	libffi6
+	tcc
+
+Windows
+~~~~~~~
+
+Simply unzip the downloaded zip file to a location of your choice. You will also need the GTK and GTKSourceView packages for Windows (please refer to "Installing pLisp From Source"  for instructions for these).
+
+OS X
+~~~~
+
+I am working on an OS X bundle for pLisp, till then we need to compile it from source for OS X.
+
+How do I report bugs and other issues?
+--------------------------------------
+You can email me at rajesh dot jayaprakash at gmail dot com, or use the ‘Issues’ feature in Github.
+
+Where is the documentation?
+---------------------------
+Online help is available within pLisp, a link:https://github.com/shikantaza/pLisp/raw/master/doc/pLisp_User_Manual.pdf[user manual] and a link:http://htmlpreview.github.com/?https://github.com/shikantaza/pLisp/blob/master/doc/help.html[language reference] document are also available. I have link:http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html[some blog posts] that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
+
+Building pLisp From Source
+--------------------------
 Linux
 ~~~~~
 You will need GCC and the make utility to install pLisp. In addition, the following dependencies need to be taken care of:
@@ -113,10 +140,3 @@ Windows
 
 Note: pLisp can be installed on Cygwin; however, issues with compiling TCC on Cygwin make this quite cumbersome.
 
-How do I report bugs and other issues?
---------------------------------------
-You can email me at rajesh dot jayaprakash at gmail dot com, or use the ‘Issues’ feature in Github.
-
-Where is the documentation?
----------------------------
-Online help is available within pLisp, a link:https://github.com/shikantaza/pLisp/raw/master/doc/pLisp_User_Manual.pdf[user manual] and a link:http://htmlpreview.github.com/?https://github.com/shikantaza/pLisp/blob/master/doc/help.html[language reference] document are also available. I have link:http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html[some blog posts] that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
