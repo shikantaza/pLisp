@@ -28,6 +28,6 @@ cp control $pkg/DEBIAN
 
 dpkg-deb --build $pkg
 
-mv $pkg.deb ..
+mv $pkg.deb ../downloads/linux
 
 rm -rf $pkg
