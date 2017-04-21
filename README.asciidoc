@@ -126,7 +126,7 @@ Note: tcc on OS X throws up a lot of warnings when running pLisp. These warnings
 
 Windows
 ~~~~~~~
-* Install link:www.msys2.org[MSYS2]
+* Install link:http://www.msys2.org[MSYS2]
 
 * Install gcc, make, flex, bison, pkg-config, GTK3, GtkSourceView3 using the pacman utility from an MSYS2 shell:
 
