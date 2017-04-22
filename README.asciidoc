@@ -71,7 +71,14 @@ pLisp can be installed using the 'dpkg' command (sudo dpkg -i <plisp deb file>).
 Windows
 ~~~~~~~
 
-Simply unzip the downloaded zip file to a location of your choice. You will also need the GTK and GTKSourceView packages for Windows (please refer to "Installing pLisp From Source"  for instructions for these).
+Simply unzip the downloaded zip file to a location of your choice. You will also need the GTK and GTKSourceView packages for Windows, which can be installed using link:http://www.msys2.org[MSY2] and pacman. For example (from an MSYS2 shell):
+
+        pacman -S mingw-w64-i686-gtk3
+        pacman -S mingw-w64-i686-gtksourceview3
+
+Before running pLisp, ensure that the PATH environment variable has been updated to reflect the location of the MSYS2 DLLs. For example:
+
+       set PATH=%path%;c:\msys2\mingw32\bin
 
 OS X
 ~~~~
