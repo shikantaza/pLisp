@@ -574,7 +574,7 @@ GtkToolbar *create_system_browser_toolbar()
   gtk_toolbar_insert((GtkToolbar *)toolbar, export_pkg_button, 5);
 
   GtkToolItem *callers_button = gtk_tool_button_new(callers_icon, NULL);
-  gtk_tool_item_set_tooltip_text(callers_button, "Callers");
+  gtk_tool_item_set_tooltip_text(callers_button, "Referrers");
   g_signal_connect (callers_button, "clicked", G_CALLBACK (callers), system_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, callers_button, 6);
 
@@ -1599,7 +1599,7 @@ void initialize_callers_symbols_list(GtkTreeView *list)
 
   renderer = gtk_cell_renderer_text_new();
 
-  column1 = gtk_tree_view_column_new_with_attributes("Symbols",
+  column1 = gtk_tree_view_column_new_with_attributes("Referring Objects",
                                                      renderer, "text", 0, NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (list), column1);
 
@@ -1619,6 +1619,8 @@ void initialize_callers_symbols_list(GtkTreeView *list)
   g_object_unref(store);  
 }
 
+extern OBJECT_PTR QUOTE;
+
 BOOLEAN symbol_exists_in_list(OBJECT_PTR sym, OBJECT_PTR lst)
 {
   if(lst == NIL)
@@ -1627,6 +1629,10 @@ BOOLEAN symbol_exists_in_list(OBJECT_PTR sym, OBJECT_PTR lst)
   if(is_atom(lst))
     return equal(sym, lst);
 
+  //to ignore symbols that occur in quotes
+  if(car(lst) == QUOTE)
+    return false;
+  
   if(symbol_exists_in_list(sym, car(lst)))
     return true;
   else
@@ -1683,7 +1689,14 @@ void create_callers_window(int posx, int posy, int width, int height)
   gtk_window_set_icon_from_file(win, PLISPDATADIR "/icons/evaluate.png", NULL);
 #endif
 
-  gtk_window_set_title((GtkWindow *)win, "pLisp Callers");
+  char buf1[SYMBOL_STRING_SIZE];
+  print_qualified_symbol(callers_sym, buf1);
+  
+  char buf2[150];
+  memset(buf2, '\0', 150);
+  sprintf(buf2, "pLisp - Referrers for %s", buf1);
+  
+  gtk_window_set_title((GtkWindow *)win, buf2);
 
   gtk_window_set_default_size(win, width, height);
   gtk_window_move(win, posx, posy); 
@@ -1781,20 +1794,20 @@ void highlight_text(GtkTextBuffer *buffer, char *text)
 
     BOOLEAN text_start_is_word_start, text_end_is_word_end;
 
-    if(offset1 > 0)
-    {
-      GtkTextIter st;
-      gtk_text_buffer_get_iter_at_offset(buffer, &st, offset1-1);
+    /* if(offset1 > 0) */
+    /* { */
+    /*   GtkTextIter st; */
+    /*   gtk_text_buffer_get_iter_at_offset(buffer, &st, offset1-1); */
 
-      if(gtk_text_iter_get_char(&st) == '(')
-        text_start_is_word_start = true;
-      else
-        text_start_is_word_start = false;
-    }
-    else
+    /*   if(gtk_text_iter_get_char(&st) == '(') */
+    /*     text_start_is_word_start = true; */
+    /*   else */
+    /*     text_start_is_word_start = false; */
+    /* } */
+    /* else */
       text_start_is_word_start = true;
     
-    if(gtk_text_iter_get_char(&end_match) == ' ' || gtk_text_iter_get_char(&end_match) == ')')
+    if(gtk_text_iter_get_char(&end_match) == ' ' || gtk_text_iter_get_char(&end_match) == ')' || gtk_text_iter_get_char(&end_match) == '\n')
       text_end_is_word_end = true;
     else
       text_end_is_word_end = false;
