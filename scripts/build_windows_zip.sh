@@ -28,6 +28,6 @@ cp $tempdir/share/plisp/icons/* $dir/share/icons
 cp $tempdir/share/plisp/help.json $dir/share
 cp $tempdir/share/plisp/plisp.lang $dir/share
 
-zip -r ../downloads/$dir.zip $dir/*
+zip -r ../downloads/windows/$dir.zip $dir/*
 
 rm -rf $dir
