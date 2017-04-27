@@ -21,6 +21,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtksourceview/gtksource.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "../plisp.h"
 
@@ -183,10 +184,25 @@ extern BOOLEAN quit_file_browser();
 
 extern void find_text();
 
+extern OBJECT_PTR replace_symbol(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+
+extern OBJECT_PTR cons_equivalent(OBJECT_PTR);
+extern OBJECT_PTR get_source_object(OBJECT_PTR);
+extern uintptr_t extract_ptr(OBJECT_PTR);
+extern OBJECT_PTR butlast(OBJECT_PTR);
+
+extern OBJECT_PTR first(OBJECT_PTR);
+extern OBJECT_PTR second(OBJECT_PTR);
+extern OBJECT_PTR third(OBJECT_PTR);
+
 void quit_application();
 void show_file_browser_window();
 void callers_window_accept();
 
+void build_autocomplete_words();
+
+void fetch_symbol_value(GtkWidget *, gpointer);
+  
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -509,7 +525,8 @@ int get_new_package_name(char *buf)
 
   gtk_window_set_resizable((GtkWindow *)dialog, FALSE);
 
-  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), action_triggering_window);
+  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
 
   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   entry = gtk_entry_new();
@@ -534,11 +551,22 @@ void create_new_package()
 
   int result = GTK_RESPONSE_ACCEPT;
 
-  while(result == GTK_RESPONSE_ACCEPT && strlen(buf) == 0)
+  unsigned int valid_package_name = 0;
+
+  char trimmed_buf[100];
+  
+  while(result == GTK_RESPONSE_ACCEPT && (strlen(buf) == 0 || !valid_package_name))
   {
     result = get_new_package_name(buf);
-    if(strlen(buf) == 0 && result == GTK_RESPONSE_ACCEPT)
-      show_error_dialog("Please enter a package name\n");
+
+    memset(trimmed_buf, '\0', 100);
+
+    trim_whitespace(trimmed_buf, 100, buf);
+
+    valid_package_name = is_valid_symbol_name(trimmed_buf);
+    
+    if((strlen(buf) == 0 || !valid_package_name) && result == GTK_RESPONSE_ACCEPT)
+      show_error_dialog("Please enter a valid package name\n");
   }
 
   if(result == GTK_RESPONSE_ACCEPT)
@@ -546,7 +574,7 @@ void create_new_package()
     char buf1[MAX_STRING_LENGTH];
     memset(buf1, '\0', MAX_STRING_LENGTH);
 
-    sprintf(buf1, "(create-package \"%s\")", buf);
+    sprintf(buf1, "(create-package \"%s\")", trimmed_buf);
 
     if(!call_repl(buf1))
     {
@@ -574,6 +602,212 @@ void new_symbol(GtkWidget *widget,
 {
   action_triggering_window = (GtkWindow *)data;
   create_new_symbol();
+}
+
+int get_new_symbol_name(char *buf)
+{
+  GtkWidget *dialog;
+  GtkWidget *entry;
+  GtkWidget *content_area;
+
+  dialog = gtk_dialog_new_with_buttons("Rename Symbol",
+                                       action_triggering_window,
+                                       GTK_DIALOG_DESTROY_WITH_PARENT, 
+                                       //GTK_STOCK_OK,
+                                       "OK",
+                                       GTK_RESPONSE_ACCEPT,
+                                       //GTK_STOCK_CANCEL,
+                                       "Cancel",
+                                       GTK_RESPONSE_REJECT,
+                                       NULL);
+
+  gtk_window_set_resizable((GtkWindow *)dialog, FALSE);
+
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), action_triggering_window);
+  gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER_ON_PARENT);
+
+  content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  entry = gtk_entry_new();
+  gtk_container_add(GTK_CONTAINER(content_area), entry);
+
+  gtk_widget_show_all(dialog);
+  gint result = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  if(result == GTK_RESPONSE_ACCEPT)
+    strcpy(buf, gtk_entry_get_text(GTK_ENTRY(entry)));
+
+  gtk_widget_destroy(dialog);
+  
+  return result;
+    
+}
+
+void rename_sym()
+{
+  gchar *package_name = NULL;
+
+  GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
+  GtkTreeModel *model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+  GtkTreeIter  iter1;
+
+  if(gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list)), &model1, &iter1))
+  {
+    gtk_tree_model_get(model1, &iter1,
+                       0, &package_name,
+                       -1);
+  }
+
+  if(!package_name)
+  {
+    show_error_dialog("Please select package containing symbol to be renamed");
+    return;
+  }
+
+  if(!strcmp(package_name, "CORE"))
+  {
+    show_error_dialog("CORE package cannot be updated");
+    return;
+  }
+
+  gchar *symbol_name;
+
+  GtkListStore *store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+  GtkTreeModel *model2 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+  GtkTreeIter  iter2;
+
+  if(!gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list)), &model2, &iter2))
+  {
+    show_error_dialog("Please select a symbol to rename\n");
+    return;
+  }
+  
+  char buf[MAX_STRING_LENGTH];
+  memset(buf, '\0', MAX_STRING_LENGTH);
+
+  int result = GTK_RESPONSE_ACCEPT;
+
+  unsigned int valid_symbol_name = 0;
+
+  char trimmed_buf[100];
+  
+  while(result == GTK_RESPONSE_ACCEPT && (strlen(buf) == 0 || !valid_symbol_name))
+  {
+    result = get_new_symbol_name(buf);
+
+    memset(trimmed_buf, '\0', 100);
+
+    trim_whitespace(trimmed_buf, 100, buf);
+
+    valid_symbol_name = is_valid_symbol_name(trimmed_buf);
+    
+    if((strlen(buf) == 0 || !valid_symbol_name) && result == GTK_RESPONSE_ACCEPT)
+      show_error_dialog("Please enter a valid symbol name\n");
+  }
+
+  if(result == GTK_RESPONSE_ACCEPT)
+  {
+    
+    GtkListStore *store3 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+    GtkTreeModel *model3 = gtk_tree_view_get_model (GTK_TREE_VIEW (symbols_list));
+    GtkTreeIter  iter3;
+
+    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list));
+
+    if(!selection)
+      return;
+
+    if(gtk_tree_selection_get_selected(selection, &model3, &iter3))
+    {
+#if __x86_64__
+      gint64 ptr;
+#else
+#ifdef __APPLE__
+      gint64 ptr;
+#else
+      gint ptr;
+#endif
+#endif
+
+      gtk_tree_model_get(model3, &iter3,
+                         0, &symbol_name,
+                         -1);
+      
+      gtk_tree_model_get(model3, &iter3,
+                         1, &ptr,
+                         -1);    
+
+
+      int package_index = extract_package_index((OBJECT_PTR)ptr);
+
+      int index = find_symbol(trimmed_buf, package_index);
+
+      OBJECT_PTR new_sym_obj;
+      
+      if(index != NOT_FOUND) //symbol exists in symbol table
+        new_sym_obj = build_symbol_object(package_index, index);
+      else
+        new_sym_obj = build_symbol_object(package_index, add_symbol(convert_to_upper_case(trimmed_buf)));
+    
+      int i;
+
+      for(i=0; i<nof_global_vars; i++)
+      {
+        if(top_level_symbols[i].delete_flag)
+          continue;
+
+        if(top_level_symbols[i].sym == (OBJECT_PTR)ptr)
+        {
+          int j;
+
+          for(j=0; j<top_level_symbols[i].ref_count; j++)
+          {
+            OBJECT_PTR referrer = top_level_symbols[i].references[j].referrer;
+
+            OBJECT_PTR cons_equiv = cons_equivalent(referrer);
+            
+            OBJECT_PTR source_obj = car(last_cell(referrer));
+
+            OBJECT_PTR rest = cons_equiv;
+
+            OBJECT_PTR prev_elem;
+            
+            while(rest != NIL)
+            {
+              prev_elem = rest;
+              rest = cdr(rest);
+            }
+            
+            set_heap(extract_ptr(prev_elem),
+                     1,
+                     cons(list(3, first(source_obj), second(source_obj), replace_symbol(third(source_obj), (OBJECT_PTR)ptr, new_sym_obj)),
+                          NIL));
+          }
+
+          top_level_symbols[i].sym = new_sym_obj;
+          break;
+        }
+      }
+
+      //update new symbol name in the symbols list
+      gtk_list_store_set(store3, &iter3, 0, trimmed_buf);
+      gtk_list_store_set(store3, &iter3, 1, new_sym_obj);
+
+      //to replace reference to the old symbol name
+      build_autocomplete_words();
+
+      //update the code panel with new symbol value
+      fetch_symbol_value(symbols_list, system_browser_window);
+      
+      gtk_statusbar_push(system_browser_statusbar, 0, "Symbol renamed");
+    }
+  }
+}
+
+void rename_symbol(GtkWidget *widget,
+                   gpointer data)
+{
+  action_triggering_window = (GtkWindow *)data;
+  rename_sym();
 }
 
 void system_browser_accept()
@@ -1269,6 +1503,8 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
   }
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_x)
     delete_package_or_symbol();
+  else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_KEY_F2)
+    rename_sym();
   else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_KEY_F5)
     refresh_system_browser();
   else if(widget == (GtkWidget *)system_browser_window && (event->state & GDK_CONTROL_MASK) && event->keyval == GDK_KEY_w)

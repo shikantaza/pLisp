@@ -6456,3 +6456,14 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
 
   return len;
 }
+
+OBJECT_PTR replace_symbol(OBJECT_PTR exp, OBJECT_PTR sym1, OBJECT_PTR sym2)
+{
+  if(exp == sym1)
+    return sym2;
+  else if(is_atom(exp) || is_quoted_expression(exp))
+    return exp;
+  else
+    return cons(replace_symbol(car(exp), sym1, sym2),
+                replace_symbol(cdr(exp), sym1, sym2));
+}

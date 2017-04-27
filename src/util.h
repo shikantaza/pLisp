@@ -50,4 +50,7 @@ int extract_package_index(OBJECT_PTR);
 int extract_symbol_index(OBJECT_PTR);
 
 OBJECT_PTR build_symbol_object(int, int);
+
+unsigned int is_valid_symbol_name(char *);
+
 #endif

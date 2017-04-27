@@ -94,6 +94,7 @@ extern gboolean delete_event(GtkWidget *,
 extern void quit(GtkWidget *, gpointer);
 extern void new_package(GtkWidget *, gpointer);
 extern void new_symbol(GtkWidget *, gpointer);
+extern void rename_symbol(GtkWidget *, gpointer);
 extern void accept(GtkWidget *, gpointer);
 extern void delete_pkg_or_sym(GtkWidget *, gpointer);
 extern void refresh_sys_browser(GtkWidget *, gpointer);
@@ -159,6 +160,8 @@ extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR);
 extern OBJECT_PTR CADR(OBJECT_PTR);
 
 OBJECT_PTR callers_sym;
+
+extern OBJECT_PTR reverse_sym_lookup(OBJECT_PTR);
 
 void set_up_system_browser_source_buffer()
 {
@@ -485,6 +488,7 @@ GtkToolbar *create_system_browser_toolbar()
 #ifdef WIN_BUILD
   GtkWidget *new_package_icon = gtk_image_new_from_file ("../share/icons/new_package.png");
   GtkWidget *new_symbol_icon = gtk_image_new_from_file ("../share/icons/new_symbol.png");
+  GtkWidget *rename_icon = gtk_image_new_from_file ("../share/icons/rename.png");  
   GtkWidget *accept_icon = gtk_image_new_from_file ("../share/icons/accept.png");
   GtkWidget *delete_icon = gtk_image_new_from_file ("../share/icons/delete.png");
   GtkWidget *refresh_icon = gtk_image_new_from_file ("../share/icons/refresh.png");
@@ -494,6 +498,7 @@ GtkToolbar *create_system_browser_toolbar()
 #else
   GtkWidget *new_package_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/new_package.png");
   GtkWidget *new_symbol_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/new_symbol.png");
+  GtkWidget *rename_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/rename.png");
   GtkWidget *accept_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/accept.png");
   GtkWidget *delete_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/delete.png");
   GtkWidget *refresh_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/refresh.png");
@@ -531,6 +536,11 @@ GtkToolbar *create_system_browser_toolbar()
   g_signal_connect (new_symbol_button, "clicked", G_CALLBACK (new_symbol), system_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, new_symbol_button, 1);
 
+  GtkToolItem *rename_button = gtk_tool_button_new(rename_icon, NULL);
+  gtk_tool_item_set_tooltip_text(rename_button, "Rename symbol (F2)");
+  g_signal_connect (rename_button, "clicked", G_CALLBACK (rename_symbol), system_browser_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, rename_button, 2);
+  
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
   /*                          NULL,                                   /\* button label *\/ */
   /*                          "Accept (Ctrl-S)",                      /\* button's tooltip *\/ */
@@ -541,7 +551,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkToolItem *accept_button = gtk_tool_button_new(accept_icon, NULL);
   gtk_tool_item_set_tooltip_text(accept_button, "Accept (Ctrl-S)");
   g_signal_connect (accept_button, "clicked", G_CALLBACK (accept), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, accept_button, 2);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, accept_button, 3);
 
 
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
@@ -554,7 +564,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkToolItem *delete_button = gtk_tool_button_new(delete_icon, NULL);
   gtk_tool_item_set_tooltip_text(delete_button, "Delete symbol (Ctrl-X)");
   g_signal_connect (delete_button, "clicked", G_CALLBACK (delete_pkg_or_sym), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, delete_button, 3);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, delete_button, 4);
 
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
   /*                          NULL,                                   /\* button label *\/ */
@@ -566,17 +576,17 @@ GtkToolbar *create_system_browser_toolbar()
   GtkToolItem *refresh_button = gtk_tool_button_new(refresh_icon, NULL);
   gtk_tool_item_set_tooltip_text(refresh_button, "Refresh (F5)");
   g_signal_connect (refresh_button, "clicked", G_CALLBACK (refresh_sys_browser), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, refresh_button, 4);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, refresh_button, 5);
 
   GtkToolItem *export_pkg_button = gtk_tool_button_new(export_pkg_icon, NULL);
   gtk_tool_item_set_tooltip_text(export_pkg_button, "Export Package");
   g_signal_connect (export_pkg_button, "clicked", G_CALLBACK (exp_pkg), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, export_pkg_button, 5);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, export_pkg_button, 6);
 
   GtkToolItem *callers_button = gtk_tool_button_new(callers_icon, NULL);
   gtk_tool_item_set_tooltip_text(callers_button, "Referrers");
   g_signal_connect (callers_button, "clicked", G_CALLBACK (callers), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, callers_button, 6);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, callers_button, 7);
 
   /* gtk_toolbar_append_item (GTK_TOOLBAR (toolbar),                    */
   /*                          NULL,                                   /\* button label *\/ */
@@ -588,7 +598,7 @@ GtkToolbar *create_system_browser_toolbar()
   GtkToolItem *close_button = gtk_tool_button_new(exit_icon, NULL);
   gtk_tool_item_set_tooltip_text(close_button, "Close (Ctrl-W)");
   g_signal_connect (close_button, "clicked", G_CALLBACK (close_window), system_browser_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 7);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, close_button, 8);
 
   return (GtkToolbar *)toolbar;
 }
@@ -1655,22 +1665,42 @@ void populate_callers_symbols_list(GtkTreeView *symbols_list)
     if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
       continue;
 
-    OBJECT_PTR val = top_level_symbols[i].val;
+    /* OBJECT_PTR val = top_level_symbols[i].val; */
 
-    if(IS_CONS_OBJECT(val) &&
-      //(IS_FUNCTION2_OBJECT(car(val)) && !is_continuation_object(car(val))) || IS_MACRO2_OBJECT(car(val)))
-       (IS_FUNCTION2_OBJECT(car(val)) || IS_MACRO2_OBJECT(car(val))))
+    /* if(IS_CONS_OBJECT(val) && */
+    /*   //(IS_FUNCTION2_OBJECT(car(val)) && !is_continuation_object(car(val))) || IS_MACRO2_OBJECT(car(val))) */
+    /*    (IS_FUNCTION2_OBJECT(car(val)) || IS_MACRO2_OBJECT(car(val)))) */
+    /* { */
+    /*   if(symbol_exists_in_list(callers_sym, car(get_source_object(car(val))))) */
+    /*   { */
+    /*     char buf[100]; */
+    /*     memset(buf, '\0', 100); */
+
+    /*     print_qualified_symbol(top_level_symbols[i].sym, buf); */
+
+    /*     gtk_list_store_append(store, &iter); */
+    /*     gtk_list_store_set(store, &iter, 0, buf, -1);   */
+    /*     gtk_list_store_set(store, &iter, 1, top_level_symbols[i].sym, -1); */
+    /*   } */
+    /* } */
+
+    if(top_level_symbols[i].sym == callers_sym)
     {
-      if(symbol_exists_in_list(callers_sym, car(get_source_object(car(val)))))
+      int j;
+
+      for(j=0; j<top_level_symbols[i].ref_count; j++)
       {
+        OBJECT_PTR sym = reverse_sym_lookup(top_level_symbols[i].references[j].referrer);
+
         char buf[100];
         memset(buf, '\0', 100);
 
-        print_qualified_symbol(top_level_symbols[i].sym, buf);
+        print_qualified_symbol(sym, buf);
 
         gtk_list_store_append(store, &iter);
-        gtk_list_store_set(store, &iter, 0, buf, -1);  
-        gtk_list_store_set(store, &iter, 1, top_level_symbols[i].sym, -1);
+        gtk_list_store_set(store, &iter, 0, buf, -1);
+        gtk_list_store_set(store, &iter, 1, sym, -1);        
+        
       }
     }
   }

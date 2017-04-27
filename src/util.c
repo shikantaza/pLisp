@@ -353,3 +353,29 @@ OBJECT_PTR build_symbol_object(int package_index, int symbol_index)
 {
   return (OBJECT_PTR)(((OBJECT_PTR)package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (symbol_index << OBJECT_SHIFT) + SYMBOL_TAG);
 }
+
+unsigned int is_valid_symbol_char(char c)
+{
+  return (c >= 48 && c <= 57)  || //0-9
+         (c >= 65 && c <= 90)  || //A-Z
+         (c >= 97 && c <= 122) || //a-z
+         c == '\\' || c == '^' || c == '$' || c == '.' || c == '|' || c == '?' || c == '*' || c == '+' || c == '{' || c == '!' ||
+         c == '_' ||  c == '-' || c == '/' || c == '<' || c == '=' || c == '>' || c == '#' || c == '%' || c == '&' || c == '}' || c == '~';
+}
+
+unsigned int is_valid_symbol_name(char *str)
+{
+  int len = strlen(str);
+
+  int i;
+  
+  for(i=0; i<len; i++)
+  {
+    if(is_valid_symbol_char(str[i]))
+      continue;
+    else
+      return 0;
+  }
+
+  return 1;
+}
