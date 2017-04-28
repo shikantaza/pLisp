@@ -195,6 +195,8 @@ extern OBJECT_PTR first(OBJECT_PTR);
 extern OBJECT_PTR second(OBJECT_PTR);
 extern OBJECT_PTR third(OBJECT_PTR);
 
+extern int add_symbol_to_package(char *, int);
+
 void quit_application();
 void show_file_browser_window();
 void callers_window_accept();
@@ -746,7 +748,7 @@ void rename_sym()
       if(index != NOT_FOUND) //symbol exists in symbol table
         new_sym_obj = build_symbol_object(package_index, index);
       else
-        new_sym_obj = build_symbol_object(package_index, add_symbol(convert_to_upper_case(trimmed_buf)));
+        new_sym_obj = build_symbol_object(package_index, add_symbol_to_package(convert_to_upper_case(trimmed_buf), package_index));
     
       int i;
 

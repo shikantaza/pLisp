@@ -427,6 +427,27 @@ int add_string(char *str)
   return nof_strings - 1;
 }
 
+int add_symbol_to_package(char *sym, int package_index)
+{
+  char **temp;
+
+  packages[package_index].nof_symbols++;
+  
+  temp = (char **)GC_REALLOC(packages[package_index].symbols, packages[package_index].nof_symbols * sizeof(char *));
+
+  if(temp != NULL)
+    packages[package_index].symbols = temp;
+  else
+  {
+    fprintf(stderr, "Out of memory extending symbol space\n");
+    cleanup();
+    exit(1);
+  }
+
+  packages[package_index].symbols[packages[package_index].nof_symbols - 1] = strdup(sym);
+
+  return packages[package_index].nof_symbols - 1;
+}
 
 int add_symbol(char *sym)
 {
