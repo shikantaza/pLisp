@@ -31,7 +31,8 @@
 #define FONT "Menlo Bold 12"
 #else
 #ifdef WIN32
-#define FONT "Courier Regular 10"
+//#define FONT "Courier Regular 10"
+#define FONT "Monospace Normal 10"
 #else
 #define FONT "DejaVu Sans Mono Bold 9"
 #endif
