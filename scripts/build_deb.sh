@@ -1,5 +1,6 @@
 #!/bin/sh
-pkg=plisp_0.1-1_i386
+ver=$1
+pkg=plisp_$ver-1_i386
 
 mkdir $pkg
 
