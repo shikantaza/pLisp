@@ -2,7 +2,7 @@
 
 tempdir=$1
 
-verno=0.1
+verno=$2
 
 dir=plisp-windows-$verno
 
