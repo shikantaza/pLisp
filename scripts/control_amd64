@@ -1,0 +1,11 @@
+Package: plisp
+Version: 0.1.1-1
+Section: base
+Priority: optional
+Architecture: amd64
+Depends: libgtk-3-0 (>= 3.4.2), libgtksourceview-3.0-1 (>= 3.4.2), libffi6 (>= 3.0.10), tcc (>= 0.9.25)
+Maintainer: Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+Description: pLisp
+ pLisp is a friendly Lisp dialect and IDE
+ modelled on Smalltalk that targets
+ beginners

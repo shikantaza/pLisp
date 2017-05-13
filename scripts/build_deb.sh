@@ -1,6 +1,7 @@
 #!/bin/sh
 ver=$1
-pkg=plisp_$ver-1_i386
+arch=$2
+pkg=plisp_$ver-1_$arch
 
 mkdir $pkg
 
@@ -25,7 +26,7 @@ cp ../doc/pLisp_User_Manual.pdf $pkg/usr/local/share/doc/plisp
 cp ../doc/tutorial.lisp $pkg/usr/local/share/doc/plisp
 
 mkdir -p $pkg/DEBIAN
-cp control $pkg/DEBIAN
+cp control_$arch $pkg/DEBIAN/control
 
 dpkg-deb --build $pkg
 
