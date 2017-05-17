@@ -50,14 +50,6 @@ extern int nof_strings;
 extern char **strings;
 
 extern BOOLEAN debug_mode;
-extern OBJECT_PTR debug_continuation;
-extern OBJECT_PTR debug_env;
-extern OBJECT_PTR debug_execution_stack;
-extern OBJECT_PTR reg_accumulator;
-extern OBJECT_PTR reg_next_expression;
-extern OBJECT_PTR reg_current_env;
-extern OBJECT_PTR reg_current_value_rib;
-extern OBJECT_PTR reg_current_stack;
 
 extern BOOLEAN in_break;
 
@@ -543,32 +535,12 @@ void create_image(char *file_name)
 
   fprintf(fp, "{ ");
 
-#ifdef INTERPRETER_MODE
-
-  fprintf(fp, "\"debug_mode\" : \"%s\"",       debug_mode ? "true" : "false");                                             fprintf(fp, ", ");
-  fprintf(fp, "\"in_break\" : \"%s\"",       in_break ? "true" : "false");                                             fprintf(fp, ", ");
-
-  fprintf(fp, "\"top_level_env\" : "        ); print_json_object(fp, top_level_env,        print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-
-  fprintf(fp, "\"debug_continuation\" : "   ); print_json_object(fp,debug_continuation,    print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"debug_env\" : "            ); print_json_object(fp,debug_env,             print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"debug_execution_stack\" : "); print_json_object(fp,debug_execution_stack, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_accumulator\" : "      ); print_json_object(fp,reg_accumulator,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_next_expression\" : "  ); print_json_object(fp,reg_next_expression,   print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_env\" : "      ); print_json_object(fp,reg_current_env,       print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_value_rib\" : "); print_json_object(fp,reg_current_value_rib, print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-  fprintf(fp, "\"reg_current_stack\" : "    ); print_json_object(fp,reg_current_stack,     print_queue, obj_count, hashtable, printed_objects, false); fprintf(fp, ", ");
-
-#else
-
   serialize_full_monty_global_vars(fp,
                                    print_queue, 
                                    obj_count,
                                    hashtable, 
                                    printed_objects,
                                    false);
-
-#endif
 
   fprintf(fp, "\"callers_sym\" : "    );
   if(!callers_sym)
@@ -1160,31 +1132,7 @@ int load_from_image(char *file_name)
 
   hashtable_t *hashtable = hashtable_create(1001);
 
-#ifdef INTERPRETER_MODE
-
-  temp = JSON_get_object_item(root, "debug_mode");
-  debug_mode = strcmp(temp->strvalue, "true") ? false : true;
-
-  temp = JSON_get_object_item(root, "in_break");
-  in_break = strcmp(temp->strvalue, "true") ? false : true;
-
-#endif
-
   queue_t *q = queue_create();
-
-#ifdef INTERPRETER_MODE
-
-  top_level_env         = deserialize_internal(heap, JSON_get_object_item(root, "top_level_env")->ivalue,         hashtable, q, false);
-  debug_continuation    = deserialize_internal(heap, JSON_get_object_item(root, "debug_continuation")->ivalue,    hashtable, q, false);
-  debug_env             = deserialize_internal(heap, JSON_get_object_item(root, "debug_env")->ivalue,             hashtable, q, false);
-  debug_execution_stack = deserialize_internal(heap, JSON_get_object_item(root, "debug_execution_stack")->ivalue, hashtable, q, false);
-  reg_accumulator       = deserialize_internal(heap, JSON_get_object_item(root, "reg_accumulator")->ivalue,       hashtable, q, false);
-  reg_next_expression   = deserialize_internal(heap, JSON_get_object_item(root, "reg_next_expression")->ivalue,   hashtable, q, false);
-  reg_current_env       = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_env")->ivalue,       hashtable, q, false);
-  reg_current_value_rib = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_value_rib")->ivalue, hashtable, q, false);
-  reg_current_stack     = deserialize_internal(heap, JSON_get_object_item(root, "reg_current_stack")->ivalue,     hashtable, q, false);
-
-#else
 
   deserialize_full_monty_global_vars(root,
                                      heap,
@@ -1192,17 +1140,15 @@ int load_from_image(char *file_name)
                                      q,
                                      false);
 
-#endif
-
   callers_sym = deserialize_internal(heap, JSON_get_object_item(root, "callers_sym")->ivalue,     hashtable, q, false);
 
   if(console_mode || single_expression_mode || pipe_mode)
   {
     convert_heap(heap, hashtable, q, false);
     //recompile_functions_and_macros();
-#ifndef INTERPRETER_MODE
+
     recreate_native_fn_objects();
-#endif
+
     JSON_delete_object(root);
     return 0;
   }
@@ -1286,25 +1232,6 @@ int load_from_image(char *file_name)
 
       store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
 
-#ifdef INTERPRETER_MODE
-
-      OBJECT_PTR rest = top_level_env;
-
-      while(rest != NIL)
-      {
-        OBJECT_PTR sym = CAAR(rest);
-
-        //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
-        if(extract_package_index(sym) == id)
-        {
-          gtk_list_store_append(store2, &iter2);
-          gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);
-          gtk_list_store_set(store2, &iter2, 1, sym, -1);
-        }
-
-        rest = cdr(rest);
-      }
-#else
       int i;
 
       for(i=0; i<nof_global_vars; i++)
@@ -1322,8 +1249,6 @@ int load_from_image(char *file_name)
           gtk_list_store_set(store2, &iter2, 1, sym, -1);
         }
       }
-#endif
-
     }
 
     if(sym_ptr != -1)
@@ -1355,14 +1280,11 @@ int load_from_image(char *file_name)
       char buf[MAX_STRING_LENGTH];
       memset(buf, '\0', MAX_STRING_LENGTH);
 
-#ifdef INTERPRETER_MODE
-      OBJECT_PTR obj = cdr(get_symbol_value_from_env(obj1, top_level_env));
-#else
-    OBJECT_PTR out;
-    int retval = get_top_level_sym_value((OBJECT_PTR)obj1, &out);
-    assert(retval == 0);
-    OBJECT_PTR obj = car(out);
-#endif
+      OBJECT_PTR out;
+      int retval = get_top_level_sym_value((OBJECT_PTR)obj1, &out);
+      assert(retval == 0);
+      OBJECT_PTR obj = car(out);
+
       gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
       gtk_text_view_set_editable(system_browser_textview, FALSE);
@@ -1883,7 +1805,6 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtab
     else
       if(single_object) add_to_deserialization_queue(heap, q, stack_ref, ptr, 0); else set_heap(ptr, 0, stack_ref);
   }
-#ifndef INTERPRETER_MODE
   else if(object_type == FUNCTION2_TAG || object_type == MACRO2_TAG)
   {
     ptr = object_alloc(2, CONS_TAG);
@@ -1913,7 +1834,6 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtab
     else
       if(single_object) add_to_deserialization_queue(heap, q, cdr_ref, ptr, 1); else set_heap(ptr, 1, cdr_ref);
   }
-#endif
   else if(object_type == INTEGER_TAG)
   {
     ptr = object_alloc(1, INTEGER_TAG);
@@ -1924,7 +1844,6 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtab
     ptr = object_alloc(1, FLOAT_TAG);
     (*(double *)ptr) = heap_obj->fvalue;
   }
-#ifndef INTERPRETER_MODE
   else if(object_type == NATIVE_FN_TAG)
   {
     ptr = object_alloc(1, NATIVE_FN_TAG);
@@ -1939,7 +1858,6 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtab
     //the slot (with the nativefn value will be
     //filled in later, by recreate_native_fn_objects())
   }
-#endif
 
   hashtable_put(ht, (void *)ref, (void *)(ptr + object_type));
 

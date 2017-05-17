@@ -51,8 +51,6 @@ extern OBJECT_PTR NIL;
 
 extern char **strings;
 
-extern OBJECT_PTR reg_current_env;
-
 extern OBJECT_PTR INTEGR;
 extern OBJECT_PTR FLOT;
 
@@ -146,10 +144,6 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 
     if(IS_SYMBOL_OBJECT(val))
     {
-#ifdef INTERPRETER_MODE
-      OBJECT_PTR res = get_symbol_value(val, reg_current_env);
-      val = cdr(res);
-#else
       OBJECT_PTR retval, out;
       retval = get_top_level_sym_value(val, &out);
       if(retval)
@@ -165,7 +159,6 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
 	return NIL;
       }
       val = car(out);
-#endif
     }
 
     char *s;
@@ -308,84 +301,17 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     else
       s = NULL;
 
-#ifdef INTERPRETER_MODE
-    //if(type == INT_POINTER && IS_SYMBOL_OBJECT(sym))
-    if(s && !strcmp(s, "INTEGER-POINTER") && IS_SYMBOL_OBJECT(sym))
-#else
     //if(type == INT_POINTER)
     if(s && !strcmp(s, "INTEGER-POINTER"))  
-#endif
     {
-
-#ifdef INTERPRETER_MODE
-      value = convert_int_to_object(*((int *)*(int **)arg_values[i]));
-
-      if(update_environment(reg_current_env, sym, value) == NIL)
-      {
-        throw_generic_exception("update_environment failed");
-        free_arg_values(arg_types, arg_values, args, nof_args);
-        //free(arg_values);
-        //free(arg_types);
-        return NIL;
-      }
-#else
       *((int *)extract_ptr(sym)) = *((int *)*(int **)arg_values[i]);
-#endif
     }
-
-#ifdef INTERPRETER_MODE
-    //else if(type == FLOAT_POINTER && IS_SYMBOL_OBJECT(sym))
-    else if(s && !strcmp(s, "FLOAT-POINTER") && IS_SYMBOL_OBJECT(sym))
-#else
     //else if(type == FLOAT_POINTER)
     else if(s, !strcmp(s, "FLOAT-POINTER"))
-#endif
     {
-
-#ifdef INTERPRETER_MODE
-      value = convert_float_to_object(*((float *)*(float **)arg_values[i]));
-
-      if(update_environment(reg_current_env, sym, value) == NIL)
-      {
-        throw_generic_exception("update_environment failed");
-        free_arg_values(arg_types, arg_values, args, nof_args);
-        //free(arg_values);
-        //free(arg_types);
-        return NIL;
-      }
-#else
       //*((float *)extract_ptr(sym)) = *((float *)*(float **)arg_values[i]);
       *((double *)extract_ptr(sym)) = *((double *)*(double **)arg_values[i]);
-#endif
-
     }
-
-#ifdef INTERPRETER_MODE
-    //else if(type == CHAR_POINTER && IS_SYMBOL_OBJECT(sym))
-    else if(s && !strcmp(s, "CHARACTER-POINTER") && IS_SYMBOL_OBJECT(sym))
-    {
-      char *str = *(char **)arg_values[i];
-
-      int sz = strlen(str);
-
-      uintptr_t ptr = object_alloc(sz+1, ARRAY_TAG);
-
-      *((uintptr_t *)ptr) = sz;
-
-      int j;
-      for(j=0; j< sz; j++)
-        set_heap(ptr, j + 1, (OBJECT_PTR)((str[j] << OBJECT_SHIFT) + CHAR_TAG));
-
-      if(update_environment(reg_current_env, sym, ptr+ARRAY_TAG) == NIL)
-      {
-        throw_generic_exception("update_environment failed");
-        free_arg_values(arg_types, arg_values, args, nof_args);
-        //free(arg_values);
-        //free(arg_types);
-        return NIL;
-      }
-    }
-#else
     //else if(type == CHAR_POINTER)
     else if(s && !strcmp(s, "CHARACTER-POINTER"))
     {
@@ -437,7 +363,6 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       /*     dealloc(temp); */
       /* } */
     }
-#endif
 
     rest_args = cdr(rest_args);
     i++;

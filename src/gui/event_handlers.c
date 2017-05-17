@@ -330,10 +330,6 @@ gboolean delete_event( GtkWidget *widget,
   else if(widget == (GtkWidget *)debugger_window)
   {
     close_application_window((GtkWidget **)&debugger_window);
-#ifdef INTERPRETER_MODE
-    //if(!in_error)
-      call_repl("(ABORT)");
-#endif
   }
   /* else if(widget == (GtkWidget *)profiler_window) */
   /* { */
@@ -1658,26 +1654,6 @@ void fetch_package_symbols()
 
     store2 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
 
-#ifdef INTERPRETER_MODE
-
-    OBJECT_PTR rest = top_level_env;
-
-    while(rest != NIL)
-    {
-      OBJECT_PTR sym = CAAR(rest);
-
-      //if(((int)sym >> (SYMBOL_BITS + OBJECT_SHIFT)) == id)
-      if(extract_package_index(sym) == id)
-      {
-        gtk_list_store_append(store2, &iter2);
-        gtk_list_store_set(store2, &iter2, 0, get_symbol_name(sym), -1);  
-        gtk_list_store_set(store2, &iter2, 1, sym, -1);
-      }
-
-      rest = cdr(rest);
-    }
-
-#else
     int i;
 
     for(i=0; i<nof_global_vars; i++)
@@ -1695,7 +1671,6 @@ void fetch_package_symbols()
         gtk_list_store_set(store2, &iter2, 1, sym, -1);
       }
     }
-#endif
   }
 
   gtk_text_buffer_set_text(system_browser_buffer, "", -1);
@@ -1742,14 +1717,10 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
-#ifdef INTERPRETER_MODE
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
-#else
     OBJECT_PTR out;
     int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
     assert(retval == 0);
     OBJECT_PTR obj = car(out);
-#endif
 
     gtk_text_buffer_set_text(system_browser_buffer, buf, -1);
 
@@ -2291,14 +2262,10 @@ void callers(GtkWidget *widget,
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
-#ifdef INTERPRETER_MODE
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
-#else
     OBJECT_PTR out;
     int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
     assert(retval == 0);
     OBJECT_PTR obj = car(out);
-#endif
 
     callers_sym = (OBJECT_PTR)ptr;
 
@@ -2742,14 +2709,10 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
-#ifdef INTERPRETER_MODE
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
-#else
     OBJECT_PTR out;
     int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
     assert(retval == 0);
     OBJECT_PTR obj = car(out);
-#endif
 
     gtk_text_buffer_set_text(callers_source_buffer, buf, -1);
 
@@ -2824,14 +2787,10 @@ void callers_window_accept()
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
-#ifdef INTERPRETER_MODE
-    OBJECT_PTR obj = cdr(get_symbol_value_from_env((OBJECT_PTR)ptr, top_level_env));
-#else
     OBJECT_PTR out;
     int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
     assert(retval == 0);
     OBJECT_PTR obj = car(out);
-#endif
 
     int current_package_backup = current_package;
 

@@ -2023,20 +2023,6 @@ void raise_error(char *err_str)
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     show_error_dialog(err_str);
-
-#ifdef INTERPRETER_MODE
-    debug_mode = true;
-    debug_continuation = create_current_continuation();
-    debug_env = reg_current_env;
-    reg_next_expression = NIL;
-
-    debug_execution_stack = reg_current_stack;
-
-    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-			DEFAULT_DEBUG_WINDOW_POSY,
-			DEFAULT_DEBUG_WINDOW_WIDTH,
-			DEFAULT_DEBUG_WINDOW_HEIGHT);
-#endif
   }
   else
     fprintf(stdout, "%s\n", err_str);
@@ -2046,12 +2032,6 @@ void raise_error(char *err_str)
   //fprintf(stdout, "Begin backtrace\n");
   //print_backtrace();
   //fprintf(stdout, "End backtrace\n");
-
-#ifdef INTERPRETER_MODE
-  reg_accumulator = NIL;
-  reg_current_value_rib = NIL;
-  reg_next_expression = NIL;
-#endif
 
   in_error = true;
   exception_object = cons(get_symbol_object("EXCEPTION"), get_string_object(err_str));

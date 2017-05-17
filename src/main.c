@@ -278,20 +278,9 @@ BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x)         { return (x & BIT_MASK) == MACRO2
 
 OBJECT_PTR rewrite_symbols(OBJECT_PTR);
 
-//registers
-OBJECT_PTR reg_accumulator;
-OBJECT_PTR reg_next_expression;
-OBJECT_PTR reg_current_env;
-OBJECT_PTR reg_current_value_rib;
-OBJECT_PTR reg_current_stack;
-
 extern void print_stack();
 
 BOOLEAN system_changed;
-
-//extern OBJECT_PTR debug_execution_stack;
-//extern OBJECT_PTR debug_continuation;
-//extern OBJECT_PTR debug_env;
 
 extern uintptr_t POINTER_MASK;
 
@@ -384,17 +373,6 @@ void initialize()
   initialize_core_package();
 
   top_level_env = NIL;
-
-  //debug_execution_stack = NIL;
-  //debug_continuation = NIL;
-  //debug_env = NIL;
-
-#ifdef INTERPRETER_MODE
-  CONS_NIL_NIL = cons(NIL, NIL);
-  CONS_APPLY_NIL = cons(APPLY, NIL);
-  CONS_HALT_NIL = cons(HALT, NIL);
-  CONS_RETURN_NIL = cons(RETURN, NIL);
-#endif
 
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 
@@ -3447,13 +3425,6 @@ int main(int argc, char **argv)
       exit(1);
     }
 
-#ifdef INTERPRETER_MODE
-    CONS_NIL_NIL = cons(NIL, NIL);
-    CONS_APPLY_NIL = cons(APPLY, NIL);
-    CONS_HALT_NIL = cons(HALT, NIL);
-    CONS_RETURN_NIL = cons(RETURN, NIL);
-#endif
-
     if(!single_expression_mode && !pipe_mode)
       fprintf(stdout, "done\n");    
   }
@@ -3512,11 +3483,7 @@ int main(int argc, char **argv)
 
       yy_scan_string(cmd);
       yyparse();
-#ifdef INTERPRETER_MODE
-      repl(1);
-#else
       repl2();
-#endif
     }
 
     //if(cmd)
@@ -3530,11 +3497,7 @@ int main(int argc, char **argv)
   {
     yy_scan_string(expression);
     yyparse();
-#ifdef INTERPRETER_MODE
-    repl(1);
-#else
     repl2();
-#endif
     printf("\n");
     cleanup();
 
@@ -3549,11 +3512,7 @@ int main(int argc, char **argv)
     {
       prompt();
       yyparse();
-#ifdef INTERPRETER_MODE
-      repl(1);
-#else
       repl2();
-#endif
     }
   }
   else
@@ -3576,54 +3535,6 @@ int load_core_library()
     fflush(stdout);
   }
   //}
-
-#ifdef INTERPRETER_MODE
-
-  reg_accumulator       = NIL;
-
-  OBJECT_PTR src = cons(LOAD_FILE, 
-//#ifdef WIN32
-//                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "./plisp.lisp"),
-//#else
-                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : PLISPDATADIR "/plisp.lisp"),
-//#endif
-                             NIL));
-
-
-  OBJECT_PTR temp = compile(src, cons(CONS_HALT_NIL, src));
-
-#ifdef WIN32
-  if(temp == ERROR1)
-#else
-  if(temp == ERROR)
-#endif
-  {
-    fprintf(stdout, "Compile failed while loading core library\n");
-    return 1;
-  }
-
-  reg_next_expression   = temp;
-
-  reg_current_env = NIL;
-
-  reg_current_value_rib = NIL;
-  reg_current_stack     = NIL;
-
-  continuations_map = NIL;
-
-  while(car(reg_next_expression) != NIL)
-  {
-    eval(false);
-    if(in_error)
-    {
-      fprintf(stdout, "Eval failed while loading core library\n");
-      return 1;
-    }
-  }
-
-  //gc(false, true);
-
-#else
 
   saved_continuations = NIL;
   continuations_for_return = NIL;
@@ -3651,8 +3562,6 @@ int load_core_library()
     fprintf(stdout, "Error loading core library\n");
     return 1;
   }
-
-#endif
 
   in_error = false;
 

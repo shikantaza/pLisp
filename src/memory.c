@@ -32,16 +32,6 @@ extern OBJECT_PTR CONS_APPLY_NIL;
 extern OBJECT_PTR CONS_HALT_NIL;
 extern OBJECT_PTR CONS_RETURN_NIL;
 
-extern OBJECT_PTR reg_accumulator;
-extern OBJECT_PTR reg_next_expression;
-extern OBJECT_PTR reg_current_env;
-extern OBJECT_PTR reg_current_value_rib;
-extern OBJECT_PTR reg_current_stack;
-extern OBJECT_PTR continuations_map;
-//extern OBJECT_PTR debug_continuation;
-//extern OBJECT_PTR debug_env;
-//extern OBJECT_PTR debug_execution_stack;
-
 extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR);
 extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR);
