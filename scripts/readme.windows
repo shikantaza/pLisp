@@ -1,6 +1,5 @@
 To generate Windows zip file:
-1. set WIN_BUILD in CFLAGS for configure
-2. set prefix to, say, /c/temp for configure (./confiure --prefix=/c/temp)
-3. sh ./build_windows_zip.sh /c/temp
+	
+	sh ./build_windows_zip.sh /c/temp/ <ver no>
 
 This will generate the zip file in the downloads/windows directory.
