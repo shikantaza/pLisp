@@ -227,7 +227,7 @@ void print_json_object(FILE *fp,
       add_obj_to_print_list(print_queue, obj, printed_objects);
     }
     else
-      fprintf(fp, "%d", obj);
+      fprintf(fp, "%lu", obj);
   }
 }
 

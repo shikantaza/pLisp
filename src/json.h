@@ -46,7 +46,11 @@ struct JSONObject
 #if __x86_64__
   long long ivalue;
 #else
+#ifdef __APPLE__
+  long long ivalue;
+#else
   int ivalue;
+#endif  
 #endif
   double fvalue;
   char *strvalue;
@@ -57,7 +61,17 @@ struct JSONObject
 };
 
 struct JSONObject *JSON_create_string_object(char *);
-struct JSONObject *JSON_create_int_object(int);
+  
+#if __x86_64__
+struct JSONObject *JSON_create_int_object(long long);
+#else
+#ifdef __APPLE__
+struct JSONObject *JSON_create_int_object(long long);
+#else
+struct JSONObject *JSON_create_int_object(int);  
+#endif
+#endif
+
 struct JSONObject *JSON_create_float_object(double);
 struct JSONObject *JSON_create_pairs_object(struct name_value_pairs *);
 struct name_value_pair *JSON_create_name_value_pair(char *, struct JSONObject *);

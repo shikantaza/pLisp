@@ -36,7 +36,15 @@ struct JSONObject *JSON_create_string_object(char *str)
   return obj;
 }
 
-struct JSONObject *JSON_create_int_object(int ival)
+#if __x86_64__
+struct JSONObject *JSON_create_int_object(long long ival)
+#else
+#ifdef __APPLE__
+struct JSONObject *JSON_create_int_object(long long ival)
+#else
+struct JSONObject *JSON_create_int_object(int ival)  
+#endif
+#endif
 {
   struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_INT;
