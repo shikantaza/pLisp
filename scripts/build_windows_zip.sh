@@ -6,8 +6,8 @@ verno=$2
 
 dir=plisp-windows-$verno
 
-export CFLAGS="-I/c/sw/tcc/libtcc -DWIN_BUILD -g -O0"
-export LD_FLAGS="-L/c/sw/tcc/libtcc"
+export CFLAGS="-I/mingw32/include -I/usr/local/libtcc -DWIN_BUILD -g -O0"
+export LDFLAGS="-L/mingw32/lib -L/usr/local/libtcc"
 
 cd ..
 
@@ -38,7 +38,7 @@ cp $tempdir/share/doc/plisp/pLisp_User_Manual.pdf $dir/doc
 cp $tempdir/share/doc/plisp/tutorial.lisp $dir/doc
 
 cp $tempdir/share/plisp/plisp_full_monty_compiler.lisp $dir/lib
-cp /c/sw/tcc//lib/libtcc1.a $dir/lib
+cp /usr/local/lib/libtcc1.a $dir/lib
 cp $tempdir/share/plisp/icons/* $dir/share/icons
 
 cp $tempdir/share/plisp/help.json $dir/share
