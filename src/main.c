@@ -2769,14 +2769,17 @@ void print_string(OBJECT_PTR string_object)
 
   int i;
 
-  char buf[500];
+  char *buf;
+
+  buf = (char *)GC_MALLOC(len*sizeof(char));
+  
   int length;
 
   assert(is_string_object(string_object));
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
-    memset(buf, '\0', 500);
+    memset(buf, '\0', len);
 
     length = 0;
 
