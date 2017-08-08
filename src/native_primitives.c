@@ -1918,6 +1918,7 @@ OBJECT_PTR primitive_throw(OBJECT_PTR excp)
   }
 
   exception_object = excp;
+  in_error = true;
   return handle_exception();
 }
 

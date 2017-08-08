@@ -693,15 +693,22 @@
 
 (defmacro try (body exception-clause finally-clause)
   (let ((ret (gensym))
-        (cc (gensym)))
+        (cc (gensym))
+        (ret1 (gensym)))
     `(call/cc (lambda (,cc)
                 (let ((,ret))
                   (progn (add-exception-handler (lambda ,(cadr exception-clause)
-                                                  (,cc (progn ,finally-clause
-                                                              ,(caddr exception-clause)))))
+                                                  (let ((,ret1))
+                                                    (disable-exception-handlers)
+                                                    ,finally-clause
+                                                    (set ,ret1 ,(caddr exception-clause))
+                                                    (enable-exception-handlers)
+                                                    (,cc ,ret1))))
                          (set ,ret
                               ,body)
+                         (disable-exception-handlers)
                          ,finally-clause
+                         (enable-exception-handlers)
                          ,ret))))))
 
 (defmacro unwind-protect (body finally-clause)

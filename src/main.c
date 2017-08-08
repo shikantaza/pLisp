@@ -217,6 +217,9 @@ OBJECT_PTR ADD_EXCEPTION_HANDLER  = (OBJECT_PTR)((120 << OBJECT_SHIFT) + SYMBOL_
 OBJECT_PTR CALL_FF_INTERNAL  = (OBJECT_PTR)((121 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR REPL_FUNCTION     = (OBJECT_PTR)((122 << OBJECT_SHIFT) + SYMBOL_TAG);
 OBJECT_PTR SAVE_CONTINUATION_TO_RESUME     = (OBJECT_PTR)((123 << OBJECT_SHIFT) + SYMBOL_TAG);
+
+OBJECT_PTR DISABLE_EXCEPTION_HANDLERS = (OBJECT_PTR)((124 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ENABLE_EXCEPTION_HANDLERS  = (OBJECT_PTR)((125 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -230,7 +233,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     85
-#define NOF_NON_SPECIAL_SYMBOLS 39
+#define NOF_NON_SPECIAL_SYMBOLS 41
 
 char err_buf[500];
 
@@ -2386,6 +2389,9 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[122] = strdup("REPL-FUNCTION");
 
   packages[CORE_PACKAGE_INDEX].symbols[123] = strdup("SAVE-CONTINUATION-TO-RESUME");
+
+  packages[CORE_PACKAGE_INDEX].symbols[124] = strdup("DISABLE-EXCEPTION-HANDLERS");
+  packages[CORE_PACKAGE_INDEX].symbols[125] = strdup("ENABLE-EXCEPTION-HANDLERS");
 }
 
 int find_package(char* package_name)

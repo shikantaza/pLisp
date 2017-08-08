@@ -193,6 +193,9 @@ extern OBJECT_PTR THROW;
 extern OBJECT_PTR GET_EXCEPTION_HANDLER;
 extern OBJECT_PTR ADD_EXCEPTION_HANDLER;
 
+extern OBJECT_PTR DISABLE_EXCEPTION_HANDLERS;
+extern OBJECT_PTR ENABLE_EXCEPTION_HANDLERS;
+
 extern OBJECT_PTR DEFUN;
 extern OBJECT_PTR DEFMACRO;
 
@@ -427,6 +430,9 @@ OBJECT_PTR flatten(OBJECT_PTR);
 void throw_exception1(char *, char *);
 OBJECT_PTR handle_exception();
 OBJECT_PTR add_exception_handler(OBJECT_PTR);
+
+void disable_exception_handlers();
+void enable_exception_handlers();
 
 //unsigned int wrap_float(OBJECT_PTR);
 unsigned long long wrap_float(OBJECT_PTR);
@@ -2398,6 +2404,8 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == THROW        ||
     sym == GET_EXCEPTION_HANDLER ||
     sym == ADD_EXCEPTION_HANDLER ||
+    sym == DISABLE_EXCEPTION_HANDLERS ||
+    sym == ENABLE_EXCEPTION_HANDLERS  ||
     sym == SAVE_CONTINUATION_TO_RESUME;
 }
 
@@ -2958,6 +2966,10 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "get_continuation");
       else if(var == ADD_EXCEPTION_HANDLER)
         sprintf(s, "add_exception_handler");
+      else if(var == DISABLE_EXCEPTION_HANDLERS)
+        sprintf(s, "disable_exception_handlers");
+      else if(var == ENABLE_EXCEPTION_HANDLERS)
+        sprintf(s, "enable_exception_handlers");      
       else if(var == GET_EXCEPTION_HANDLER)
         sprintf(s, "get_exception_handler");
       else if(var == THROW)
@@ -3282,8 +3294,8 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
         primitive_call = true;
 
       //if(car(exp) == THROW || car(exp) == SAVE_CONTINUATION_TO_RESUME)
-      if(car(exp) == THROW)
-        len += sprintf(buf+len, "return ");
+      //if(car(exp) == THROW)
+      //  len += sprintf(buf+len, "return ");
 
       char *var = extract_variable_string(car(exp), serialize_flag);
 
@@ -5519,18 +5531,31 @@ OBJECT_PTR handle_exception()
   nativefn fn = extract_native_fn(h);
   assert(fn);
 
-  return fn(h, exception_object, idclo);  
+  return fn(h, exception_object, idclo);
 }
+
+BOOLEAN exception_handling_disabled;
 
 void throw_exception1(char *excp_name, char *excp_str)
 {
   //mainly to handle exceptions that are thrown 
   //in other clauses of 'try' forms (catch and finally)
-  if(exception_object != NIL)
+  //if(exception_object != NIL)
+  if(exception_handling_disabled)
     return;
 
   in_error = true;
   exception_object = cons(get_symbol_object(excp_name), get_string_object(excp_str));
+}
+
+void disable_exception_handlers()
+{
+  exception_handling_disabled = true;
+}
+
+void enable_exception_handlers()
+{
+  exception_handling_disabled = false;
 }
 
 OBJECT_PTR add_exception_handler(OBJECT_PTR handler)
@@ -6283,6 +6308,9 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
 
   len += sprintf(buf+len, "uintptr_t save_cont_to_resume(uintptr_t);\n");
 
+  len += sprintf(buf+len, "void disable_exception_handlers();\n");
+  len += sprintf(buf+len, "void enable_exception_handlers();\n");  
+  
   /* len += sprintf(buf+len, "void insert_node(unsigned int, uintptr_t);\n"); */
   /* len += sprintf(buf+len, "void gc(int, int);\n"); */
   /* len += sprintf(buf+len, "int is_dynamic_memory_object(uintptr_t);\n"); */
