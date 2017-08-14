@@ -1528,11 +1528,16 @@ OBJECT_PTR free_ids_il(OBJECT_PTR exp)
   else if(car_exp == DEFINE)
     return difference(free_ids_il(third(exp)), list(1, second(exp)));
   else if(car_exp == LET)
-    return union1(2,
-                  flatten(map(free_ids_il,
-                              map(CADR, second(exp)))),
-                  difference(free_ids_il(third(exp)),
-                             map(car, second(exp))));
+  {
+    if(is_valid_let_exp(exp, false))
+      return union1(2,
+                    flatten(map(free_ids_il,
+                                map(CADR, second(exp)))),
+                    difference(free_ids_il(third(exp)),
+                               map(car, second(exp))));
+    else
+      return NIL;
+  }
   else if(car_exp == LETREC)
     return difference(union1(2,
                              flatten(map(free_ids_il,
@@ -4158,11 +4163,16 @@ void update_dependencies(OBJECT_PTR sym, OBJECT_PTR val)
 
         OBJECT_PTR rest = cons_eqiv;
         int k=0;
-
+        OBJECT_PTR prev;
+        
         for(k=0; k<pos; k++)
+        {
+          prev = rest;
           rest = cdr(rest);
+        }
 
-        set_heap(extract_ptr(car(rest)), 0, car(val));
+        //set_heap(extract_ptr(car(rest)), 0, car(val));
+        set_heap(extract_ptr(prev), 1, cons (val, rest));
 
         add_reference_to_top_level_sym(sym, pos, clo);
       }
