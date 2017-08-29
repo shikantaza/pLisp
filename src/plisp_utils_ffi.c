@@ -35,11 +35,22 @@ commands to build .so file:
 #include <stdint.h>
 #include <fcntl.h>
 
-float plisp_random()
+void init_random_seed()
+{
+  srand(time(NULL));
+}
+
+double plisp_random()
 {
   int i = rand();
-  float ret = (i*1.0)/RAND_MAX;
+  double ret = (i*1.0)/RAND_MAX;
   return ret;
+}
+
+int cast_to_int(double x)
+{
+  int i = x;
+  return i;
 }
 
 void format(const char *fmt, ...)

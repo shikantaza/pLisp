@@ -2519,10 +2519,22 @@ OBJECT_PTR nth1(OBJECT_PTR n, OBJECT_PTR lst)
     return NIL;
   else
   {
-    if(i_val == 0)
-      return car(lst1);
-    else
-      return nth1(convert_int_to_object(i_val-1), cdr(lst1));
+    /* if(i_val == 0) */
+    /*   return car(lst1); */
+    /* else */
+    /*   return nth1(convert_int_to_object(i_val-1), cdr(lst1)); */
+
+    int i = 0;
+
+    OBJECT_PTR rest = lst1;
+    
+    while(i<i_val)
+    {
+      rest = cdr(rest);
+      i++;
+    }
+
+    return car(rest);
   }
 }
 

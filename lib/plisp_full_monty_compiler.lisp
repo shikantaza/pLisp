@@ -428,12 +428,23 @@
 	   ,@body
 	   (set ,sym (cdr ,sym)))))))
 
+;(defun nth (n lst)
+;  (if (> n (length lst))
+;      nil
+;      (if (eq n 0)
+;	  (car lst)
+;	  (nth (- n 1) (cdr lst)))))
+
 (defun nth (n lst)
-  (if (> n (length lst))
-      nil
-      (if (eq n 0)
-	  (car lst)
-	  (nth (- n 1) (cdr lst)))))
+  (let ((len (length lst)))
+    (if (or (< n 0) (>= n len))
+        (error "Invalid list index")
+      (let ((i 0)
+            (rest lst))
+        (while (< i n)
+          (set rest (cdr rest))
+          (set i (+ i 1)))
+        (car rest)))))
 
 (defmacro make-string (size elem)
   `(make-array ,size ,elem))
