@@ -2130,8 +2130,15 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
   res = expand_macro_full(res, true);
   macro_expansion_in_progress = false;
 
-  if(!is_valid_expression(res))
-    return NIL; //error would have been raised in is_valid_expression()
+  /* if(!is_valid_expression(res)) */
+  /*   return NIL; //error would have been raised in is_valid_expression() */
+  if(IS_CONS_OBJECT(res) && (car(res) == DEFINE || car(res) == SET))
+  {
+    if(!is_valid_expression(third(res)))
+      return NIL;
+  }
+   else if(!is_valid_expression(res))
+     return NIL;
 
   //res = handle_and_rest_applications_for_functions(res);
 
@@ -4696,6 +4703,30 @@ BOOLEAN contains_internal_macros(OBJECT_PTR exp)
     return contains_internal_macros(car(exp) || contains_internal_macros(cdr(exp)));
 }
 
+BOOLEAN contains_symbol_in_operator_pos(OBJECT_PTR exp, OBJECT_PTR sym)
+{
+  if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
+    return false;
+
+  if(car(exp) == sym)
+    return true;
+
+  OBJECT_PTR rest = exp;
+
+  while (rest != NIL)
+  {
+    if(contains_symbol_in_operator_pos(car(rest), sym))
+      return true;
+    rest = cdr(rest);
+  }
+  return false;
+}
+
+BOOLEAN contains_define_in_operator_pos(OBJECT_PTR exp)
+{
+  return contains_symbol_in_operator_pos(exp, DEFINE);
+}
+
 BOOLEAN is_valid_expression(OBJECT_PTR exp)
 {
   if(is_atom(exp) || is_quoted_expression(exp) || is_backquoted_expression(exp))
@@ -4704,6 +4735,18 @@ BOOLEAN is_valid_expression(OBJECT_PTR exp)
   OBJECT_PTR car_exp = car(exp);
 
   unsigned int len = cons_length(exp);
+
+  if(contains_define_in_operator_pos(exp))
+  {
+    throw_exception1("COMPILE-ERROR", "Expression contains DEFINE");
+    return false;
+  }
+
+  if(contains_symbol_in_operator_pos(exp, ABORT) || contains_symbol_in_operator_pos(exp, RESUME))
+  {
+    throw_exception1("COMPILE-ERROR", "Expression contains ABORT/RESUME, these are permitted only at the top level");
+    return false;
+  }
 
   if(car_exp == LAMBDA && !is_valid_lambda_exp(exp))             //
     return false;                                                //
@@ -5383,7 +5426,11 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp1)
   {
     if(!debug_mode)
     {
-      show_error_dialog("Not in debug mode");
+      //show_error_dialog("Not in debug mode");
+      if(!console_mode && !single_expression_mode && !pipe_mode)
+        show_error_dialog("Not in debug mode");
+      else
+        printf("Not in debug mode\n");
       return NIL;
     }
     close_debugger_window();
@@ -5394,7 +5441,11 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp1)
   {
     if(!debug_mode)
     {
-      show_error_dialog("Not in debug mode");
+      //show_error_dialog("Not in debug mode");
+      if(!console_mode && !single_expression_mode && !pipe_mode)
+        show_error_dialog("Not in debug mode");
+      else
+        printf("Not in debug mode\n");
       return NIL;
     }
     close_debugger_window();
@@ -5516,10 +5567,15 @@ OBJECT_PTR handle_exception()
       {
         OBJECT_PTR frame = car(rest);
 
-        char buf[MAX_STRING_LENGTH];
-        memset(buf, '\0', MAX_STRING_LENGTH);
-        print_object_to_string(car(frame), buf, 0);
-        printf("%d: %s\n", i, buf);
+        char buf1[MAX_STRING_LENGTH];
+        memset(buf1, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(car(frame), buf1, 0);
+
+        char buf2[MAX_STRING_LENGTH];
+        memset(buf2, '\0', MAX_STRING_LENGTH);
+        print_object_to_string(CADR(frame), buf2, 0);
+
+        printf("%d: %s\nSource: %s\n", i, buf1, buf2);
 
         i++;
         rest = cdr(rest);
@@ -5744,10 +5800,37 @@ OBJECT_PTR save_continuation_to_resume(OBJECT_PTR cont)
 
   debug_window_dbg_stack = debug_stack;
 
-  create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
-                      DEFAULT_DEBUG_WINDOW_POSY,
-                      DEFAULT_DEBUG_WINDOW_WIDTH,
-                      DEFAULT_DEBUG_WINDOW_HEIGHT);
+  if(console_mode || single_expression_mode || pipe_mode)
+  {
+    printf("Call Stack:\n");
+
+    OBJECT_PTR rest = debug_window_dbg_stack;
+
+    int i = 1;
+
+    while(rest != NIL)
+    {
+      OBJECT_PTR frame = car(rest);
+
+      char buf1[MAX_STRING_LENGTH];
+      memset(buf1, '\0', MAX_STRING_LENGTH);
+      print_object_to_string(car(frame), buf1, 0);
+
+      char buf2[MAX_STRING_LENGTH];
+      memset(buf2, '\0', MAX_STRING_LENGTH);
+      print_object_to_string(CADR(frame), buf2, 0);
+
+      printf("%d: %s\nSource: %s\n", i, buf1, buf2);
+
+      i++;
+      rest = cdr(rest);
+    }      
+  }
+  else
+    create_debug_window(DEFAULT_DEBUG_WINDOW_POSX,
+                        DEFAULT_DEBUG_WINDOW_POSY,
+                        DEFAULT_DEBUG_WINDOW_WIDTH,
+                        DEFAULT_DEBUG_WINDOW_HEIGHT);
 
   return NIL;
 }

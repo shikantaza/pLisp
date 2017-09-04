@@ -747,10 +747,12 @@
     `(make-array ,(car dims) (array ,(cdr dims) ,default-value))))
 
 (defmacro build-ref (a indexes)
-  (let ((rev-indexes (reverse indexes)))
-    (if (eq (length rev-indexes) 1) 
-	`(array-get ,a ,(car rev-indexes))
-      `(array-get (build-ref ,a ,(cdr rev-indexes)) ,(car rev-indexes)))))
+  (if (null indexes)
+      (error "Indexes cannot be nil")
+    (let ((rev-indexes (reverse indexes)))
+      (if (eq (length rev-indexes) 1) 
+          `(array-get ,a ,(car rev-indexes))
+        `(array-get (build-ref ,a ,(cdr rev-indexes)) ,(car rev-indexes))))))
 
 (defmacro aset (ref val)
   (let ((a (second ref))
