@@ -281,7 +281,7 @@
   (prim-eval x))
 
 (defun exception (excp desc)
-  (cons excp desc))
+  (list excp desc))
 
 (defmacro assert (condition text)
   `(if (not ,condition)

@@ -978,8 +978,8 @@ OBJECT_PTR car(OBJECT_PTR cons_obj)
   {
      if(!IS_CONS_OBJECT(cons_obj))
      {
-       //print_object(cons_obj);printf("\n");
-       char buf[20];memset(buf, 20, '\0');print_qualified_symbol(cons_obj,buf);printf("%s\n",buf);
+       print_object(cons_obj);printf("\n");
+       //char buf[20];memset(buf, 20, '\0');print_qualified_symbol(cons_obj,buf);printf("%s\n",buf);
        assert(false);
      }
      //return get_heap(extract_ptr(cons_obj), 0);
@@ -1024,6 +1024,33 @@ int print_cons_obj_in_single_line(OBJECT_PTR obj, char *buf, int filled_buf_len)
   return length;
 }
 
+BOOLEAN is_valid_defun_defmacro_exp(OBJECT_PTR exp)
+{
+  if(!IS_CONS_OBJECT(exp))
+    return false;
+
+  if(car(exp) != DEFUN && car(exp) != DEFMACRO)
+    return false;
+
+  if(!IS_SYMBOL_OBJECT(second(exp)))
+    return false;
+
+  if(!IS_CONS_OBJECT(third(exp)))
+    return false;
+
+  OBJECT_PTR rest = third(exp);
+
+  while(rest != NIL)
+  {
+    if(!IS_SYMBOL_OBJECT(car(rest)))
+      return false;
+
+    rest = cdr(rest);
+  }
+
+  return true;
+}
+
 int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
   OBJECT_PTR car_obj = car(obj);
@@ -1046,6 +1073,17 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     if(*ptr == '\n')
       break;
     indents++;
+  }
+
+  if(((car_obj == DEFUN || car_obj == DEFMACRO) && !is_valid_defun_defmacro_exp(obj)) ||
+     (car_obj == LET && !is_valid_let_exp(obj, false)) ||
+     (car_obj == LET1 && !is_valid_let1_exp(obj,false)) ||
+     (car_obj == LETREC && !is_valid_letrec_exp(obj, false)) ||
+     (car_obj == LAMBDA && !is_valid_lambda_exp(obj)) ||
+     (car_obj == MACRO && !is_valid_macro_exp(obj)))
+  {
+    length += print_cons_obj_in_single_line(obj, buf, filled_buf_len+length);
+    return length;
   }
 
   if(car_obj == get_symbol_object("WHILE"))
