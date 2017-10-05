@@ -5709,6 +5709,8 @@ char *generate_lst_construct(OBJECT_PTR exp)
   assert(buf);
   memset(buf, 1000, '\0');
 
+  unsigned int buf_size = 1000;
+
   if(exp == NIL)
   {
     sprintf(buf, "17");
@@ -5751,13 +5753,20 @@ char *generate_lst_construct(OBJECT_PTR exp)
       //free(var);
     }
 
+    if(len >= 0.9 * buf_size)
+    {
+      buf_size += 1000;
+      buf = GC_REALLOC(buf, buf_size * sizeof(char));
+    }
+
     rest = cdr(rest);
     first_time = false;
   }
 
   len += sprintf(buf+len, ")");
 
-  assert(len <= 1000);
+  //assert(len <= 1000);
+  assert(len <= buf_size);
 
   return buf;
 }
