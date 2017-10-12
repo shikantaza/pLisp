@@ -7,8 +7,11 @@ mkdir $pkg
 
 mkdir -p $pkg/usr/local/bin
 mkdir -p $pkg/usr/local/lib
+mkdir -p $pkg/usr/local/lib/tcc
 mkdir -p $pkg/usr/local/share/plisp/icons
 mkdir -p $pkg/usr/local/share/doc/plisp
+
+cp /usr/local/lib/tcc/libtcc1.a $pkg/usr/local/lib/tcc
 
 cp ../plisp $pkg/usr/local/bin
 
