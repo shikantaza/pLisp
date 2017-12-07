@@ -5516,7 +5516,7 @@ void add_native_fn_source(nativefn fn, char *source)
 
 char *get_native_fn_source(nativefn fn)
 {
-  if(fn == (nativefn)identity_function)
+  if(fn == (nativefn)identity_function || fn == 0xbaadf00d)
     return "uintptr_t identity_function(uintptr_t closure, uintptr_t x) {  return x; }";
   int i;
   for(i=0; i<nof_native_fns; i++)
@@ -5624,8 +5624,8 @@ void throw_exception1(char *excp_name, char *excp_str)
     return;
 
   in_error = true;
-  //exception_object = cons(get_symbol_object(excp_name), get_string_object(excp_str));
-  exception_object = list(2, get_symbol_object(excp_name), get_string_object(excp_str));
+  exception_object = cons(get_symbol_object(excp_name), get_string_object(excp_str));
+  //exception_object = list(2, get_symbol_object(excp_name), get_string_object(excp_str));
 }
 
 void disable_exception_handlers()

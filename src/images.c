@@ -1289,7 +1289,7 @@ int load_from_image(char *file_name)
 
       gtk_text_view_set_editable(system_browser_textview, FALSE);
 
-      if(IS_CLOSURE_OBJECT(obj))
+      if(IS_FUNCTION2_OBJECT(obj))
       {
         memset(buf, '\0', MAX_STRING_LENGTH);
         OBJECT_PTR temp = cons(DEFUN,
@@ -1303,7 +1303,7 @@ int load_from_image(char *file_name)
 
         gtk_text_view_set_editable(system_browser_textview, TRUE);
       }
-      else if(IS_MACRO_OBJECT(obj))
+      else if(IS_MACRO2_OBJECT(obj))
       {
         memset(buf, '\0', MAX_STRING_LENGTH);
         OBJECT_PTR temp = cons(DEFMACRO,

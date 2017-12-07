@@ -1415,23 +1415,33 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       {
         length += sprintf(buf+filled_buf_len+length, " ");
 
-        length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+        //length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
 
-        OBJECT_PTR rest = CDDR(obj);
-
-        while(rest != NIL)
+        if(IS_CONS_OBJECT(cdr(obj)))
         {
-          length += sprintf(buf+filled_buf_len+length, "\n");
+          length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
 
-          for(i=0; i<indents+1; i++)
-            length += sprintf(buf+filled_buf_len+length, " ");
+          OBJECT_PTR rest = CDDR(obj);
 
-          for(i=0; i<strlen(s); i++)
-            length += sprintf(buf+filled_buf_len+length, " ");
+          while(rest != NIL)
+          {
+            length += sprintf(buf+filled_buf_len+length, "\n");
 
-          length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+            for(i=0; i<indents+1; i++)
+              length += sprintf(buf+filled_buf_len+length, " ");
 
-          rest = cdr(rest);
+            for(i=0; i<strlen(s); i++)
+              length += sprintf(buf+filled_buf_len+length, " ");
+
+            length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+
+            rest = cdr(rest);
+          }
+        }
+        else
+        {
+          length += sprintf(buf+filled_buf_len+length, ". ");
+          length += print_object_to_string(cdr(obj), buf, filled_buf_len+length);
         }
       }
 
