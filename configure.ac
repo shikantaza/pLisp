@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([plisp], [0.1.8], [rajesh.jayaprakash@gamil.com], [plisp], [https://github.com/shikantaza/plisp])
+AC_INIT([plisp], [0.1.9], [rajesh.jayaprakash@gamil.com], [plisp], [https://github.com/shikantaza/plisp])
 AC_PREREQ([2.68])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADERS([config.h])
