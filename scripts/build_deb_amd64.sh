@@ -1,6 +1,6 @@
 #!/bin/sh
 ver=$1
-arch=$2
+arch=amd64
 pkg=plisp_$ver-1_$arch
 
 mkdir $pkg
