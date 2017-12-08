@@ -1035,7 +1035,7 @@ BOOLEAN is_valid_defun_defmacro_exp(OBJECT_PTR exp)
   if(!IS_SYMBOL_OBJECT(second(exp)))
     return false;
 
-  if(!IS_CONS_OBJECT(third(exp)))
+  if(!IS_CONS_OBJECT(third(exp)) && third(exp) != NIL)
     return false;
 
   OBJECT_PTR rest = third(exp);
@@ -1053,6 +1053,8 @@ BOOLEAN is_valid_defun_defmacro_exp(OBJECT_PTR exp)
 
 int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
+  assert(IS_CONS_OBJECT(obj));
+
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
 
@@ -1066,7 +1068,12 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
   BOOLEAN macro_form;
 
-  assert(IS_CONS_OBJECT(obj));
+  BOOLEAN let_star;
+
+  if(car_obj == get_symbol_object("LET*"))
+    let_star = true;
+  else
+    let_star = false;
 
   for(ptr=buf+filled_buf_len; ptr>=buf; ptr--)
   {
@@ -1079,6 +1086,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
      (car_obj == LET && !is_valid_let_exp(obj, false)) ||
      (car_obj == LET1 && !is_valid_let1_exp(obj,false)) ||
      (car_obj == LETREC && !is_valid_letrec_exp(obj, false)) ||
+     (let_star && !is_valid_let_exp(obj, false)) ||
      (car_obj == LAMBDA && !is_valid_lambda_exp(obj)) ||
      (car_obj == MACRO && !is_valid_macro_exp(obj)))
   {
@@ -1138,6 +1146,24 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
 
+  if(let_star && !is_valid_let_exp(obj, false))
+  {
+    OBJECT_PTR rest = cdr(obj);
+
+    length += sprintf(buf+filled_buf_len+length, "(let* ");
+
+    while(rest != NIL)
+    {
+      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
+      rest = cdr(rest);
+      if(rest != NIL)
+        length += sprintf(buf+filled_buf_len+length, " ");
+    }
+    length += sprintf(buf+filled_buf_len+length, ")");
+
+    return length;
+  }
+
   if(car_obj == LET1 && !is_valid_let1_exp(obj, false))
   {
     OBJECT_PTR rest = cdr(obj);
@@ -1179,6 +1205,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
      car_obj == LET     ||
      car_obj == LET1    ||
      car_obj == LETREC  ||
+     let_star           ||
      //car_obj == WHILE   ||
      car_obj == DOTIMES ||
      car_obj == DOLIST)
@@ -1195,6 +1222,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       length += sprintf(buf+filled_buf_len+length, "(let1 ");
     else if(car_obj == LETREC)
       length += sprintf(buf+filled_buf_len+length, "(letrec ");
+    else if(let_star)
+      length += sprintf(buf+filled_buf_len+length, "(let* ");
     /* else if(car_obj == WHILE) */
     /*   length += sprintf(buf+filled_buf_len+length, "(while "); */
     else if(car_obj == DOTIMES)
@@ -1202,7 +1231,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     else if(car_obj == DOLIST)
       length += sprintf(buf+filled_buf_len+length, "(dolist ");
 
-    if(car_obj != LET && car_obj != LET1 && car_obj != LETREC)
+    if(car_obj != LET && car_obj != LET1 && car_obj != LETREC && !let_star)
       length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
     else
     {
@@ -1225,7 +1254,9 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
           length += sprintf(buf+filled_buf_len+length, " ");
 
         if(car_obj == LET)
-          length += sprintf(buf+filled_buf_len+length, "      ");        
+          length += sprintf(buf+filled_buf_len+length, "      ");
+        else if(let_star)
+          length += sprintf(buf+filled_buf_len+length, "       ");
         else
           length += sprintf(buf+filled_buf_len+length, "       ");        
 
