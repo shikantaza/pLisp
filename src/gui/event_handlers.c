@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -2504,11 +2504,11 @@ void build_autocomplete_words()
                                     "return-from", "throw" ,"string", "make-array", "array-get", "array-set", "sub-array", "array-length", 
                                     "print-string", "consp", "listp", "integerp", "floatp", "characterp", "symbolp", "stringp",
                                     "arrayp", "closurep", "macrop", "continuationp", "load-foreign-library", "create-package",
-                                    "in-package", "export-package", "create-image", "save-object", "load-object", "load-file", "profile",
+                                    "in-package", "export-package", "import-package", "create-image", "save-object", "load-object", "load-file", "profile",
                                     "time", "env", "expand-macro", "eval", "break", "resume", "abort"};
 
 
-  nof_autocomplete_words = 66;
+  nof_autocomplete_words = 67;
   autocomplete_words = (char **)GC_MALLOC(nof_autocomplete_words * sizeof(char *));
   
   assert(autocomplete_words);

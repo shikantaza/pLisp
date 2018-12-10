@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -70,6 +70,9 @@ OBJECT_PTR debug_stack;
 BOOLEAN macro_expansion_in_progress;
 
 OBJECT_PTR continuation_to_resume;
+
+unsigned int nof_pkg_import_entries;
+pkg_import_t *pkg_import_entries;
 
 //end of global variables
 
@@ -165,6 +168,7 @@ extern OBJECT_PTR CALL_FF_INTERNAL;
 extern OBJECT_PTR CREATE_PACKAGE;
 extern OBJECT_PTR IN_PACKAGE;
 extern OBJECT_PTR EXPORT_PACKAGE;
+extern OBJECT_PTR IMPORT_PACKAGE;
 extern OBJECT_PTR CREATE_IMAGE;
 extern OBJECT_PTR SAVE_OBJECT;
 extern OBJECT_PTR LOAD_OBJECT;
@@ -2457,7 +2461,8 @@ BOOLEAN package_op(OBJECT_PTR sym)
 {
   return sym == CREATE_PACKAGE ||
     sym == IN_PACKAGE          ||
-    sym == EXPORT_PACKAGE;
+    sym == EXPORT_PACKAGE      ||
+    sym == IMPORT_PACKAGE;
 }
 
 BOOLEAN serialization_op(OBJECT_PTR sym)
@@ -2968,6 +2973,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "prim_in_package");
       else if(var == EXPORT_PACKAGE)
         sprintf(s, "prim_export_pkg");
+      else if(var == IMPORT_PACKAGE)
+        sprintf(s, "prim_import_package");
       else if(var == CREATE_IMAGE)
         sprintf(s, "prim_create_image");
       else if(var == SAVE_OBJECT)
@@ -3581,6 +3588,40 @@ int get_top_level_sym_value(OBJECT_PTR sym, OBJECT_PTR *out)
   /*     return 0; */
   /*   } */
   /* } */
+
+  //check the imported packages
+  for(i=0; i<nof_pkg_import_entries; i++)
+  {
+    if(pkg_import_entries[i].delete_flag)
+      continue;
+
+    if(pkg_import_entries[i].pkg_index == current_package)
+    {
+      int symbol_index = extract_symbol_index(sym);
+
+      char *symbol_name = get_symbol_name(sym);
+
+      int index = find_symbol(symbol_name, pkg_import_entries[i].imported_pkg_index);
+
+      if(index != NOT_FOUND)
+      {
+        OBJECT_PTR sym1 = build_symbol_object(pkg_import_entries[i].imported_pkg_index, index);
+
+        OBJECT_PTR out1;
+
+        int retval;
+
+        retval = get_top_level_sym_value(sym1, &out1);
+
+        if(!retval)
+        {
+          *out = out1;
+          return 0;
+        }
+      }
+    }
+  }
+  //end of checking the imported packages
 
   return 1;
 }
@@ -5889,7 +5930,7 @@ BOOLEAN is_continuation_object(OBJECT_PTR obj)
 
 BOOLEAN is_core_symbol(char *s)
 {
-  char *core_symbols[77] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET*", "LETREC", "BREAK", "ABORT", "RESUME",
+  char *core_symbols[78] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET*", "LETREC", "BREAK", "ABORT", "RESUME",
                             "IF", "CALL/CC", "RETURN-FROM", "CATCH", "THROW",  "ATOM", "EQ", "CAR", "CDR",
                             "CONS", "+", "-", "*", "/", "PROGN", "PRINT", "LIST", "LISTP", "SYMBOL-VALUE", "GENSYM",
                             "SETCAR", "SETCDR", "CREATE-PACKAGE", "IN-PACKAGE", "EXPAND-MACRO", "APPLY",
@@ -5897,9 +5938,9 @@ BOOLEAN is_core_symbol(char *s)
                             "LOAD-FOREIGN-LIBRARY", "CALL-FOREIGN-FUNCTION", "ENV", "EVAL", "LOAD-FILE", "CONSP", "INTEGERP", "FLOATP",
                             "CHARACTERP", "SYMBOLP", "STRINGP", "ARRAYP", "CLOSUREP", "MACROP", "CONTINUATIONP", "FORMAT", "CLONE",
                             "SYMBOL", "SYMBOL-NAME", "UNBIND", "NEWLINE", "TIME", "PROFILE", "NOT", "<", ">", "<=", ">=", "NEQ",
-                            "SAVE-OBJECT", "LOAD-OBJECT", "EXPORT-PACKAGE"};
+                            "SAVE-OBJECT", "LOAD-OBJECT", "EXPORT-PACKAGE", "IMPORT-PACKAGE"};
 
-  int nof_core_symbols = 77;
+  int nof_core_symbols = 78;
 
   int i;
 
@@ -6098,7 +6139,8 @@ char *get_signature_for_core_symbol(char *symbol_name)
     ret = "(load-object str)";
   else if(!strcmp(s,"EXPORT-PACKAGE"))
     ret = "(export-package package-name str)";
-
+  else if(!strcmp(s,"IMPORT-PACKAGE"))
+    ret = "(import-package package-name)";
   //free(s);
   
   return ret;
@@ -6393,6 +6435,7 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
   len += sprintf(buf+len, "uintptr_t prim_create_pkg(uintptr_t);\n");
   len += sprintf(buf+len, "uintptr_t prim_in_package(uintptr_t);\n");
   len += sprintf(buf+len, "uintptr_t prim_export_pkg(uintptr_t, uintptr_t);\n");
+  len += sprintf(buf+len, "uintptr_t prim_import_package(uintptr_t);\n");
 
   len += sprintf(buf+len, "uintptr_t prim_create_image(uintptr_t);\n");
   len += sprintf(buf+len, "uintptr_t prim_serialize(uintptr_t, uintptr_t);\n");

@@ -6,6 +6,7 @@
 <b><a href="#C">C</a> | </b>
 <b><a href="#D">D</a> | </b>
 <b><a href="#E">E</a> | </b>
+<b><a href="#I">I</a> | </b>
 <b><a href="#F">F</a> | </b>
 <b><a href="#G">G</a> | </b>
 <b><a href="#I">I</a> | </b>
@@ -87,6 +88,10 @@
 <li><a href="#exception">exception</a></li><br/>
 <li><a href="#expand-macro">expand-macro</a></li><br/>
 <li><a href="#export-package">export-package</a></li><br/>
+</ul>
+<br/><b><a name="I">I</a></b><br/>
+<ul style="padding-left:40px">
+<li><a href="#import-package">import-package</a></li><br/>
 </ul>
 <br/><b><a name="F">F</a></b><br/>
 <ul style="padding-left:40px">
@@ -597,7 +602,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no arguments are passed, and an exception of type INVALID-ARGUMENT if the argument is not a string object. An exception of type PACKAGE-ALREADY-EXISTS is thrown if the package with name package-name already exists<br/><br/>
 <b>Examples:</b><br/><br/>
 (create-package "pkg") => "PKG"<br/><br/><b>See Also:</b> 
-<a href="#export-package">export-package</a>, <a href="#in-package">in-package</a><hr/>
+<a href="#export-package">export-package</a>, <a href="#in-package">in-package</a>, <a href="#import-package">import-package</a><hr/>
 <a name="define"></a>
 <i>Special Operator</i><b> define</b><br/><br/>
 <b>Syntax:</b> (define var form) => var<br/><br/>
@@ -714,7 +719,16 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of parameters is not  passed and an exception of type PACKAGE-NOT-FOUND if <i>package-name</i> does not exist<br/><br/>
 <b>Examples:</b><br/><br/>
 (export-package "user" "user.lisp") => NIL<br/><br/><b>See Also:</b> 
-<a href="#create-package">create-package</a>, <a href="#in-package">in-package</a><hr/>
+<a href="#create-package">create-package</a>, <a href="#in-package">in-package</a>, <a href="#import-package">import-package</a><hr/>
+<a name="import-package"></a>
+<i>Special Operator</i><b> import-package</b><br/><br/>
+<b>Syntax:</b> (import-package package-name) => NIL<br/><br/>
+<b>Arguments:</b> package-name: a form that evaluates to a string<br/><br/>
+<b>Description: import-package</b> makes available the symbols (and their bound values)  of the package <i>package-name</i> to the current package<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of parameters is not  passed and an exception of type PACKAGE-NOT-FOUND if <i>package-name</i> does not exist. An exception of type EXCEPTION is thrown if a package is attempted to be imported into itself, or if it is attempted to import the CORE package.<br/><br/>
+<b>Examples:</b><br/><br/>
+(import-package "user") => NIL<br/><br/><b>See Also:</b> 
+<a href="#create-package">create-package</a>, <a href="#in-package">in-package</a>, <a href="#export-package">export-package</a><hr/>
 <a name="fifth"></a>
 <i>Macro</i><b> fifth</b><br/><br/>
 <b>Syntax:</b> (fifth lst) => result<br/><br/>
@@ -828,10 +842,10 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Syntax:</b> (in-package package-name) => NIL<br/><br/>
 <b>Arguments:</b> package-name: a form that evaluates to a string<br/><br/>
 <b>Description: in-package</b> sets the current package to <i>package-name</i><br/><br/>
-<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception of type ACCESS-VIOLATION if applied to the CORE package. Throws an exception of type PACKAGE-NOT-FOUND if <i>package-name</i> does not exist<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception of type ACCESS-VIOLATION if applied to the CORE package. Throws an exception of type PACKAGE-NOT-FOUND if <i>package-name</i> does not exist.<br/><br/>
 <b>Examples:</b><br/><br/>
 (in-package "some-package") => NIL<br/><br/><b>See Also:</b> 
-<a href="#create-package">create-package</a>, <a href="#export-package">export-package</a><hr/>
+<a href="#create-package">create-package</a>, <a href="#export-package">export-package</a>, <a href="#import-package">import-package</a><hr/>
 <a name="incf"></a>
 <i>Macro</i><b> incf</b><br/><br/>
 <b>Syntax:</b> (incf var) => result<br/><br/>

@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -156,70 +156,72 @@ OBJECT_PTR COMPILEFN             = (OBJECT_PTR)((82 << OBJECT_SHIFT) + SYMBOL_TA
 OBJECT_PTR EXPORT_PACKAGE        = (OBJECT_PTR)((83 << OBJECT_SHIFT) + SYMBOL_TAG);
 
 OBJECT_PTR COMPILE_EXP           = (OBJECT_PTR)((84 << OBJECT_SHIFT) + SYMBOL_TAG);
+
+OBJECT_PTR IMPORT_PACKAGE        = (OBJECT_PTR)((85 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end of standard object definition
 
 /* symbols corresponding to assembler mnemonics */
-OBJECT_PTR HALT     = (OBJECT_PTR)((85 << OBJECT_SHIFT) + SYMBOL_TAG);                  
-OBJECT_PTR REFER    = (OBJECT_PTR)((86 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CONSTANT = (OBJECT_PTR)((87 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CLOSE    = (OBJECT_PTR)((88 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR TEST     = (OBJECT_PTR)((89 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR ASSIGN   = (OBJECT_PTR)((90 << OBJECT_SHIFT) + SYMBOL_TAG);         
-OBJECT_PTR CONTI    = (OBJECT_PTR)((91 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR NUATE    = (OBJECT_PTR)((92 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR FRAME    = (OBJECT_PTR)((93 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR ARGUMENT = (OBJECT_PTR)((94 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR HALT     = (OBJECT_PTR)((86 << OBJECT_SHIFT) + SYMBOL_TAG);                  
+OBJECT_PTR REFER    = (OBJECT_PTR)((87 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CONSTANT = (OBJECT_PTR)((88 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CLOSE    = (OBJECT_PTR)((89 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR TEST     = (OBJECT_PTR)((90 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ASSIGN   = (OBJECT_PTR)((91 << OBJECT_SHIFT) + SYMBOL_TAG);         
+OBJECT_PTR CONTI    = (OBJECT_PTR)((92 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR NUATE    = (OBJECT_PTR)((93 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR FRAME    = (OBJECT_PTR)((94 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ARGUMENT = (OBJECT_PTR)((95 << OBJECT_SHIFT) + SYMBOL_TAG);
 /* APPLY already defined as a special symbol */
 /* RETURN already defined as a special symbol */
 /* DEFINE already defind as a special symbol */
-OBJECT_PTR MACRO    = (OBJECT_PTR)((95 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR MACRO    = (OBJECT_PTR)((96 << OBJECT_SHIFT) + SYMBOL_TAG);
 /* end symbols corresponding to assembler mnemonics */
 
 /* symbols useful in FFI */
-OBJECT_PTR INTEGR        = (OBJECT_PTR)((96 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR FLOT          = (OBJECT_PTR)((97 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR INTEGR        = (OBJECT_PTR)((97 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR FLOT          = (OBJECT_PTR)((98 << OBJECT_SHIFT) + SYMBOL_TAG);
 
 #ifdef WIN32
-OBJECT_PTR CHAR1         = (OBJECT_PTR)((98 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR VOID1         = (OBJECT_PTR)((99 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CHAR1         = (OBJECT_PTR)((99 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR VOID1         = (OBJECT_PTR)((100 << OBJECT_SHIFT) + SYMBOL_TAG);
 #else
-OBJECT_PTR CHAR          = (OBJECT_PTR)((98 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR VOID          = (OBJECT_PTR)((99 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CHAR          = (OBJECT_PTR)((99 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR VOID          = (OBJECT_PTR)((100 << OBJECT_SHIFT) + SYMBOL_TAG);
 #endif
 
-OBJECT_PTR INT_POINTER   = (OBJECT_PTR)((100 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR FLOAT_POINTER = (OBJECT_PTR)((101 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CHAR_POINTER  = (OBJECT_PTR)((102 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR INT_POINTER   = (OBJECT_PTR)((101 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR FLOAT_POINTER = (OBJECT_PTR)((102 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CHAR_POINTER  = (OBJECT_PTR)((103 << OBJECT_SHIFT) + SYMBOL_TAG);
 /* end symbols useful in FFI */
 
-OBJECT_PTR LET           = (OBJECT_PTR)((103 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR COND          = (OBJECT_PTR)((104 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DOTIMES       = (OBJECT_PTR)((105 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DOLIST        = (OBJECT_PTR)((106 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LET           = (OBJECT_PTR)((104 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR COND          = (OBJECT_PTR)((105 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DOTIMES       = (OBJECT_PTR)((106 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DOLIST        = (OBJECT_PTR)((107 << OBJECT_SHIFT) + SYMBOL_TAG);
 
-OBJECT_PTR LET1          = (OBJECT_PTR)((107 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DEFUN         = (OBJECT_PTR)((108 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR DEFMACRO      = (OBJECT_PTR)((109 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LET1          = (OBJECT_PTR)((108 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DEFUN         = (OBJECT_PTR)((109 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DEFMACRO      = (OBJECT_PTR)((110 << OBJECT_SHIFT) + SYMBOL_TAG);
 
 //symbols needed for compile-exp
-OBJECT_PTR NTH               = (OBJECT_PTR)((110 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR NTH               = (OBJECT_PTR)((111 << OBJECT_SHIFT) + SYMBOL_TAG);
 //OBJECT_PTR CALL_CC1          = (OBJECT_PTR)((111 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR MY_CONT_VAR       = (OBJECT_PTR)((111 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR SAVE_CONTINUATION = (OBJECT_PTR)((112 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR LETREC            = (OBJECT_PTR)((113 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR EXTRACT_NATIVE_FN = (OBJECT_PTR)((114 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CREATE_FN_CLOSURE = (OBJECT_PTR)((115 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CONCAT            = (OBJECT_PTR)((116 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR GET_CONTINUATION  = (OBJECT_PTR)((117 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR THROW             = (OBJECT_PTR)((118 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR GET_EXCEPTION_HANDLER  = (OBJECT_PTR)((119 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR ADD_EXCEPTION_HANDLER  = (OBJECT_PTR)((120 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR CALL_FF_INTERNAL  = (OBJECT_PTR)((121 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR REPL_FUNCTION     = (OBJECT_PTR)((122 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR SAVE_CONTINUATION_TO_RESUME     = (OBJECT_PTR)((123 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR MY_CONT_VAR       = (OBJECT_PTR)((112 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR SAVE_CONTINUATION = (OBJECT_PTR)((113 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR LETREC            = (OBJECT_PTR)((114 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR EXTRACT_NATIVE_FN = (OBJECT_PTR)((115 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CREATE_FN_CLOSURE = (OBJECT_PTR)((116 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CONCAT            = (OBJECT_PTR)((117 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR GET_CONTINUATION  = (OBJECT_PTR)((118 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR THROW             = (OBJECT_PTR)((119 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR GET_EXCEPTION_HANDLER  = (OBJECT_PTR)((120 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ADD_EXCEPTION_HANDLER  = (OBJECT_PTR)((121 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR CALL_FF_INTERNAL  = (OBJECT_PTR)((122 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR REPL_FUNCTION     = (OBJECT_PTR)((123 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR SAVE_CONTINUATION_TO_RESUME     = (OBJECT_PTR)((124 << OBJECT_SHIFT) + SYMBOL_TAG);
 
-OBJECT_PTR DISABLE_EXCEPTION_HANDLERS = (OBJECT_PTR)((124 << OBJECT_SHIFT) + SYMBOL_TAG);
-OBJECT_PTR ENABLE_EXCEPTION_HANDLERS  = (OBJECT_PTR)((125 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR DISABLE_EXCEPTION_HANDLERS = (OBJECT_PTR)((125 << OBJECT_SHIFT) + SYMBOL_TAG);
+OBJECT_PTR ENABLE_EXCEPTION_HANDLERS  = (OBJECT_PTR)((126 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
 //for performance
@@ -232,7 +234,7 @@ extern FILE *yyin;
 
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
-#define NOF_SPECIAL_SYMBOLS     85
+#define NOF_SPECIAL_SYMBOLS     86
 #define NOF_NON_SPECIAL_SYMBOLS 41
 
 char err_buf[500];
@@ -317,8 +319,11 @@ extern OBJECT_PTR concat(unsigned int, ...);
 extern OBJECT_PTR reverse(OBJECT_PTR);
 extern BOOLEAN primop(OBJECT_PTR);
 
+extern unsigned int nof_pkg_import_entries;
+extern pkg_import_t *pkg_import_entries;
+
 //variables moved from original compiler.c
-char *default_transcript_text =  "Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
+char *default_transcript_text =  "Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
                                  "pLisp is free software: you can redistribute it and/or modify\n"
                                  "it under the terms of the GNU General Public License as published by\n"
                                  "the Free Software Foundation, either version 3 of the License, or\n"
@@ -380,6 +385,9 @@ void initialize()
   idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
 
   continuation_to_resume = NIL;
+
+  nof_pkg_import_entries = 0;
+  pkg_import_entries = NULL;
 }
 
 int add_string(char *str)
@@ -701,7 +709,7 @@ void cleanup()
 void print_copyright_notice()
 {
   fprintf(stdout, "pLisp is an interpreter for a Lisp-1 dialect.\n\n");
-  fprintf(stdout, "Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n");
+  fprintf(stdout, "Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n");
 
   fprintf(stdout, "pLisp is free software: you can redistribute it and/or modify\n");
   fprintf(stdout, "it under the terms of the GNU General Public License as published by\n");
@@ -2413,64 +2421,66 @@ void initialize_core_package()
 
   packages[CORE_PACKAGE_INDEX].symbols[84] = strdup("COMPILE-EXP");
 
+  packages[CORE_PACKAGE_INDEX].symbols[85] = strdup("IMPORT-PACKAGE");
+
   /* symbols corresponding to assembler mnemonics */
-  packages[CORE_PACKAGE_INDEX].symbols[85] =  strdup("HALT");
-  packages[CORE_PACKAGE_INDEX].symbols[86] =  strdup("REFER");
-  packages[CORE_PACKAGE_INDEX].symbols[87] =  strdup("CONSTANT");
-  packages[CORE_PACKAGE_INDEX].symbols[88] =  strdup("CLOSE");
-  packages[CORE_PACKAGE_INDEX].symbols[89] =  strdup("TEST");
-  packages[CORE_PACKAGE_INDEX].symbols[90] =  strdup("ASSIGN");         
-  packages[CORE_PACKAGE_INDEX].symbols[91] =  strdup("CONTI");
-  packages[CORE_PACKAGE_INDEX].symbols[92] =  strdup("NUATE");
-  packages[CORE_PACKAGE_INDEX].symbols[93] =  strdup("FRAME");
-  packages[CORE_PACKAGE_INDEX].symbols[94] =  strdup("ARGUMENT");
+  packages[CORE_PACKAGE_INDEX].symbols[86] =  strdup("HALT");
+  packages[CORE_PACKAGE_INDEX].symbols[87] =  strdup("REFER");
+  packages[CORE_PACKAGE_INDEX].symbols[88] =  strdup("CONSTANT");
+  packages[CORE_PACKAGE_INDEX].symbols[89] =  strdup("CLOSE");
+  packages[CORE_PACKAGE_INDEX].symbols[90] =  strdup("TEST");
+  packages[CORE_PACKAGE_INDEX].symbols[91] =  strdup("ASSIGN");         
+  packages[CORE_PACKAGE_INDEX].symbols[92] =  strdup("CONTI");
+  packages[CORE_PACKAGE_INDEX].symbols[93] =  strdup("NUATE");
+  packages[CORE_PACKAGE_INDEX].symbols[94] =  strdup("FRAME");
+  packages[CORE_PACKAGE_INDEX].symbols[95] =  strdup("ARGUMENT");
   /* APPLY already defined as a special symbol */
   /* RETURN already defined as a special symbol */
   /* DEFINE already defined as a special symbol */
-  packages[CORE_PACKAGE_INDEX].symbols[95] = strdup("MACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[96] = strdup("MACRO");
   /* end symbols corresponding to assembler mnemonics */
 
   /* symbols for FFI */
-  packages[CORE_PACKAGE_INDEX].symbols[96] = strdup("INTEGER");
-  packages[CORE_PACKAGE_INDEX].symbols[97] = strdup("FLOAT");
-  packages[CORE_PACKAGE_INDEX].symbols[98] = strdup("CHARACTER");
-  packages[CORE_PACKAGE_INDEX].symbols[99] = strdup("VOID");
-  packages[CORE_PACKAGE_INDEX].symbols[100] = strdup("INTEGER-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[101] = strdup("FLOAT-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[102] = strdup("CHARACTER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[97] = strdup("INTEGER");
+  packages[CORE_PACKAGE_INDEX].symbols[98] = strdup("FLOAT");
+  packages[CORE_PACKAGE_INDEX].symbols[99] = strdup("CHARACTER");
+  packages[CORE_PACKAGE_INDEX].symbols[100] = strdup("VOID");
+  packages[CORE_PACKAGE_INDEX].symbols[101] = strdup("INTEGER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[102] = strdup("FLOAT-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[103] = strdup("CHARACTER-POINTER");
   /* end symbols for FFI */
 
-  packages[CORE_PACKAGE_INDEX].symbols[103] = strdup("LET");
-  packages[CORE_PACKAGE_INDEX].symbols[104] = strdup("COND");
-  packages[CORE_PACKAGE_INDEX].symbols[105] = strdup("DOTIMES");
-  packages[CORE_PACKAGE_INDEX].symbols[106] = strdup("DOLIST");
+  packages[CORE_PACKAGE_INDEX].symbols[104] = strdup("LET");
+  packages[CORE_PACKAGE_INDEX].symbols[105] = strdup("COND");
+  packages[CORE_PACKAGE_INDEX].symbols[106] = strdup("DOTIMES");
+  packages[CORE_PACKAGE_INDEX].symbols[107] = strdup("DOLIST");
 
-  packages[CORE_PACKAGE_INDEX].symbols[107] = strdup("LET2");
-  packages[CORE_PACKAGE_INDEX].symbols[108] = strdup("DEFUN");
-  packages[CORE_PACKAGE_INDEX].symbols[109] = strdup("DEFMACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[108] = strdup("LET2");
+  packages[CORE_PACKAGE_INDEX].symbols[109] = strdup("DEFUN");
+  packages[CORE_PACKAGE_INDEX].symbols[110] = strdup("DEFMACRO");
 
-  packages[CORE_PACKAGE_INDEX].symbols[110] = strdup("NTH1");
+  packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("NTH1");
   //packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("CALL-CC");
-  packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("MY-CONT-VAR");
-  packages[CORE_PACKAGE_INDEX].symbols[112] = strdup("SAVE-CONTINUATION");
-  packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("LETREC");
-  packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("EXTRACT-NATIVE-FN");
-  packages[CORE_PACKAGE_INDEX].symbols[115] = strdup("CREATE-FN-CLOSURE");
-  packages[CORE_PACKAGE_INDEX].symbols[116] = strdup("PRIM-CONCAT");
-  packages[CORE_PACKAGE_INDEX].symbols[117] = strdup("GET-CONTINUATION");
+  packages[CORE_PACKAGE_INDEX].symbols[112] = strdup("MY-CONT-VAR");
+  packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("SAVE-CONTINUATION");
+  packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("LETREC");
+  packages[CORE_PACKAGE_INDEX].symbols[115] = strdup("EXTRACT-NATIVE-FN");
+  packages[CORE_PACKAGE_INDEX].symbols[116] = strdup("CREATE-FN-CLOSURE");
+  packages[CORE_PACKAGE_INDEX].symbols[117] = strdup("PRIM-CONCAT");
+  packages[CORE_PACKAGE_INDEX].symbols[118] = strdup("GET-CONTINUATION");
 
-  packages[CORE_PACKAGE_INDEX].symbols[118] = strdup("THROW");
-  packages[CORE_PACKAGE_INDEX].symbols[119] = strdup("GET-EXCEPTION-HANDLER");
-  packages[CORE_PACKAGE_INDEX].symbols[120] = strdup("ADD-EXCEPTION-HANDLER");
+  packages[CORE_PACKAGE_INDEX].symbols[119] = strdup("THROW");
+  packages[CORE_PACKAGE_INDEX].symbols[120] = strdup("GET-EXCEPTION-HANDLER");
+  packages[CORE_PACKAGE_INDEX].symbols[121] = strdup("ADD-EXCEPTION-HANDLER");
 
-  packages[CORE_PACKAGE_INDEX].symbols[121] = strdup("PRIM-CALL-FF-INTERNAL");
+  packages[CORE_PACKAGE_INDEX].symbols[122] = strdup("PRIM-CALL-FF-INTERNAL");
 
-  packages[CORE_PACKAGE_INDEX].symbols[122] = strdup("REPL-FUNCTION");
+  packages[CORE_PACKAGE_INDEX].symbols[123] = strdup("REPL-FUNCTION");
 
-  packages[CORE_PACKAGE_INDEX].symbols[123] = strdup("SAVE-CONTINUATION-TO-RESUME");
+  packages[CORE_PACKAGE_INDEX].symbols[124] = strdup("SAVE-CONTINUATION-TO-RESUME");
 
-  packages[CORE_PACKAGE_INDEX].symbols[124] = strdup("DISABLE-EXCEPTION-HANDLERS");
-  packages[CORE_PACKAGE_INDEX].symbols[125] = strdup("ENABLE-EXCEPTION-HANDLERS");
+  packages[CORE_PACKAGE_INDEX].symbols[125] = strdup("DISABLE-EXCEPTION-HANDLERS");
+  packages[CORE_PACKAGE_INDEX].symbols[126] = strdup("ENABLE-EXCEPTION-HANDLERS");
 }
 
 int find_package(char* package_name)

@@ -397,7 +397,7 @@
    "desc" : "create-package creates a new package with the name 'package-name'. It returns the name of the newly-created package",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if no arguments are passed, and an exception of type INVALID-ARGUMENT if the argument is not a string object. An exception of type PACKAGE-ALREADY-EXISTS is thrown if the package with name package-name already exists",
    "examples" : [ "(create-package \"pkg\") => \"PKG\"" ],
-   "see-also" : [ "export-package", "in-package" ]
+   "see-also" : [ "export-package", "in-package", "import-package" ]
   },
 
   {"type" : 2, 
@@ -527,7 +527,17 @@
    "desc" : "export-package writes the contents of the package 'package-name' to the file specified by 'str'",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of parameters is not  passed and an exception of type PACKAGE-NOT-FOUND if 'package-name' does not exist",
    "examples" : [ "(export-package \"user\" \"user.lisp\") => NIL" ],
-   "see-also" : [ "create-package", "in-package" ]
+   "see-also" : [ "create-package", "in-package", "import-package" ]
+  },
+
+  {"type" : 2, 
+   "name" : "import-package", 
+   "syntax" : "(import-package package-name) => NIL",
+   "args" : "package-name: a form that evaluates to a string",
+   "desc" : "import-package makes available the symbols (and their bound values)  of the package 'package-name' to the current package",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of parameters is not  passed and an exception of type PACKAGE-NOT-FOUND if 'package-name' does not exist. An exception of type EXCEPTION is thrown if a package is attempted to be imported into itself, or if it is attempted to import the CORE package.",
+   "examples" : [ "(import-package \"user\") => NIL" ],
+   "see-also" : [ "create-package", "in-package", "export-package" ]
   },
 
   {"type" : 1, 
@@ -655,9 +665,9 @@
    "syntax" : "(in-package package-name) => NIL",
    "args" : "package-name: a form that evaluates to a string",
    "desc" : "in-package sets the current package to 'package-name'",
-   "exceptions" : "Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception of type ACCESS-VIOLATION if applied to the CORE package. Throws an exception of type PACKAGE-NOT-FOUND if 'package-name' does not exist",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if no parameters are passed. Throws an exception of type ACCESS-VIOLATION if applied to the CORE package. Throws an exception of type PACKAGE-NOT-FOUND if 'package-name' does not exist.",
    "examples" : [ "(in-package \"some-package\") => NIL" ],
-   "see-also" : [ "create-package", "export-package" ]
+   "see-also" : [ "create-package", "export-package", "import-package" ]
   },
 
   {"type" : 1, 

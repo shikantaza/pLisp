@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -118,6 +118,7 @@ extern OBJECT_PTR prim_call_fgn_func(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR prim_create_pkg(OBJECT_PTR);
 extern OBJECT_PTR prim_in_package(OBJECT_PTR);
 extern OBJECT_PTR prim_export_pkg(OBJECT_PTR, OBJECT_PTR);
+extern OBJECT_PTR prim_import_package(OBJECT_PTR);
 
 extern OBJECT_PTR prim_create_image(OBJECT_PTR);
 extern OBJECT_PTR prim_serialize(OBJECT_PTR, OBJECT_PTR);
@@ -231,9 +232,10 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "prim_load_fgn_lib",  prim_load_fgn_lib);
   tcc_add_symbol(tcc_state, "prim_call_fgn_func", prim_call_fgn_func);
 
-  tcc_add_symbol(tcc_state, "prim_create_pkg",    prim_create_pkg);
-  tcc_add_symbol(tcc_state, "prim_in_package",    prim_in_package);
-  tcc_add_symbol(tcc_state, "prim_export_pkg",    prim_export_pkg);
+  tcc_add_symbol(tcc_state, "prim_create_pkg",        prim_create_pkg);
+  tcc_add_symbol(tcc_state, "prim_in_package",        prim_in_package);
+  tcc_add_symbol(tcc_state, "prim_export_pkg",        prim_export_pkg);
+  tcc_add_symbol(tcc_state, "prim_import_package",    prim_import_package);
 
   tcc_add_symbol(tcc_state, "prim_create_image",  prim_create_image);
   tcc_add_symbol(tcc_state, "prim_serialize",     prim_serialize);

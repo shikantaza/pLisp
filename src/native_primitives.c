@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -129,6 +129,9 @@ extern void serialize(OBJECT_PTR, char *);
 extern int deserialize(char *);
 extern OBJECT_PTR compile_and_evaluate(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR handle_exception();
+
+extern unsigned int nof_pkg_import_entries;
+extern pkg_import_t *pkg_import_entries;
 
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
@@ -1649,6 +1652,74 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
   } //end of for
 
   fclose(fp);
+
+  return NIL;
+}
+
+OBJECT_PTR prim_import_package(OBJECT_PTR package)
+{
+  char *package_name;
+
+  if(!IS_STRING_LITERAL_OBJECT(package) && !is_string_object(package))
+  {
+    throw_exception1("INVALID-ARGUMENT", "IMPORT-PACKAGE requires a string object or string literal as its argument");
+    return NIL;
+  }
+
+  package_name = (char *)convert_to_upper_case(strings[(int)package >> OBJECT_SHIFT]);
+
+  if(!strcmp(package_name,"CORE"))
+  {
+    //TODO: see if this really needs to be an exception
+    throw_exception1("EXCEPTION", "Core package doesn't have to be explicitly imported");
+    return NIL;
+  }
+  else
+  {
+    int index = find_package(package_name);
+
+    if(index == current_package)
+    {
+      throw_exception1("EXCEPTION", "Attempting to import package into itself");
+      return NIL;      
+    }
+    else if(index == NOT_FOUND)
+    {
+      throw_exception1("PACKAGE-NOT-FOUND", "Package does not exist");
+      return NIL;
+    }
+    else
+    {
+      int i;
+
+      for(i=0; i<nof_pkg_import_entries; i++)
+      {
+        if(pkg_import_entries[i].delete_flag)
+          continue;
+        
+        //the to-be-imported package has already been imported earlier
+        if(pkg_import_entries[i].pkg_index = current_package && pkg_import_entries[i].imported_pkg_index == index)
+          return NIL;
+      }
+       
+      nof_pkg_import_entries++;
+
+      pkg_import_t *temp;
+
+      if(!pkg_import_entries)
+        temp = (pkg_import_t *)GC_MALLOC(nof_pkg_import_entries * sizeof(pkg_import_t));
+      else
+        temp = (pkg_import_t *)GC_REALLOC(pkg_import_entries, nof_pkg_import_entries * sizeof(pkg_import_t));
+
+      assert(temp);
+
+      pkg_import_entries = temp;
+
+      pkg_import_entries[nof_pkg_import_entries - 1].delete_flag          = false;
+      pkg_import_entries[nof_pkg_import_entries - 1].pkg_index            = current_package;
+      pkg_import_entries[nof_pkg_import_entries - 1].imported_pkg_index   = index;
+    }
+  }
 
   return NIL;
 }

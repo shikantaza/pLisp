@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -266,4 +266,35 @@ void close_file(int fd)
 {
   //fclose((FILE*)fp);
   close(fd);
+}
+
+int read_line(int fd, char *buf, int *count)
+{
+  unsigned int i = 0;
+  char a = 0;
+
+  ssize_t ret = 1;
+
+  ret = read(fd, &a, 1);
+
+  while(a != '\n' && ret > 0) 
+  {
+    buf[i] = a;
+    i++;
+    ret = read(fd, &a, 1);
+  }
+
+  *count = i;
+
+  return ret;
+}
+
+int str_to_int(char *s)
+{
+  return atoi(s);
+}
+
+double str_to_double(char *s)
+{
+  return atof(s);
 }

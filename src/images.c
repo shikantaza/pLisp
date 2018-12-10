@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -168,6 +168,9 @@ extern OBJECT_PTR convert_native_fn_to_object(nativefn);
 extern OBJECT_PTR compile_and_evaluate(OBJECT_PTR, OBJECT_PTR);
 
 extern void recreate_native_fn_objects();
+
+extern unsigned int nof_pkg_import_entries;
+extern pkg_import_t *pkg_import_entries;
 
 struct slot
 {
@@ -585,6 +588,26 @@ void create_image(char *file_name)
 
   fprintf(fp, ", ");
   
+  //for package imports
+  fprintf(fp,"\"package_imports\" : [ ");
+
+  for(i=0; i<nof_pkg_import_entries; i++)
+  {
+    fprintf(fp, 
+            "[\"%s\",%d,%d]", 
+            pkg_import_entries[i].delete_flag ? "true" : "false",
+            pkg_import_entries[i].pkg_index,
+            pkg_import_entries[i].imported_pkg_index);
+
+    if(i != nof_pkg_import_entries-1) fprintf(fp, ", ");
+    else                              fprintf(fp, " ");
+  }
+
+  fprintf(fp, "]");
+
+  fprintf(fp, ", ");
+  //end package imports
+
   /* if(serialize_gui_elements && profiler_window) */
   /* { */
   /*   int posx, posy, width, height; */
@@ -1129,6 +1152,30 @@ int load_from_image(char *file_name)
       packages[i].symbols[j] = strdup(symbol_obj->strvalue);
     }
   }
+
+  //package imports
+  temp = JSON_get_object_item(root, "package_imports");
+  nof_pkg_import_entries = JSON_get_array_size(temp);
+
+  pkg_import_entries = (pkg_import_t *)GC_MALLOC(nof_pkg_import_entries * sizeof(pkg_import_t));
+
+  for(i=0; i<nof_pkg_import_entries; i++)
+  {
+    struct JSONObject *pkg_import_obj = JSON_get_array_item(temp, i);
+
+    struct JSONObject *delete_flag            = JSON_get_array_item(pkg_import_obj, 0);
+    struct JSONObject *pkg_index_obj          = JSON_get_array_item(pkg_import_obj, 1);
+    struct JSONObject *imported_pkg_index_obj = JSON_get_array_item(pkg_import_obj, 2);
+
+    if(!strcmp(delete_flag->strvalue, "true"))
+      pkg_import_entries[i].delete_flag = true;
+    else
+      pkg_import_entries[i].delete_flag = false;
+
+    pkg_import_entries[i].pkg_index = pkg_index_obj->ivalue;
+    pkg_import_entries[i].imported_pkg_index =imported_pkg_index_obj->ivalue;
+  }
+  //end package imports
 
   hashtable_t *hashtable = hashtable_create(1001);
 

@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2017 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+  Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -236,6 +236,13 @@ typedef struct json_native_fn_src_mapping
   OBJECT_PTR nativefn_obj;
   char *source;
 } json_native_fn_src_mapping_t;
+
+typedef struct pkg_import
+{
+  BOOLEAN delete_flag;
+  int pkg_index;
+  int imported_pkg_index;
+} pkg_import_t;
 
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
