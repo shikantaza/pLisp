@@ -3560,6 +3560,25 @@ OBJECT_PTR create_fn_closure(OBJECT_PTR count1, nativefn fn, ...)
   return ret;  
 }
 
+int get_top_level_sym_value_non_recur(OBJECT_PTR sym, OBJECT_PTR *out)
+{
+  int i;
+  OBJECT_PTR sym_to_be_used = sym;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+    else if(top_level_symbols[i].sym == sym_to_be_used)
+    {
+      *out = top_level_symbols[i].val;
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
 int get_top_level_sym_value(OBJECT_PTR sym, OBJECT_PTR *out)
 {
   int i;
@@ -3597,7 +3616,7 @@ int get_top_level_sym_value(OBJECT_PTR sym, OBJECT_PTR *out)
 
     if(pkg_import_entries[i].pkg_index == current_package)
     {
-      int symbol_index = extract_symbol_index(sym);
+      //int symbol_index = extract_symbol_index(sym);
 
       char *symbol_name = get_symbol_name(sym);
 
@@ -3611,7 +3630,7 @@ int get_top_level_sym_value(OBJECT_PTR sym, OBJECT_PTR *out)
 
         int retval;
 
-        retval = get_top_level_sym_value(sym1, &out1);
+        retval = get_top_level_sym_value_non_recur(sym1, &out1);
 
         if(!retval)
         {
