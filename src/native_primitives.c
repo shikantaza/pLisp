@@ -133,6 +133,9 @@ extern OBJECT_PTR handle_exception();
 extern unsigned int nof_pkg_import_entries;
 extern pkg_import_t *pkg_import_entries;
 
+extern unsigned int nof_packages;
+extern package_t *packages;
+
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
   return exp;
@@ -1597,9 +1600,25 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
   fprintf(fp, "(in-package \"%s\")\n\n", convert_to_lower_case(package_name));
 
-  char buf[MAX_STRING_LENGTH];
-
+  //code for import-package statements
   int i;
+
+  for(i=0; i<nof_pkg_import_entries; i++)
+  {
+    if(pkg_import_entries[i].delete_flag)
+      continue;
+
+    if(pkg_import_entries[i].pkg_index == index)
+    {
+      char *pkg_name = convert_to_lower_case(strdup(packages[pkg_import_entries[i].imported_pkg_index].name));
+      fprintf(fp, "(import-package \"%s\")\n\n", pkg_name);
+      free(pkg_name);
+    }
+  }
+  //end of code for import-package statements
+
+
+  char buf[MAX_STRING_LENGTH];
 
   for(i=0; i<nof_global_vars; i++)
   {

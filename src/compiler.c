@@ -4098,6 +4098,54 @@ int add_reference_to_top_level_sym(OBJECT_PTR sym, int pos, OBJECT_PTR clo)
       }
       return 0;
     }
+    else //code added to check imported packages
+    {
+      int j;
+      for(j=0; j<nof_pkg_import_entries; j++)
+      {
+        if(pkg_import_entries[j].delete_flag)
+          continue;
+
+        if(pkg_import_entries[j].pkg_index == current_package)
+        {
+          int imported_pkg_index = pkg_import_entries[j].imported_pkg_index;
+
+          char *symbol_name = get_symbol_name(sym);
+
+          int index = find_symbol(symbol_name, imported_pkg_index);
+
+          if(index != NOT_FOUND)
+          {
+            OBJECT_PTR sym1 = build_symbol_object(imported_pkg_index, index);
+
+            if(top_level_symbols[i].sym == sym1)
+            {
+              if(top_level_symbols[i].ref_count == 0)
+              {
+                top_level_symbols[i].ref_count++;
+                top_level_symbols[i].references = (global_var_ref_detail_t *)GC_MALLOC(sizeof(global_var_ref_detail_t));
+                assert(top_level_symbols[i].references);
+                top_level_symbols[i].references[top_level_symbols[i].ref_count-1].referrer = clo;
+                top_level_symbols[i].references[top_level_symbols[i].ref_count-1].pos = pos;
+              }
+              else
+              {
+                global_var_ref_detail_t *temp;
+                top_level_symbols[i].ref_count++;
+                temp = (global_var_ref_detail_t *)GC_REALLOC(top_level_symbols[i].references, 
+                                                             top_level_symbols[i].ref_count * sizeof(global_var_ref_detail_t));
+                assert(temp);
+
+                top_level_symbols[i].references = temp;
+                top_level_symbols[i].references[top_level_symbols[i].ref_count-1].referrer = clo;
+                top_level_symbols[i].references[top_level_symbols[i].ref_count-1].pos = pos;
+              }
+              return 0;
+            }
+          }
+        }
+      }
+    } //end of code added to check imported packages
   }
   return 1;
 }

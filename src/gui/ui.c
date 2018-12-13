@@ -1599,10 +1599,10 @@ void create_callers_window(int posx, int posy, int width, int height)
                    G_CALLBACK (handle_key_press_events), 
                    NULL);
 
-  g_signal_connect(G_OBJECT(workspace_buffer), 
-                   "notify::cursor-position", 
-                   G_CALLBACK (handle_cursor_move), 
-                   NULL);
+  /* g_signal_connect(G_OBJECT(workspace_buffer),  */
+  /*                  "notify::cursor-position",  */
+  /*                  G_CALLBACK (handle_cursor_move),  */
+  /*                  NULL); */
 
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)callers_symbols_list);
 
