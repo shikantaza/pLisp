@@ -2628,6 +2628,31 @@ char *get_symbol_name(OBJECT_PTR symbol_object)
   return packages[package_index].symbols[symbol_index];
 }
 
+char *get_qualified_symbol_name(OBJECT_PTR symbol_object)
+{
+  int package_index, symbol_index;
+
+  if(!IS_SYMBOL_OBJECT(symbol_object))
+    assert(false);
+
+  package_index = extract_package_index(symbol_object);
+  symbol_index = extract_symbol_index(symbol_object);
+
+  char *package_name = packages[package_index].name;
+  char *symbol_name = packages[package_index].symbols[symbol_index];
+
+  int package_name_length = strlen(package_name);
+  int symbol_name_length = strlen(symbol_name);
+
+  char *ret = GC_MALLOC((package_name_length + symbol_name_length + 1) * sizeof(char));
+
+  sprintf(ret, "%s:%s", package_name, symbol_name);
+
+  ret[strlen(ret)] = '\0';
+
+  return ret;
+}
+
 //given a key (e.g. 'a') and an arg list (e.g. (:a 1 :b 2 :c 3)
 //this function returns the corresponding value (1 in this case)
 OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)

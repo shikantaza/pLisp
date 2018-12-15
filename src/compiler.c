@@ -358,6 +358,8 @@ extern OBJECT_PTR mcps_transform(OBJECT_PTR);
 
 extern nativefn get_compiler_symbol(compiler_state_t *, char *);
 extern compiler_state_t *compile_functions(OBJECT_PTR);
+
+extern get_qualified_symbol_name(OBJECT_PTR);
 //end of external functions
 
 //forward declarations
@@ -548,7 +550,15 @@ BOOLEAN exists(OBJECT_PTR obj, OBJECT_PTR lst)
     //to strip package names while comparing symbols.
     //this is OK because exists() is used only
     //within the compiler, where package names don't matter
-    if(IS_SYMBOL_OBJECT(obj) && IS_SYMBOL_OBJECT(car(rest)) && !strcmp(get_symbol_name(obj), get_symbol_name(car(rest))))
+
+    //update 15/12/2018 - this is incorrect; stripping should
+    //not be done as we need to keep track of package names
+    //(e.g., a function may refer to top level variables named 'x'
+    //in two different packages (one of which could be the current
+    //package itself))
+
+    //if(IS_SYMBOL_OBJECT(obj) && IS_SYMBOL_OBJECT(car(rest)) && !strcmp(get_symbol_name(obj), get_symbol_name(car(rest))))
+    if(IS_SYMBOL_OBJECT(obj) && IS_SYMBOL_OBJECT(car(rest)) && obj == car(rest))
       return true;
     else if(obj == *((OBJECT_PTR *)extract_ptr(rest))) 
       return true;
@@ -3036,7 +3046,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       /* free(raw_name); */
 
       /* return convert_to_lower_case(replace_hyphens(name)); */
-      return convert_to_lower_case(convert_identifier(get_symbol_name(var)));
+      //return convert_to_lower_case(convert_identifier(get_symbol_name(var)));
+      return convert_to_lower_case(convert_identifier(get_qualified_symbol_name(var)));
     }
     else
       return convert_to_lower_case(replace_hyphens(raw_name));
