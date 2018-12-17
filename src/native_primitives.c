@@ -136,6 +136,8 @@ extern pkg_import_t *pkg_import_entries;
 extern unsigned int nof_packages;
 extern package_t *packages;
 
+extern unsigned int print_context_pkg_index;
+
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
   return exp;
@@ -840,6 +842,8 @@ OBJECT_PTR prim_symbol_name(OBJECT_PTR sym)
   }
 
   memset(buf,'\0',SYMBOL_STRING_SIZE);
+
+  print_context_pkg_index = current_package;
 
   print_symbol(sym, buf);
 

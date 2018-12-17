@@ -322,6 +322,8 @@ extern BOOLEAN primop(OBJECT_PTR);
 extern unsigned int nof_pkg_import_entries;
 extern pkg_import_t *pkg_import_entries;
 
+extern unsigned int print_context_pkg_index;
+
 //variables moved from original compiler.c
 char *default_transcript_text =  "Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>\n\n"
                                  "pLisp is free software: you can redistribute it and/or modify\n"
@@ -2577,6 +2579,9 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
   /* if(package_index != 0) */
   /*   sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]); */
   /* else */
+  if(package_index != CORE_PACKAGE_INDEX && package_index != print_context_pkg_index)
+    sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]);
+  else
     sprintf(buf, "%s", packages[package_index].symbols[symbol_index]);
 
   log_function_exit("print_symbol");

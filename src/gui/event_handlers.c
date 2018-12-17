@@ -198,6 +198,8 @@ extern OBJECT_PTR third(OBJECT_PTR);
 
 extern int add_symbol_to_package(char *, int);
 
+unsigned int print_context_pkg_index;
+
 void quit_application();
 void show_file_browser_window();
 void callers_window_accept();
@@ -1647,6 +1649,8 @@ void fetch_package_symbols()
                        1, &id,
                        -1);
 
+    print_context_pkg_index = id;
+
     remove_all_from_list(symbols_list);
 
     GtkListStore *store2;
@@ -2709,6 +2713,8 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
     char buf[MAX_STRING_LENGTH];
     memset(buf, '\0', MAX_STRING_LENGTH);
 
+    print_context_pkg_index = extract_package_index(ptr);
+
     OBJECT_PTR out;
     int retval = get_top_level_sym_value((OBJECT_PTR)ptr, &out);
     assert(retval == 0);
@@ -2746,7 +2752,15 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
 
     gtk_text_buffer_insert_at_cursor(callers_source_buffer, "\n", -1);
 
-    char *text = strdup(get_symbol_name(callers_sym));
+    char *text;
+
+    unsigned int package_index = extract_package_index(callers_sym);
+
+    if(package_index != CORE_PACKAGE_INDEX && package_index != print_context_pkg_index)
+      text = strdup(get_qualified_symbol_name(callers_sym));
+    else
+      text = strdup(get_symbol_name(callers_sym));
+
     highlight_text(callers_source_buffer, convert_to_lower_case(text));
     //free(text);
   }
