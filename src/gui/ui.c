@@ -1654,6 +1654,15 @@ void highlight_text(GtkTextBuffer *buffer, char *text)
   gtk_text_buffer_remove_tag_by_name(buffer, "gray_bg", 
                                      &start_find, &end_find);  
 
+  //to skip the first line of the definition
+  //(to avoid recursive calls)
+  gtk_text_iter_forward_search(&start_find, "\n",
+                               GTK_TEXT_SEARCH_TEXT_ONLY |
+                               GTK_TEXT_SEARCH_VISIBLE_ONLY,
+                               &start_match, &end_match, NULL);
+
+  start_find = end_match;
+
   while (gtk_text_iter_forward_search(&start_find, text, 
                                       GTK_TEXT_SEARCH_TEXT_ONLY | 
                                       GTK_TEXT_SEARCH_VISIBLE_ONLY, 
