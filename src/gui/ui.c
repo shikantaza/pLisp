@@ -114,15 +114,15 @@ extern void fetch_variables(GtkWidget *, gpointer);
 
 extern void show_file_browser_win(GtkWidget *, gpointer);
 
-extern resume_from_debugger(GtkWidget *, gpointer);
-extern abort_debugger(GtkWidget *, gpointer);
+extern void resume_from_debugger(GtkWidget *, gpointer);
+extern void abort_debugger(GtkWidget *, gpointer);
 
-extern clear_transcript(GtkWidget *, gpointer);
-extern clear_workspace(GtkWidget *, gpointer);
+extern void clear_transcript(GtkWidget *, gpointer);
+extern void clear_workspace(GtkWidget *, gpointer);
 
-extern exp_pkg(GtkWidget *, gpointer);
+extern void exp_pkg(GtkWidget *, gpointer);
 
-extern callers(GtkWidget *, gpointer);
+extern void callers(GtkWidget *, gpointer);
 
 extern void handle_cursor_move(GtkWidget *, gpointer);
 

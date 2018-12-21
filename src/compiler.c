@@ -315,9 +315,9 @@ extern OBJECT_PTR primitive_env(OBJECT_PTR);
 extern OBJECT_PTR prim_expand_macro(OBJECT_PTR);
 extern OBJECT_PTR primitive_throw(OBJECT_PTR);
 
-extern add_to_autocomplete_list(char *);
+extern void add_to_autocomplete_list(char *);
 
-extern close_debugger_window();
+extern void close_debugger_window();
 
 extern void insert_node(unsigned int, OBJECT_PTR);
 extern void gc(BOOLEAN, BOOLEAN);
@@ -359,7 +359,7 @@ extern OBJECT_PTR mcps_transform(OBJECT_PTR);
 extern nativefn get_compiler_symbol(compiler_state_t *, char *);
 extern compiler_state_t *compile_functions(OBJECT_PTR);
 
-extern get_qualified_symbol_name(OBJECT_PTR);
+extern char *get_qualified_symbol_name(OBJECT_PTR);
 //end of external functions
 
 //forward declarations

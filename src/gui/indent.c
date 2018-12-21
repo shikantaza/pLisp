@@ -52,7 +52,7 @@ typedef struct form_position
   unsigned int pos;
 } form_position_t;
 
-extern in_code(GtkTextBuffer *, GtkTextIter *);
+extern BOOLEAN in_code(GtkTextBuffer *, GtkTextIter *);
 
 form_position_t *convert_to_form_position(char *str, unsigned int *count)
 {
