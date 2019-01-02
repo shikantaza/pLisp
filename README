@@ -65,7 +65,7 @@ Before running pLisp, ensure that the PATH environment variable has been updated
 OS X
 ~~~~
 
-I am working on an OS X bundle for pLisp, till then we need to compile it from source for OS X.
+Double-click the downloaded .DMG file and drag the pLisp application to the directory of your choice (typically 'Applications'). You can then run pLisp as you would any other OS X application (from the Launcher, Spotlight, and so on). Please note that this will launch pLisp in the current user's home directory, so if you would like automatic opening of an image on startup, you should create/save the image as 'plisp.image' in your home directory.
 
 How do I report bugs and other issues?
 --------------------------------------
