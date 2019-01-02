@@ -64,8 +64,12 @@ char *default_workspace_text =  "; This is the workspace; type pLisp expressions
 #ifdef WIN32
                                 "; in the 'doc' directory of your pLisp installation.\n";
 #else
+#ifdef __OSX_BUNDLE__
+                                "; in the 'doc' directory of your pLisp installation.\n";
+#else
                                 "; in the 'doc' directory of your pLisp installation\n"
                                 "; (typically /usr/local/share/doc/plisp).\n";
+#endif
 #endif
 
 
