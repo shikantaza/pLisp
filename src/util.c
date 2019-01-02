@@ -379,3 +379,10 @@ unsigned int is_valid_symbol_name(char *str)
 
   return 1;
 }
+
+//concatenate str1 and str2, write result to dest and return it
+char *concat_strings(char *dest, char *str1, char *str2)
+{
+  sprintf(dest, "%s%s", str1, str2);
+  return dest;
+}

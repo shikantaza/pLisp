@@ -3455,11 +3455,38 @@ int main1(int argc, char **argv)
   return 0;
 }
 
+#ifdef __OSX_BUNDLE__
+char full_exec[4096];
+char exec_path[4096];
+char path_buf[4096];
+#endif
+
 int main(int argc, char **argv)
 {
   int opt, i;
   char *expression;
 
+#ifdef __OSX_BUNDLE__
+
+  int ret;
+  pid_t pid; 
+
+  pid = getpid();
+  ret = proc_pidpath (pid, full_exec, sizeof(full_exec));
+
+  assert(ret);
+
+  for(i=strlen(full_exec)-1; i>=0; i--)
+  {
+    if(full_exec[i] == '/')
+      break;
+  }
+
+  strncpy(exec_path, full_exec, i+1);
+
+  chdir(getenv("HOME"));
+#endif  
+  
   while((opt = getopt(argc, argv, "i:rcnl:e:p")) != -1)
   {
     switch(opt)
@@ -3584,7 +3611,11 @@ int main(int argc, char **argv)
 #ifdef WIN_BUILD
     if(build_help_entries("../share/help.json"))
 #else
+#ifdef __OSX_BUNDLE__
+    if(build_help_entries(concat_strings(path_buf, exec_path, "../Resources/share/plisp/help.json")))
+#else      
     if(build_help_entries( PLISPDATADIR "/help.json"))
+#endif
 #endif
     {
       fprintf(stderr, "Building help entries failed: %s\n", get_string(cdr(exception_object)));
@@ -3678,7 +3709,11 @@ int load_core_library()
 #ifdef WIN_BUILD
                         cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : "../lib/plisp_full_monty_compiler.lisp"),
 #else
+#ifdef __OSX_BUNDLE__                             
+                        cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : concat_strings(path_buf, exec_path, "../Resources/share/plisp/plisp_full_monty_compiler.lisp")),
+#else                             
                         cons((OBJECT_PTR)get_string_object(core_library_file_name ? core_library_file_name : PLISPDATADIR "/plisp_full_monty_compiler.lisp"),
+#endif
 #endif
                              NIL));
 

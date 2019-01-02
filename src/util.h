@@ -53,4 +53,6 @@ OBJECT_PTR build_symbol_object(int, int);
 
 unsigned int is_valid_symbol_name(char *);
 
+char *concat_strings(char *, char *, char *);
+
 #endif

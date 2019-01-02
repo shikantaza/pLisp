@@ -85,6 +85,11 @@ GtkTextBuffer *find_buffer;
 GtkTextIter last_find_iter;
 //end for find functionality
 
+#ifdef __OSX_BUNDLE__
+extern char exec_path[512];
+extern char path_buf[1024];
+#endif
+
 void cleanup_file_name_widgets()
 {
   int i;
@@ -696,6 +701,16 @@ GtkToolbar *create_file_browser_toolbar()
   GtkWidget *eval_icon    = gtk_image_new_from_file ("../share/icons/evaluate.png");
   GtkWidget *exit_icon    = gtk_image_new_from_file ("../share/icons/exit32x32.png");
 #else
+#ifdef __OSX_BUNDLE__
+  GtkWidget *new_icon     = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/new_file.png"));
+  GtkWidget *open_icon    = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/open_file.png"));
+  GtkWidget *save_icon    = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/save_file.png"));
+  GtkWidget *close_icon   = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/close_file.png"));
+  GtkWidget *refresh_icon = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/refresh.png"));
+  GtkWidget *find_icon    = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/find.png"));
+  GtkWidget *eval_icon    = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"));
+  GtkWidget *exit_icon    = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/exit32x32.png"));
+#else
   GtkWidget *new_icon     = gtk_image_new_from_file (PLISPDATADIR "/icons/new_file.png");
   GtkWidget *open_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/open_file.png");
   GtkWidget *save_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/save_file.png");
@@ -705,6 +720,7 @@ GtkToolbar *create_file_browser_toolbar()
   GtkWidget *eval_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/evaluate.png");
   GtkWidget *exit_icon    = gtk_image_new_from_file (PLISPDATADIR "/icons/exit32x32.png");
 #endif
+#endif  
 
   toolbar = gtk_toolbar_new ();
   gtk_orientable_set_orientation (GTK_ORIENTABLE (toolbar), GTK_ORIENTATION_HORIZONTAL);
@@ -763,8 +779,12 @@ void create_file_browser_window(int posx, int posy, int width, int height)
 #ifdef WIN_BUILD
   gtk_window_set_icon_from_file(file_browser_window, "../share/icons/evaluate.png", NULL);
 #else
+#ifdef __OSX_BUNDLE__
+  gtk_window_set_icon_from_file(file_browser_window, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
+#else
   gtk_window_set_icon_from_file(file_browser_window, PLISPDATADIR "/icons/evaluate.png", NULL);
 #endif
+#endif  
 
   gtk_window_set_title(file_browser_window, "pLisp File Browser");
 
