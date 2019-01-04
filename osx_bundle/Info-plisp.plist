@@ -26,5 +26,7 @@
     <string>Copyright 2011 - 2018 Rajesh Jayaprakash, GNU General Public License.</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.4</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
 </dict>
 </plist>
