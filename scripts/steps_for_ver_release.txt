@@ -1,0 +1,34 @@
+1. Update version number in configure.ac
+2. Commit and push changes (git commit -m <message> and git push origin master)
+3. Create a new tag with the new version number (git tag vX.X.x)
+4. Push this tag (git push origin <tag name>)
+5. Source
+     1. make dist
+     2. Move newly created tar.gz to downloads/source
+     3. git remove previous tar.gz
+     4. git add new tar.gz in downloads /source
+     5. Commit and push changes (git commit -m <message> and git push origin master)
+6. Linux debs
+     1. git pull
+     2. Build (configure; make; sudo make install)
+     3. Update control file with new version number
+     4. Run deb gen script with new version number
+     5. git remove old deb file
+     6. git add new deb file
+     7. Commit and push changes (git commit -m <message> and git push origin master)
+7. Windows zip file
+     1. git pull
+     2. Run zip file gen script with temp directory and new version number
+     3. git remove old zip file
+     4. git add new zip file
+     5. Commit and push changes (git commit -m <message> and git push origin master)
+8. OS X DMG file
+     1. git pull
+     2. Remove previous pLisp.app directory
+     3. Update version number in Info-plisp.plist
+     4. Open a jhbuild shell 
+     5. Run DMG creation script with version number (version number not used currently)
+     6. Create DMG file  of the pLisp.app directory using Disk Utility (include version number in file name)
+     7. git remove old DMG file
+     8. git add new DMG file
+     9. Commit and push changes (git commit -m <message> and git push origin master)
