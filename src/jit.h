@@ -1,5 +1,5 @@
 /**
-   Copyright 2011-2018 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
+   Copyright 2011-2019 Rajesh Jayaprakash <rajesh.jayaprakash@gmail.com>
 
   This file is part of pLisp.
 
@@ -17,9 +17,16 @@
   along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "libtcc.h"
+#ifndef JIT_H
+#define JIT_H
 
-typedef struct compiler_state
-{
-  TCCState *tcc_state;
-} compiler_state_t;
+typedef uintptr_t OBJECT_PTR;
+
+typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
+
+void initializeJIT();
+nativefn get_function(void *, const char *);
+void cleanupJIT(void *);
+void *compile_functions_from_string(const char *);
+
+#endif

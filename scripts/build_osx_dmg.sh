@@ -9,7 +9,7 @@ CFLAGS="-I/usr/local/include -D__OSX_BUNDLE__"
 
 make distclean
 
-./configure
+./configure LLVMDIR=/Users/a103035/clang+llvm-8.0.0-x86_64-apple-darwin/
 
 sudo make install
 

@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with pLisp.  If not, see <http://www.gnu.org/licenses/>.
 
+AC_ARG_VAR(LLVMDIR, "Directory in which LLVM and Clang are installed")
+
 AC_INIT([plisp], [0.1.19], [rajesh.jayaprakash@gamil.com], [plisp], [https://github.com/shikantaza/plisp])
 AC_PREREQ([2.68])
 AC_CONFIG_SRCDIR([src/main.c])
@@ -31,6 +33,8 @@ AC_PROG_YACC
 #AC_PROG_RANLIB
 AM_PROG_CC_C_O
 # Put various checks and such here.
+
+AC_PROG_CXX
 
 AC_SEARCH_LIBS([dlopen], [dl], [], [])
 

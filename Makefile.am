@@ -21,7 +21,8 @@ all:	${bin_PROGRAMS} ${noinst_PROGRAMS} ${lib_LTLIBRARIES} help.html
 
 bin_PROGRAMS = plisp
 
-plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h src/jit.c
+#change libplispjitllvm.la to src/jit.h to used TCC instead of LLVM
+plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h libplispjitllvm.la
 
 noinst_PROGRAMS = docgen
 
@@ -34,15 +35,28 @@ AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
-plisp_LDADD = ${AM_LIBS} -ltcc -lgc $(LIBS)
+#uncomment according to whether we want to use TCC or LLVM
+plisp_LDADD = ${AM_LIBS} -lgc $(LIBS) -lplispjitllvm
+#plisp_LDADD = ${AM_LIBS} -ltcc -lgc $(LIBS)
 
-lib_LTLIBRARIES = libplisp.la libtest.la
+#uncomment according to whether we want to use TCC or LLVM
+lib_LTLIBRARIES = libplisp.la libtest.la libplispjitllvm.la
+#lib_LTLIBRARIES = libplisp.la libtest.la
 
 libplisp_la_SOURCES = src/plisp_utils_ffi.c
 libplisp_la_LDFLAGS = -no-undefined -avoid-version
 
 libtest_la_SOURCES = src/test_so.c
 libtest_la_LDFLAGS = -no-undefined -avoid-version
+
+#comment this out according to whether we want to use TCC or LLVM
+llvm_CFLAGS = `$(LLVMDIR)/bin/llvm-config --cflags`
+llvm_LDFLAGS = `$(LLVMDIR)/bin/llvm-config --ldflags --libs`
+clang_LDADD = -lclangBasic -lclangCodeGen -lclangDriver -lclangFrontEnd -lclangAST -lclangLex -lclangSerialization -lclangSema -lclangAnalysis -lclangEdit -lclangParse -lz -lncurses
+libplispjitllvm_la_SOURCES = src/jit_llvm.cpp
+libplispjitllvm_la_CXXFLAGS = -std=c++11 -fno-rtti ${llvm_CFLAGS}
+libplispjitllvm_la_LDFLAGS = -no-undefined -avoid-version ${llvm_LDFLAGS}
+libplispjitllvm_la_LIBADD = ${clang_LDADD}
 
 pkgdata_DATA = data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
 

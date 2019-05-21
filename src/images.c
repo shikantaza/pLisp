@@ -1082,7 +1082,7 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
 int load_from_image(char *file_name)
 {
   int i, j;
-
+  
   struct JSONObject *root = JSON_parse(file_name);
 
   if(!root)
@@ -2062,6 +2062,33 @@ void recompile_functions_and_macros()
 
 void json_add_native_fn_source(OBJECT_PTR nativefn_obj, char *source)
 {
+  assert(source);
+
+  //this check is to weed out duplicate native function sources.
+  //TCC doesn't complain about such redefinitions, but LLVM/Clang does
+  int i;
+  for(i=0; i<nof_json_native_fns; i++)
+  {
+    if(!json_native_fns[i].source)
+      continue;
+    
+    if(!strcmp(source, json_native_fns[i].source))
+    {
+      nof_json_native_fns++;
+
+      json_native_fn_src_mapping_t *temp = (json_native_fn_src_mapping_t *)GC_REALLOC(json_native_fns, nof_json_native_fns * sizeof(json_native_fn_src_mapping_t));
+
+      assert(temp);
+
+      json_native_fns = temp;
+
+      json_native_fns[nof_json_native_fns-1].nativefn_obj = nativefn_obj;
+      json_native_fns[nof_json_native_fns-1].orig_obj_index = i;
+
+      return;
+    }  
+  }
+  
   nof_json_native_fns++;
 
   json_native_fn_src_mapping_t *temp = (json_native_fn_src_mapping_t *)GC_REALLOC(json_native_fns, nof_json_native_fns * sizeof(json_native_fn_src_mapping_t));
@@ -2071,6 +2098,7 @@ void json_add_native_fn_source(OBJECT_PTR nativefn_obj, char *source)
   json_native_fns = temp;
 
   json_native_fns[nof_json_native_fns-1].nativefn_obj = nativefn_obj;
+  json_native_fns[nof_json_native_fns-1].orig_obj_index = -1;
   json_native_fns[nof_json_native_fns-1].source = strdup(source);
 }
 
@@ -2080,7 +2108,12 @@ char *get_json_native_fn_source(OBJECT_PTR nativefn_obj)
   for(i=0; i<nof_json_native_fns; i++)
   {
     if(json_native_fns[i].nativefn_obj == nativefn_obj)
-      return json_native_fns[i].source;
+    {
+      if(json_native_fns[i].orig_obj_index != -1)
+        return json_native_fns[json_native_fns[i].orig_obj_index].source;
+      else
+        return json_native_fns[i].source;
+    }
   }
 
   return NULL;

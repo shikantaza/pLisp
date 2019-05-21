@@ -234,6 +234,7 @@ typedef struct help_entry
 typedef struct json_native_fn_src_mapping
 {
   OBJECT_PTR nativefn_obj;
+  int orig_obj_index;
   char *source;
 } json_native_fn_src_mapping_t;
 

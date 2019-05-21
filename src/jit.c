@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "libtcc.h"
+
 #include "jit.h"
 #include "plisp.h"
 #include "util.h"
@@ -151,9 +153,9 @@ extern void enable_exception_handlers();
 extern void push_into_debug_stack(OBJECT_PTR);
 extern OBJECT_PTR save_continuation_to_resume(OBJECT_PTR);
 
-nativefn get_compiler_symbol(compiler_state_t *state, char *fname)
+nativefn get_function(void *state, const char *fname)
 {
-  return (nativefn)tcc_get_symbol(state->tcc_state, fname);
+  return (nativefn)tcc_get_symbol((TCCState *)state, fname);
 }
 
 TCCState *create_tcc_state1()
@@ -280,27 +282,10 @@ TCCState *create_tcc_state1()
   return tcc_state;
 }
 
-compiler_state_t *compile_functions(OBJECT_PTR lambda_forms)
+void *compile_functions_from_string(const char *str)
 {
-  char str[MAX_C_SOURCE_SIZE];
-  memset(str, MAX_C_SOURCE_SIZE, '\0');
-
-  unsigned int len = 0;
-
   TCCState *tcc_state1 = create_tcc_state1();
   assert(tcc_state1);
-
-  len += build_fn_prototypes(str+len, len);
-  
-  OBJECT_PTR rest = lambda_forms;
-
-  while(rest != NIL)
-  {
-    len += build_c_string(car(rest), str+len, false);
-    rest = cdr(rest);
-  }
-
-  assert(len <= MAX_C_SOURCE_SIZE);
 
   /* FILE *out = fopen("debug.c", "a"); */
   /* fprintf(out, "%s\n", str); */
@@ -320,117 +305,6 @@ compiler_state_t *compile_functions(OBJECT_PTR lambda_forms)
     return NULL;
   }
 
-  compiler_state_t *state = (compiler_state_t *)GC_MALLOC(sizeof(compiler_state_t));
-  state->tcc_state = tcc_state1;
-
-  return state;
+  return (void *)tcc_state1;
   
-}
-
-void replace_native_fn(OBJECT_PTR obj, TCCState *tcc_state1)
-{
-  if(IS_NATIVE_FN_OBJECT(obj))
-  {
-    //if(get_heap(obj & POINTER_MASK, 0) != 0xbaadf00d)
-    //  return;
-
-    char *source = get_json_native_fn_source(obj);
-    assert(source);
-
-    //note: the last parameter value (12)
-    //will have to be updated if we're
-    //making the size of gensym symbols bigger
-    //note2: since we're adding the preamable '#include <stdint.h>...'
-    //to all functions to make use of uintptr_t in the generated code,
-    //second parameter is set to 116 to skip all this preamble
-#ifdef WIN32 //to account for the replacement of #include <stdint.h>' with 'typedef unsigned int uintptr_t;' in Windows
-    //char *fname = substring(source, 128, 12);
-    char *fname = substring(source, 10, 17);
-#else
-    //char *fname = substring(source, 116, 12);
-    char *fname = substring(source, 10, 17);
-#endif
-
-    //crude way to check if fn is the identity function,
-    //but this works as all other native functions
-    //will be named from gensym symbols
-    //note2: fname will be null for identify_function (as the
-    //above substring() would have failed)
-    nativefn fn = !strcmp(fname, "identity_fun") ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
-    //nativefn fn = !fname ? (nativefn)identity_function : (nativefn)tcc_get_symbol(tcc_state1, fname);
-
-    if(!fn)
-      assert(false);
-
-    uintptr_t ptr = extract_ptr(obj);
-
-    *((nativefn *)ptr) = fn;
-
-    //so that subsequent saves of the image will work correctly
-    add_native_fn_source(fn, source);
-  }
-  else if(IS_FUNCTION2_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
-  {
-    OBJECT_PTR cons_equiv = cons_equivalent(obj);
-    replace_native_fn(car(cons_equiv), tcc_state1);
-  }
-  else if(IS_CONS_OBJECT(obj))
-  {
-    OBJECT_PTR rest = obj;
-    while(rest != NIL)
-    {
-      replace_native_fn(car(rest), tcc_state1);
-      rest = cdr(rest);
-    }
-  }
-  //TODO: extend this for arrays (anything else?)
-}
-
-void recreate_native_fn_objects()
-{
-  idclo = create_closure(0, true, convert_native_fn_to_object((nativefn)identity_function));
-
-  int i, len=0;
-  char *buf;
-
-  buf = (char *)GC_MALLOC(nof_json_native_fns * 2000);
-  assert(buf);
-
-  memset(buf, nof_json_native_fns * 2000, '\0');
-
-  len += build_fn_prototypes(buf+len, len);
-  
-  for(i=0; i<nof_json_native_fns; i++)
-    len += sprintf(buf+len, "%s\n", json_native_fns[i].source);
-
-  TCCState *tcc_state1 = create_tcc_state1();
-  assert(tcc_state1);
-
-  if(tcc_compile_string(tcc_state1, buf) == -1)
-    assert(false);
-
-  if(tcc_relocate(tcc_state1, TCC_RELOCATE_AUTO) < 0)
-    assert(false);
-
-  for(i=0; i<nof_global_vars; i++)
-  {
-    if(top_level_symbols[i].delete_flag)
-      continue;
-
-    replace_native_fn(top_level_symbols[i].val, tcc_state1);
-  }
-
-  OBJECT_PTR rest = saved_continuations;
-
-  while(rest != NIL)
-  {
-    replace_native_fn(car(rest), tcc_state1);
-    rest = cdr(rest);
-  }
-
-  if(is_dynamic_memory_object(continuation_to_resume))
-    replace_native_fn(continuation_to_resume, tcc_state1);
-
-  //not really needed as load_from_image() will be called only once on startup
-  nof_json_native_fns = 0;
 }
