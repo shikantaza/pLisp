@@ -20,6 +20,8 @@
 #ifndef JIT_H
 #define JIT_H
 
+#include <stdint.h>
+
 typedef uintptr_t OBJECT_PTR;
 
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
