@@ -31,7 +31,7 @@ docgen_SOURCES = tools/docgen.c src/util.c src/util.h src/json.h src/jsonlib.c s
 
 docgen_LDADD = -lgc $(LIBS)
 
-AM_CFLAGS = -DPLISPDATADIR=\"$(pkgdatadir)\" ${gtk_CFLAGS} ${gtksourceview_CFLAGS} ${libffi_CFLAGS}
+AM_CFLAGS = -DPLISPDATADIR=\"$(pkgdatadir)\" ${gtk_CFLAGS} ${gtksourceview_CFLAGS} ${libffi_CFLAGS} -Wl,--export-dynamic
 AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
