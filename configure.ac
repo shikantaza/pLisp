@@ -44,4 +44,6 @@ PKG_CHECK_MODULES([libffi], [libffi >= 3.0.11])
 
 LT_INIT
 
+AM_CONDITIONAL(LINUX, test `uname -s` = "Linux")
+
 AC_OUTPUT
