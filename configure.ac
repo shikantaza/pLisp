@@ -45,6 +45,7 @@ PKG_CHECK_MODULES([libffi], [libffi >= 3.0.11])
 LT_INIT
 
 AM_CONDITIONAL(LINUX, test `uname -s` = "Linux")
+AM_CONDITIONAL(LINUXI686, test `uname -p` = "i686")
 AM_CONDITIONAL(WINDOWS, test `uname -s` = "MINGW32_NT-6.1")
 
 AC_OUTPUT

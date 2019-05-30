@@ -22,7 +22,9 @@ all:	${bin_PROGRAMS} ${noinst_PROGRAMS} ${lib_LTLIBRARIES} help.html
 bin_PROGRAMS = plisp
 
 if !WINDOWS
+if !LINUXI686
 BUILT_SOURCES = libplispjitllvm.la
+endif
 endif
 
 plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h
@@ -31,6 +33,9 @@ if WINDOWS
 plisp_SOURCES += src/jit.c
 endif
 
+if LINUXI686
+plisp_SOURCES += src/jit.c
+endif
 noinst_PROGRAMS = docgen
 
 docgen_SOURCES = tools/docgen.c src/util.c src/util.h src/json.h src/jsonlib.c src/json.l src/json_parser.y
@@ -48,6 +53,10 @@ if WINDOWS
 AM_CFLAGS += -DJIT_TCC
 endif
 
+if LINUXI686
+AM_CFLAGS += -DJIT_TCC
+endif
+
 AM_LIBS = ${gtk_LIBS} ${gtksourceview_LIBS} ${libffi_LIBS} ${LEXLIB}
 
 ACLOCAL_AMFLAGS = -I m4 --install
@@ -56,8 +65,13 @@ if WINDOWS
 plisp_LDADD = ${AM_LIBS} -ltcc -lgc $(LIBS)
 lib_LTLIBRARIES = libplisp.la libtest.la
 else
+if LINUXI686
+plisp_LDADD = ${AM_LIBS} -ltcc -lgc $(LIBS)
+lib_LTLIBRARIES = libplisp.la libtest.la
+else
 plisp_LDADD = ${AM_LIBS} -lgc $(LIBS) libplispjitllvm.la
 lib_LTLIBRARIES = libplisp.la libtest.la libplispjitllvm.la
+endif
 endif
 
 libplisp_la_SOURCES = src/plisp_utils_ffi.c
@@ -67,10 +81,12 @@ libtest_la_SOURCES = src/test_so.c
 libtest_la_LDFLAGS = -no-undefined -avoid-version
 
 if !WINDOWS
+if !LINUXI686
 clang_LIBS = -lclangCodeGen  -lclangFrontend -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangEdit -lclangAST -lclangLex -lclangBasic
 libplispjitllvm_la_SOURCES = src/jit_llvm.cpp
 libplispjitllvm_la_CXXFLAGS = -std=c++11 -fPIC -fno-rtti `$(LLVMDIR)/bin/llvm-config --cflags` 
 libplispjitllvm_la_LDFLAGS = `$(LLVMDIR)/bin/llvm-config --ldflags` -no-undefined -avoid-version $(clang_LIBS) `$(LLVMDIR)/bin/llvm-config --libs` -lz -lncurses -pthread -ldl
+endif
 endif
 
 pkgdata_DATA = data/plisp.lang data/help.json lib/plisp_full_monty_compiler.lisp
