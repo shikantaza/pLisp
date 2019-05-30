@@ -185,5 +185,6 @@
   <!-- Icon theme -->
   <icon-theme icons="auto">Adwaita</icon-theme>
   <!-- <icon-theme icons="auto">gnome</icon-theme> -->
+
   
 </app-bundle>
