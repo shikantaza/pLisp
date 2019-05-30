@@ -66,7 +66,7 @@ pLisp can be installed using the 'dpkg' command (sudo dpkg -i <plisp deb file>).
 	libgtk-3-0
 	libgtksourceview-3.0-0
 	libffi6
-	tcc
+	tcc (required only for 32-bit)
 
 Note: If you get the error "tcc: error: file '/usr/local/lib/tcc/libtcc1.a' not found" on launching pLisp after installation, create a symbolic link to this file (found in the installation directory of tcc) in /usr/local/lib/tcc. I am investigating this.
 
@@ -101,9 +101,9 @@ Online help is available within pLisp, a link:https://github.com/shikantaza/pLis
 
 Installing pLisp From Source
 ----------------------------
-Linux
-~~~~~
-You will need GCC and the make utility to install pLisp. In addition, the following dependencies need to be taken care of:
+Linux - 32-bit
+~~~~~~~~~~~~~~
+You will need autoconf, automate, libtool, and GCC to install pLisp. In addition, the following dependencies need to be taken care of:
 
 * Flex and Bison
 * The link:http://www.gtk.org/[GTK+] 3.0 development package (libgtk-3-dev)
@@ -113,6 +113,21 @@ You will need GCC and the make utility to install pLisp. In addition, the follow
 * The link:https://www.hboehm.info/gc/gc_source/[Boehm Garbage Collector]
 
 All these packages can be installed using the package manager that comes with your distro or from the package's home page.
+
+Linux - 64-bit
+~~~~~~~~~~~~~~
+You will need autoconf, automate, libtool, GCC, and g++ to install pLisp. In addition, the following dependencies need to be taken care of:
+
+* Flex and Bison
+* The GTK+ 3.0 (http://www.gtk.org/) development package (libgtk-3-dev)
+* The GtkSourceview3 (https://wiki.gnome.org/Projects/GtkSourceView) development package (libgtksourceview-3.0-dev)
+* link:http://releases.llvm.org/download.html#8.0.0[LLVM/Clang]
+* The libffi (https://sourceware.org/libffi/) package (libffi6)
+* The Boehm Garbage Collector (https://www.hboehm.info/gc/gc_source/)
+
+All these packages can be installed using the package manager that comes with your distro or from the package's home page.
+
+To build and install pLisp, type './configure LLVMDIR=<llvmdir>' (where <llvmdir> is the directory where LLVM/Clang is installed), 'make', and 'sudo make install'.
 
 OS X
 ~~~~
@@ -129,13 +144,11 @@ OS X
 
     jhbuild build gtksourceview3
 
-* Install the link:http://bellard.org/tcc/[Tiny C Compiler]. You will have to do it the './configure; make; sudo make install' way.
+* Install link:http://releases.llvm.org/download.html#8.0.0[LLVM/Clang] using the DMG file from the LLVM website
 
 * Install the link:https://www.hboehm.info/gc/gc_source/[Boehm Garbage Collector]  using './configure; make; sudo make install'.
 
-* Install pLisp by entering into a jhbuild shell and typing './configure', 'make' and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
-
-Note: tcc on OS X throws up a lot of warnings when running pLisp. These warnings can be ignored. One option is to redirect them to /dev/null (plisp 2>/dev/null). I'm working on this.
+* Install pLisp by entering into a jhbuild shell and typing './configure LLVMDIR=<llvmdir>' (where <llvmdir> is the directory where LLVM/Clang is installed), 'make', and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
 
 Windows
 ~~~~~~~
