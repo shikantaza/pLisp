@@ -18,6 +18,9 @@ cp ../plisp $pkg/usr/local/bin
 cp ../.libs/libplisp.a $pkg/usr/local/lib
 cp ../libplisp.la $pkg/usr/local/lib
 cp ../.libs/libplisp.so $pkg/usr/local/lib
+cp ../.libs/libplispjitllvm.a $pkg/usr/local/lib
+cp ../libplispjitllvm.la $pkg/usr/local/lib
+cp ../.libs/libplispjitllvm.so $pkg/usr/local/lib
 
 cp ../data/help.json $pkg/usr/local/share/plisp
 cp ../lib/plisp_full_monty_compiler.lisp $pkg/usr/local/share/plisp
