@@ -1819,6 +1819,8 @@ void save_image()
     {
       loaded_image_file_name = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
     }
+    else
+      return;
 
     gtk_widget_destroy (dialog);
 
