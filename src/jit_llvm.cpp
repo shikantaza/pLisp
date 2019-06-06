@@ -188,6 +188,7 @@ std::unique_ptr<llvm::Module> convert_file_to_module(const char * c_file_name) {
   SmallVector<const char *, 16> Args;
   Args.push_back("a.out");
   Args.push_back(c_file_name);
+  Args.push_back("-O2");
   Args.push_back("-Wno-everything"); //to disable warnings, specifically 'missing return statement in function'
   std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(Args));
   if (!C)
