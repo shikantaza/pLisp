@@ -6445,12 +6445,18 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
   unsigned int len = offset;
 
 //Tiny C Compiler has trouble finding stdint.h in windows
-#ifdef WIN32
+/* #ifdef WIN32 */
+/*   len += sprintf(buf+len, "typedef unsigned int uintptr_t;\n"); */
+/* #else */
+/*   len += sprintf(buf+len, "#include <stdint.h>\n"); */
+/* #endif */
+  len += sprintf(buf+len, "#ifdef __LP64__\n");
+  len += sprintf(buf+len, "typedef unsigned long uintptr_t;\n");
+  len += sprintf(buf+len, "#else\n");
   len += sprintf(buf+len, "typedef unsigned int uintptr_t;\n");
-#else
-  len += sprintf(buf+len, "#include <stdint.h>\n");
-#endif
+  len += sprintf(buf+len, "#endif\n");
 
+  
   len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
   
   len += sprintf(buf+len, "uintptr_t nth1(uintptr_t, uintptr_t);\n");

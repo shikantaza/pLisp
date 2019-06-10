@@ -50,15 +50,15 @@
 //symbols table of the chosen package table entry
 #define PACKAGE_BITS         6
 
-#if __x86_64__
-#define SYMBOL_BITS         54
-#else
-#ifdef __APPLE__
-#define SYMBOL_BITS         54
-#else
+/* #if __x86_64__ */
+/* #define SYMBOL_BITS         54 */
+/* #else */
+/* #ifdef __APPLE__ */
+/* #define SYMBOL_BITS         54 */
+/* #else */
 #define SYMBOL_BITS         22
-#endif
-#endif
+/* #endif */
+/* #endif */
 
 #define OBJECT_SHIFT         4
 
@@ -89,15 +89,15 @@
 #define NOT_OK 1
 
 //#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 4194303
-#if __x86_64__
-#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFFFFFFFFFF
-#else
-#ifdef __APPLE__
-#define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFFFFFFFFFF
-#else
+/* #if __x86_64__ */
+/* #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFFFFFFFFFF */
+/* #else */
+/* #ifdef __APPLE__ */
+/* #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFFFFFFFFFF */
+/* #else */
 #define TWO_RAISED_TO_SYMBOL_BITS_MINUS_1 0x3FFFFF
-#endif
-#endif
+/* #endif */
+/* #endif */
 
 #define DEFAULT_TRANSCRIPT_POSX 0
 #define DEFAULT_TRANSCRIPT_POSY 350
