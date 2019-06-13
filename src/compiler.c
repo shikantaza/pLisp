@@ -454,7 +454,7 @@ char *generate_lst_construct(OBJECT_PTR);
 
 void push_into_debug_stack(OBJECT_PTR);
 
-OBJECT_PTR save_continuation_to_resume(OBJECT_PTR);
+OBJECT_PTR save_cont_to_resume(OBJECT_PTR);
 OBJECT_PTR resume_continuation(OBJECT_PTR);
 OBJECT_PTR abort_evaluation();
 
@@ -5929,7 +5929,7 @@ void push_into_debug_stack(OBJECT_PTR form)
   }
 }
 
-OBJECT_PTR save_continuation_to_resume(OBJECT_PTR cont)
+OBJECT_PTR save_cont_to_resume(OBJECT_PTR cont)
 {
   debug_mode = true;
 

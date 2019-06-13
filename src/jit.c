@@ -151,7 +151,7 @@ extern void disable_exception_handlers();
 extern void enable_exception_handlers();
 
 extern void push_into_debug_stack(OBJECT_PTR);
-extern OBJECT_PTR save_continuation_to_resume(OBJECT_PTR);
+extern OBJECT_PTR save_cont_to_resume(OBJECT_PTR);
 
 nativefn get_function(void *state, const char *fname)
 {
@@ -267,7 +267,7 @@ TCCState *create_tcc_state1()
 
   tcc_add_symbol(tcc_state, "push_into_debug_stack",    push_into_debug_stack);
 
-  tcc_add_symbol(tcc_state, "save_cont_to_resume",      save_continuation_to_resume);
+  tcc_add_symbol(tcc_state, "save_cont_to_resume",      save_cont_to_resume);
 
   tcc_add_symbol(tcc_state, "disable_exception_handlers", disable_exception_handlers);
   tcc_add_symbol(tcc_state, "enable_exception_handlers",  enable_exception_handlers);
