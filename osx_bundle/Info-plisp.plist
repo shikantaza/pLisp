@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>pLisp</string>
     <key>CFBundleGetInfoString</key>
-    <string>0.1.21, (C) 2011-2019 Rajesh Jayaprakash</string>
+    <string>0.1.22, (C) 2011-2019 Rajesh Jayaprakash</string>
     <key>CFBundleIconFile</key>
     <string>plisp.icns</string>
     <key>CFBundleIdentifier</key>
@@ -17,11 +17,11 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.21</string>
+    <string>0.1.22</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleVersion</key>
-    <string>0.1.21</string>
+    <string>0.1.22</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright 2011 - 2019 Rajesh Jayaprakash, GNU General Public License.</string>
     <key>LSMinimumSystemVersion</key>
