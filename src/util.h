@@ -55,4 +55,6 @@ unsigned int is_valid_symbol_name(char *);
 
 char *concat_strings(char *, char *, char *);
 
+char *extract_function_name(char *);
+
 #endif

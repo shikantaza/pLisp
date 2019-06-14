@@ -22,6 +22,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <assert.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -385,4 +386,27 @@ char *concat_strings(char *dest, char *str1, char *str2)
 {
   sprintf(dest, "%s%s", str1, str2);
   return dest;
+}
+
+char *extract_function_name(char *fn_source)
+{
+  //assumes fn_source is of the form "uintptr_t <fn_name>(..."
+  unsigned int len = strlen(fn_source);
+  unsigned int i;
+
+  unsigned int loc_of_first_left_paren = 10;
+
+  //starting from 10 to skip 'uintptr_t '
+  for(i=10; i<len; i++)
+  {
+    if(fn_source[i] == '(')
+    {
+      loc_of_first_left_paren = i;
+      break;
+    }
+  }
+
+  assert(loc_of_first_left_paren > 10);
+
+  return substring(fn_source, 10, loc_of_first_left_paren - 10);
 }
