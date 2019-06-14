@@ -885,7 +885,7 @@ void system_browser_accept()
 
       //the newly added symbol will be the last row
       set_focus_to_last_row(symbols_list);
-
+      gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
     }
 
     new_symbol_being_created = false;
@@ -921,10 +921,10 @@ void system_browser_accept()
       if(!call_repl(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE)))
       {
         update_workspace_title();
+        gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
       }
     }
   }
-  gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
 }
 
 void accept(GtkWidget *widget,
