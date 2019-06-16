@@ -1036,7 +1036,7 @@
    "args" : "exp: a quoted form",
    "desc" : "profile evaluates 'exp' and displays the resource usage information for the evaluation",
    "exceptions" : "Propagates exceptions thrown (if any) by the evaluation of the form",
-   "examples" : [ "(profile '(+ 1 1)) =>", "Expression took 0.022831 seconds (elapsed), 0.020000 seconds (CPU), 4416 words allocated, 6786 words deallocated", "2" ],
+   "examples" : [ "(profile '(+ 1 1)) =>", "Expression took 0.017554 seconds (elapsed), 0.013966 seconds (CPU), 2696 words allocated", "2" ],
    "see-also" : [ "time" ]
   },
 
