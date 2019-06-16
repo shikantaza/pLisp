@@ -124,6 +124,8 @@ OBJECT_PTR get_heap(uintptr_t ptr, unsigned int index)
 
 }
 
+extern unsigned int words_alloc_for_profiled_exp;
+
 uintptr_t object_alloc(int size, int tag)
 {
   uintptr_t *ret;
@@ -159,6 +161,8 @@ uintptr_t object_alloc(int size, int tag)
 
   assert(is_valid_object((OBJECT_PTR)((uintptr_t)ret+tag)));
 
+  words_alloc_for_profiled_exp += size;
+  
   return (uintptr_t)ret;
 }
 

@@ -1777,6 +1777,8 @@ OBJECT_PTR primitive_env(OBJECT_PTR dummy)
   return ret;
 }
 
+unsigned int words_alloc_for_profiled_exp;
+
 OBJECT_PTR primitive_profile(OBJECT_PTR exp)
 {
   double initial_wall_time, final_wall_time;
@@ -1796,12 +1798,14 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
   //initial_mem_alloc = memory_allocated();
   //initial_mem_dealloc = memory_deallocated();
 
+  words_alloc_for_profiled_exp = 0;
+  
   OBJECT_PTR res = full_monty_eval(exp);
 
-  if(is_dynamic_memory_object(res))
-    insert_node(GREY, res);
+  /* if(is_dynamic_memory_object(res)) */
+  /*   insert_node(GREY, res); */
 
-  gc(false, false);
+  /* gc(false, false); */
 
   if(in_error)
   {
@@ -1814,24 +1818,41 @@ OBJECT_PTR primitive_profile(OBJECT_PTR exp)
   //final_mem_alloc = memory_allocated();
   //final_mem_dealloc = memory_deallocated();
 
+  /* if(!console_mode && !single_expression_mode && !pipe_mode) */
+  /* { */
+  /*   memset(buf, '\0', 500); */
+  /*   sprintf(buf, */
+  /*           "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated, %d words deallocated\n", */
+  /*           final_wall_time - initial_wall_time, */
+  /*           (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC, */
+  /*           final_mem_alloc - initial_mem_alloc, */
+  /*           final_mem_dealloc - initial_mem_dealloc); */
+  /*   print_to_transcript(buf); */
+  /* } */
+  /* else */
+  /*   printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated, %d words deallocated\n", */
+  /*          final_wall_time - initial_wall_time, */
+  /*          (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC, */
+  /*          final_mem_alloc - initial_mem_alloc, */
+  /*          final_mem_dealloc - initial_mem_dealloc); */
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     memset(buf, '\0', 500);
     sprintf(buf,
-	    "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated, %d words deallocated\n",
+	    "Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
 	    final_wall_time - initial_wall_time,
 	    (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-	    final_mem_alloc - initial_mem_alloc,
-            final_mem_dealloc - initial_mem_dealloc);
+            words_alloc_for_profiled_exp);
     print_to_transcript(buf);
   }
   else
-    printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated, %d words deallocated\n",
+    printf("Expression took %lf seconds (elapsed), %lf seconds (CPU), %d words allocated\n",
            final_wall_time - initial_wall_time,
            (final_cpu_time - initial_cpu_time) * 1.0 / CLOCKS_PER_SEC,
-           final_mem_alloc - initial_mem_alloc,
-           final_mem_dealloc - initial_mem_dealloc);
-
+           words_alloc_for_profiled_exp);
+  
+  words_alloc_for_profiled_exp = 0;
+  
   return res;
 }
 
