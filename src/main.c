@@ -1093,11 +1093,11 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
   }
 
   if(((car_obj == DEFUN || car_obj == DEFMACRO) && !is_valid_defun_defmacro_exp(obj)) ||
-     (car_obj == LET && !is_valid_let_exp(obj, false)) ||
+     //(car_obj == LET && !is_valid_let_exp(obj, false)) ||
      (car_obj == LET1 && !is_valid_let1_exp(obj,false)) ||
-     (car_obj == LETREC && !is_valid_letrec_exp(obj, false)) ||
-     (let_star && !is_valid_let_exp(obj, false)) ||
-     (car_obj == LAMBDA && !is_valid_lambda_exp(obj)) ||
+     //(car_obj == LETREC && !is_valid_letrec_exp(obj, false)) ||
+     //(let_star && !is_valid_let_exp(obj, false)) ||
+     //(car_obj == LAMBDA && !is_valid_lambda_exp(obj)) ||
      (car_obj == MACRO && !is_valid_macro_exp(obj)))
   {
     length += print_cons_obj_in_single_line(obj, buf, filled_buf_len+length);
@@ -1138,41 +1138,41 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
 
-  if(car_obj == LET && !is_valid_let_exp(obj, false))
-  {
-    OBJECT_PTR rest = cdr(obj);
+  /* if(car_obj == LET && !is_valid_let_exp(obj, false)) */
+  /* { */
+  /*   OBJECT_PTR rest = cdr(obj); */
 
-    length += sprintf(buf+filled_buf_len+length, "(let ");
+  /*   length += sprintf(buf+filled_buf_len+length, "(let "); */
 
-    while(rest != NIL)
-    {
-      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
-      rest = cdr(rest);
-      if(rest != NIL)
-        length += sprintf(buf+filled_buf_len+length, " ");
-    }
-    length += sprintf(buf+filled_buf_len+length, ")");
+  /*   while(rest != NIL) */
+  /*   { */
+  /*     length +=  print_object_to_string(car(rest), buf, filled_buf_len+length); */
+  /*     rest = cdr(rest); */
+  /*     if(rest != NIL) */
+  /*       length += sprintf(buf+filled_buf_len+length, " "); */
+  /*   } */
+  /*   length += sprintf(buf+filled_buf_len+length, ")"); */
 
-    return length;
-  }
+  /*   return length; */
+  /* } */
 
-  if(let_star && !is_valid_let_exp(obj, false))
-  {
-    OBJECT_PTR rest = cdr(obj);
+  /* if(let_star && !is_valid_let_exp(obj, false)) */
+  /* { */
+  /*   OBJECT_PTR rest = cdr(obj); */
 
-    length += sprintf(buf+filled_buf_len+length, "(let* ");
+  /*   length += sprintf(buf+filled_buf_len+length, "(let* "); */
 
-    while(rest != NIL)
-    {
-      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
-      rest = cdr(rest);
-      if(rest != NIL)
-        length += sprintf(buf+filled_buf_len+length, " ");
-    }
-    length += sprintf(buf+filled_buf_len+length, ")");
+  /*   while(rest != NIL) */
+  /*   { */
+  /*     length +=  print_object_to_string(car(rest), buf, filled_buf_len+length); */
+  /*     rest = cdr(rest); */
+  /*     if(rest != NIL) */
+  /*       length += sprintf(buf+filled_buf_len+length, " "); */
+  /*   } */
+  /*   length += sprintf(buf+filled_buf_len+length, ")"); */
 
-    return length;
-  }
+  /*   return length; */
+  /* } */
 
   if(car_obj == LET1 && !is_valid_let1_exp(obj, false))
   {
@@ -1192,23 +1192,23 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
 
-  if(car_obj == LETREC && !is_valid_letrec_exp(obj, false))
-  {
-    OBJECT_PTR rest = cdr(obj);
+  /* if(car_obj == LETREC && !is_valid_letrec_exp(obj, false)) */
+  /* { */
+  /*   OBJECT_PTR rest = cdr(obj); */
 
-    length += sprintf(buf+filled_buf_len+length, "(letrec ");
+  /*   length += sprintf(buf+filled_buf_len+length, "(letrec "); */
 
-    while(rest != NIL)
-    {
-      length +=  print_object_to_string(car(rest), buf, filled_buf_len+length);
-      rest = cdr(rest);
-      if(rest != NIL)
-        length += sprintf(buf+filled_buf_len+length, " ");
-    }
-    length += sprintf(buf+filled_buf_len+length, ")");
+  /*   while(rest != NIL) */
+  /*   { */
+  /*     length +=  print_object_to_string(car(rest), buf, filled_buf_len+length); */
+  /*     rest = cdr(rest); */
+  /*     if(rest != NIL) */
+  /*       length += sprintf(buf+filled_buf_len+length, " "); */
+  /*   } */
+  /*   length += sprintf(buf+filled_buf_len+length, ")"); */
 
-    return length;
-  }
+  /*   return length; */
+  /* } */
 
   if(car_obj == LAMBDA  || 
      car_obj == MACRO   || 
@@ -1267,6 +1267,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
           length += sprintf(buf+filled_buf_len+length, "      ");
         else if(let_star)
           length += sprintf(buf+filled_buf_len+length, "       ");
+        else if(car_obj == LETREC)
+          length += sprintf(buf+filled_buf_len+length, "         ");        
         else
           length += sprintf(buf+filled_buf_len+length, "       ");        
 
