@@ -1492,24 +1492,26 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
   //to handle applications (a b c)
   if(IS_SYMBOL_OBJECT(car_obj) && !macro_form)
   {
-    /* if(cons_length(obj) <= 3) */
-    /* { */
-    /*   length += sprintf(buf+filled_buf_len+length, "("); */
+    //
+    if(cons_length(obj) <= 3)
+    {
+      length += sprintf(buf+filled_buf_len+length, "(");
 
-    /*   OBJECT_PTR rest = obj; */
+      OBJECT_PTR rest = obj;
 
-    /*   while(rest != NIL) */
-    /*   { */
-    /*     length += print_object_to_string(car(rest), buf, filled_buf_len+length); */
-    /*     if(cdr(rest) != NIL) */
-    /*       length += sprintf(buf+filled_buf_len+length, " "); */
-    /*     rest = cdr(rest); */
-    /*   } */
+      while(rest != NIL)
+      {
+        length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+        if(cdr(rest) != NIL)
+          length += sprintf(buf+filled_buf_len+length, " ");
+        rest = cdr(rest);
+      }
 
-    /*   length += sprintf(buf+filled_buf_len+length, ")"); */
-    /* } */
-    /* else */
-    /* { */
+      length += sprintf(buf+filled_buf_len+length, ")");
+    }
+    else
+    {
+    //
       int i;
 
       char *s = get_symbol_name(car_obj);
@@ -1551,7 +1553,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
       }
 
       length += sprintf(buf+filled_buf_len+length, ")");
-    /* } */
+    } //
 
     return length;
   }
