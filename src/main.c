@@ -1017,7 +1017,18 @@ int print_cons_obj_in_single_line(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
   length += sprintf(buf+filled_buf_len+length, "(");
 
-  OBJECT_PTR rest = obj;
+  if(car(obj) == COMMA)
+    length += sprintf(buf+filled_buf_len+length, ",");
+  else if(car(obj) == COMMA_AT)
+    length += sprintf(buf+filled_buf_len+length, ",@");
+  else
+  {
+     length += print_object_to_string(car(obj), buf, filled_buf_len+length);
+     if(cdr(obj) != NIL)
+       length += sprintf(buf+filled_buf_len+length, " ");
+  }
+  
+  OBJECT_PTR rest = cdr(obj);
 
   while(rest != NIL)
   {
@@ -1323,7 +1334,11 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     length += sprintf(buf+filled_buf_len+length, " ");
 
     //length += print_object_to_string(CADDR(obj), buf, filled_buf_len+length);
-    length += print_cons_obj_in_single_line(CADDR(obj), buf, filled_buf_len+length);
+
+    if(CADDR(obj) == NIL)
+      length += sprintf(buf+filled_buf_len+length, "()");
+    else
+      length += print_cons_obj_in_single_line(CADDR(obj), buf, filled_buf_len+length);
 
     /* length += sprintf(buf+filled_buf_len+length, "\n"); */
 
