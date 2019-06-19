@@ -1241,43 +1241,48 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     else if(car_obj == DOLIST)
       length += sprintf(buf+filled_buf_len+length, "(dolist ");
 
-    if(car_obj != LET && car_obj != LET1 && car_obj != LETREC && !let_star)
-      length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+    if(CADR(obj) == NIL)
+      length += sprintf(buf+filled_buf_len+length, "()");
     else
     {
-      //LET specs
-      OBJECT_PTR specs = CADR(obj);
-
-      OBJECT_PTR rest = cdr(specs);
-
-      length += sprintf(buf+filled_buf_len+length, "(");
-
-      length += print_object_to_string(car(specs), buf, filled_buf_len+length);
-
-      while(rest != NIL)
+      if(car_obj != LET && car_obj != LET1 && car_obj != LETREC && !let_star)
+        length += print_object_to_string(CADR(obj), buf, filled_buf_len+length);
+      else
       {
-        int i;
+        //LET specs
+        OBJECT_PTR specs = CADR(obj);
 
-        length += sprintf(buf+filled_buf_len+length, "\n");
+        OBJECT_PTR rest = cdr(specs);
 
-        for(i=1; i<indents; i++)
-          length += sprintf(buf+filled_buf_len+length, " ");
+        length += sprintf(buf+filled_buf_len+length, "(");
 
-        if(car_obj == LET)
-          length += sprintf(buf+filled_buf_len+length, "      ");
-        else if(let_star)
-          length += sprintf(buf+filled_buf_len+length, "       ");
-        else if(car_obj == LETREC)
-          length += sprintf(buf+filled_buf_len+length, "         ");        
-        else
-          length += sprintf(buf+filled_buf_len+length, "       ");        
+        length += print_object_to_string(car(specs), buf, filled_buf_len+length);
 
-        length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+        while(rest != NIL)
+        {
+          int i;
 
-        rest = cdr(rest);
+          length += sprintf(buf+filled_buf_len+length, "\n");
+
+          for(i=1; i<indents; i++)
+            length += sprintf(buf+filled_buf_len+length, " ");
+
+          if(car_obj == LET)
+            length += sprintf(buf+filled_buf_len+length, "      ");
+          else if(let_star)
+            length += sprintf(buf+filled_buf_len+length, "       ");
+          else if(car_obj == LETREC)
+            length += sprintf(buf+filled_buf_len+length, "         ");        
+          else
+            length += sprintf(buf+filled_buf_len+length, "       ");        
+
+          length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+
+          rest = cdr(rest);
+        }
+
+        length += sprintf(buf+filled_buf_len+length, ")");
       }
-
-      length += sprintf(buf+filled_buf_len+length, ")");
     }
 
     rest = CDDR(obj);
