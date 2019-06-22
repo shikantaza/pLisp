@@ -1405,6 +1405,14 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     int i;
     OBJECT_PTR rest;
 
+    //quick and dirty check
+    //needed to print signature
+    if(!IS_CONS_OBJECT(second(obj)))
+    {
+      length += print_cons_obj_in_single_line(obj, buf, filled_buf_len+length);
+      return length;
+    }
+    
     length += sprintf(buf+filled_buf_len+length, "(cond (");
 
     length += print_object_to_string(first(second(obj)), buf, filled_buf_len+length);
