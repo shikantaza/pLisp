@@ -6658,6 +6658,8 @@ void replace_native_fn(OBJECT_PTR obj, void *state)
     OBJECT_PTR rest = obj;
     while(rest != NIL)
     {
+      if(is_atom(rest))
+        break;
       replace_native_fn(car(rest), state);
       rest = cdr(rest);
     }
