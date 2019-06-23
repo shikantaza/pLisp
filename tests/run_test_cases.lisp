@@ -447,6 +447,18 @@
 
 (test-symbol-name-207)
 
+(test-cond-208)
+
+(test-cond-209)
+
+(test-cond-210)
+
+(test-cond-211)
+
+(test-map-212)
+
+(test-map-213)
+
 (in-package "unit-tests-core")
 
 (format nil 

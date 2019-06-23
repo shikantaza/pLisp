@@ -917,4 +917,28 @@
   (test-condition 207 (eq (symbol-name 'abc) "ABC")))
 ;end symbol-name
 
+(defun f-cond (n)
+  (cond ((eq n 1) 2)
+        ((eq n 2) 5)
+        ((eq n 3) 8)
+        (t 14)))
 
+(defun test-cond-208 ()
+  (test-condition 208 (eq (f-cond 1) 2)))
+
+(defun test-cond-209 ()
+  (test-condition 209 (eq (f-cond 2) 5)))
+
+(defun test-cond-210 ()
+  (test-condition 210 (eq (f-cond 3) 8)))
+
+(defun test-cond-211 ()
+  (test-condition 211 (eq (f-cond 4) 14)))
+
+(defun test-map-212 ()
+  (let ((lst '(1 2 3 4)))
+    (test-condition 212 (eq '(2 4 6 8) (map (lambda (x) (* x 2)) lst)))))
+
+(defun test-map-213 ()
+  (let ((lst (map (lambda (x) (* x 2)) '(1 2 3 4))))
+    (test-condition 213 (eq lst '(2 4 6 8)))))
