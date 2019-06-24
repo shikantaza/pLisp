@@ -1045,6 +1045,26 @@ int print_cons_obj_in_single_line(OBJECT_PTR obj, char *buf, int filled_buf_len)
   return length;
 }
 
+BOOLEAN is_proper_list(OBJECT_PTR obj)
+{
+  if(obj == NIL)
+    return true;
+  
+  if(!IS_CONS_OBJECT(obj))
+    return false;
+
+  OBJECT_PTR rest = obj;
+
+  while(rest != NIL)
+  {
+    if(is_atom(rest))
+       return false;
+    rest = cdr(rest);
+  }
+
+  return true;
+}
+
 BOOLEAN is_valid_defun_defmacro_exp(OBJECT_PTR exp)
 {
   if(!IS_CONS_OBJECT(exp))
@@ -1072,10 +1092,78 @@ BOOLEAN is_valid_defun_defmacro_exp(OBJECT_PTR exp)
   return true;
 }
 
+int print_improper_list_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
+{
+  OBJECT_PTR car_obj = car(obj);
+  OBJECT_PTR cdr_obj = cdr(obj);
+
+  int length = 0;
+  
+  assert(IS_CONS_OBJECT(obj));
+
+  if((is_atom(cdr_obj)                || 
+      IS_CLOSURE_OBJECT(cdr_obj)      || 
+      IS_MACRO_OBJECT(cdr_obj)        || 
+      IS_CONTINUATION_OBJECT(cdr_obj) ||
+      IS_FUNCTION2_OBJECT(cdr_obj)    ||
+      IS_MACRO2_OBJECT(cdr_obj))  
+     && cdr_obj != NIL)
+  {
+    length += sprintf(buf+filled_buf_len+length, "(");
+    length += print_object_to_string(car_obj, buf, filled_buf_len+length);
+    length += sprintf(buf+filled_buf_len+length, " . ");
+    length += print_object_to_string(cdr_obj, buf, filled_buf_len+length);
+    length += sprintf(buf+filled_buf_len+length, ")");
+  }
+  else
+  {
+    OBJECT_PTR rest = obj;
+
+    length += sprintf(buf+filled_buf_len+length, "(");
+
+    while(rest != NIL && 
+          !(IS_ARRAY_OBJECT(rest)        || 
+            is_atom(rest)                || 
+            IS_CLOSURE_OBJECT(rest)      || 
+            IS_MACRO_OBJECT(rest)        || 
+            IS_CONTINUATION_OBJECT(rest) ||
+            IS_FUNCTION2_OBJECT(rest)    ||
+            IS_MACRO2_OBJECT(rest)))
+    {
+      length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+      length += sprintf(buf+filled_buf_len+length, " ");
+      rest = cdr(rest);
+    }
+
+    if((IS_ARRAY_OBJECT(rest)        || 
+        is_atom(rest)                || 
+        IS_CLOSURE_OBJECT(rest)      || 
+        IS_MACRO_OBJECT(rest)        || 
+        IS_CONTINUATION_OBJECT(rest) ||
+        IS_FUNCTION2_OBJECT(rest)    ||
+        IS_MACRO2_OBJECT(rest)) 
+       && rest != NIL)
+    {
+      length += sprintf(buf+filled_buf_len+length, " . ");
+      length += print_object_to_string(rest, buf, filled_buf_len+length);
+      length += sprintf(buf+filled_buf_len+length, ")");
+    }
+    else
+    {
+      length += sprintf(buf+filled_buf_len+length - 1, ")");
+    }
+  }
+
+  return length;
+}
+
 int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
   assert(IS_CONS_OBJECT(obj));
 
+  if(!is_proper_list(obj))
+    return print_improper_list_to_string(obj, buf, filled_buf_len);
+  
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
 
