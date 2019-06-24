@@ -459,6 +459,12 @@
 
 (test-map-213)
 
+(test-dolist-214)
+
+(test-for-215)
+
+(test-reverse-216)
+
 (in-package "unit-tests-core")
 
 (format nil 

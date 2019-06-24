@@ -942,3 +942,19 @@
 (defun test-map-213 ()
   (let ((lst (map (lambda (x) (* x 2)) '(1 2 3 4))))
     (test-condition 213 (eq lst '(2 4 6 8)))))
+
+(defun test-dolist-214 ()
+  (let ((lst))
+    (dolist (x '(1 2 3 4 5))
+      (set lst (cons (* x 2) lst)))
+    (set lst (reverse lst))
+    (test-condition 214 (eq lst '(2 4 6 8 10)))))
+
+(defun test-for-215 ()
+  (let ((lst))
+    (for (i 0 (< i 5) (incf i) nil)
+         (set lst (cons (* i 3) lst)))
+    (test-condition 215 (eq lst '(12 9 6 3 0)))))
+
+(defun test-reverse-216 ()
+  (test-condition 216 (eq (reverse '(1 2 3 4 5)) '(5 4 3 2 1))))
