@@ -203,13 +203,21 @@ void print_to_transcript(char * str)
     fprintf(stdout, "%s", str);
   else
   {
-    gtk_text_buffer_insert_at_cursor(transcript_buffer, str, -1);
+    //gtk_text_buffer_insert_at_cursor(transcript_buffer, str, -1);
 
     //scroll to the end of the text
+    /* GtkTextIter iter; */
+    /* gtk_text_buffer_get_end_iter (transcript_buffer, &iter); */
+    /* gtk_text_view_scroll_to_iter(transcript_textview, */
+    /*     			 &iter, 0.0, TRUE, 1.0, 1.0); */
+
+    GtkTextMark *mark = gtk_text_buffer_get_insert(transcript_buffer);
     GtkTextIter iter;
-    gtk_text_buffer_get_end_iter (transcript_buffer, &iter);
-    gtk_text_view_scroll_to_iter(transcript_textview,
-				 &iter, 0.0, FALSE, 0, 0);
+
+    gtk_text_buffer_get_end_iter(transcript_buffer, &iter );
+    gtk_text_buffer_move_mark(transcript_buffer, mark, &iter );
+    gtk_text_buffer_insert_at_cursor(transcript_buffer, str, -1 );
+    gtk_text_view_scroll_to_mark(transcript_textview, mark, 0.0, TRUE, 0.5, 1 );
   }
 }
 
