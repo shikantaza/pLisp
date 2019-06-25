@@ -1600,7 +1600,8 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
     return NIL;
   }
 
-  fprintf(fp, "(create-package \"%s\")\n\n", convert_to_lower_case(package_name));
+  if(strcmp(package_name, "USER"))
+    fprintf(fp, "(create-package \"%s\")\n\n", convert_to_lower_case(package_name));
 
   fprintf(fp, "(in-package \"%s\")\n\n", convert_to_lower_case(package_name));
 
@@ -1659,16 +1660,17 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
 	print_object_to_string(temp, buf, 0);
       }
-      else if(IS_CONTINUATION_OBJECT(obj))
-      {
-	//not doing anything for continuation objects
-      }
-      else
-      {
-	memset(buf, '\0', MAX_STRING_LENGTH);
-	print_object_to_string(cons(DEFINE,
-				    cons(sym, cons(obj, NIL))), buf, 0);
-      }
+      //exporting only macros and closures
+      /* else if(IS_CONTINUATION_OBJECT(obj)) */
+      /* { */
+      /*   //not doing anything for continuation objects */
+      /* } */
+      /* else */
+      /* { */
+      /*   memset(buf, '\0', MAX_STRING_LENGTH); */
+      /*   print_object_to_string(cons(DEFINE, */
+      /*   			    cons(sym, cons(obj, NIL))), buf, 0); */
+      /* } */
 
       fprintf(fp, "%s\n\n", convert_to_lower_case(buf));
     }
