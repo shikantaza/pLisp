@@ -1544,6 +1544,45 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
   
+  if(!strcmp(get_symbol_name(car_obj),"FOR"))
+  {
+    int i;
+    OBJECT_PTR rest;
+
+    //quick and dirty check
+    //needed to print signature
+    if(!IS_CONS_OBJECT(second(obj)))
+    {
+      length += print_cons_obj_in_single_line(obj, buf, filled_buf_len+length);
+      return length;
+    }
+    
+    length += sprintf(buf+filled_buf_len+length, "(for ");
+
+    length += print_cons_obj_in_single_line(second(obj), buf, filled_buf_len+length);
+
+
+    rest = cdr(cdr_obj);
+
+    while(rest != NIL)
+    {
+      length += sprintf(buf+filled_buf_len+length, "\n");
+      
+      for(i=1; i<indents; i++)
+        length += sprintf(buf+filled_buf_len+length, " ");
+
+      length += sprintf(buf+filled_buf_len+length, "  ");
+
+      length += print_object_to_string(car(rest), buf, filled_buf_len+length);
+      
+      rest = cdr(rest);
+    }
+
+    length += sprintf(buf+filled_buf_len+length, ")");
+    
+    return length;
+  }  
+  
   if(car_obj == IF)
   {
     int i;
