@@ -1544,7 +1544,7 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
     return length;
   }
   
-  if(!strcmp(get_symbol_name(car_obj),"FOR"))
+  if(car_obj == get_symbol_object("FOR"))
   {
     int i;
     OBJECT_PTR rest;
