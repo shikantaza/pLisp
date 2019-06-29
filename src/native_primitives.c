@@ -80,6 +80,10 @@ extern OBJECT_PTR INT_POINTER;
 extern OBJECT_PTR FLOAT_POINTER;
 extern OBJECT_PTR CHAR_POINTER;
 
+extern OBJECT_PTR GET_SOURCE;
+extern OBJECT_PTR LAMBDA;
+extern OBJECT_PTR MACRO;
+
 extern OBJECT_PTR exception_object;
 
 extern unsigned int current_package;
@@ -137,6 +141,9 @@ extern unsigned int nof_packages;
 extern package_t *packages;
 
 extern unsigned int print_context_pkg_index;
+
+extern OBJECT_PTR get_source_object(OBJECT_PTR);
+extern OBJECT_PTR get_params_object(OBJECT_PTR);
 
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
@@ -2158,4 +2165,16 @@ void raise_error(char *err_str)
 void throw_generic_exception(char *err_str)
 {
   throw_exception1("EXCEPTION", err_str);
+}
+
+OBJECT_PTR prim_get_source(OBJECT_PTR obj)
+{
+  if(!IS_FUNCTION2_OBJECT(obj) && !IS_MACRO2_OBJECT(obj))
+  {
+    throw_exception1("Exception", "GET-SOURCE expects a closure or macro object as argument");
+    return NIL;
+  }
+
+  return cons(IS_FUNCTION2_OBJECT(obj) ? LAMBDA : MACRO,
+              cons(get_params_object(obj),get_source_object(obj)));
 }

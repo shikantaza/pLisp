@@ -224,6 +224,8 @@ OBJECT_PTR DISABLE_EXCEPTION_HANDLERS = (OBJECT_PTR)((125 << OBJECT_SHIFT) + SYM
 OBJECT_PTR ENABLE_EXCEPTION_HANDLERS  = (OBJECT_PTR)((126 << OBJECT_SHIFT) + SYMBOL_TAG);
 //end symbols needed for compile-exp
 
+OBJECT_PTR GET_SOURCE  = (OBJECT_PTR)((127 << OBJECT_SHIFT) + SYMBOL_TAG);
+
 //for performance
 OBJECT_PTR CONS_NIL_NIL;
 OBJECT_PTR CONS_APPLY_NIL;
@@ -235,7 +237,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     86
-#define NOF_NON_SPECIAL_SYMBOLS 41
+#define NOF_NON_SPECIAL_SYMBOLS 42
 
 char err_buf[500];
 
@@ -2706,6 +2708,8 @@ void initialize_core_package()
 
   packages[CORE_PACKAGE_INDEX].symbols[125] = strdup("DISABLE-EXCEPTION-HANDLERS");
   packages[CORE_PACKAGE_INDEX].symbols[126] = strdup("ENABLE-EXCEPTION-HANDLERS");
+
+  packages[CORE_PACKAGE_INDEX].symbols[127] = strdup("GET-SOURCE");
 }
 
 int find_package(char* package_name)
