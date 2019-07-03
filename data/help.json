@@ -414,7 +414,7 @@
    "name" : "defmacro", 
    "syntax" : "(defmacro name params &rest body) => result",
    "args" : "name: symbol; params: list; body: the rest of the arguments converted into a list; result: a macro object",
-   "desc" : "defmacro creates a macro named 'name' with parameters 'params' and body 'body'",
+   "desc" : "defmacro creates a macro named 'name' with parameters 'params' and body 'body'. An optional string can be passed after 'params' to document the macro.",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.",
    "examples" : [ "(defmacro first (lst) `(car ,lst)) => <macro>" ],
    "see-also" : [ "macro" ]
@@ -424,7 +424,7 @@
    "name" : "defun", 
    "syntax" : "(defun name params &rest body) => result",
    "args" : "name: symbol; params: list; body: the rest of the arguments converted into a list; result: a function object",
-   "desc" : "defun creates a function named 'name' with parameters 'params' and body 'body'",
+   "desc" : "defun creates a function named 'name' with parameters 'params' and body 'body'. An optional string can be passed after 'params' to document the function.",
    "exceptions" : "Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.",
    "examples" : [ "(defun double (n) (* n 2)) => <function>" ],
    "see-also" : [ "lambda" ]
