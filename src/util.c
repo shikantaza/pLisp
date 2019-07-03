@@ -410,3 +410,50 @@ char *extract_function_name(char *fn_source)
 
   return substring(fn_source, 10, loc_of_first_left_paren - 10);
 }
+
+int get_first_occur(char *str, char c)
+{
+  unsigned int i, len;
+
+  len = strlen(str);
+
+  for(i=0; i < len; i++)
+    if(str[i] == c)
+      return i;
+
+  return -1;
+}
+
+//this function is for inserting the documentation string in
+//the string representation of the function/macro source
+void insert_doc_string(char *str, unsigned int pos, char *inserted_str)
+{
+  unsigned int len = strlen(str);
+
+  unsigned int inserted_len = strlen(inserted_str);
+  
+  if(pos < 0 || pos > len)
+    return;
+
+  if(!inserted_len)
+    return;
+  
+  char *temp = strndup(str+pos, len);
+
+  unsigned int i;
+
+  str[pos] = '"';
+  
+  for(i=0; i<inserted_len; i++)
+    str[pos+i+1] = inserted_str[i];
+
+  str[pos+i+1] = '"';
+  str[pos+i+2] = '\n';
+
+  unsigned int temp_len = strlen(temp);
+  
+  for(i=0; i<temp_len; i++)
+    str[pos+inserted_len + i + 3] = temp[i];
+
+  free(temp);
+}

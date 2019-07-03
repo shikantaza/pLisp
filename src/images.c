@@ -413,6 +413,9 @@ void serialize_full_monty_global_vars(FILE *fp,
 
     fprintf(fp, "]");
 
+    if(top_level_symbols[i].doc_str)
+      fprintf(fp, ", \"docstr\" : \"%s\"", top_level_symbols[i].doc_str);
+    
     fprintf(fp, "}");
 
     if(i < nof_global_vars - 1)
@@ -1003,6 +1006,12 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
                                                                          single_object);
       top_level_symbols[i].references[j].pos = JSON_get_object_item(ref_detail_obj, "pos")->ivalue;
     }
+
+    struct JSONObject *doc_str_obj = JSON_get_object_item(obj, "docstr");
+
+    if(doc_str_obj)
+      top_level_symbols[i].doc_str = strdup(doc_str_obj->strvalue);
+
   }
   //end of top level symbols
 

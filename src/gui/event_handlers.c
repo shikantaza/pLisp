@@ -202,6 +202,8 @@ extern OBJECT_PTR third(OBJECT_PTR);
 
 extern int add_symbol_to_package(char *, int);
 
+extern char *get_doc_str(OBJECT_PTR);
+
 unsigned int print_context_pkg_index;
 
 void quit_application();
@@ -1744,13 +1746,19 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
       /*                                                 get_source_object(obj))), */
       /*                                       NIL))), buf, 0); */
       /* print_object_to_string(list(4, DEFUN, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0); */
+
+      char *doc_str = get_doc_str((OBJECT_PTR)ptr);
+
       OBJECT_PTR temp = cons(DEFUN, 
                              cons((OBJECT_PTR)ptr,
                                   cons(get_params_object(obj),
-                                       get_source_object(obj))));
+                                       doc_str ? cdr(get_source_object(obj)) : get_source_object(obj))));
 
       print_object_to_string(temp, buf, 0);
 
+      if(doc_str)
+        insert_doc_string(buf, get_first_occur(buf, '\n')+1, doc_str);
+      
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
 
       gtk_text_view_set_editable(system_browser_textview, TRUE);
@@ -1766,14 +1774,18 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
       /*                                       NIL))), buf, 0); */
       /* print_object_to_string(list(4, DEFMACRO, (OBJECT_PTR)ptr, get_params_object(obj), car(get_source_object(obj))), buf, 0); */
 
+      char *doc_str = get_doc_str((OBJECT_PTR)ptr);
+      
       OBJECT_PTR temp = cons(DEFMACRO, 
                              cons((OBJECT_PTR)ptr,
                                   cons(get_params_object(obj),
-                                       get_source_object(obj))));
+                                       doc_str ? cdr(get_source_object(obj)) : get_source_object(obj))));
 
       print_object_to_string(temp, buf, 0);
 
-
+      if(doc_str)
+        insert_doc_string(buf, get_first_occur(buf, '\n')+1, doc_str);
+      
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
       gtk_text_view_set_editable(system_browser_textview, TRUE);
     }

@@ -3724,6 +3724,8 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
     top_level_symbols[nof_global_vars-1].ref_count = 0;
     top_level_symbols[nof_global_vars-1].references = NULL;
 
+    top_level_symbols[nof_global_vars-1].doc_str = NULL;
+    
     add_to_autocomplete_list(convert_to_lower_case(strdup(get_symbol_name(sym))));
 
     //system_changed = true;
@@ -5325,6 +5327,38 @@ OBJECT_PTR symbol_to_use(OBJECT_PTR sym)
   return symbol_to_be_used;
 }
 
+void update_doc_str(OBJECT_PTR sym, char *str)
+{
+  unsigned int i;
+
+  for(i=0; i < nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(top_level_symbols[i].sym == sym)
+    {
+      top_level_symbols[i].doc_str = strdup(str);
+      return;
+    }
+  }
+}
+
+char *get_doc_str(OBJECT_PTR sym)
+{
+  unsigned int i;
+
+  for(i=0; i < nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag)
+      continue;
+
+    if(top_level_symbols[i].sym == sym)
+      return top_level_symbols[i].doc_str;
+  }
+  return NULL;
+}
+
 OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
 {
   OBJECT_PTR res;
@@ -5335,10 +5369,19 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
     return NIL;
   }
 
-  if(cons_length(exp) != 3)
+  if(cons_length(exp) != 3 && cons_length(exp) != 4)
   {
-    throw_exception1("INVALID-ARGUMENT", "DEFINE requires exactly two arguments");
+    throw_exception1("INVALID-ARGUMENT", "DEFINE takes two mandatory arguments (a symbol and a value) followed by an optional documentation string");
     return NIL;
+  }
+
+  if(cons_length(exp) == 4)
+  {
+    if(!is_string_object(fourth(exp))  && !IS_STRING_LITERAL_OBJECT(fourth(exp)))
+    {
+      throw_exception1("INVALID-ARGUMENT", "DEFINE takes two mandatory arguments (a symbol and a value) followed by an optional documentation string");
+      return NIL;
+    }
   }
 
   if(IS_CONS_OBJECT(third(exp)) && 
@@ -5401,6 +5444,12 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
 
   add_top_level_sym(symbol_to_be_used, cons(res, NIL));
 
+  if(cons_length(exp) == 4)
+  {
+    OBJECT_PTR doc_str_obj = fourth(exp);
+    update_doc_str(symbol_to_be_used, is_string_object(doc_str_obj) ? get_string(doc_str_obj) : strings[(int)doc_str_obj >> OBJECT_SHIFT]);
+  }
+  
   update_dependencies(symbol_to_be_used, cons(res, NIL));
 
   if(update_references(symbol_to_be_used, res))

@@ -57,4 +57,7 @@ char *concat_strings(char *, char *, char *);
 
 char *extract_function_name(char *);
 
+int get_first_occur(char *, char);
+
+void insert_doc_string(char *, unsigned int, char *);
 #endif

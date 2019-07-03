@@ -194,6 +194,7 @@ typedef struct global_var_mapping
   unsigned int ref_count;
   global_var_ref_detail_t * references;
   BOOLEAN delete_flag;
+  char *doc_str;
 } global_var_mapping_t;
 
 typedef struct unmet_dependency

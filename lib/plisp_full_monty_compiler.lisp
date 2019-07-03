@@ -57,11 +57,21 @@
 (define backquote (macro (quoted-form)
                          (qq quoted-form)))
 
+;(define defun (macro (name vars &rest body)
+;                     `(define ,name (lambda ,vars ,@body))))
+
+;(define defmacro (macro (name vars &rest body)
+;                        `(define ,name (macro ,vars ,@body))))
+
 (define defun (macro (name vars &rest body)
-                     `(define ,name (lambda ,vars ,@body))))
+                     (if (prim-stringp (prim-car body))
+                         `(define ,name (lambda ,vars ,@(prim-cdr body)) ,(prim-car body))
+                       `(define ,name (lambda ,vars ,@body)))))
 
 (define defmacro (macro (name vars &rest body)
-                        `(define ,name (macro ,vars ,@body))))
+                        (if (prim-stringp (prim-car body))
+                            `(define ,name (macro ,vars ,@(prim-cdr body)) ,(prim-car body))
+                          `(define ,name (macro ,vars ,@body)))))
 
 (defun plus-internal (args)
   (if (prim-eq args nil)
