@@ -616,7 +616,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <i>Macro</i><b> defmacro</b><br/><br/>
 <b>Syntax:</b> (defmacro name params &rest body) => result<br/><br/>
 <b>Arguments:</b> name: symbol; params: list; body: the rest of the arguments converted into a list; result: a macro object<br/><br/>
-<b>Description: defmacro</b> creates a macro named <i>name</i> with parameters <i>params</i> and body <i>body</i><br/><br/>
+<b>Description: defmacro</b> creates a macro named <i>name</i> with parameters <i>params</i> and body <i>body</i>. An optional string can be passed after <i>params</i> to document the macro.<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.<br/><br/>
 <b>Examples:</b><br/><br/>
 (defmacro first (lst) `(car ,lst)) => <macro><br/><br/><b>See Also:</b> 
@@ -625,7 +625,7 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <i>Macro</i><b> defun</b><br/><br/>
 <b>Syntax:</b> (defun name params &rest body) => result<br/><br/>
 <b>Arguments:</b> name: symbol; params: list; body: the rest of the arguments converted into a list; result: a function object<br/><br/>
-<b>Description: defun</b> creates a function named <i>name</i> with parameters <i>params</i> and body <i>body</i><br/><br/>
+<b>Description: defun</b> creates a function named <i>name</i> with parameters <i>params</i> and body <i>body</i>. An optional string can be passed after <i>params</i> to document the function.<br/><br/>
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if the required number of parameters is not supplied. Propagates exceptions thrown (if any) by the underlying macro expansion.<br/><br/>
 <b>Examples:</b><br/><br/>
 (defun double (n) (* n 2)) => <function><br/><br/><b>See Also:</b> 
