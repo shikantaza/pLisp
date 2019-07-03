@@ -17,7 +17,7 @@
 
 AC_ARG_VAR(LLVMDIR, "Directory in which LLVM and Clang are installed")
 
-AC_INIT([plisp], [0.1.24], [rajesh.jayaprakash@gamil.com], [plisp], [https://github.com/shikantaza/plisp])
+AC_INIT([plisp], [0.1.25], [rajesh.jayaprakash@gamil.com], [plisp], [https://github.com/shikantaza/plisp])
 AC_PREREQ([2.68])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADERS([config.h])
