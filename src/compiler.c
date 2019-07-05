@@ -3696,7 +3696,11 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
       top_level_symbols[i].val = val;
       top_level_symbols[i].delete_flag = false;
 
-      top_level_symbols[i].doc_str = NULL;
+      if(top_level_symbols[i].doc_str)
+      {
+        free(top_level_symbols[i].doc_str);
+        top_level_symbols[i].doc_str = NULL;
+      }
       
       found = true;
 
