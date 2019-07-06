@@ -27,7 +27,7 @@ BUILT_SOURCES = libplispjitllvm.la
 endif
 endif
 
-plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h
+plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h src/gui/object_inspector.c
 
 if WINDOWS
 plisp_SOURCES += src/jit.c

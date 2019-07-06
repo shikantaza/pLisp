@@ -2178,3 +2178,11 @@ OBJECT_PTR prim_get_source(OBJECT_PTR obj)
   return cons(IS_FUNCTION2_OBJECT(obj) ? LAMBDA : MACRO,
               cons(get_params_object(obj),get_source_object(obj)));
 }
+
+extern void create_object_inspector_window(OBJECT_PTR);
+
+OBJECT_PTR prim_inspect_object(OBJECT_PTR obj)
+{
+  create_object_inspector_window(obj);
+  return NIL;
+}

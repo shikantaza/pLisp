@@ -213,6 +213,8 @@ extern OBJECT_PTR ABORT;
 
 extern OBJECT_PTR GET_SOURCE;
 
+extern OBJECT_PTR INSPECT_OBJECT;
+
 extern uintptr_t POINTER_MASK;
 
 extern expression_t *g_expr;
@@ -2440,7 +2442,8 @@ BOOLEAN core_op(OBJECT_PTR sym)
     sym == DISABLE_EXCEPTION_HANDLERS ||
     sym == ENABLE_EXCEPTION_HANDLERS  ||
     sym == SAVE_CONTINUATION_TO_RESUME ||
-    sym == GET_SOURCE;
+    sym == GET_SOURCE ||
+    sym == INSPECT_OBJECT;
 }
 
 BOOLEAN string_array_op(OBJECT_PTR sym)
@@ -3027,6 +3030,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "save_cont_to_resume");
       else if(var == GET_SOURCE)
         sprintf(s, "prim_get_source");      
+      else if(var == INSPECT_OBJECT)
+        sprintf(s, "prim_inspect_object");      
       else
       {
         print_object(var);
@@ -6623,6 +6628,8 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
   len += sprintf(buf+len, "uintptr_t enable_exception_handlers();\n");  
 
   len += sprintf(buf+len, "uintptr_t prim_get_source(uintptr_t);\n");  
+
+  len += sprintf(buf+len, "uintptr_t prim_inspect_object(uintptr_t);\n");
   
   /* len += sprintf(buf+len, "void insert_node(unsigned int, uintptr_t);\n"); */
   /* len += sprintf(buf+len, "void gc(int, int);\n"); */

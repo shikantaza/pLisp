@@ -1491,7 +1491,7 @@ void create_help_window()
                              NULL);
 
   gtk_text_buffer_create_tag(help_buffer, "bold_blue_foreground",
-                             "weight", PANGO_WEIGHT_BOLD, "foreground", "blue", NULL);  
+                             "weight", PANGO_WEIGHT_BOLD, "foreground", "blue", "underline", PANGO_UNDERLINE_SINGLE, NULL);  
 
 #ifndef __APPLE__  
   gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Monospace Normal 9"));
