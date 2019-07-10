@@ -1578,7 +1578,17 @@
    "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly two arguments are not supplied. An exception of type INVALID-ARGUMENT is thrown if either of the arguments is not an integer or a float",
    "examples" : [ "(>= 7 2) => T", "(>= 1 2) => NIL", "(>= 1 1) => T" ],
    "see-also" : [ ">" ]
-  }
+  },
 
+  {"type" : 2, 
+   "name" : "inspect-object", 
+   "syntax" : "(inspect-object obj) => NIL",
+   "args" : "obj: a pLisp object",
+   "desc" : "inspect-object invokes the pLisp Object Inspector and displays the type, structure, and contents of the object passed as its argument",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied",
+   "examples" : [ "(inspect-object (cons 1 2))  => NIL" ],
+   "see-also" : [ ]
+  }
+     
  ]
 }

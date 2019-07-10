@@ -6079,19 +6079,21 @@ BOOLEAN is_continuation_object(OBJECT_PTR obj)
   return IS_FUNCTION2_OBJECT(obj);
 }
 
+#define NOF_CORE_SYMBOLS 79
+
 BOOLEAN is_core_symbol(char *s)
 {
-  char *core_symbols[78] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET*", "LETREC", "BREAK", "ABORT", "RESUME",
-                            "IF", "CALL/CC", "RETURN-FROM", "CATCH", "THROW",  "ATOM", "EQ", "CAR", "CDR",
-                            "CONS", "+", "-", "*", "/", "PROGN", "PRINT", "LIST", "LISTP", "SYMBOL-VALUE", "GENSYM",
-                            "SETCAR", "SETCDR", "CREATE-PACKAGE", "IN-PACKAGE", "EXPAND-MACRO", "APPLY",
-                            "STRING", "MAKE-ARRAY", "ARRAY-GET", "ARRAY-SET", "SUB-ARRAY", "ARRAY-LENGTH", "PRINT-STRING", "CREATE-IMAGE",
-                            "LOAD-FOREIGN-LIBRARY", "CALL-FOREIGN-FUNCTION", "ENV", "EVAL", "LOAD-FILE", "CONSP", "INTEGERP", "FLOATP",
-                            "CHARACTERP", "SYMBOLP", "STRINGP", "ARRAYP", "CLOSUREP", "MACROP", "CONTINUATIONP", "FORMAT", "CLONE",
-                            "SYMBOL", "SYMBOL-NAME", "UNBIND", "NEWLINE", "TIME", "PROFILE", "NOT", "<", ">", "<=", ">=", "NEQ",
-                            "SAVE-OBJECT", "LOAD-OBJECT", "EXPORT-PACKAGE", "IMPORT-PACKAGE"};
+  char *core_symbols[NOF_CORE_SYMBOLS] = {"LAMBDA", "MACRO", "DEFINE", "SET", "ERROR", "LET", "LET*", "LETREC", "BREAK", "ABORT", "RESUME",
+                                          "IF", "CALL/CC", "RETURN-FROM", "CATCH", "THROW",  "ATOM", "EQ", "CAR", "CDR",
+                                          "CONS", "+", "-", "*", "/", "PROGN", "PRINT", "LIST", "LISTP", "SYMBOL-VALUE", "GENSYM",
+                                          "SETCAR", "SETCDR", "CREATE-PACKAGE", "IN-PACKAGE", "EXPAND-MACRO", "APPLY",
+                                          "STRING", "MAKE-ARRAY", "ARRAY-GET", "ARRAY-SET", "SUB-ARRAY", "ARRAY-LENGTH", "PRINT-STRING", "CREATE-IMAGE",
+                                          "LOAD-FOREIGN-LIBRARY", "CALL-FOREIGN-FUNCTION", "ENV", "EVAL", "LOAD-FILE", "CONSP", "INTEGERP", "FLOATP",
+                                          "CHARACTERP", "SYMBOLP", "STRINGP", "ARRAYP", "CLOSUREP", "MACROP", "CONTINUATIONP", "FORMAT", "CLONE",
+                                          "SYMBOL", "SYMBOL-NAME", "UNBIND", "NEWLINE", "TIME", "PROFILE", "NOT", "<", ">", "<=", ">=", "NEQ",
+                                          "SAVE-OBJECT", "LOAD-OBJECT", "EXPORT-PACKAGE", "IMPORT-PACKAGE", "INSPECT-OBJECT"};
 
-  int nof_core_symbols = 78;
+  int nof_core_symbols = NOF_CORE_SYMBOLS;
 
   int i;
 
@@ -6292,6 +6294,8 @@ char *get_signature_for_core_symbol(char *symbol_name)
     ret = "(export-package package-name str)";
   else if(!strcmp(s,"IMPORT-PACKAGE"))
     ret = "(import-package package-name)";
+  else if(!strcmp(s,"INSPECT-OBJECT"))
+    ret = "(inspect-object obj)";
   //free(s);
   
   return ret;

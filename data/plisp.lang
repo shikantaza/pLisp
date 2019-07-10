@@ -218,6 +218,7 @@
       <keyword>unwind-protect</keyword>
       <keyword>array</keyword>
       <keyword>aset</keyword>
+      <keyword>inspect-object</keyword>
     </context>
 
     <context id="plisp" class="no-spell-check">

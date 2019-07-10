@@ -68,7 +68,7 @@ gboolean handle_obj_insp_key_press_events(GtkWidget *widget, GdkEventKey *event,
     if(is_valid_object(obj))
       create_object_inspector_window(obj);
   }
-  else if(event->keyval = GDK_KEY_Escape)
+  else if(event->keyval == GDK_KEY_Escape)
     close_application_window(&widget);
   
   return TRUE;

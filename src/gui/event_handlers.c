@@ -2527,10 +2527,10 @@ void build_autocomplete_words()
                                     "print-string", "consp", "listp", "integerp", "floatp", "characterp", "symbolp", "stringp",
                                     "arrayp", "closurep", "macrop", "continuationp", "load-foreign-library", "create-package",
                                     "in-package", "export-package", "import-package", "create-image", "save-object", "load-object", "load-file", "profile",
-                                    "time", "env", "expand-macro", "eval", "break", "resume", "abort"};
+                                    "time", "env", "expand-macro", "eval", "break", "resume", "abort", "inspect-object"};
 
 
-  nof_autocomplete_words = 67;
+  nof_autocomplete_words = 68;
   autocomplete_words = (char **)GC_MALLOC(nof_autocomplete_words * sizeof(char *));
   
   assert(autocomplete_words);
