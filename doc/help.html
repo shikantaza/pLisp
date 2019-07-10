@@ -21,6 +21,7 @@
 <b><a href="#U">U</a> | </b>
 <b><a href="#V">V</a> | </b>
 <b><a href="#W">W</a> | </b>
+<b><a href="#I">I</a> | </b>
 <b><a href="#Non-Alphabetic">Non-Alphabetic</a></b><br/><br/><br/><b><a name="A">A</a></b><br/>
 <ul style="padding-left:40px">
 <li><a href="#abort">abort</a></li><br/>
@@ -226,6 +227,10 @@
 <br/><b><a name="W">W</a></b><br/>
 <ul style="padding-left:40px">
 <li><a href="#while">while</a></li><br/>
+</ul>
+<br/><b><a name="I">I</a></b><br/>
+<ul style="padding-left:40px">
+<li><a href="#inspect-object">inspect-object</a></li><br/>
 </ul>
 <br/><b><a name="Non-Alphabetic">Non-Alphabetic</a></b><br/>
 <ul style="padding-left:40px">
@@ -1665,5 +1670,14 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Examples:</b><br/><br/>
 (>= 7 2) => T<br/><br/>(>= 1 2) => NIL<br/><br/>(>= 1 1) => T<br/><br/><b>See Also:</b> 
 <a href="#>">></a><hr/>
+<a name="inspect-object"></a>
+<i>Special Operator</i><b> inspect-object</b><br/><br/>
+<b>Syntax:</b> (inspect-object obj) => NIL<br/><br/>
+<b>Arguments:</b> obj: a pLisp object<br/><br/>
+<b>Description: inspect-object</b> invokes the pLisp Object Inspector and displays the type, structure, and contents of the object passed as its argument<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(inspect-object (cons 1 2))  => NIL<br/><br/><b>See Also:</b> 
+<hr/>
 </body>
 </html>
