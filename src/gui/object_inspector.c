@@ -162,12 +162,21 @@ void apply_link_tag(GtkTextBuffer *object_inspector_buffer)
   
   while(1)
   {
+#ifdef WIN32
+    if(gtk_text_iter_forward_search(&curr_iter, 
+                                     "<0", 
+                                     GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, 
+                                     &start_match,
+                                     &end_match, 
+                                     NULL))
+#else
     if(gtk_text_iter_forward_search(&curr_iter, 
                                      "<0x", 
                                      GTK_TEXT_SEARCH_TEXT_ONLY | GTK_TEXT_SEARCH_VISIBLE_ONLY, 
                                      &start_match,
                                      &end_match, 
                                      NULL))
+#endif
     {
       GtkTextIter start_match1;
       

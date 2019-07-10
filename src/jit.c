@@ -150,6 +150,8 @@ extern OBJECT_PTR primitive_throw(OBJECT_PTR);
 extern void disable_exception_handlers();
 extern void enable_exception_handlers();
 
+extern void prim_inspect_object(OBJECT_PTR);
+
 extern void push_into_debug_stack(OBJECT_PTR);
 extern OBJECT_PTR save_cont_to_resume(OBJECT_PTR);
 
@@ -271,6 +273,8 @@ TCCState *create_tcc_state1()
 
   tcc_add_symbol(tcc_state, "disable_exception_handlers", disable_exception_handlers);
   tcc_add_symbol(tcc_state, "enable_exception_handlers",  enable_exception_handlers);
+
+  tcc_add_symbol(tcc_state, "prim_inspect_object",      prim_inspect_object);
   
   /* tcc_add_symbol(tcc_state, "insert_node",              insert_node); */
   /* tcc_add_symbol(tcc_state, "gc",                       gc); */
