@@ -24,4 +24,8 @@ cd ~/Desktop/pLisp.app/Contents/MacOS
 
 sed -i -e 's/gtk-2.0/gtk-3.0/g' pLisp
 
+cd ~/Desktop/pLisp.app/Contents/Resources/etc/gtk-3.0
+
+sed -i -e 's/\/Users\/a103035\/gtk\/inst/@executable_path\/\.\.\/Resources/g' gdk-pixbuf.loaders
+
 exit
