@@ -140,7 +140,7 @@ int print_cons_object_to_string_for_insp(OBJECT_PTR obj, char *buf, int filled_b
       IS_MACRO2_OBJECT(rest)) 
      && rest != NIL)
   {
-    len += sprintf(buf+filled_buf_len+len, " . ");
+    len += sprintf(buf+filled_buf_len+len, ". ");
     if(is_atom(rest))
       len += print_object_to_string(rest, buf, filled_buf_len+len);
     else

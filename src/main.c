@@ -369,6 +369,8 @@ extern OBJECT_PTR debug_window_dbg_stack;
 
 //end of variables moved from original compiler.c
 
+extern void show_warning_dialog(char *);
+
 void initialize()
 {
   if(initialize_memory())
@@ -1847,7 +1849,7 @@ void print_cons_object(OBJECT_PTR obj)
           IS_MACRO2_OBJECT(rest)) 
          && rest != NIL)
       {
-	print_to_transcript(" . ");
+	print_to_transcript(". ");
 	print_object(rest);
 	print_to_transcript(")");
       }
@@ -1905,7 +1907,7 @@ void print_cons_object(OBJECT_PTR obj)
           IS_MACRO2_OBJECT(rest)) 
          && rest != NIL)
       {
-	fprintf(stdout, " . ");
+	fprintf(stdout, ". ");
 	print_object(rest);
 	fprintf(stdout, ")");
       }
@@ -3767,7 +3769,7 @@ int main(int argc, char **argv)
       fprintf(stdout, "Default image file 'plisp.image' not found in the current\n");
       fprintf(stdout, "directory. Working with an image is faster and more convenient,\n");
       fprintf(stdout, "as the core library doesn't have to be recompiled each time\n");
-      fprintf(stdout, "plisp is invoked. You can create the image file by choosing\n");
+      fprintf(stdout, "pLisp is invoked. You can create the image file by choosing\n");
       fprintf(stdout, "the 'Save image' option in the Transcript window, and invoking\n");
       fprintf(stdout, "plisp as 'plisp -i <image file>' thereafter. If you name your\n");
       fprintf(stdout, "image file as 'plisp.image', you do not have to specify it\n");
@@ -3833,6 +3835,17 @@ int main(int argc, char **argv)
 			       DEFAULT_TRANSCRIPT_HEIGHT,
 			       default_transcript_text);
 
+    if(!console_mode && !single_expression_mode && !pipe_mode)
+    {
+      show_warning_dialog("Default image file 'plisp.image' not found in the current " \
+                          "directory. Working with an image is faster and more convenient, " \
+                          "as the core library doesn't have to be recompiled each time " \
+                          "pLisp is invoked. You can create the image file by choosing " \
+                          "the 'Save image' option in the Transcript window. " \
+                          "If you name your image file as 'plisp.image', pLisp will use " \
+                          "this file automatically.");
+    }
+    
   }
 
   build_autocomplete_words();
