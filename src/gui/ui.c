@@ -1788,10 +1788,15 @@ void highlight_text(GtkTextBuffer *buffer, char *text)
 
 GtkWindow *splash_window;
 
+void close_splash_screen()
+{
+  close_application_window(&splash_window);
+}
+
 void show_splash_screen()
 {
   GtkWidget  *image;
-  splash_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  splash_window = gtk_window_new (GTK_WINDOW_POPUP);
 
   gtk_window_set_default_size(splash_window, 620, 300);
   gtk_window_set_decorated(GTK_WINDOW (splash_window), FALSE);
@@ -1809,10 +1814,12 @@ void show_splash_screen()
 #endif
 
   gtk_container_add(GTK_CONTAINER(splash_window), image);
+  gtk_window_set_auto_startup_notification(FALSE);
   gtk_widget_show_all(splash_window);
+  gtk_window_set_auto_startup_notification(TRUE);
+
+  while (gtk_events_pending())
+    gtk_main_iteration();
+
 }
 
-void close_splash_window()
-{
-  close_application_window(&splash_window);
-}

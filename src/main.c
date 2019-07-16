@@ -372,7 +372,7 @@ extern OBJECT_PTR debug_window_dbg_stack;
 extern void show_warning_dialog(char *);
 
 extern void show_splash_screen();
-extern void close_splash_window();
+extern void close_splash_screen();
 
 void initialize()
 {
@@ -3836,7 +3836,8 @@ int main(int argc, char **argv)
 
     if(!console_mode && !single_expression_mode && !pipe_mode)
     {
-      close_splash_window();
+      close_splash_screen();
+      
       create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
 			       DEFAULT_TRANSCRIPT_POSY,
 			       DEFAULT_TRANSCRIPT_WIDTH,
