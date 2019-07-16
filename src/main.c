@@ -371,6 +371,9 @@ extern OBJECT_PTR debug_window_dbg_stack;
 
 extern void show_warning_dialog(char *);
 
+extern void show_splash_screen();
+extern void close_splash_window();
+
 void initialize()
 {
   if(initialize_memory())
@@ -3790,8 +3793,11 @@ int main(int argc, char **argv)
   }
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
+  {
     gtk_init(&argc, &argv);
-
+    show_splash_screen();
+  }
+    
   if(image_mode)
   {
     if(!single_expression_mode && !pipe_mode)
@@ -3829,11 +3835,14 @@ int main(int argc, char **argv)
     core_library_loaded = true;
 
     if(!console_mode && !single_expression_mode && !pipe_mode)
+    {
+      close_splash_window();
       create_transcript_window(DEFAULT_TRANSCRIPT_POSX,
 			       DEFAULT_TRANSCRIPT_POSY,
 			       DEFAULT_TRANSCRIPT_WIDTH,
 			       DEFAULT_TRANSCRIPT_HEIGHT,
 			       default_transcript_text);
+    }
 
     if(!console_mode && !single_expression_mode && !pipe_mode)
     {

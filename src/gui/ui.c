@@ -168,6 +168,8 @@ extern char exec_path[512];
 extern char path_buf[1024];
 #endif
 
+void close_application_window(GtkWidget **);
+
 void set_up_system_browser_source_buffer()
 {
   system_browser_source_buffer = gtk_source_buffer_new_with_language(source_language);
@@ -1782,4 +1784,35 @@ void highlight_text(GtkTextBuffer *buffer, char *text)
     gtk_text_buffer_get_iter_at_offset(buffer, 
                                        &start_find, offset);  
   }
+}
+
+GtkWindow *splash_window;
+
+void show_splash_screen()
+{
+  GtkWidget  *image;
+  splash_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  gtk_window_set_default_size(splash_window, 620, 300);
+  gtk_window_set_decorated(GTK_WINDOW (splash_window), FALSE);
+  gtk_window_set_position(GTK_WINDOW(splash_window),GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_window_set_resizable(GTK_WINDOW(splash_window), FALSE);
+
+#ifdef WIN_BUILD
+  image = gtk_image_new_from_file("../share/icons/splash.png");
+#else
+#ifdef __OSX_BUNDLE__
+  image = gtk_image_new_from_file(concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/splash.png"));
+#else  
+  image = gtk_image_new_from_file(PLISPDATADIR "/icons/splash.png");
+#endif
+#endif
+
+  gtk_container_add(GTK_CONTAINER(splash_window), image);
+  gtk_widget_show_all(splash_window);
+}
+
+void close_splash_window()
+{
+  close_application_window(&splash_window);
 }
