@@ -490,6 +490,8 @@ unsigned int build_fn_prototypes(char *, unsigned int);
 
 void *compile_functions(OBJECT_PTR);
 
+OBJECT_PTR reverse_sym_lookup(OBJECT_PTR);
+
 //end of forward declarations
 
 binding_env_t *create_binding_env()
@@ -4204,6 +4206,9 @@ int update_references(OBJECT_PTR sym, OBJECT_PTR new_val)
 
         assert(IS_FUNCTION2_OBJECT(clo) || IS_MACRO2_OBJECT(clo));
 
+        if(reverse_sym_lookup(clo) == NIL)
+          continue;
+        
         //if(clo == new_val)
         //  continue;
         
