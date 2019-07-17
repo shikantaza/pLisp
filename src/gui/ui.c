@@ -1612,6 +1612,9 @@ void populate_callers_symbols_list(GtkTreeView *symbols_list)
       {
         OBJECT_PTR sym = reverse_sym_lookup(top_level_symbols[i].references[j].referrer);
 
+        if(sym == NIL)
+          continue;
+        
         char buf[100];
         memset(buf, '\0', 100);
 

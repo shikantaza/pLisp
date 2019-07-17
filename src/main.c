@@ -3820,7 +3820,10 @@ int main(int argc, char **argv)
     }
 
     if(!single_expression_mode && !pipe_mode)
-      fprintf(stdout, "done\n");    
+      fprintf(stdout, "done\n");
+
+    if(!console_mode && !single_expression_mode && !pipe_mode)
+      close_splash_screen();
   }
   else
   {
