@@ -924,6 +924,9 @@
     (call-foreign-function "free_memory" void ((ptr integer)))))
 |#
 
+(defmacro step (exp)
+  `(step-internal ',exp))
+
 (create-package "user")
 
 (in-package "user")

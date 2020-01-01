@@ -1221,7 +1221,7 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
            widget == (GtkWidget *)system_browser_window || 
            widget == (GtkWidget *)callers_window        ||
            widget == (GtkWidget *)help_window           ||
-           widget == (GtkWidget *)file_browser_window)  && 
+           widget == (GtkWidget *)file_browser_window)  &&
 	  event->keyval == GDK_KEY_F1)
   {
     enum {FUNCTION, MACRO, SPECIAL_OPERATOR};

@@ -27,7 +27,7 @@ BUILT_SOURCES = libplispjitllvm.la
 endif
 endif
 
-plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h src/gui/object_inspector.c
+plisp_SOURCES = src/hashtable.h src/util.c src/images.c src/json.h src/hashtable.c src/queue.c src/main.c src/memory.c src/compiler.c src/ffi.c src/gui/event_handlers.c src/gui/ui.c src/gui/indent.c src/gui/help.c src/native_primitives.c src/plisp.h src/memory.h src/util.h src/queue.h src/plisp_parser.y src/plisp.l src/jsonlib.c src/json_parser.y src/json.l src/gui/file_browser.c src/plisp_config.c src/metacont.c src/jit.h src/gui/object_inspector.c src/stepper.c src/stack.c src/gui/stepper_gui.c
 
 if WINDOWS
 plisp_SOURCES += src/jit.c
@@ -100,7 +100,8 @@ icons_DATA  = icons/abort.png icons/clear.png icons/export_package.png icons/ref
 	      icons/delete.png icons/load_file.png icons/resume.png icons/browser.png icons/evaluate.png icons/load_image.png \
               icons/save_image.png icons/callers.png icons/exit32x32.png icons/new_package.png icons/workspace.png \
               icons/clear32x32.png icons/exit.png icons/new_symbol.png icons/close_file.png icons/file_browser.png \
-              icons/new_file.png icons/open_file.png icons/save_file.png icons/find.png icons/rename.png icons/splash.png
+              icons/new_file.png icons/open_file.png icons/save_file.png icons/find.png icons/rename.png icons/splash.png \
+              icons/step.png
 
 dist_icons_DATA = ${icons_DATA}
 

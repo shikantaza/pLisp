@@ -246,6 +246,36 @@ typedef struct pkg_import
   int imported_pkg_index;
 } pkg_import_t;
 
+
+typedef enum
+{
+  ID_CONT,
+  TRY_CONT,
+  FINALLY_CONT,
+  THROW_CONT,
+  IF_CONT,
+  ERROR_CONT,
+  PRIMOP_CONT,
+  FN_APP_CONT,
+  PROGN_CONT,
+  DEFINE_CONT,
+  SET_CONT,
+  LET_CONT,
+  LETREC_CONT,
+  RETURN_FROM_CONT
+} cont_type_t;
+
+typedef struct continuation
+{
+  cont_type_t type;
+  OBJECT_PTR exp1;
+  OBJECT_PTR exp2;
+  OBJECT_PTR exp3;
+  OBJECT_PTR exp4;
+  OBJECT_PTR env;
+  struct continuation *k;
+} continuation_t;
+
 expression_t *create_expression(int, char *, int, float, int);
 void delete_expression(expression_t *);
 void print_expression(expression_t *);

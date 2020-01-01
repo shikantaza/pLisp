@@ -228,6 +228,8 @@ OBJECT_PTR GET_SOURCE  = (OBJECT_PTR)((127 << OBJECT_SHIFT) + SYMBOL_TAG);
 
 OBJECT_PTR INSPECT_OBJECT  = (OBJECT_PTR)((128 << OBJECT_SHIFT) + SYMBOL_TAG);
 
+OBJECT_PTR STEP_INTERNAL = (OBJECT_PTR)((129 << OBJECT_SHIFT) + SYMBOL_TAG);
+
 //for performance
 OBJECT_PTR CONS_NIL_NIL;
 OBJECT_PTR CONS_APPLY_NIL;
@@ -239,7 +241,7 @@ extern FILE *yyin;
 extern BOOLEAN console_mode, single_expression_mode, pipe_mode;
 
 #define NOF_SPECIAL_SYMBOLS     86
-#define NOF_NON_SPECIAL_SYMBOLS 43
+#define NOF_NON_SPECIAL_SYMBOLS 44
 
 char err_buf[500];
 
@@ -2760,6 +2762,8 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].symbols[127] = strdup("GET-SOURCE");
 
   packages[CORE_PACKAGE_INDEX].symbols[128] = strdup("INSPECT-OBJECT");
+
+  packages[CORE_PACKAGE_INDEX].symbols[129] = strdup("STEP-INTERNAL");
 }
 
 int find_package(char* package_name)

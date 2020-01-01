@@ -1588,6 +1588,16 @@
    "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied",
    "examples" : [ "(inspect-object (cons 1 2))  => NIL" ],
    "see-also" : [ ]
+  },
+
+  {"type" : 2, 
+   "name" : "step", 
+   "syntax" : "(step exp) => result",
+   "args" : "exp: a pLisp source expression",
+   "desc" : "step invokes the pLisp Stepper UI and interactively steps through the expression passed as its argument",
+   "exceptions" : "Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied",
+   "examples" : [ "(step (+ 1 2))  => 3" ],
+   "see-also" : [ ]
   }
      
  ]
