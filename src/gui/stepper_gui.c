@@ -55,6 +55,9 @@ extern GtkSourceLanguage *source_language;
 
 extern void highlight_text(GtkTextBuffer *, char *);
 
+extern GtkWindow *action_triggering_window;
+extern GtkWindow *transcript_window;
+
 GtkWindow *stepper_window;
 
 GtkTreeView *env_symbols_list;
@@ -73,6 +76,7 @@ void continue_stepper(GtkWidget *widget,
                       gpointer data)
 {
   close_application_window((GtkWidget **)&stepper_window);
+  run_to_completion = false;
   gtk_main_quit();
 }
 
@@ -210,9 +214,10 @@ void highlight_text_stepper(GtkTextBuffer *buffer, char *text)
                                      &start_find, &end_find);  
 
   if(gtk_text_iter_forward_search(&start_find, text, 
-                                      GTK_TEXT_SEARCH_TEXT_ONLY | 
-                                      GTK_TEXT_SEARCH_VISIBLE_ONLY, 
-                                      &start_match, &end_match, NULL))
+                                  GTK_TEXT_SEARCH_TEXT_ONLY | 
+                                  GTK_TEXT_SEARCH_VISIBLE_ONLY |
+                                  GTK_TEXT_SEARCH_CASE_INSENSITIVE, 
+                                  &start_match, &end_match, NULL))
   {
     gint offset1 = gtk_text_iter_get_offset(&start_match);
 
@@ -338,5 +343,12 @@ void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
 
   gtk_main();
 
-  gtk_widget_grab_focus((GtkWidget *)env_symbols_list);
+  //since the stepper_window will already be closed when an
+  //exception dialog is displayed, the fool-proof option
+  //is to center the dialog against the transcript window
+  //(the '(step ..)' expression might have been evaluated
+  //from the workspace, file browser, etc.).
+  action_triggering_window = transcript_window;
+  
+  //gtk_widget_grab_focus((GtkWidget *)env_symbols_list);
 }

@@ -52,8 +52,8 @@ OBJECT_PTR step_lambda(OBJECT_PTR, OBJECT_PTR);
 OBJECT_PTR step_app(OBJECT_PTR, OBJECT_PTR);
 void stepper_error(char *, char *);
 
-continuation_t *make_id_cont();
-continuation_t *make_if_cont(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, continuation_t *);
+continuation_t *make_id_cont(OBJECT_PTR);
+continuation_t *make_if_cont(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, continuation_t *, OBJECT_PTR);
 OBJECT_PTR step_cont(OBJECT_PTR, OBJECT_PTR, continuation_t *);
 OBJECT_PTR resume_cont(continuation_t *, OBJECT_PTR);
 OBJECT_PTR expand_macro_stepper(OBJECT_PTR);
@@ -891,10 +891,12 @@ void handle_stepper_exception()
   memset(buf, 200, '\0');
 
   OBJECT_PTR desc_obj = cdr(stepper_exception);
-
+  
   sprintf(buf, "Uncaught exception %s: %s", get_symbol_name(car(stepper_exception)), 
           is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
   raise_error(buf);
+
+  in_error = false;
   
   //this is actually redundant
   in_stepper_error = false;
@@ -970,7 +972,7 @@ int repl_step()
     cleanup_stepper_env();
     
     //OBJECT_PTR res = step(exp1);
-    continuation_t *id_continuation = make_id_cont(); //TODO: do this initialization outside the repl loop
+    continuation_t *id_continuation = make_id_cont(NIL); //TODO: do this initialization outside the repl loop
     OBJECT_PTR res = step_cont(exp2, NIL, id_continuation);
     
     if(in_stepper_error)
@@ -1026,16 +1028,18 @@ void print_cont_object(continuation_t *k)
     assert(false);
 }
 
-continuation_t *make_id_cont()
+continuation_t *make_id_cont(OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
   ret->type = ID_CONT;
 
+  ret->fn_source = fn_source;
+  
   return ret;  
 }
 
-continuation_t *make_if_cont(OBJECT_PTR then_exp, OBJECT_PTR else_exp, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_if_cont(OBJECT_PTR then_exp, OBJECT_PTR else_exp, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   /* printf("making if cont\n"); */
   /* print_object(env); */
@@ -1050,10 +1054,11 @@ continuation_t *make_if_cont(OBJECT_PTR then_exp, OBJECT_PTR else_exp, OBJECT_PT
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
   return ret;
 }
 
-continuation_t *make_finally_cont(OBJECT_PTR finally_clause, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_finally_cont(OBJECT_PTR finally_clause, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
   
@@ -1062,19 +1067,23 @@ continuation_t *make_finally_cont(OBJECT_PTR finally_clause, OBJECT_PTR env, con
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+  
   return ret;
 }
 
-continuation_t *make_try_cont(OBJECT_PTR catch_clause, OBJECT_PTR finally_clause, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_try_cont(OBJECT_PTR catch_clause, OBJECT_PTR finally_clause, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
-  continuation_t *finally_cont = make_finally_cont(finally_clause, env, k);
+  continuation_t *finally_cont = make_finally_cont(finally_clause, env, k, fn_source);
   
   ret->type = TRY_CONT;
   ret->env = env;
   ret->k = finally_cont;
 
+  ret->fn_source = fn_source;
+  
   exception_handler_t *excp_handler = (exception_handler_t *)GC_MALLOC(sizeof(exception_handler_t));
   excp_handler->catch_clause = catch_clause;
   excp_handler->env = env;
@@ -1087,24 +1096,28 @@ continuation_t *make_try_cont(OBJECT_PTR catch_clause, OBJECT_PTR finally_clause
   return ret;  
 }
 
-continuation_t *make_throw_cont(continuation_t *k)
+continuation_t *make_throw_cont(continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));  
   ret->type = THROW_CONT;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+
   return ret;
 }
 
-continuation_t *make_error_cont()
+continuation_t *make_error_cont(OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
   ret->type = ERROR_CONT;
 
+  ret->fn_source = fn_source;
+
   return ret;
 }
 
-continuation_t *make_primop_cont(OBJECT_PTR operator, OBJECT_PTR rands_to_be_evaled, OBJECT_PTR rands_evaled, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_primop_cont(OBJECT_PTR operator, OBJECT_PTR rands_to_be_evaled, OBJECT_PTR rands_evaled, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
@@ -1115,10 +1128,12 @@ continuation_t *make_primop_cont(OBJECT_PTR operator, OBJECT_PTR rands_to_be_eva
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+  
   return ret;  
 }
 
-continuation_t *make_fn_app_cont(OBJECT_PTR operator, OBJECT_PTR rands_to_be_evaled, OBJECT_PTR rands_evaled, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_fn_app_cont(OBJECT_PTR operator, OBJECT_PTR rands_to_be_evaled, OBJECT_PTR rands_evaled, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
@@ -1129,10 +1144,12 @@ continuation_t *make_fn_app_cont(OBJECT_PTR operator, OBJECT_PTR rands_to_be_eva
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+  
   return ret;  
 }
 
-continuation_t *make_progn_cont(OBJECT_PTR exps, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_progn_cont(OBJECT_PTR exps, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
@@ -1141,10 +1158,12 @@ continuation_t *make_progn_cont(OBJECT_PTR exps, OBJECT_PTR env, continuation_t 
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+
   return ret;  
 }
 
-continuation_t *make_define_cont(OBJECT_PTR sym, continuation_t *k)
+continuation_t *make_define_cont(OBJECT_PTR sym, continuation_t *k, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
@@ -1152,10 +1171,12 @@ continuation_t *make_define_cont(OBJECT_PTR sym, continuation_t *k)
   ret->exp1 = sym;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+
   return ret;  
 }
 
-continuation_t *make_set_cont(OBJECT_PTR sym, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_set_cont(OBJECT_PTR sym, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   /* printf("making set cont\n"); */
   /* print_object(env); */
@@ -1169,10 +1190,18 @@ continuation_t *make_set_cont(OBJECT_PTR sym, OBJECT_PTR env, continuation_t *k)
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+  
   return ret;  
 }
 
-continuation_t *make_let_cont(OBJECT_PTR full_bindings, OBJECT_PTR let_body, OBJECT_PTR to_be_evaled_bindings, OBJECT_PTR evaluated_vals, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_let_cont(OBJECT_PTR full_bindings,
+                              OBJECT_PTR let_body,
+                              OBJECT_PTR to_be_evaled_bindings,
+                              OBJECT_PTR evaluated_vals,
+                              OBJECT_PTR env,
+                              continuation_t *k,
+                              OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
@@ -1184,10 +1213,18 @@ continuation_t *make_let_cont(OBJECT_PTR full_bindings, OBJECT_PTR let_body, OBJ
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
+
   return ret;  
 }
 
-continuation_t *make_letrec_cont(OBJECT_PTR full_bindings, OBJECT_PTR let_body, OBJECT_PTR to_be_evaled_bindings, OBJECT_PTR evaluated_vals, OBJECT_PTR env, continuation_t *k)
+continuation_t *make_letrec_cont(OBJECT_PTR full_bindings,
+                                 OBJECT_PTR let_body,
+                                 OBJECT_PTR to_be_evaled_bindings,
+                                 OBJECT_PTR evaluated_vals,
+                                 OBJECT_PTR env,
+                                 continuation_t *k,
+                                 OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
@@ -1199,16 +1236,18 @@ continuation_t *make_letrec_cont(OBJECT_PTR full_bindings, OBJECT_PTR let_body, 
   ret->env = env;
   ret->k = k;
 
+  ret->fn_source = fn_source;
   return ret;  
 }
 
-continuation_t *make_return_from_cont(OBJECT_PTR ret_exp)
+continuation_t *make_return_from_cont(OBJECT_PTR ret_exp, OBJECT_PTR fn_source)
 {
   continuation_t *ret = GC_MALLOC(sizeof(continuation_t));
 
   ret->type = RETURN_FROM_CONT;
   ret->exp1 = ret_exp;
-  
+
+  ret->fn_source = fn_source;
   return ret;
 }
 
@@ -1253,22 +1292,22 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
     if(obj == BREAK)
       return resume_cont(k, NIL);
     else if(obj == DEFINE)
-      return step_cont(third(exp), env, make_define_cont(second(exp), k));
+      return step_cont(third(exp), env, make_define_cont(second(exp), k, fn_source));
     else if(obj == SET)
-      return step_cont(third(exp), env, make_set_cont(second(exp), env, k));
+      return step_cont(third(exp), env, make_set_cont(second(exp), env, k, fn_source));
     else if(obj == LET)
-      return step_cont(second(first(second(exp))), env, make_let_cont(second(exp), CDDR(exp), cdr(second(exp)), NIL, env, k));
+      return step_cont(second(first(second(exp))), env, make_let_cont(second(exp), CDDR(exp), cdr(second(exp)), NIL, env, k, fn_source));
     else if(obj == LETREC)
     {
       OBJECT_PTR let_env = stepper_map(temp_fn2, second(exp));
       OBJECT_PTR extended_env = extend_env(env, let_env);
-      return step_cont(second(first(second(exp))), extended_env, make_letrec_cont(second(exp), CDDR(exp), cdr(second(exp)), NIL, extended_env, k));
+      return step_cont(second(first(second(exp))), extended_env, make_letrec_cont(second(exp), CDDR(exp), cdr(second(exp)), NIL, extended_env, k, fn_source));
     }
     else if(obj == RETURN_FROM)
     {
-      OBJECT_PTR fn = step_cont(second(exp), env, make_id_cont());
+      OBJECT_PTR fn = step_cont(second(exp), env, make_id_cont(fn_source));
       assert(IS_FUNCTION2_OBJECT(fn));
-      return step_cont(third(exp), env, make_return_from_cont(fn));
+      return step_cont(third(exp), env, make_return_from_cont(fn, fn_source));
     }
     else if(obj == CALL_CC)
     {
@@ -1278,19 +1317,19 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
     else if(obj == QUOTE)
       return resume_cont(k, second(exp));
     else if(obj == IF)
-      return step_cont(second(exp), env, make_if_cont(third(exp), fourth(exp), env, k));
+      return step_cont(second(exp), env, make_if_cont(third(exp), fourth(exp), env, k, fn_source));
     else if(IS_SYMBOL_OBJECT(obj) && !strcmp(get_symbol_name(obj), "TRY"))
     {
       disable_stepper_exception_handling = true;
-      return step_cont(second(exp), env, make_try_cont(third(exp), fourth(exp), env, k));
+      return step_cont(second(exp), env, make_try_cont(third(exp), fourth(exp), env, k, fn_source));
     }
     else if(IS_SYMBOL_OBJECT(obj) && !strcmp(get_symbol_name(obj), "THROW"))
     {
-      return step_cont(second(exp), env, make_throw_cont(k));
+      return step_cont(second(exp), env, make_throw_cont(k, fn_source));
     }
     else if(IS_SYMBOL_OBJECT(obj) && !strcmp(get_symbol_name(obj), "ERROR"))
     {
-      return step_cont(second(exp), env, make_error_cont());
+      return step_cont(second(exp), env, make_error_cont(fn_source));
     }
     else if(obj == LAMBDA)
     {
@@ -1318,11 +1357,11 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
     }
     else if(primop(obj))
     {
-      return step_cont(second(exp), env, make_primop_cont(obj, CDDR(exp), NIL, env, k));
+      return step_cont(second(exp), env, make_primop_cont(obj, CDDR(exp), NIL, env, k, fn_source));
     }
     else //it's a function application
     {
-      return step_cont(first(exp), env, make_fn_app_cont(NIL, cdr(exp), NIL, env, k));
+      return step_cont(first(exp), env, make_fn_app_cont(NIL, cdr(exp), NIL, env, k, fn_source));
     }
   }
 }
@@ -1334,6 +1373,8 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
   /* printf(" with value "); */
   /* print_object(v); */
   /* printf("\n"); */
+
+  fn_source = k->fn_source;
   
   if(in_stepper_error && k->type != FINALLY_CONT)
   {
@@ -1405,7 +1446,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
   {
     in_stepper_error = false;
     in_error = false;
-    OBJECT_PTR ret = step_cont(k->exp1, k->env, make_id_cont());
+    OBJECT_PTR ret = step_cont(k->exp1, k->env, make_id_cont(k->fn_source));
 
     return resume_cont(k->k, v);
   }
@@ -1432,7 +1473,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
     }
     else
     {
-      return step_cont(car(k->exp2), k->env, make_primop_cont(k->exp1, cdr(k->exp2), cons(v, k->exp3), k->env, k->k));
+      return step_cont(car(k->exp2), k->env, make_primop_cont(k->exp1, cdr(k->exp2), cons(v, k->exp3), k->env, k->k, k->fn_source));
     }
   }
   else if(k->type == FN_APP_CONT)
@@ -1441,7 +1482,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
     {
       assert(IS_FUNCTION2_OBJECT(v));
 
-      return step_cont(car(k->exp2), k->env, make_fn_app_cont(v, cdr(k->exp2), k->exp3, k->env, k->k));
+      return step_cont(car(k->exp2), k->env, make_fn_app_cont(v, cdr(k->exp2), k->exp3, k->env, k->k, k->fn_source));
     }
     else
     {
@@ -1466,7 +1507,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
           fn_source = concat(2, list(2, LAMBDA, arg_syms), source);
         else
           fn_source = concat(2, list (3, DEFUN, fn_name, arg_syms), source);
-        
+
         OBJECT_PTR rest = source;
         
         OBJECT_PTR extended_env;
@@ -1489,11 +1530,11 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
         
         stack_push(conts_for_return, fc);
         
-        return step_cont(car(rest), extended_env, make_progn_cont(cdr(rest), extended_env, k->k));
+        return step_cont(car(rest), extended_env, make_progn_cont(cdr(rest), extended_env, k->k, fn_source));
       }
       else
       {
-        return step_cont(car(k->exp2), k->env, make_fn_app_cont(k->exp1, cdr(k->exp2), cons(v, k->exp3), k->env, k->k));
+        return step_cont(car(k->exp2), k->env, make_fn_app_cont(k->exp1, cdr(k->exp2), cons(v, k->exp3), k->env, k->k, k->fn_source));
       }
     }
   }
@@ -1513,7 +1554,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
     else
     {
       //v is not passed to the progn continuation
-      return step_cont(car(k->exp1), k->env, make_progn_cont(cdr(k->exp1), k->env, k->k));
+      return step_cont(car(k->exp1), k->env, make_progn_cont(cdr(k->exp1), k->env, k->k, k->fn_source));
     }
   }
   else if(k->type == DEFINE_CONT)
@@ -1591,11 +1632,11 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
 
       OBJECT_PTR extended_env = extend_env(k->env, new_env);
       
-      return step_cont(car(k->exp2), extended_env, make_progn_cont(cdr(k->exp2), extended_env, k->k));
+      return step_cont(car(k->exp2), extended_env, make_progn_cont(cdr(k->exp2), extended_env, k->k, k->fn_source));
     }
     else
     {
-      return step_cont(second(first(k->exp3)), k->env, make_let_cont(k->exp1, k->exp2, cdr(k->exp3), cons(v, k->exp4), k->env, k->k));
+      return step_cont(second(first(k->exp3)), k->env, make_let_cont(k->exp1, k->exp2, cdr(k->exp3), cons(v, k->exp4), k->env, k->k, k->fn_source));
     }
   }
   else if(k->type == LETREC_CONT)
@@ -1604,9 +1645,9 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
     primitive_setcdr(nth(n, k->env), cons(v, NIL));
 
     if(cons_length(k->exp3) == 0) //all binding expressions evaluated
-      return step_cont(car(k->exp2), k->env, make_progn_cont(cdr(k->exp2), k->env, k->k));
+      return step_cont(car(k->exp2), k->env, make_progn_cont(cdr(k->exp2), k->env, k->k, k->fn_source));
     else
-      return step_cont(second(first(k->exp3)), k->env, make_letrec_cont(k->exp1, k->exp2, cdr(k->exp3), cons(v, k->exp4), k->env, k->k));
+      return step_cont(second(first(k->exp3)), k->env, make_letrec_cont(k->exp1, k->exp2, cdr(k->exp3), cons(v, k->exp4), k->env, k->k, k->fn_source));
   }
   else if(k->type == RETURN_FROM_CONT)
   {
@@ -1658,6 +1699,7 @@ OBJECT_PTR expand_macro_stepper(OBJECT_PTR exp)
 
 OBJECT_PTR step(OBJECT_PTR exp)
 {
+  stepper_mode = true;
   cleanup_stepper_env();
     
   OBJECT_PTR exp1 = rewrite_symbols(exp);
@@ -1668,7 +1710,7 @@ OBJECT_PTR step(OBJECT_PTR exp)
 
   run_to_completion = false;
   
-  continuation_t *id_continuation = make_id_cont();
+  continuation_t *id_continuation = make_id_cont(exp);
 
   fn_source = exp;
   
@@ -1677,32 +1719,29 @@ OBJECT_PTR step(OBJECT_PTR exp)
   if(in_stepper_error)
   {
     handle_stepper_exception();
+    stepper_mode = false;
     return NIL;
   }
   else
+  {
     return res;
+    stepper_mode = false;
+  }
 }
 
 
 /*
 TODO: 
-      1. get source of the current function, location of the evaluated
-         expression in the source
-      2. call/cc (not being taken up now)
-
 
 1. Handling call/cc may be tricky since continuations in the stepper are not
    OBJECT_PTRs (may need to do some coercing) - maybe not implement it for this
    iteration of the stepper.
 
-2. Need to supress 'Undefined symbol' message while defining recursive forms (in
-   compile_and_evaluate())
-
-3. Assertion failed: (IS_FUNCTION2_OBJECT(closure_obj)) in step_cont() for letrec
+2. Assertion failed: (IS_FUNCTION2_OBJECT(closure_obj)) in step_cont() for letrec
    (occurs randomly)
 
-4. How to handle throw statements within try (in any location in the try expression)?
+3. How to handle throw statements within try (in any location in the try expression)?
 
- */
+*/
 
 // ---end of continuation-based interpreter code--

@@ -274,6 +274,7 @@ typedef struct continuation
   OBJECT_PTR exp4;
   OBJECT_PTR env;
   struct continuation *k;
+  OBJECT_PTR fn_source;
 } continuation_t;
 
 expression_t *create_expression(int, char *, int, float, int);

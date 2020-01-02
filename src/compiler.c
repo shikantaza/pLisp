@@ -247,6 +247,8 @@ extern BOOLEAN debug_mode;
 //extern BOOLEAN can_do_gc;
 extern unsigned int nof_json_native_fns;
 extern json_native_fn_src_mapping_t *json_native_fns;
+
+extern BOOLEAN stepper_mode;
 //end of external variables
 
 //external functions
@@ -2308,11 +2310,14 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
       else
         sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
 
-      if(!console_mode && !single_expression_mode && !pipe_mode)
-        show_warning_dialog(buf);
-      else
+      if(!stepper_mode)
+      {
+        if(!console_mode && !single_expression_mode && !pipe_mode)
+          show_warning_dialog(buf);
+        else
         printf("%s\n", buf);
-
+      }
+      
       uintptr_t ptr = extract_ptr(last_cell(ret));
       //set_heap(ptr, 1, cons(cons(NIL, NIL), NIL));
       set_heap(ptr, 1, cons(NIL, NIL));
