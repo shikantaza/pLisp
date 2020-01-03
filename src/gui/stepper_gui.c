@@ -241,6 +241,106 @@ void highlight_text_stepper(GtkTextBuffer *buffer, char *text)
   }
 }
 
+//experimental code to see if we can
+//highlight multi-line expressions
+//in stepper window. need to iron
+//out wrinkle
+int is_white_space(char c)
+{
+  return c == ' ' || c == '\t' || c == '\n';
+}
+
+int search(char *s, char *exp)
+{
+  int i, j;
+
+  int skipped_white_spaces;
+
+  int slen = strlen(s);
+  int exp_len = strlen(exp);
+  
+  for(i=0; i <= (slen - exp_len); i++)
+  {
+    skipped_white_spaces = 0;
+    j = 0;
+    
+    if(s[i] != exp[j]) //scan s to match first char of exp
+      continue;
+    else //first char of exp matched
+    {
+      while(s[i] == exp[j] || (is_white_space(s[i]) && is_white_space(exp[j]))) //continue matching
+      {
+        if(j == exp_len - 1) //exp fully matched in s
+          return i - exp_len - skipped_white_spaces + 2;
+
+        if(is_white_space(s[i]))
+        {
+          while(is_white_space(s[i++])) //skip whitespace
+            skipped_white_spaces++;
+
+          i--;
+        }
+        else
+          i++;
+        
+        j++;
+        
+      }
+    }
+  }
+  return -1;
+}
+
+int find_matching_right_paren(char *s, int offset)
+{
+  int i;
+  
+  int slen = strlen(s);
+
+  int unmatched_parens = 1; //the offest is assumed to contain a left paren
+
+  for(i=offset+1; i<slen; i++)
+  {
+    if(s[i] == '"')
+      while(s[++i] != '"')
+      {
+        //skip char literals
+      }
+
+    if(s[i] == '(')
+      unmatched_parens++;
+
+    if(s[i] == ')')
+    {
+      unmatched_parens--;
+
+      if(unmatched_parens == 0)
+        return i;
+    }
+  }
+  return slen;
+}
+
+void highlight_text_stepper1(GtkTextBuffer *buffer, char *text)
+{
+  GtkTextIter start, end;
+  GtkTextIter sel_start, sel_end;
+  
+  gtk_text_buffer_get_start_iter(buffer, &start);
+  gtk_text_buffer_get_end_iter(buffer, &end);
+
+  gchar *s = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+
+  int start_index = search(s, text);
+  int end_index = find_matching_right_paren(s, start_index);
+
+  gtk_text_buffer_get_iter_at_offset(buffer, &sel_start, start_index);
+  gtk_text_buffer_get_iter_at_offset(buffer, &sel_end, end_index+1);
+
+  gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", &sel_start, &sel_end);
+}
+//end of experimental code
+
 void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
