@@ -131,6 +131,9 @@ OBJECT_PTR replace_t(OBJECT_PTR);
 BOOLEAN is_core_package_op(OBJECT_PTR);
 
 OBJECT_PTR reverse_sym_lookup(OBJECT_PTR);
+
+void create_stepper_window();
+void close_stepper_window();
 //end of external functions
 
 //external variables
@@ -1287,7 +1290,7 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
     OBJECT_PTR obj = car(exp);
 
     if(!run_to_completion || obj == BREAK)
-      create_stepper_window(exp, env, fn_source);
+      show_stepper_window(exp, env, fn_source);
 
     if(obj == BREAK)
       return resume_cont(k, NIL);
@@ -1713,6 +1716,8 @@ OBJECT_PTR step(OBJECT_PTR exp)
   continuation_t *id_continuation = make_id_cont(exp);
 
   fn_source = exp;
+
+  create_stepper_window();
   
   OBJECT_PTR res = step_cont(exp2, NIL, id_continuation);
     
@@ -1727,6 +1732,8 @@ OBJECT_PTR step(OBJECT_PTR exp)
     return res;
     stepper_mode = false;
   }
+
+  close_stepper_window();
 }
 
 

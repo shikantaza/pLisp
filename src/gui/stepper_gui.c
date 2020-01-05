@@ -59,6 +59,7 @@ extern GtkWindow *action_triggering_window;
 extern GtkWindow *transcript_window;
 
 GtkWindow *stepper_window;
+GtkSourceBuffer *fn_source_buffer;
 
 GtkTreeView *env_symbols_list;
 
@@ -72,10 +73,15 @@ extern char path_buf[1024];
 
 extern OBJECT_PTR NIL;
 
+void close_stepper_window()
+{
+  close_application_window((GtkWidget **)&stepper_window);
+}
+
 void continue_stepper(GtkWidget *widget,
                       gpointer data)
 {
-  close_application_window((GtkWidget **)&stepper_window);
+  gtk_widget_hide(stepper_window);
   run_to_completion = false;
   gtk_main_quit();
 }
@@ -83,7 +89,7 @@ void continue_stepper(GtkWidget *widget,
 void run_complete(GtkWidget *widget,
                   gpointer data)
 {
-  close_application_window((GtkWidget **)&stepper_window);
+  gtk_widget_hide(stepper_window);
   gtk_main_quit();
   run_to_completion = true;
 }
@@ -91,7 +97,7 @@ void run_complete(GtkWidget *widget,
 void abort_stepper(GtkWidget *widget,
                    gpointer data)
 {
-  close_application_window((GtkWidget **)&stepper_window);
+  gtk_widget_hide(stepper_window);  
   gtk_main_quit();
   abrt_stepper = true;
 }
@@ -176,6 +182,8 @@ void populate_env_symbols_list(GtkTreeView *list, OBJECT_PTR env)
 
   store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(list)));
 
+  gtk_list_store_clear(store);
+  
   OBJECT_PTR rest = env;
 
   while(rest != NIL)
@@ -239,6 +247,22 @@ void highlight_text_stepper(GtkTextBuffer *buffer, char *text)
     gtk_text_buffer_get_iter_at_offset(buffer, 
                                        &start_find, offset);  
   }
+}
+
+void populate_stepper_fn_source(OBJECT_PTR fn_source, OBJECT_PTR exp)
+{
+  char buf[MAX_STRING_LENGTH];
+  memset(buf, '\0', MAX_STRING_LENGTH);
+
+  print_object_to_string(fn_source, buf, 0);
+
+  gtk_text_buffer_set_text(fn_source_buffer, convert_to_lower_case(buf), -1);
+
+  memset(buf, '\0', MAX_STRING_LENGTH);
+
+  print_object_to_string(exp, buf, 0);  
+
+  highlight_text_stepper(fn_source_buffer, convert_to_lower_case(buf));
 }
 
 //experimental code to see if we can
@@ -341,7 +365,7 @@ void highlight_text_stepper1(GtkTextBuffer *buffer, char *text)
 }
 //end of experimental code
 
-void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
+void create_stepper_window()
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -395,8 +419,6 @@ void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
 
   gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(env_symbols_list, 0), 0); 
 
-  populate_env_symbols_list((GtkTreeView *)env_symbols_list, env);
-
   gtk_container_add(GTK_CONTAINER (scrolled_win1), (GtkWidget *)env_symbols_list);
 
   hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
@@ -407,7 +429,7 @@ void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
   //function source
   GtkWidget *scrolled_win;
 
-  GtkSourceBuffer *fn_source_buffer = gtk_source_buffer_new_with_language(source_language);
+  fn_source_buffer = gtk_source_buffer_new_with_language(source_language);
   GtkSourceView *fn_source_view = gtk_source_view_new_with_buffer(fn_source_buffer);
 
   gtk_widget_override_font(GTK_WIDGET(fn_source_view), pango_font_description_from_string(FONT));
@@ -419,27 +441,22 @@ void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), fn_source_view);
 
-  char buf[MAX_STRING_LENGTH];
-  memset(buf, '\0', MAX_STRING_LENGTH);
-
-  print_object_to_string(fn_source, buf, 0);
-
-  gtk_text_buffer_set_text(fn_source_buffer, convert_to_lower_case(buf), -1);
-
-  memset(buf, '\0', MAX_STRING_LENGTH);
-
-  print_object_to_string(exp, buf, 0);  
-
-  highlight_text_stepper(fn_source_buffer, convert_to_lower_case(buf));
-  
   //end function source
 
   gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
 
   gtk_container_add (GTK_CONTAINER (win), vbox);
+  
+  //gtk_widget_grab_focus((GtkWidget *)env_symbols_list);
+}
 
-  gtk_widget_show_all(win);
+show_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
+{
+  populate_env_symbols_list((GtkTreeView *)env_symbols_list, env);
+  populate_stepper_fn_source(fn_source, exp);
+
+  gtk_widget_show_all(stepper_window);
 
   gtk_main();
 
@@ -449,6 +466,4 @@ void create_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
   //(the '(step ..)' expression might have been evaluated
   //from the workspace, file browser, etc.).
   action_triggering_window = transcript_window;
-  
-  //gtk_widget_grab_focus((GtkWidget *)env_symbols_list);
 }
