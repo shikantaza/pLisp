@@ -155,6 +155,8 @@ extern void prim_inspect_object(OBJECT_PTR);
 extern void push_into_debug_stack(OBJECT_PTR);
 extern OBJECT_PTR save_cont_to_resume(OBJECT_PTR);
 
+extern OBJECT_PTR step(OBJECT_PT);
+
 nativefn get_function(void *state, const char *fname)
 {
   return (nativefn)tcc_get_symbol((TCCState *)state, fname);
@@ -275,6 +277,8 @@ TCCState *create_tcc_state1()
   tcc_add_symbol(tcc_state, "enable_exception_handlers",  enable_exception_handlers);
 
   tcc_add_symbol(tcc_state, "prim_inspect_object",      prim_inspect_object);
+
+  tcc_add_symbol(tcc_state, "step",                     step);
   
   /* tcc_add_symbol(tcc_state, "insert_node",              insert_node); */
   /* tcc_add_symbol(tcc_state, "gc",                       gc); */
