@@ -22,6 +22,7 @@
 <b><a href="#V">V</a> | </b>
 <b><a href="#W">W</a> | </b>
 <b><a href="#I">I</a> | </b>
+<b><a href="#S">S</a> | </b>
 <b><a href="#Non-Alphabetic">Non-Alphabetic</a></b><br/><br/><br/><b><a name="A">A</a></b><br/>
 <ul style="padding-left:40px">
 <li><a href="#abort">abort</a></li><br/>
@@ -231,6 +232,10 @@
 <br/><b><a name="I">I</a></b><br/>
 <ul style="padding-left:40px">
 <li><a href="#inspect-object">inspect-object</a></li><br/>
+</ul>
+<br/><b><a name="S">S</a></b><br/>
+<ul style="padding-left:40px">
+<li><a href="#step">step</a></li><br/>
 </ul>
 <br/><b><a name="Non-Alphabetic">Non-Alphabetic</a></b><br/>
 <ul style="padding-left:40px">
@@ -1678,6 +1683,15 @@ a => ((1 . x) (2 . y))<br/><br/>(assoc 1 a) => x<br/><br/>(assoc 3 a) => NIL<br/
 <b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied<br/><br/>
 <b>Examples:</b><br/><br/>
 (inspect-object (cons 1 2))  => NIL<br/><br/><b>See Also:</b> 
+<hr/>
+<a name="step"></a>
+<i>Special Operator</i><b> step</b><br/><br/>
+<b>Syntax:</b> (step exp) => result<br/><br/>
+<b>Arguments:</b> exp: a pLisp source expression<br/><br/>
+<b>Description: step</b> invokes the pLisp Stepper UI and interactively steps through the expression passed as its argument<br/><br/>
+<b>Exceptions: </b>Throws an exception of type COMPILE-ERROR if exactly one argument is not supplied<br/><br/>
+<b>Examples:</b><br/><br/>
+(step (+ 1 2))  => 3<br/><br/><b>See Also:</b> 
 <hr/>
 </body>
 </html>

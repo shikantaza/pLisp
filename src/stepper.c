@@ -57,7 +57,7 @@ continuation_t *make_if_cont(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR, continuation_t 
 OBJECT_PTR step_cont(OBJECT_PTR, OBJECT_PTR, continuation_t *);
 OBJECT_PTR resume_cont(continuation_t *, OBJECT_PTR);
 OBJECT_PTR expand_macro_stepper(OBJECT_PTR);
-OBJECT_PTR preprocess(OBJECT_PTR);
+OBJECT_PTR preprocess_stepper(OBJECT_PTR);
 //end of forward declarations
 
 //external functions
@@ -967,7 +967,7 @@ int repl_step()
     
     OBJECT_PTR exp1 = rewrite_symbols(exp);
 
-    OBJECT_PTR exp2 = preprocess(exp1);
+    OBJECT_PTR exp2 = preprocess_stepper(exp1);
 
     cleanup_stepper_env();
     
@@ -1674,7 +1674,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
   }
 }
 
-OBJECT_PTR preprocess(OBJECT_PTR exp)
+OBJECT_PTR preprocess_stepper(OBJECT_PTR exp)
 {
   OBJECT_PTR ret = expand_macro_stepper(exp);
   return ret;
@@ -1704,7 +1704,7 @@ OBJECT_PTR step(OBJECT_PTR exp)
     
   OBJECT_PTR exp1 = rewrite_symbols(exp);
 
-  OBJECT_PTR exp2 = preprocess(exp1);
+  OBJECT_PTR exp2 = preprocess_stepper(exp1);
 
   cleanup_stepper_env();
 
