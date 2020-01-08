@@ -1,8 +1,7 @@
 _The only thing left to do is to add whatever is needed to open a lot of little windows everywhere._
 
-....
-                                      Christian Queinnec, "Lisp in Small Pieces"
-.... 
+-Christian Queinnec, _Lisp in Small Pieces_
+
 <<what-is-plisp, What is pLisp?>>
 
 <<what-features-does-plisp-support, What features does pLisp support?>>
