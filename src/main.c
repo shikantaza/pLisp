@@ -554,7 +554,18 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
   else if(type == STRING_LITERAL)
     e->atom_value = strdup(char_val);
   else if(type == CHARACTER)
-    e->char_value = char_val[2]; //the first two characters are '#' and '\'
+  {
+    if(!strcmp(char_val, "Space"))
+      e->char_value = ' ';
+    else if(!strcmp(char_val, "Newline"))
+      e->char_value = '\n';
+    else if(!strcmp(char_val, "Tab"))
+      e->char_value = '\t';
+    else if(!strcmp(char_val, "Backspace"))
+      e->char_value = '\b';
+    else
+      e->char_value = char_val[2]; //the first two characters are '#' and '\'
+  }
   else if(type == LIST)
   {
     e->nof_elements = nof_elements;
