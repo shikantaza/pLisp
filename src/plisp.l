@@ -116,10 +116,10 @@ int open_square_brackets = 0;
 
 #\\[a-zA-Z0-9!$"'(),_\-./:;?+<=>#%&*@\[\\\]{|}`\^~] { yylval.atom_value = yytext; return T_CHAR; }
 
-#\\Space                {yylval.atom_value = "Space";     return T_CHAR; }
-#\\Newline              {yylval.atom_value = "Newline";   return T_CHAR; }
-#\\Tab                  {yylval.atom_value = "Tab";       return T_CHAR; }
-#\\Backspace            {yylval.atom_value = "Backspace"; return T_CHAR; }
+#\\[Ss][Pp][Aa][Cc][Ee]                    {yylval.atom_value = "space";     return T_CHAR; }
+#\\[Nn][Ee][Ww][Ll][Ii][Nn][Ee]             {yylval.atom_value = "newline";   return T_CHAR; }
+#\\[Tt][Aa][Bb]                            {yylval.atom_value = "tab";       return T_CHAR; }
+#\\[Bb][Aa][Cc][Kk][Ss][Pp][Aa][Cc][Ee]    {yylval.atom_value = "backspace"; return T_CHAR; }
 
 [a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+|[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+:[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+ { yylval.atom_value = strdup(yytext); return T_SYMBOL; }
 

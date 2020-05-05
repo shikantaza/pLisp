@@ -555,16 +555,20 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
     e->atom_value = strdup(char_val);
   else if(type == CHARACTER)
   {
-    if(!strcmp(char_val, "Space"))
+    char *s = convert_to_lower_case(strdup(char_val));
+    
+    if(!strcmp(s, "space"))
       e->char_value = ' ';
-    else if(!strcmp(char_val, "Newline"))
+    else if(!strcmp(s, "newline"))
       e->char_value = '\n';
-    else if(!strcmp(char_val, "Tab"))
+    else if(!strcmp(s, "tab"))
       e->char_value = '\t';
-    else if(!strcmp(char_val, "Backspace"))
+    else if(!strcmp(s, "backspace"))
       e->char_value = '\b';
     else
       e->char_value = char_val[2]; //the first two characters are '#' and '\'
+
+    free(s);
   }
   else if(type == LIST)
   {
@@ -790,7 +794,19 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
   else if(IS_STRING_LITERAL_OBJECT(obj_ptr))
     length += sprintf(buf+filled_buf_len+length, "\"%s\"", strings[(int)obj_ptr >> OBJECT_SHIFT]);
   else if(IS_CHAR_OBJECT(obj_ptr))
-    length += sprintf(buf+filled_buf_len+length, "#\\%c", (int)obj_ptr >> OBJECT_SHIFT);
+  {
+    char c = (int)obj_ptr >> OBJECT_SHIFT;
+    if(c == ' ')
+      length += sprintf(buf+filled_buf_len+length, "#\\space");
+    else if(c == '\n')
+      length += sprintf(buf+filled_buf_len+length, "#\\newline");
+    else if(c == '\t')
+      length += sprintf(buf+filled_buf_len+length, "#\\tab");
+    else if(c == '\b')
+      length += sprintf(buf+filled_buf_len+length, "#\\backspace");
+    else
+      length += sprintf(buf+filled_buf_len+length, "#\\%c", c);
+  }
   else if(IS_ARRAY_OBJECT(obj_ptr))
   {
     if(is_string_object(obj_ptr))
@@ -850,7 +866,19 @@ void print_object(OBJECT_PTR obj_ptr)
     else if(IS_STRING_LITERAL_OBJECT(obj_ptr))
       length = sprintf(buf+length, "\"%s\"", strings[(int)obj_ptr >> OBJECT_SHIFT]);
     else if(IS_CHAR_OBJECT(obj_ptr))
-      length = sprintf(buf+length, "#\\%c", (int)obj_ptr >> OBJECT_SHIFT);
+    {
+      char c = (int)obj_ptr >> OBJECT_SHIFT;
+      if(c == ' ')
+        length = sprintf(buf+length, "#\\space");
+      else if(c == '\n')
+        length = sprintf(buf+length, "#\\newline");
+      else if(c == '\t')
+        length = sprintf(buf+length, "#\\tab");
+      else if(c == '\b')
+        length = sprintf(buf+length, "#\\backspace");
+    else
+      length = sprintf(buf+length, "#\\%c", c);      
+    }
     else if(IS_ARRAY_OBJECT(obj_ptr))
     {
       if(is_string_object(obj_ptr))
