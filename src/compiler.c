@@ -1633,16 +1633,35 @@ OBJECT_PTR simplify_il_eta(OBJECT_PTR exp)
                 simplify_il_eta(cdr(exp)));
 }
 
+/* OBJECT_PTR simplify_il_copy_prop(OBJECT_PTR exp) */
+/* { */
+/*   if(is_atom(exp) || is_quoted_expression(exp)) */
+/*     return exp; */
+/*   else if(car(exp) == LET && */
+/*           cons_length(second(exp)) == 2 && */
+/*           IS_SYMBOL_OBJECT(first(first(second(exp)))) && */
+/*           IS_SYMBOL_OBJECT(second(first(second(exp))))) */
+/*     return subst(second(second(first(exp))), */
+/*                  first(second(first(exp))), */
+/*                  third(exp)); */
+/*   else */
+/*     return cons(simplify_il_copy_prop(car(exp)), */
+/*                 simplify_il_copy_prop(cdr(exp))); */
+/* } */
 OBJECT_PTR simplify_il_copy_prop(OBJECT_PTR exp)
 {
   if(is_atom(exp) || is_quoted_expression(exp))
     return exp;
-  else if(car(exp) == LET &&
-          cons_length(second(exp)) == 2 &&
-          IS_SYMBOL_OBJECT(first(first(second(exp)))) &&
-          IS_SYMBOL_OBJECT(second(first(second(exp)))))
-    return subst(second(second(first(exp))),
-                 first(second(first(exp))),
+  else if(cons_length(exp) == 3                       && // - expression a three-element list
+          first(exp) == LET                           && // - first element is LET
+          IS_CONS_OBJECT(second(exp))                 && // - second element is a
+          cons_length(second(exp)) == 1               && //   one-element list
+          IS_CONS_OBJECT(first(second(exp)))          && // - that one element is also a list,
+          cons_length(first(second(exp))) == 2        && //   with two elements
+          IS_SYMBOL_OBJECT(first(first(second(exp)))) && // - which are both 
+          IS_SYMBOL_OBJECT(second(first(second(exp)))))  //   symbols
+    return subst(second(first(second(exp))),
+                 first(first(second(exp))),
                  third(exp));
   else
     return cons(simplify_il_copy_prop(car(exp)),
