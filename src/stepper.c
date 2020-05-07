@@ -893,7 +893,7 @@ void handle_stepper_exception()
   char buf[200];
   memset(buf, 200, '\0');
 
-  OBJECT_PTR desc_obj = cdr(stepper_exception);
+  OBJECT_PTR desc_obj = second(stepper_exception);
   
   sprintf(buf, "Uncaught exception %s: %s", get_symbol_name(car(stepper_exception)), 
           is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
@@ -1502,7 +1502,7 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
         else
           new_env = create_bindings(arg_syms, reverse(cons(v, k->exp3)));
 
-        OBJECT_PTR source = get_source_object(rator);
+        OBJECT_PTR source = preprocess_stepper(get_source_object(rator));
 
         OBJECT_PTR fn_name = reverse_sym_lookup(rator);
 

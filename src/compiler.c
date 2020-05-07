@@ -5781,8 +5781,8 @@ OBJECT_PTR handle_exception()
     char buf[200];
     memset(buf, 200, '\0');
 
-    OBJECT_PTR desc_obj = cdr(exception_object);
-    //OBJECT_PTR desc_obj = second(exception_object);
+    //OBJECT_PTR desc_obj = cdr(exception_object);
+    OBJECT_PTR desc_obj = second(exception_object);
 
     sprintf(buf, "Uncaught exception %s: %s", get_symbol_name(car(exception_object)), 
             is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);

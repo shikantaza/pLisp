@@ -2027,7 +2027,8 @@ BOOLEAN is_valid_exception_object(OBJECT_PTR obj)
     return false;
   else if(!IS_SYMBOL_OBJECT(car(obj)))
     return false;
-  else if(!IS_STRING_LITERAL_OBJECT(cdr(obj)) && !is_string_object(cdr(obj)))
+  //else if(!IS_STRING_LITERAL_OBJECT(cdr(obj)) && !is_string_object(cdr(obj)))
+  else if(!IS_STRING_LITERAL_OBJECT(second(obj)) && !is_string_object(second(obj)))
     return false;
 
   return true;
