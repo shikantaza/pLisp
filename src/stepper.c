@@ -58,6 +58,9 @@ OBJECT_PTR step_cont(OBJECT_PTR, OBJECT_PTR, continuation_t *);
 OBJECT_PTR resume_cont(continuation_t *, OBJECT_PTR);
 OBJECT_PTR expand_macro_stepper(OBJECT_PTR);
 OBJECT_PTR preprocess_stepper(OBJECT_PTR);
+
+BOOLEAN is_primitive_fn(OBJECT_PTR);
+OBJECT_PTR primitive_apply(OBJECT_PTR, OBJECT_PTR);
 //end of forward declarations
 
 //external functions
@@ -197,7 +200,8 @@ OBJECT_PTR fn_source;
 void stepper_error(char *excp_name, char *excp_str)
 {
   in_stepper_error = true;
-  stepper_exception = cons(get_symbol_object(excp_name), get_string_object(excp_str));
+  //stepper_exception = cons(get_symbol_object(excp_name), get_string_object(excp_str));
+  stepper_exception = list(2, get_symbol_object(excp_name), get_string_object(excp_str));
   exception_object = stepper_exception;
 }
 
@@ -1341,7 +1345,8 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
       if(in_error)
       {
         OBJECT_PTR exception_name = car(exception_object);
-        OBJECT_PTR desc_obj = cdr(exception_object);
+        //OBJECT_PTR desc_obj = cdr(exception_object);
+        OBJECT_PTR desc_obj = second(exception_object);
         stepper_error(get_symbol_name(exception_name), is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
         return resume_cont(k, NIL);
       }
@@ -1467,7 +1472,8 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
       if(in_error)
       {
         OBJECT_PTR exception_name = car(exception_object);
-        OBJECT_PTR desc_obj = cdr(exception_object);
+        //OBJECT_PTR desc_obj = cdr(exception_object);
+        OBJECT_PTR desc_obj = second(exception_object);
         stepper_error(get_symbol_name(exception_name), is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
         return resume_cont(k->k, NIL);
       }
@@ -1506,34 +1512,51 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
 
         OBJECT_PTR fn_name = reverse_sym_lookup(rator);
 
-        if(fn_name == NIL)
-          fn_source = concat(2, list(2, LAMBDA, arg_syms), source);
+        if(is_primitive_fn(fn_name))
+        {
+          OBJECT_PTR ret = primitive_apply(rator, reverse(cons(v, k->exp3)));
+
+          if(in_error)
+          {
+            OBJECT_PTR exception_name = car(exception_object);
+            OBJECT_PTR desc_obj = second(exception_object);
+            stepper_error(get_symbol_name(exception_name), is_string_object(desc_obj) ? get_string(desc_obj) : strings[(int)desc_obj >> OBJECT_SHIFT]);
+            return resume_cont(k->k, NIL);
+          }
+          else
+            return resume_cont(k->k, ret);
+        }
         else
-          fn_source = concat(2, list (3, DEFUN, fn_name, arg_syms), source);
+        {
+          if(fn_name == NIL)
+            fn_source = concat(2, list(2, LAMBDA, arg_syms), source);
+          else
+            fn_source = concat(2, list (3, DEFUN, fn_name, arg_syms), source);
 
-        OBJECT_PTR rest = source;
+          OBJECT_PTR rest = source;
         
-        OBJECT_PTR extended_env;
+          OBJECT_PTR extended_env;
 
-        OBJECT_PTR env_lambda = get_env_for_lambda(rator);
+          OBJECT_PTR env_lambda = get_env_for_lambda(rator);
 
-        /* if(k->env != NIL) */
-        /*   extended_env = extend_env(k->env, reverse(new_env)); */
-        /* else */
-        /*   extended_env = reverse(new_env); */
-        if(env_lambda != NIL)
-          extended_env = extend_env(env_lambda, reverse(new_env));
-        else
-          extended_env = reverse(new_env);
+          /* if(k->env != NIL) */
+          /*   extended_env = extend_env(k->env, reverse(new_env)); */
+          /* else */
+          /*   extended_env = reverse(new_env); */
+          if(env_lambda != NIL)
+            extended_env = extend_env(env_lambda, reverse(new_env));
+          else
+            extended_env = reverse(new_env);
         
-        fn_cont_t *fc = (fn_cont_t *)GC_MALLOC(sizeof(fn_cont_t));
+          fn_cont_t *fc = (fn_cont_t *)GC_MALLOC(sizeof(fn_cont_t));
 
-        fc->fn = rator;
-        fc->k = k->k;
+          fc->fn = rator;
+          fc->k = k->k;
         
-        stack_push(conts_for_return, fc);
+          stack_push(conts_for_return, fc);
         
-        return step_cont(car(rest), extended_env, make_progn_cont(cdr(rest), extended_env, k->k, fn_source));
+          return step_cont(car(rest), extended_env, make_progn_cont(cdr(rest), extended_env, k->k, fn_source));
+        }
       }
       else
       {
@@ -1734,6 +1757,77 @@ OBJECT_PTR step(OBJECT_PTR exp)
   }
 
   close_stepper_window();
+}
+
+
+//this considers as primitive functions
+//only those that will occur in user
+//code, so it's a subset of the full list 
+//covered in is_primop() in compiler.c
+BOOLEAN is_primitive_fn(OBJECT_PTR fn_name)
+{
+  if(!IS_SYMBOL_OBJECT(fn_name))
+    return false;
+
+  char *fn_name_str = get_symbol_name(fn_name);
+
+  return !strcmp(fn_name_str, "+")                ||
+    !strcmp(fn_name_str, "-")                     ||
+    !strcmp(fn_name_str, "*")                     ||
+    !strcmp(fn_name_str, "/")                     ||
+    !strcmp(fn_name_str, ">")                     ||
+    !strcmp(fn_name_str, "<")                     ||
+    !strcmp(fn_name_str, "<=")                    ||
+    !strcmp(fn_name_str, ">=")                    ||
+    !strcmp(fn_name_str, "ATOM")                  ||
+    !strcmp(fn_name_str, "CONCAT")                ||
+    !strcmp(fn_name_str, "EQ")                    ||
+    !strcmp(fn_name_str, "LIST")                  ||
+    !strcmp(fn_name_str, "CONS")                  ||
+    !strcmp(fn_name_str, "CAR")                   ||
+    !strcmp(fn_name_str, "CDR")                   ||
+    !strcmp(fn_name_str, "PRINT")                 ||
+    !strcmp(fn_name_str, "SYMBOL-VALUE")          ||
+    !strcmp(fn_name_str, "GENSYM")                ||
+    !strcmp(fn_name_str, "SETCAR")                ||
+    !strcmp(fn_name_str, "SETCDR")                ||
+    !strcmp(fn_name_str, "APPLY")                 ||
+    !strcmp(fn_name_str, "SYMBL")                 ||
+    !strcmp(fn_name_str, "SYMBOL-NAME")           ||
+    !strcmp(fn_name_str, "FORMAT")                ||
+    !strcmp(fn_name_str, "CLONE")                 ||
+    !strcmp(fn_name_str, "UNBIND")                ||
+    !strcmp(fn_name_str, "NEWLINE")               ||
+    !strcmp(fn_name_str, "NOT")                   ||
+    !strcmp(fn_name_str, "STRING")                ||
+    !strcmp(fn_name_str, "MAKE-ARRAY")            ||
+    !strcmp(fn_name_str, "ARRAY-GET")             ||
+    !strcmp(fn_name_str, "ARRAY-SET")             ||
+    !strcmp(fn_name_str, "SUB-ARRAY")             ||
+    !strcmp(fn_name_str, "ARRAY-LENGTH")          ||
+    !strcmp(fn_name_str, "PRINT-STRING")          ||
+    !strcmp(fn_name_str, "CONSP")                 ||
+    !strcmp(fn_name_str, "LISTP")                 ||
+    !strcmp(fn_name_str, "INTEGERP")              ||
+    !strcmp(fn_name_str, "FLOATP")                ||
+    !strcmp(fn_name_str, "CHARACTERP")            ||
+    !strcmp(fn_name_str, "SYMBOLP")               ||
+    !strcmp(fn_name_str, "STRINGP")               ||
+    !strcmp(fn_name_str, "ARRAYP")                ||
+    !strcmp(fn_name_str, "CLOSUREP")              ||
+    !strcmp(fn_name_str, "MACROP")                ||
+    !strcmp(fn_name_str, "CONTINUATIONP")         ||
+    !strcmp(fn_name_str, "LOAD-FOREIGN-LIBRARY")  ||
+    !strcmp(fn_name_str, "CALL-FF-INTERNAL") ||
+    !strcmp(fn_name_str, "CREATE-PACKAGE")        ||
+    !strcmp(fn_name_str, "IN-PACKAGE")            ||
+    !strcmp(fn_name_str, "EXPORT-PACKAGE")        ||
+    !strcmp(fn_name_str, "IMPORT-PACKAGE")        ||
+    !strcmp(fn_name_str, "CREATE-IMAGE")          ||
+    !strcmp(fn_name_str, "SAVE-OBJECT")           ||
+    !strcmp(fn_name_str, "LOAD-OBJECT")           ||
+    !strcmp(fn_name_str, "LOAD-FILE")             ||
+    !strcmp(fn_name_str, "EVAL");  
 }
 
 

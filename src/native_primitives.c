@@ -2160,7 +2160,8 @@ void raise_error(char *err_str)
   //fprintf(stdout, "End backtrace\n");
 
   in_error = true;
-  exception_object = cons(get_symbol_object("EXCEPTION"), get_string_object(err_str));
+  //exception_object = cons(get_symbol_object("EXCEPTION"), get_string_object(err_str));
+  exception_object = list(2, get_symbol_object("EXCEPTION"), get_string_object(err_str));
 }
 
 void throw_generic_exception(char *err_str)
