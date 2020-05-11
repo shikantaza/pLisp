@@ -36,7 +36,9 @@ int call_repl(char *expression)
 {
   YY_BUFFER_STATE buf = yy_scan_string(expression);
 
-  while(yyparse() == 0)
+  int ret;
+
+  while((ret = yyparse()) == 0)
   {
     if(repl2())
     {
@@ -46,6 +48,10 @@ int call_repl(char *expression)
   }
 
   yy_delete_buffer(buf);
+
+  if(ret == 1)
+    return -1;
+
   return 0;
 }
 

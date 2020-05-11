@@ -213,7 +213,11 @@ void callers_window_accept();
 void build_autocomplete_words();
 
 void fetch_symbol_value(GtkWidget *, gpointer);
-  
+
+//to track logical failure of call_repl()
+//when called from System Browser's accept
+BOOLEAN sys_browser_accept_error;
+
 int get_indents_for_form(char *form)
 {
   char *up = convert_to_upper_case(form);
@@ -822,6 +826,8 @@ void system_browser_accept()
   if(!gtk_text_view_get_editable(system_browser_textview))
     return;
 
+  sys_browser_accept_error = false;
+  
   gchar *package_name, *symbol_name;
 
   GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
@@ -844,18 +850,22 @@ void system_browser_accept()
 
     if(call_repl(buf))
     {
-        show_error_dialog("Evaluation failed\n");
-        return;
+      show_error_dialog("Evaluation failed\n");
+      return;
     }
 
+    update_workspace_title();
+    
     GtkTextIter start, end;
 
     gtk_text_buffer_get_start_iter(system_browser_buffer, &start);
     gtk_text_buffer_get_end_iter (system_browser_buffer, &end);
 
     if(!call_repl(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE)))
-    {
-      update_workspace_title();
+    {      
+      if(sys_browser_accept_error)
+        return;
+
       refresh_system_browser();
 
       gboolean valid;
@@ -888,9 +898,9 @@ void system_browser_accept()
       //the newly added symbol will be the last row
       set_focus_to_last_row(symbols_list);
       gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
-    }
 
-    new_symbol_being_created = false;
+      new_symbol_being_created = false;
+    }
   }
   else
   {
@@ -922,6 +932,9 @@ void system_browser_accept()
 
       if(!call_repl(gtk_text_buffer_get_text(system_browser_buffer, &start, &end, FALSE)))
       {
+        if(sys_browser_accept_error)
+          return;
+
         update_workspace_title();
         gtk_statusbar_push(system_browser_statusbar, 0, "Evaluation successful");
       }

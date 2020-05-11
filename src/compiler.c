@@ -5850,6 +5850,8 @@ OBJECT_PTR handle_exception()
 
 BOOLEAN exception_handling_disabled;
 
+extern BOOLEAN sys_browser_accept_error;
+
 void throw_exception1(char *excp_name, char *excp_str)
 {
   //mainly to handle exceptions that are thrown 
@@ -5858,6 +5860,8 @@ void throw_exception1(char *excp_name, char *excp_str)
   if(exception_handling_disabled)
     return;
 
+  sys_browser_accept_error = true;
+  
   in_error = true;
   //exception_object = cons(get_symbol_object(excp_name), get_string_object(excp_str));
   exception_object = list(2, get_symbol_object(excp_name), get_string_object(excp_str));
