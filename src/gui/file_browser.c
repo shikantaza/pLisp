@@ -904,7 +904,7 @@ void add_file_to_file_browser(char *file_name)
   if(!file_contents)
   {
     char buf[200];
-    memset(buf, 200, '\0');
+    memset(buf, '\0', 200);
     sprintf(buf, "Unable to open file %s", file_name);
     show_error_dialog(buf);
     return;

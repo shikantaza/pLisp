@@ -275,7 +275,7 @@ char *convert_identifier(char *id)
 
   char *s = (char *)GC_MALLOC((MAX_IDENTIFIER_LENGTH + 1) * sizeof(char));
 
-  memset(s, MAX_IDENTIFIER_LENGTH + 1, '\0');
+  memset(s, '\0', MAX_IDENTIFIER_LENGTH + 1);
 
   s[0] = '_';
 

@@ -2286,7 +2286,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
                       convert_native_fn_to_object(get_function(state, fname)));
 
     char source[32000];
-    memset(source, 32000, '\0');
+    memset(source, '\0', 32000);
     build_c_string(lambda, source, true);
 
     assert(strlen(source)<=32000);
@@ -2322,7 +2322,7 @@ OBJECT_PTR compile_and_evaluate(OBJECT_PTR exp, OBJECT_PTR source)
     if(retval && symbol_to_be_used != SAVE_CONTINUATION && symbol_to_be_used != TRUE)
     {
       char buf[200];
-      memset(buf, 200, '\0');
+      memset(buf, '\0', 200);
 
       if(symbol_to_be_used == MACRO)
         sprintf(buf, "MACRO definitions permitted only at the top level");
@@ -3103,7 +3103,7 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
     /* if(serialize_flag) */
     /* { */
       char *s = (char *)GC_MALLOC(50*sizeof(char));
-      memset(s,50,'\0');
+      memset(s,'\0',50);
 
       if(IS_INTEGER_OBJECT(var))
         sprintf(s, "convert_int_to_object(%d)", get_int_value(var));
@@ -5534,7 +5534,7 @@ OBJECT_PTR process_set(OBJECT_PTR exp, OBJECT_PTR src)
   if(retval)
   {
     char buf[200];
-    memset(buf, 200, '\0');
+    memset(buf, '\0', 200);
     sprintf(buf, "Undefined symbol: %s", get_symbol_name(symbol_to_be_used));
     throw_exception1("EXCEPTION", buf);
     return NIL;
@@ -5684,7 +5684,7 @@ OBJECT_PTR full_monty_eval(OBJECT_PTR exp1)
     if(retval)
     {
       char buf[200];
-      memset(buf, 200, '\0');
+      memset(buf, '\0', 200);
       sprintf(buf, "Undefined symbol: %s", get_symbol_name(exp));
       throw_exception1("EXCEPTION", buf);
       return NIL;
@@ -5779,7 +5779,7 @@ OBJECT_PTR handle_exception()
   if(exception_handlers == NIL)
   {
     char buf[200];
-    memset(buf, 200, '\0');
+    memset(buf, '\0', 200);
 
     //OBJECT_PTR desc_obj = cdr(exception_object);
     OBJECT_PTR desc_obj = second(exception_object);
@@ -5948,7 +5948,7 @@ char *generate_lst_construct(OBJECT_PTR exp)
   char *buf;
   buf = GC_MALLOC(1000 * sizeof(char));
   assert(buf);
-  memset(buf, 1000, '\0');
+  memset(buf, '\0', 1000);
 
   unsigned int buf_size = 1000;
 
@@ -6707,7 +6707,7 @@ OBJECT_PTR replace_symbol(OBJECT_PTR exp, OBJECT_PTR sym1, OBJECT_PTR sym2)
 void *compile_functions(OBJECT_PTR lambda_forms)
 {
   char str[MAX_C_SOURCE_SIZE];
-  memset(str, MAX_C_SOURCE_SIZE, '\0');
+  memset(str, '\0', MAX_C_SOURCE_SIZE);
 
   unsigned int len = 0;
 
@@ -6802,7 +6802,7 @@ void recreate_native_fn_objects()
   buf = (char *)GC_MALLOC(nof_json_native_fns * 2000);
   assert(buf);
 
-  memset(buf, nof_json_native_fns * 2000, '\0');
+  memset(buf, '\0', nof_json_native_fns * 2000);
 
   len += build_fn_prototypes(buf+len, len);
   

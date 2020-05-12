@@ -201,7 +201,7 @@ void print_object_to_inspector(OBJECT_PTR obj, GtkTextBuffer *object_inspector_b
 
   char buf[MAX_STRING_LENGTH];
 
-  memset(buf, MAX_STRING_LENGTH, '\0');
+  memset(buf, '\0', MAX_STRING_LENGTH);
 
   GtkTextIter start_iter, curr_iter;
   

@@ -895,7 +895,7 @@ OBJECT_PTR step1(OBJECT_PTR exp)
 void handle_stepper_exception()
 {
   char buf[200];
-  memset(buf, 200, '\0');
+  memset(buf, '\0', 200);
 
   OBJECT_PTR desc_obj = second(stepper_exception);
   
