@@ -262,6 +262,8 @@ void print_object_to_inspector(OBJECT_PTR obj, GtkTextBuffer *object_inspector_b
     gtk_text_buffer_insert_at_cursor(object_inspector_buffer, buf, -1);
   
   apply_link_tag(object_inspector_buffer);
+
+  gtk_text_buffer_insert_at_cursor(object_inspector_buffer, "\n\n(To drill down into child objects (indicated by <0x..>), place the cursor on the object and press F3)", -1);
 }
 
 void create_object_inspector_window(OBJECT_PTR obj)
