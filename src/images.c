@@ -1387,6 +1387,11 @@ int load_from_image(char *file_name)
       }
 
       gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
+
+      //to prevent 'Save changes?' prompt appearing
+      //if user tries to exit pLisp immediately after
+      //opening it on an inage
+      gtk_text_buffer_set_modified(system_browser_buffer, FALSE);
     }
   }
 
