@@ -206,8 +206,6 @@ extern char *get_doc_str(OBJECT_PTR);
 
 unsigned int print_context_pkg_index;
 
-extern GtkTreeIter *selected_symbol_iter;
-
 void quit_application();
 void show_file_browser_window();
 void callers_window_accept();
@@ -223,7 +221,9 @@ BOOLEAN sys_browser_accept_error;
 //to keep track of the currently-selected
 //package and symbol (to revert to if
 //user opts to not discard code changes)
-GtkTreeIter *selected_package_iter, *selected_symbol_iter;
+OBJECT_PTR selected_symbol;
+
+void revert_to_prev_pkg_sym();
 
 BOOLEAN check_for_sys_browser_changes()
 {
@@ -1768,6 +1768,77 @@ void show_system_browser_win(GtkWidget *widget,
   show_system_browser_window();
 }
 
+void revert_to_prev_pkg_sym()
+{
+  int package_index, symbol_index;
+
+  if(!IS_SYMBOL_OBJECT(selected_symbol))
+    assert(false);
+
+  package_index = extract_package_index(selected_symbol);
+  symbol_index = extract_symbol_index(selected_symbol);
+  
+  char *selected_sym_name = packages[package_index].symbols[symbol_index];
+  char *selected_pkg_name = packages[package_index].name;
+
+  gchar *pkg_name;
+  gchar *sym_name;
+  
+  gboolean valid;
+  BOOLEAN found = false;
+  int idx = 0;
+
+  GtkListStore *store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
+  GtkTreeModel *model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
+  GtkTreeIter  iter1;
+  
+  valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store1), &iter1);
+
+  while (valid && !found)
+  {
+    gtk_tree_model_get(model1, &iter1, 0, &pkg_name, -1);
+
+    if(!strcmp(pkg_name, selected_pkg_name))
+    {
+      found = true;
+
+      GtkTreePath *path = gtk_tree_path_new_from_indices(idx, -1);
+      gtk_tree_selection_select_path(gtk_tree_view_get_selection(packages_list), path);
+      
+      break;
+    }
+
+    valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store1), &iter1);
+    idx++;
+  }
+
+  idx = 0;
+  found = false;
+  
+  store1 = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(symbols_list)));
+  model1 = gtk_tree_view_get_model (GTK_TREE_VIEW (symbols_list));
+  
+  valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store1), &iter1);
+
+  while (valid && !found)
+  {
+    gtk_tree_model_get(model1, &iter1, 0, &sym_name, -1);
+
+    if(!strcmp(sym_name, selected_sym_name))
+    {
+      found = true;
+
+      GtkTreePath *path = gtk_tree_path_new_from_indices(idx, -1);
+      gtk_tree_selection_select_path(gtk_tree_view_get_selection(symbols_list), path);
+
+      break;
+    }
+
+    valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store1), &iter1);
+    idx++;
+  }
+}
+
 void fetch_package_symbols()
 {
   GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(packages_list)));
@@ -1783,7 +1854,7 @@ void fetch_package_symbols()
   
   if(!check_for_sys_browser_changes())
   {
-    gtk_tree_selection_select_iter(selection, selected_package_iter);
+    revert_to_prev_pkg_sym();
     return;
   }
   
@@ -1834,27 +1905,6 @@ void fetch_package_members(GtkWidget *list, gpointer selection)
   fetch_package_symbols();
 }
 
-void set_selected_pkg_sym_iters()
-{
-  GtkTreeModel *model;
-  
-  GtkTreeSelection *selection;
-
-  model = gtk_tree_view_get_model (GTK_TREE_VIEW (packages_list));
-  
-  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(packages_list));
-
-  if(selection)
-    gtk_tree_selection_get_selected(selection, &model, selected_package_iter);
-
-  model = gtk_tree_view_get_model (GTK_TREE_VIEW (symbols_list));
-  
-  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(symbols_list));
-
-  if(selection)
-    gtk_tree_selection_get_selected(selection, &model, selected_symbol_iter);
-}
-
 void fetch_symbol_value(GtkWidget *lst, gpointer data)
 {
   GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
@@ -1870,7 +1920,7 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
   
   if(!check_for_sys_browser_changes())
   {
-    gtk_tree_selection_select_iter(selection, selected_symbol_iter);
+    revert_to_prev_pkg_sym();
     return;
   }
   
@@ -1977,13 +2027,13 @@ void fetch_symbol_value(GtkWidget *lst, gpointer data)
     }
 
     gtk_text_buffer_insert_at_cursor(system_browser_buffer, "\n", -1);
+
+    selected_symbol = (OBJECT_PTR)ptr;
   }
 
   gtk_statusbar_push(system_browser_statusbar, 0, "");
 
   gtk_text_buffer_set_modified(system_browser_buffer, FALSE);
-    
-  set_selected_pkg_sym_iters();
 }
 
 void save_image()
