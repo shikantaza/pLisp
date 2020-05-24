@@ -407,8 +407,6 @@ int add_string(char *str)
 {
   char **temp;
 
-  log_function_entry("add_string");
-
   nof_strings++;
 
   temp = (char **)GC_REALLOC(strings, nof_strings * sizeof(char *));
@@ -423,8 +421,6 @@ int add_string(char *str)
   }
 
   strings[nof_strings - 1] = strdup(str);
-
-  log_function_exit("add_string");
 
   return nof_strings - 1;
 }
@@ -455,8 +451,6 @@ int add_symbol(char *sym)
 {
   char **temp;
 
-  log_function_entry("add_symbol");
-
   packages[current_package].nof_symbols++;
   
   temp = (char **)GC_REALLOC(packages[current_package].symbols, packages[current_package].nof_symbols * sizeof(char *));
@@ -471,8 +465,6 @@ int add_symbol(char *sym)
   }
 
   packages[current_package].symbols[packages[current_package].nof_symbols - 1] = strdup(sym);
-
-  log_function_exit("add_symbol");
 
   return packages[current_package].nof_symbols - 1;
 }
@@ -496,8 +488,6 @@ int find_symbol(char *sym, int package_index)
   BOOLEAN found = false;
   int i;
 
-  log_function_entry("find_symbol");
-
   for(i=0; i<packages[package_index].nof_symbols; i++)
   {
     if(!strcmp(packages[package_index].symbols[i],sym))
@@ -510,8 +500,6 @@ int find_symbol(char *sym, int package_index)
 
   if(!found)
     ret = NOT_FOUND;
-
-  log_function_exit("find_symbol");
 
   return ret;
 }
@@ -695,8 +683,6 @@ void cleanup()
 
   int i,j;
 
-  log_function_entry("cleanup");
-
   if(yyin != stdin && yyin)
     fclose(yyin);
 
@@ -730,8 +716,6 @@ void cleanup()
   /*   free(strings[i]); */
 
   /* free(strings); */
-
-  log_function_exit("cleanup");
 }
 
 void print_copyright_notice()
@@ -828,8 +812,6 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
 
 void print_object(OBJECT_PTR obj_ptr)
 {
-  log_function_entry("print_object");
-
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {
     char buf[500];
@@ -947,15 +929,11 @@ void print_object(OBJECT_PTR obj_ptr)
 
     fflush(stdout);
   }
-
-  log_function_exit("print_object");
 }
 
 OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
 {
   uintptr_t ptr = object_alloc(2, CONS_TAG);
-
-  log_function_entry("cons");
 
   if(!is_valid_object(car))
     //assert(false);
@@ -973,8 +951,6 @@ OBJECT_PTR cons(OBJECT_PTR car, OBJECT_PTR cdr)
   set_heap(ptr, 0, car);
   set_heap(ptr, 1, cdr);
 
-  log_function_exit("cons");
-
   return ptr + CONS_TAG;
 }
 
@@ -984,14 +960,10 @@ OBJECT_PTR get_string_object(char *str)
 
   OBJECT_PTR retval;
 
-  log_function_entry("get_string_object");
-
   if(index != NOT_FOUND) //string exists in string table
     retval = (OBJECT_PTR)((index << OBJECT_SHIFT) + STRING_LITERAL_TAG);
   else
     retval = (OBJECT_PTR)((add_string(str) << OBJECT_SHIFT) + STRING_LITERAL_TAG);
-
-  log_function_exit("get_string_object");
 
   return retval;
 }
@@ -1004,8 +976,6 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
   int package_index = current_package;
 
   int index;
-
-  log_function_entry("get_symbol_object");
 
   for(i=0; i<packages[CORE_PACKAGE_INDEX].nof_symbols; i++)
   {
@@ -1025,8 +995,6 @@ OBJECT_PTR get_symbol_object(char *symbol_name)
     //retval = (OBJECT_PTR) ((package_index << (SYMBOL_BITS + OBJECT_SHIFT)) + (add_symbol(symbol_name) << OBJECT_SHIFT) + SYMBOL_TAG);
     retval = build_symbol_object(package_index, add_symbol(symbol_name));
     
-  log_function_exit("get_symbol_object");
-
   return retval;
 }
 
@@ -1885,8 +1853,6 @@ void print_cons_object(OBJECT_PTR obj)
   OBJECT_PTR car_obj = car(obj);
   OBJECT_PTR cdr_obj = cdr(obj);
 
-  log_function_entry("print_cons_object");
-
   assert(IS_CONS_OBJECT(obj));
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
@@ -2000,8 +1966,6 @@ void print_cons_object(OBJECT_PTR obj)
 	fprintf(stdout, "\b)");
     }
   }
-
-  log_function_exit("print_cons_object");
 }
 
 BOOLEAN is_atom(OBJECT_PTR ptr)
@@ -2016,8 +1980,6 @@ BOOLEAN is_atom(OBJECT_PTR ptr)
 int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
 {
   int ret = 0;
-
-  log_function_entry("convert_expression_to_object");
 
   if(e->type == SYMBOL)
   {
@@ -2104,8 +2066,6 @@ int convert_expression_to_object(expression_t *e, OBJECT_PTR *out_val)
   fprintf(stdout, "\n");
 #endif
 
-  log_function_exit("convert_expression_to_object");
-
   return ret;
 }
 
@@ -2175,8 +2135,6 @@ OBJECT_PTR create_closure_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_
 OBJECT_PTR clone_object(OBJECT_PTR obj)
 {
   OBJECT_PTR ret;
-
-  log_function_entry("clone_object");
 
 #ifdef DEBUG
   print_object(obj);
@@ -2253,8 +2211,6 @@ OBJECT_PTR clone_object(OBJECT_PTR obj)
     }
 
   }
-
-  log_function_exit("clone_object");
 
 #ifdef DEBUG
   print_object(ret);
@@ -2359,8 +2315,6 @@ OBJECT_PTR get_symbol_value(OBJECT_PTR symbol_obj, OBJECT_PTR env_list)
   OBJECT_PTR ret;
   BOOLEAN found = false;
 
-  log_function_entry("get_symbol_value");
-
   while(rest != NIL)
   {
     OBJECT_PTR result = get_symbol_value_from_env(symbol_obj, car(rest));
@@ -2390,8 +2344,6 @@ OBJECT_PTR get_symbol_value(OBJECT_PTR symbol_obj, OBJECT_PTR env_list)
   if(!found)
     ret = CONS_NIL_NIL;
 
-  log_function_exit("get_symbol_value");
-
   return ret;
 }
 
@@ -2400,8 +2352,6 @@ OBJECT_PTR get_symbol_value_from_env(OBJECT_PTR symbol_obj, OBJECT_PTR env_obj)
   OBJECT_PTR rest = env_obj;
   OBJECT_PTR ret;
   BOOLEAN found = false;
-
-  log_function_entry("get_symbol_value_from_env");
 
   while(rest != NIL)
   {
@@ -2417,8 +2367,6 @@ OBJECT_PTR get_symbol_value_from_env(OBJECT_PTR symbol_obj, OBJECT_PTR env_obj)
 
   if(!found)
     ret = CONS_NIL_NIL;
-
-  log_function_exit("get_symbol_value_from_env");
 
   return ret;
 }
@@ -2884,8 +2832,6 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
   int package_index = extract_package_index(ptr);
   int symbol_index = extract_symbol_index(ptr);
   
-  log_function_entry("print_symbol");
-
   assert(IS_SYMBOL_OBJECT(ptr));
 
   memset(buf,'\0',SYMBOL_STRING_SIZE);
@@ -2903,8 +2849,6 @@ void print_symbol(OBJECT_PTR ptr, char *buf)
     sprintf(buf, "%s:%s", packages[package_index].name, packages[package_index].symbols[symbol_index]);
   else
     sprintf(buf, "%s", packages[package_index].symbols[symbol_index]);
-
-  log_function_exit("print_symbol");
 }
 
 int add_qualified_symbol(char *package_name, char *sym)
@@ -2912,8 +2856,6 @@ int add_qualified_symbol(char *package_name, char *sym)
   int package_index = find_package(package_name);
 
   char ** temp;
-
-  log_function_entry("add_symbol");
 
   assert(package_index != NOT_FOUND);
 
@@ -2931,8 +2873,6 @@ int add_qualified_symbol(char *package_name, char *sym)
     }
 
   packages[package_index].symbols[packages[package_index].nof_symbols - 1] = strdup(sym);
-
-  log_function_exit("add_symbol");
 
   return packages[package_index].nof_symbols - 1;
 }
@@ -2989,8 +2929,6 @@ OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)
 
   char *temp1, *temp2;
 
-  log_function_entry("get_keyword_arg");
-
   assert(IS_SYMBOL_OBJECT(key));
 
   while(rest != NIL)
@@ -3023,16 +2961,12 @@ OBJECT_PTR get_keyword_arg(OBJECT_PTR key, OBJECT_PTR arg_list)
   if(!found)
     ret = NIL;
 
-  log_function_exit("get_keyword_arg");
-
   return ret;
 }
 
 BOOLEAN is_keyword_symbol(OBJECT_PTR symbol_object)
 {
   BOOLEAN ret;
-
-  log_function_entry("is_keyword_symbol");
 
   if(!(IS_SYMBOL_OBJECT(symbol_object)))
     ret = false;
@@ -3042,8 +2976,6 @@ BOOLEAN is_keyword_symbol(OBJECT_PTR symbol_object)
     ret = (temp1[0] == ':');
   }
 
-  log_function_exit("is_keyword_symbol");
-
   return ret;
 }
 
@@ -3052,8 +2984,6 @@ BOOLEAN contains_keyword_parameter(OBJECT_PTR list)
   BOOLEAN ret = false;
 
   OBJECT_PTR rest = list;
-
-  log_function_entry("contains_keyword_parameter");
 
   while(rest != NIL)
   {
@@ -3065,8 +2995,6 @@ BOOLEAN contains_keyword_parameter(OBJECT_PTR list)
 
     rest = cdr(rest);
   }
-
-  log_function_exit("contains_keyword_parameter");
 
   return ret;
 }
@@ -3140,8 +3068,6 @@ void print_array_object(OBJECT_PTR array)
   uintptr_t ptr;
   int length, i;
 
-  log_function_entry("print_array_object");
-
   ptr = extract_ptr(array);
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
@@ -3180,8 +3106,6 @@ void print_array_object(OBJECT_PTR array)
 
     fprintf(stdout, "]");
   }
-
-  log_function_exit("print_array_object");
 }
 
 int print_string_to_string(OBJECT_PTR string_object, char *buf, int filled_buf_len)
@@ -3334,8 +3258,6 @@ OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)
   OBJECT_PTR ret;
   BOOLEAN found = false;
 
-  log_function_entry("get_symbol_from_value");
-
   while(rest != NIL)
   {
     OBJECT_PTR result = get_symbol_from_value_from_env(value_obj, car(rest));
@@ -3365,8 +3287,6 @@ OBJECT_PTR get_symbol_from_value(OBJECT_PTR value_obj, OBJECT_PTR env_list)
   if(!found)
     ret = CONS_NIL_NIL;
 
-  log_function_exit("get_symbol_from_value");
-
   return ret;
 }
 
@@ -3375,8 +3295,6 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_o
   OBJECT_PTR rest = env_obj;
   OBJECT_PTR ret;
   BOOLEAN found = false;
-
-  log_function_entry("get_symbol_from_value_from_env");
 
   while(rest != NIL)
   {
@@ -3392,8 +3310,6 @@ OBJECT_PTR get_symbol_from_value_from_env(OBJECT_PTR value_obj, OBJECT_PTR env_o
 
   if(!found)
     ret = CONS_NIL_NIL;
-
-  log_function_exit("get_symbol_from_value_from_env");
 
   return ret;
 }

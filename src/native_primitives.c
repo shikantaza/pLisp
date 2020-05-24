@@ -2139,8 +2139,6 @@ OBJECT_PTR eval_sub_array(OBJECT_PTR array, OBJECT_PTR start, OBJECT_PTR length)
 
   ret = ptr;
 
-  log_function_exit("eval_sub_array");
-
   return ret + ARRAY_TAG;
 }
 

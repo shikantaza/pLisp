@@ -1017,6 +1017,7 @@ void system_browser_accept()
       }
     }
   }
+  gtk_text_buffer_set_modified(system_browser_buffer, FALSE);
 }
 
 void accept(GtkWidget *widget,

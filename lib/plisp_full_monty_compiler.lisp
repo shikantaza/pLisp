@@ -421,11 +421,6 @@
         nil
       (cons (car lst) (remove-last (cdr lst))))))
 
-(defun reverse (lst)
-  (if (null lst)
-      nil
-    (append (reverse (cdr lst)) (list (car lst)))))
-
 (defun range (start end incr)
   (if (> start end)
       nil
@@ -441,6 +436,12 @@
 	 (let ((,elem (car ,sym)))
 	   ,@body
 	   (set ,sym (cdr ,sym)))))))
+
+(defun reverse (lst)
+  (let ((ret nil))
+    (dolist (x lst)
+      (set ret (cons x ret)))
+    ret))
 
 ;(defun nth (n lst)
 ;  (if (> n (length lst))
