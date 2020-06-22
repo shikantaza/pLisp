@@ -2888,12 +2888,12 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
 
   if(IS_SYMBOL_OBJECT(var))
   {
-    char *raw_name = strdup(get_symbol_name(var));
+    char *raw_name = GC_strdup(get_symbol_name(var));
 
     /* if(raw_name[0] == '#') */
     /* { */
     /*   //char *name = substring(raw_name, 2, strlen(raw_name)-2); */
-    /*   char *name = strdup(raw_name); */
+    /*   char *name = GC_strdup(raw_name); */
     /*   free(raw_name); */
     /*   name[0] = '_'; */
     /*   name[1] = '_'; */
@@ -3769,7 +3769,7 @@ void add_top_level_sym(OBJECT_PTR sym, OBJECT_PTR val)
 
     top_level_symbols[nof_global_vars-1].doc_str = NULL;
     
-    add_to_autocomplete_list(convert_to_lower_case(strdup(get_symbol_name(sym))));
+    add_to_autocomplete_list(convert_to_lower_case(GC_strdup(get_symbol_name(sym))));
 
     //system_changed = true;
   }
@@ -5384,7 +5384,7 @@ void update_doc_str(OBJECT_PTR sym, char *str)
 
     if(top_level_symbols[i].sym == sym)
     {
-      top_level_symbols[i].doc_str = strdup(str);
+      top_level_symbols[i].doc_str = GC_strdup(str);
       return;
     }
   }
@@ -5735,7 +5735,7 @@ void add_native_fn_source(nativefn fn, char *source)
   native_fn_sources = temp;
 
   native_fn_sources[nof_native_fns-1].fn = fn;
-  native_fn_sources[nof_native_fns-1].source = strdup(source);
+  native_fn_sources[nof_native_fns-1].source = GC_strdup(source);
 }
 
 char *get_native_fn_source(nativefn fn)
@@ -6181,7 +6181,7 @@ char *get_signature_for_core_symbol(char *symbol_name)
 {
   assert(is_core_symbol(symbol_name));
 
-  char *s = strdup(symbol_name);
+  char *s = GC_strdup(symbol_name);
 
   convert_to_upper_case(s);
 

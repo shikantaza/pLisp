@@ -502,7 +502,7 @@ void populate_packages_list()
   for(i=0; i<nof_packages; i++)
   {
     gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter, 0, strdup(packages[i].name), -1);  
+    gtk_list_store_set(store, &iter, 0, GC_strdup(packages[i].name), -1);  
     gtk_list_store_set(store, &iter, 1, i, -1);
   }
 

@@ -127,7 +127,7 @@ int open_square_brackets = 0;
 #\\[Tt][Aa][Bb]                            {yylval.atom_value = "tab";       return T_CHAR; }
 #\\[Bb][Aa][Cc][Kk][Ss][Pp][Aa][Cc][Ee]    {yylval.atom_value = "backspace"; return T_CHAR; }
 
-[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+|[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+:[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+ { yylval.atom_value = strdup(yytext); return T_SYMBOL; }
+[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+|[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+:[a-zA-Z0-9\\\^\$\.\|\?\*\+\{!_\-/<=>#%&}~]+ { yylval.atom_value = GC_strdup(yytext); return T_SYMBOL; }
 
 \(                      { open_parens++; return T_LEFT_PAREN; }
 \)                      { open_parens--; return T_RIGHT_PAREN; }

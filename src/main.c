@@ -420,7 +420,7 @@ int add_string(char *str)
     exit(1);
   }
 
-  strings[nof_strings - 1] = strdup(str);
+  strings[nof_strings - 1] = GC_strdup(str);
 
   return nof_strings - 1;
 }
@@ -442,7 +442,7 @@ int add_symbol_to_package(char *sym, int package_index)
     exit(1);
   }
 
-  packages[package_index].symbols[packages[package_index].nof_symbols - 1] = strdup(sym);
+  packages[package_index].symbols[packages[package_index].nof_symbols - 1] = GC_strdup(sym);
 
   return packages[package_index].nof_symbols - 1;
 }
@@ -464,7 +464,7 @@ int add_symbol(char *sym)
     exit(1);
   }
 
-  packages[current_package].symbols[packages[current_package].nof_symbols - 1] = strdup(sym);
+  packages[current_package].symbols[packages[current_package].nof_symbols - 1] = GC_strdup(sym);
 
   return packages[current_package].nof_symbols - 1;
 }
@@ -515,22 +515,22 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
     if(char_val[0] == ':') //keyword symbols; not used currently
     {
       e->package_name = NULL;
-      e->atom_value = strdup(char_val);
+      e->atom_value = GC_strdup(char_val);
     }
     else
     {
-      char *temp = strdup(char_val);
+      char *temp = GC_strdup(char_val);
       char *res = strtok(temp, ":");
 
       if(strlen(res) == strlen(char_val)) //no colon
       {
 	e->package_name = NULL;
-	e->atom_value = strdup(char_val);
+	e->atom_value = GC_strdup(char_val);
       }
       else //colon present
       {
-	e->package_name = strdup(res);
-	e->atom_value = strdup(strtok(NULL, ":"));
+	e->package_name = GC_strdup(res);
+	e->atom_value = GC_strdup(strtok(NULL, ":"));
       }
       //free(temp);
     }
@@ -540,10 +540,10 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
   else if(type == FLOAT)
     e->float_value = float_val;
   else if(type == STRING_LITERAL)
-    e->atom_value = strdup(char_val);
+    e->atom_value = GC_strdup(char_val);
   else if(type == CHARACTER)
   {
-    char *s = convert_to_lower_case(strdup(char_val));
+    char *s = convert_to_lower_case(GC_strdup(char_val));
     
     if(!strcmp(s, "space"))
       e->char_value = ' ';
@@ -556,7 +556,7 @@ expression_t *create_expression(int type, char *char_val, int int_val, float flo
     else
       e->char_value = char_val[2]; //the first two characters are '#' and '\'
 
-    free(s);
+    //free(s);
   }
   else if(type == LIST)
   {
@@ -2578,7 +2578,7 @@ void create_package(char *name)
       exit(1);
     }
 
-  packages[nof_packages - 1].name = strdup(name);
+  packages[nof_packages - 1].name = GC_strdup(name);
   packages[nof_packages - 1].symbols = NULL;
   packages[nof_packages - 1].nof_symbols = 0;
 
@@ -2593,164 +2593,164 @@ void initialize_core_package()
   packages[CORE_PACKAGE_INDEX].nof_symbols = NOF_SPECIAL_SYMBOLS + NOF_NON_SPECIAL_SYMBOLS; 
   packages[CORE_PACKAGE_INDEX].symbols = (char **)GC_MALLOC(packages[CORE_PACKAGE_INDEX].nof_symbols * sizeof(char *));
 
-  packages[CORE_PACKAGE_INDEX].symbols[0]  = strdup("T");
-  packages[CORE_PACKAGE_INDEX].symbols[1]  = strdup("NIL");
-  packages[CORE_PACKAGE_INDEX].symbols[2]  = strdup("QUOTE");
-  packages[CORE_PACKAGE_INDEX].symbols[3]  = strdup("PRIM-ATOM");
-  packages[CORE_PACKAGE_INDEX].symbols[4]  = strdup("PRIM-EQ");
-  packages[CORE_PACKAGE_INDEX].symbols[5]  = strdup("PRIM-CAR");
-  packages[CORE_PACKAGE_INDEX].symbols[6]  = strdup("PRIM-CDR");
-  packages[CORE_PACKAGE_INDEX].symbols[7]  = strdup("PRIM-CONS");
-  packages[CORE_PACKAGE_INDEX].symbols[8]  = strdup("LAMBDA");
-  packages[CORE_PACKAGE_INDEX].symbols[9]  = strdup("SET");
-  packages[CORE_PACKAGE_INDEX].symbols[10] = strdup("PRIM-ADD");
-  packages[CORE_PACKAGE_INDEX].symbols[11] = strdup("PRIM-SUB");
-  packages[CORE_PACKAGE_INDEX].symbols[12] = strdup("PRIM-MULT");
-  packages[CORE_PACKAGE_INDEX].symbols[13] = strdup("PRIM-DIV");
-  packages[CORE_PACKAGE_INDEX].symbols[14] = strdup("PROGN");
-  packages[CORE_PACKAGE_INDEX].symbols[15] = strdup("PRIM-PRINT");
-  packages[CORE_PACKAGE_INDEX].symbols[16] = strdup("PRIM-LIST");
-  packages[CORE_PACKAGE_INDEX].symbols[17] = strdup("PRIM-LISTP");
-  packages[CORE_PACKAGE_INDEX].symbols[18] = strdup("PRIM-SYMBOL-VALUE");
-  packages[CORE_PACKAGE_INDEX].symbols[19] = strdup("BACKQUOTE");
-  packages[CORE_PACKAGE_INDEX].symbols[20] = strdup("PRIM-GT");
-  packages[CORE_PACKAGE_INDEX].symbols[21] = strdup("PRIM-GENSYM");
-  packages[CORE_PACKAGE_INDEX].symbols[22] = strdup("PRIM-SETCAR");
-  packages[CORE_PACKAGE_INDEX].symbols[23] = strdup("PRIM-SETCDR");
-  packages[CORE_PACKAGE_INDEX].symbols[24] = strdup("PRIM-ERROR");
-  packages[CORE_PACKAGE_INDEX].symbols[25] = strdup("PRIM-CREATE-PACKAGE");
-  packages[CORE_PACKAGE_INDEX].symbols[26] = strdup("PRIM-IN-PACKAGE");
-  packages[CORE_PACKAGE_INDEX].symbols[27] = strdup("COMMA");
-  packages[CORE_PACKAGE_INDEX].symbols[28] = strdup("COMMA-AT");
-  packages[CORE_PACKAGE_INDEX].symbols[29] = strdup("PRIM-EXPAND-MACRO");
-  packages[CORE_PACKAGE_INDEX].symbols[30] = strdup("PRIM-APPLY");
-  packages[CORE_PACKAGE_INDEX].symbols[31] = strdup("PRIM-STRING");
-  packages[CORE_PACKAGE_INDEX].symbols[32] = strdup("PRIM-MAKE-ARRAY");
-  packages[CORE_PACKAGE_INDEX].symbols[33] = strdup("PRIM-ARRAY-GET");
-  packages[CORE_PACKAGE_INDEX].symbols[34] = strdup("PRIM-ARRAY-SET");
-  packages[CORE_PACKAGE_INDEX].symbols[35] = strdup("PRIM-SUB-ARRAY");
-  packages[CORE_PACKAGE_INDEX].symbols[36] = strdup("PRIM-ARRAY-LENGTH");
-  packages[CORE_PACKAGE_INDEX].symbols[37] = strdup("PRIM-PRINT-STRING");
-  packages[CORE_PACKAGE_INDEX].symbols[38] = strdup("LABELS");
-  packages[CORE_PACKAGE_INDEX].symbols[39] = strdup("PRIM-CREATE-IMAGE");
-  packages[CORE_PACKAGE_INDEX].symbols[40] = strdup("BREAK");
-  packages[CORE_PACKAGE_INDEX].symbols[41] = strdup("PRIM-LOAD-FOREIGN-LIBRARY");
-  packages[CORE_PACKAGE_INDEX].symbols[42] = strdup("CALL-FOREIGN-FUNCTION");
-  packages[CORE_PACKAGE_INDEX].symbols[43] = strdup("PRIM-ENV");
-  packages[CORE_PACKAGE_INDEX].symbols[44] = strdup("IF");
-  packages[CORE_PACKAGE_INDEX].symbols[45] = strdup("PRIM-EVAL"); 
-  packages[CORE_PACKAGE_INDEX].symbols[46] = strdup("CALL/CC"); 
-  packages[CORE_PACKAGE_INDEX].symbols[47] = strdup("DEFINE"); 
-  packages[CORE_PACKAGE_INDEX].symbols[48] = strdup("RESUME"); 
-  packages[CORE_PACKAGE_INDEX].symbols[49] = strdup("BACKTRACE"); 
-  packages[CORE_PACKAGE_INDEX].symbols[50] = strdup("PRIM-LOAD-FILE"); 
+  packages[CORE_PACKAGE_INDEX].symbols[0]  = GC_strdup("T");
+  packages[CORE_PACKAGE_INDEX].symbols[1]  = GC_strdup("NIL");
+  packages[CORE_PACKAGE_INDEX].symbols[2]  = GC_strdup("QUOTE");
+  packages[CORE_PACKAGE_INDEX].symbols[3]  = GC_strdup("PRIM-ATOM");
+  packages[CORE_PACKAGE_INDEX].symbols[4]  = GC_strdup("PRIM-EQ");
+  packages[CORE_PACKAGE_INDEX].symbols[5]  = GC_strdup("PRIM-CAR");
+  packages[CORE_PACKAGE_INDEX].symbols[6]  = GC_strdup("PRIM-CDR");
+  packages[CORE_PACKAGE_INDEX].symbols[7]  = GC_strdup("PRIM-CONS");
+  packages[CORE_PACKAGE_INDEX].symbols[8]  = GC_strdup("LAMBDA");
+  packages[CORE_PACKAGE_INDEX].symbols[9]  = GC_strdup("SET");
+  packages[CORE_PACKAGE_INDEX].symbols[10] = GC_strdup("PRIM-ADD");
+  packages[CORE_PACKAGE_INDEX].symbols[11] = GC_strdup("PRIM-SUB");
+  packages[CORE_PACKAGE_INDEX].symbols[12] = GC_strdup("PRIM-MULT");
+  packages[CORE_PACKAGE_INDEX].symbols[13] = GC_strdup("PRIM-DIV");
+  packages[CORE_PACKAGE_INDEX].symbols[14] = GC_strdup("PROGN");
+  packages[CORE_PACKAGE_INDEX].symbols[15] = GC_strdup("PRIM-PRINT");
+  packages[CORE_PACKAGE_INDEX].symbols[16] = GC_strdup("PRIM-LIST");
+  packages[CORE_PACKAGE_INDEX].symbols[17] = GC_strdup("PRIM-LISTP");
+  packages[CORE_PACKAGE_INDEX].symbols[18] = GC_strdup("PRIM-SYMBOL-VALUE");
+  packages[CORE_PACKAGE_INDEX].symbols[19] = GC_strdup("BACKQUOTE");
+  packages[CORE_PACKAGE_INDEX].symbols[20] = GC_strdup("PRIM-GT");
+  packages[CORE_PACKAGE_INDEX].symbols[21] = GC_strdup("PRIM-GENSYM");
+  packages[CORE_PACKAGE_INDEX].symbols[22] = GC_strdup("PRIM-SETCAR");
+  packages[CORE_PACKAGE_INDEX].symbols[23] = GC_strdup("PRIM-SETCDR");
+  packages[CORE_PACKAGE_INDEX].symbols[24] = GC_strdup("PRIM-ERROR");
+  packages[CORE_PACKAGE_INDEX].symbols[25] = GC_strdup("PRIM-CREATE-PACKAGE");
+  packages[CORE_PACKAGE_INDEX].symbols[26] = GC_strdup("PRIM-IN-PACKAGE");
+  packages[CORE_PACKAGE_INDEX].symbols[27] = GC_strdup("COMMA");
+  packages[CORE_PACKAGE_INDEX].symbols[28] = GC_strdup("COMMA-AT");
+  packages[CORE_PACKAGE_INDEX].symbols[29] = GC_strdup("PRIM-EXPAND-MACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[30] = GC_strdup("PRIM-APPLY");
+  packages[CORE_PACKAGE_INDEX].symbols[31] = GC_strdup("PRIM-STRING");
+  packages[CORE_PACKAGE_INDEX].symbols[32] = GC_strdup("PRIM-MAKE-ARRAY");
+  packages[CORE_PACKAGE_INDEX].symbols[33] = GC_strdup("PRIM-ARRAY-GET");
+  packages[CORE_PACKAGE_INDEX].symbols[34] = GC_strdup("PRIM-ARRAY-SET");
+  packages[CORE_PACKAGE_INDEX].symbols[35] = GC_strdup("PRIM-SUB-ARRAY");
+  packages[CORE_PACKAGE_INDEX].symbols[36] = GC_strdup("PRIM-ARRAY-LENGTH");
+  packages[CORE_PACKAGE_INDEX].symbols[37] = GC_strdup("PRIM-PRINT-STRING");
+  packages[CORE_PACKAGE_INDEX].symbols[38] = GC_strdup("LABELS");
+  packages[CORE_PACKAGE_INDEX].symbols[39] = GC_strdup("PRIM-CREATE-IMAGE");
+  packages[CORE_PACKAGE_INDEX].symbols[40] = GC_strdup("BREAK");
+  packages[CORE_PACKAGE_INDEX].symbols[41] = GC_strdup("PRIM-LOAD-FOREIGN-LIBRARY");
+  packages[CORE_PACKAGE_INDEX].symbols[42] = GC_strdup("CALL-FOREIGN-FUNCTION");
+  packages[CORE_PACKAGE_INDEX].symbols[43] = GC_strdup("PRIM-ENV");
+  packages[CORE_PACKAGE_INDEX].symbols[44] = GC_strdup("IF");
+  packages[CORE_PACKAGE_INDEX].symbols[45] = GC_strdup("PRIM-EVAL"); 
+  packages[CORE_PACKAGE_INDEX].symbols[46] = GC_strdup("CALL/CC"); 
+  packages[CORE_PACKAGE_INDEX].symbols[47] = GC_strdup("DEFINE"); 
+  packages[CORE_PACKAGE_INDEX].symbols[48] = GC_strdup("RESUME"); 
+  packages[CORE_PACKAGE_INDEX].symbols[49] = GC_strdup("BACKTRACE"); 
+  packages[CORE_PACKAGE_INDEX].symbols[50] = GC_strdup("PRIM-LOAD-FILE"); 
 
-  packages[CORE_PACKAGE_INDEX].symbols[51] = strdup("PRIM-CONSP");
-  packages[CORE_PACKAGE_INDEX].symbols[52] = strdup("PRIM-INTEGERP");
-  packages[CORE_PACKAGE_INDEX].symbols[53] = strdup("PRIM-FLOATP");
-  packages[CORE_PACKAGE_INDEX].symbols[54] = strdup("PRIM-CHARACTERP");
-  packages[CORE_PACKAGE_INDEX].symbols[55] = strdup("PRIM-SYMBOLP");
-  packages[CORE_PACKAGE_INDEX].symbols[56] = strdup("PRIM-STRINGP");
-  packages[CORE_PACKAGE_INDEX].symbols[57] = strdup("PRIM-ARRAYP");
-  packages[CORE_PACKAGE_INDEX].symbols[58] = strdup("PRIM-CLOSUREP");
-  packages[CORE_PACKAGE_INDEX].symbols[59] = strdup("PRIM-MACROP");
-  packages[CORE_PACKAGE_INDEX].symbols[60] = strdup("PRIM-CONTINUATIONP");
-  packages[CORE_PACKAGE_INDEX].symbols[61] = strdup("LAMBDA-EXPRESSION");
-  packages[CORE_PACKAGE_INDEX].symbols[62] = strdup("WHILE1"); //reverting to macro WHILE
-  packages[CORE_PACKAGE_INDEX].symbols[63] = strdup("FORMAT");
-  packages[CORE_PACKAGE_INDEX].symbols[64] = strdup("PRIM-CLONE");
-  packages[CORE_PACKAGE_INDEX].symbols[65] = strdup("RETURN");
-  packages[CORE_PACKAGE_INDEX].symbols[66] = strdup("COMPILE1");
-  packages[CORE_PACKAGE_INDEX].symbols[67] = strdup("RETURN-FROM");
-  packages[CORE_PACKAGE_INDEX].symbols[68] = strdup("PRIM-SYMBOL");
-  packages[CORE_PACKAGE_INDEX].symbols[69] = strdup("PRIM-SYMBOL-NAME");
-  packages[CORE_PACKAGE_INDEX].symbols[70] = strdup("PRIM-UNBIND");
-  packages[CORE_PACKAGE_INDEX].symbols[71] = strdup("PRIM-NEWLINE");
-  packages[CORE_PACKAGE_INDEX].symbols[72] = strdup("ABORT");
-  packages[CORE_PACKAGE_INDEX].symbols[73] = strdup("PRIM-TIME");
-  packages[CORE_PACKAGE_INDEX].symbols[74] = strdup("PRIM-PROFILE");
+  packages[CORE_PACKAGE_INDEX].symbols[51] = GC_strdup("PRIM-CONSP");
+  packages[CORE_PACKAGE_INDEX].symbols[52] = GC_strdup("PRIM-INTEGERP");
+  packages[CORE_PACKAGE_INDEX].symbols[53] = GC_strdup("PRIM-FLOATP");
+  packages[CORE_PACKAGE_INDEX].symbols[54] = GC_strdup("PRIM-CHARACTERP");
+  packages[CORE_PACKAGE_INDEX].symbols[55] = GC_strdup("PRIM-SYMBOLP");
+  packages[CORE_PACKAGE_INDEX].symbols[56] = GC_strdup("PRIM-STRINGP");
+  packages[CORE_PACKAGE_INDEX].symbols[57] = GC_strdup("PRIM-ARRAYP");
+  packages[CORE_PACKAGE_INDEX].symbols[58] = GC_strdup("PRIM-CLOSUREP");
+  packages[CORE_PACKAGE_INDEX].symbols[59] = GC_strdup("PRIM-MACROP");
+  packages[CORE_PACKAGE_INDEX].symbols[60] = GC_strdup("PRIM-CONTINUATIONP");
+  packages[CORE_PACKAGE_INDEX].symbols[61] = GC_strdup("LAMBDA-EXPRESSION");
+  packages[CORE_PACKAGE_INDEX].symbols[62] = GC_strdup("WHILE1"); //reverting to macro WHILE
+  packages[CORE_PACKAGE_INDEX].symbols[63] = GC_strdup("FORMAT");
+  packages[CORE_PACKAGE_INDEX].symbols[64] = GC_strdup("PRIM-CLONE");
+  packages[CORE_PACKAGE_INDEX].symbols[65] = GC_strdup("RETURN");
+  packages[CORE_PACKAGE_INDEX].symbols[66] = GC_strdup("COMPILE1");
+  packages[CORE_PACKAGE_INDEX].symbols[67] = GC_strdup("RETURN-FROM");
+  packages[CORE_PACKAGE_INDEX].symbols[68] = GC_strdup("PRIM-SYMBOL");
+  packages[CORE_PACKAGE_INDEX].symbols[69] = GC_strdup("PRIM-SYMBOL-NAME");
+  packages[CORE_PACKAGE_INDEX].symbols[70] = GC_strdup("PRIM-UNBIND");
+  packages[CORE_PACKAGE_INDEX].symbols[71] = GC_strdup("PRIM-NEWLINE");
+  packages[CORE_PACKAGE_INDEX].symbols[72] = GC_strdup("ABORT");
+  packages[CORE_PACKAGE_INDEX].symbols[73] = GC_strdup("PRIM-TIME");
+  packages[CORE_PACKAGE_INDEX].symbols[74] = GC_strdup("PRIM-PROFILE");
 
-  packages[CORE_PACKAGE_INDEX].symbols[75] = strdup("PRIM-NOT");
-  packages[CORE_PACKAGE_INDEX].symbols[76] = strdup("PRIM-LT");
-  packages[CORE_PACKAGE_INDEX].symbols[77] = strdup("PRIM-LEQ");
-  packages[CORE_PACKAGE_INDEX].symbols[78] = strdup("PRIM-GEQ");
-  packages[CORE_PACKAGE_INDEX].symbols[79] = strdup("NEQ");
+  packages[CORE_PACKAGE_INDEX].symbols[75] = GC_strdup("PRIM-NOT");
+  packages[CORE_PACKAGE_INDEX].symbols[76] = GC_strdup("PRIM-LT");
+  packages[CORE_PACKAGE_INDEX].symbols[77] = GC_strdup("PRIM-LEQ");
+  packages[CORE_PACKAGE_INDEX].symbols[78] = GC_strdup("PRIM-GEQ");
+  packages[CORE_PACKAGE_INDEX].symbols[79] = GC_strdup("NEQ");
 
-  packages[CORE_PACKAGE_INDEX].symbols[80] = strdup("PRIM-SAVE-OBJECT");
-  packages[CORE_PACKAGE_INDEX].symbols[81] = strdup("PRIM-LOAD-OBJECT");
+  packages[CORE_PACKAGE_INDEX].symbols[80] = GC_strdup("PRIM-SAVE-OBJECT");
+  packages[CORE_PACKAGE_INDEX].symbols[81] = GC_strdup("PRIM-LOAD-OBJECT");
 
-  packages[CORE_PACKAGE_INDEX].symbols[82] = strdup("COMPILE-FN");
+  packages[CORE_PACKAGE_INDEX].symbols[82] = GC_strdup("COMPILE-FN");
 
-  packages[CORE_PACKAGE_INDEX].symbols[83] = strdup("PRIM-EXPORT-PACKAGE");
+  packages[CORE_PACKAGE_INDEX].symbols[83] = GC_strdup("PRIM-EXPORT-PACKAGE");
 
-  packages[CORE_PACKAGE_INDEX].symbols[84] = strdup("COMPILE-EXP");
+  packages[CORE_PACKAGE_INDEX].symbols[84] = GC_strdup("COMPILE-EXP");
 
-  packages[CORE_PACKAGE_INDEX].symbols[85] = strdup("IMPORT-PACKAGE");
+  packages[CORE_PACKAGE_INDEX].symbols[85] = GC_strdup("IMPORT-PACKAGE");
 
   /* symbols corresponding to assembler mnemonics */
-  packages[CORE_PACKAGE_INDEX].symbols[86] =  strdup("HALT");
-  packages[CORE_PACKAGE_INDEX].symbols[87] =  strdup("REFER");
-  packages[CORE_PACKAGE_INDEX].symbols[88] =  strdup("CONSTANT");
-  packages[CORE_PACKAGE_INDEX].symbols[89] =  strdup("CLOSE");
-  packages[CORE_PACKAGE_INDEX].symbols[90] =  strdup("TEST");
-  packages[CORE_PACKAGE_INDEX].symbols[91] =  strdup("ASSIGN");         
-  packages[CORE_PACKAGE_INDEX].symbols[92] =  strdup("CONTI");
-  packages[CORE_PACKAGE_INDEX].symbols[93] =  strdup("NUATE");
-  packages[CORE_PACKAGE_INDEX].symbols[94] =  strdup("FRAME");
-  packages[CORE_PACKAGE_INDEX].symbols[95] =  strdup("ARGUMENT");
+  packages[CORE_PACKAGE_INDEX].symbols[86] =  GC_strdup("HALT");
+  packages[CORE_PACKAGE_INDEX].symbols[87] =  GC_strdup("REFER");
+  packages[CORE_PACKAGE_INDEX].symbols[88] =  GC_strdup("CONSTANT");
+  packages[CORE_PACKAGE_INDEX].symbols[89] =  GC_strdup("CLOSE");
+  packages[CORE_PACKAGE_INDEX].symbols[90] =  GC_strdup("TEST");
+  packages[CORE_PACKAGE_INDEX].symbols[91] =  GC_strdup("ASSIGN");         
+  packages[CORE_PACKAGE_INDEX].symbols[92] =  GC_strdup("CONTI");
+  packages[CORE_PACKAGE_INDEX].symbols[93] =  GC_strdup("NUATE");
+  packages[CORE_PACKAGE_INDEX].symbols[94] =  GC_strdup("FRAME");
+  packages[CORE_PACKAGE_INDEX].symbols[95] =  GC_strdup("ARGUMENT");
   /* APPLY already defined as a special symbol */
   /* RETURN already defined as a special symbol */
   /* DEFINE already defined as a special symbol */
-  packages[CORE_PACKAGE_INDEX].symbols[96] = strdup("MACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[96] = GC_strdup("MACRO");
   /* end symbols corresponding to assembler mnemonics */
 
   /* symbols for FFI */
-  packages[CORE_PACKAGE_INDEX].symbols[97] = strdup("INTEGER");
-  packages[CORE_PACKAGE_INDEX].symbols[98] = strdup("FLOAT");
-  packages[CORE_PACKAGE_INDEX].symbols[99] = strdup("CHARACTER");
-  packages[CORE_PACKAGE_INDEX].symbols[100] = strdup("VOID");
-  packages[CORE_PACKAGE_INDEX].symbols[101] = strdup("INTEGER-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[102] = strdup("FLOAT-POINTER");
-  packages[CORE_PACKAGE_INDEX].symbols[103] = strdup("CHARACTER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[97] = GC_strdup("INTEGER");
+  packages[CORE_PACKAGE_INDEX].symbols[98] = GC_strdup("FLOAT");
+  packages[CORE_PACKAGE_INDEX].symbols[99] = GC_strdup("CHARACTER");
+  packages[CORE_PACKAGE_INDEX].symbols[100] = GC_strdup("VOID");
+  packages[CORE_PACKAGE_INDEX].symbols[101] = GC_strdup("INTEGER-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[102] = GC_strdup("FLOAT-POINTER");
+  packages[CORE_PACKAGE_INDEX].symbols[103] = GC_strdup("CHARACTER-POINTER");
   /* end symbols for FFI */
 
-  packages[CORE_PACKAGE_INDEX].symbols[104] = strdup("LET");
-  packages[CORE_PACKAGE_INDEX].symbols[105] = strdup("COND");
-  packages[CORE_PACKAGE_INDEX].symbols[106] = strdup("DOTIMES");
-  packages[CORE_PACKAGE_INDEX].symbols[107] = strdup("DOLIST");
+  packages[CORE_PACKAGE_INDEX].symbols[104] = GC_strdup("LET");
+  packages[CORE_PACKAGE_INDEX].symbols[105] = GC_strdup("COND");
+  packages[CORE_PACKAGE_INDEX].symbols[106] = GC_strdup("DOTIMES");
+  packages[CORE_PACKAGE_INDEX].symbols[107] = GC_strdup("DOLIST");
 
-  packages[CORE_PACKAGE_INDEX].symbols[108] = strdup("LET2");
-  packages[CORE_PACKAGE_INDEX].symbols[109] = strdup("DEFUN");
-  packages[CORE_PACKAGE_INDEX].symbols[110] = strdup("DEFMACRO");
+  packages[CORE_PACKAGE_INDEX].symbols[108] = GC_strdup("LET2");
+  packages[CORE_PACKAGE_INDEX].symbols[109] = GC_strdup("DEFUN");
+  packages[CORE_PACKAGE_INDEX].symbols[110] = GC_strdup("DEFMACRO");
 
-  packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("NTH1");
-  //packages[CORE_PACKAGE_INDEX].symbols[111] = strdup("CALL-CC");
-  packages[CORE_PACKAGE_INDEX].symbols[112] = strdup("MY-CONT-VAR");
-  packages[CORE_PACKAGE_INDEX].symbols[113] = strdup("SAVE-CONTINUATION");
-  packages[CORE_PACKAGE_INDEX].symbols[114] = strdup("LETREC");
-  packages[CORE_PACKAGE_INDEX].symbols[115] = strdup("EXTRACT-NATIVE-FN");
-  packages[CORE_PACKAGE_INDEX].symbols[116] = strdup("CREATE-FN-CLOSURE");
-  packages[CORE_PACKAGE_INDEX].symbols[117] = strdup("PRIM-CONCAT");
-  packages[CORE_PACKAGE_INDEX].symbols[118] = strdup("GET-CONTINUATION");
+  packages[CORE_PACKAGE_INDEX].symbols[111] = GC_strdup("NTH1");
+  //packages[CORE_PACKAGE_INDEX].symbols[111] = GC_strdup("CALL-CC");
+  packages[CORE_PACKAGE_INDEX].symbols[112] = GC_strdup("MY-CONT-VAR");
+  packages[CORE_PACKAGE_INDEX].symbols[113] = GC_strdup("SAVE-CONTINUATION");
+  packages[CORE_PACKAGE_INDEX].symbols[114] = GC_strdup("LETREC");
+  packages[CORE_PACKAGE_INDEX].symbols[115] = GC_strdup("EXTRACT-NATIVE-FN");
+  packages[CORE_PACKAGE_INDEX].symbols[116] = GC_strdup("CREATE-FN-CLOSURE");
+  packages[CORE_PACKAGE_INDEX].symbols[117] = GC_strdup("PRIM-CONCAT");
+  packages[CORE_PACKAGE_INDEX].symbols[118] = GC_strdup("GET-CONTINUATION");
 
-  packages[CORE_PACKAGE_INDEX].symbols[119] = strdup("THROW");
-  packages[CORE_PACKAGE_INDEX].symbols[120] = strdup("GET-EXCEPTION-HANDLER");
-  packages[CORE_PACKAGE_INDEX].symbols[121] = strdup("ADD-EXCEPTION-HANDLER");
+  packages[CORE_PACKAGE_INDEX].symbols[119] = GC_strdup("THROW");
+  packages[CORE_PACKAGE_INDEX].symbols[120] = GC_strdup("GET-EXCEPTION-HANDLER");
+  packages[CORE_PACKAGE_INDEX].symbols[121] = GC_strdup("ADD-EXCEPTION-HANDLER");
 
-  packages[CORE_PACKAGE_INDEX].symbols[122] = strdup("PRIM-CALL-FF-INTERNAL");
+  packages[CORE_PACKAGE_INDEX].symbols[122] = GC_strdup("PRIM-CALL-FF-INTERNAL");
 
-  packages[CORE_PACKAGE_INDEX].symbols[123] = strdup("REPL-FUNCTION");
+  packages[CORE_PACKAGE_INDEX].symbols[123] = GC_strdup("REPL-FUNCTION");
 
-  packages[CORE_PACKAGE_INDEX].symbols[124] = strdup("SAVE-CONTINUATION-TO-RESUME");
+  packages[CORE_PACKAGE_INDEX].symbols[124] = GC_strdup("SAVE-CONTINUATION-TO-RESUME");
 
-  packages[CORE_PACKAGE_INDEX].symbols[125] = strdup("DISABLE-EXCEPTION-HANDLERS");
-  packages[CORE_PACKAGE_INDEX].symbols[126] = strdup("ENABLE-EXCEPTION-HANDLERS");
+  packages[CORE_PACKAGE_INDEX].symbols[125] = GC_strdup("DISABLE-EXCEPTION-HANDLERS");
+  packages[CORE_PACKAGE_INDEX].symbols[126] = GC_strdup("ENABLE-EXCEPTION-HANDLERS");
 
-  packages[CORE_PACKAGE_INDEX].symbols[127] = strdup("GET-SOURCE");
+  packages[CORE_PACKAGE_INDEX].symbols[127] = GC_strdup("GET-SOURCE");
 
-  packages[CORE_PACKAGE_INDEX].symbols[128] = strdup("INSPECT-OBJECT");
+  packages[CORE_PACKAGE_INDEX].symbols[128] = GC_strdup("INSPECT-OBJECT");
 
-  packages[CORE_PACKAGE_INDEX].symbols[129] = strdup("STEP-INTERNAL");
+  packages[CORE_PACKAGE_INDEX].symbols[129] = GC_strdup("STEP-INTERNAL");
 }
 
 int find_package(char* package_name)
@@ -2872,7 +2872,7 @@ int add_qualified_symbol(char *package_name, char *sym)
       exit(1);
     }
 
-  packages[package_index].symbols[packages[package_index].nof_symbols - 1] = strdup(sym);
+  packages[package_index].symbols[packages[package_index].nof_symbols - 1] = GC_strdup(sym);
 
   return packages[package_index].nof_symbols - 1;
 }
@@ -3729,14 +3729,14 @@ int main(int argc, char **argv)
     {
       case 'i':
 	image_mode = true;
-	loaded_image_file_name = strdup(optarg);
+	loaded_image_file_name = GC_strdup(optarg);
 	break;
       case 'c':
 	console_mode = true;
 	break;
       case 'e':
 	single_expression_mode = true;
-	expression = strdup(optarg);
+	expression = GC_strdup(optarg);
 	break;
       case 'n':
         interpreter_mode = true;
@@ -3745,7 +3745,7 @@ int main(int argc, char **argv)
         pipe_mode = true;
         break;
       case 'l':
-        core_library_file_name = strdup(optarg);
+        core_library_file_name = GC_strdup(optarg);
         break;
       case 'r':
         raw_mode = true;
@@ -3764,7 +3764,7 @@ int main(int argc, char **argv)
     if(access("plisp.image", F_OK) != -1)
     {
       image_mode = true;
-      loaded_image_file_name = strdup("plisp.image");
+      loaded_image_file_name = GC_strdup("plisp.image");
     }
     else
     {

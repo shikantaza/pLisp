@@ -31,7 +31,7 @@ struct JSONObject *JSON_create_string_object(char *str)
 {
   struct JSONObject *obj = (struct JSONObject *)GC_MALLOC(sizeof(struct JSONObject));
   obj->type = JSON_STRING;
-  obj->strvalue = strdup(str);
+  obj->strvalue = GC_strdup(str);
 
   return obj;
 }
@@ -75,7 +75,7 @@ struct name_value_pair *JSON_create_name_value_pair(char *name, struct JSONObjec
 {
   struct name_value_pair *pair = (struct name_value_pair *)GC_MALLOC(sizeof(struct name_value_pair));
 
-  pair->name = strdup(name);
+  pair->name = GC_strdup(name);
   pair->value = obj;
 
   return pair;

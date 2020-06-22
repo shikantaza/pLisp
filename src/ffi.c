@@ -202,7 +202,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
     else if(s && !strcmp(s, "CHARACTER-POINTER"))
     {
       arg_types[i] = &ffi_type_pointer;
-      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? GC_strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)GC_MALLOC(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
@@ -555,7 +555,7 @@ int format(OBJECT_PTR args)
     else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
     {
       arg_types[i] = &ffi_type_pointer;
-      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? GC_strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)GC_MALLOC(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }
@@ -692,7 +692,7 @@ int format_for_gui(OBJECT_PTR args)
     else if(IS_STRING_LITERAL_OBJECT(val) || is_string_object(val))
     {
       arg_types[i] = &ffi_type_pointer;
-      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
+      c_val_ptr = IS_STRING_LITERAL_OBJECT(val) ? GC_strdup(strings[(int)val >> OBJECT_SHIFT]) : get_string(val);
       arg_values[i] = (char **)GC_MALLOC(sizeof(char *));
       *(char **)arg_values[i] = c_val_ptr;
     }

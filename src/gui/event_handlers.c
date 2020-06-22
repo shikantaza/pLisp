@@ -2696,14 +2696,14 @@ char *get_current_word(GtkTextBuffer *buffer)
   char *left, *right;
 
   if(idx1 == -1)
-    left = strdup(str1);
+    left = GC_strdup(str1);
   else
-    left = strndup(str1+idx1+1, strlen(str1)-idx1-1);
+    left = GC_strndup(str1+idx1+1, strlen(str1)-idx1-1);
 
   if(idx2 == -1)
-    right = strdup(str2);
+    right = GC_strdup(str2);
   else
-    right = strndup(str2, idx2);
+    right = GC_strndup(str2, idx2);
 
   char *ret = (char *)GC_MALLOC((strlen(left) + strlen(right) + 1) * sizeof(char));
   assert(ret);
@@ -2736,7 +2736,7 @@ void add_auto_complete_words(int package_index)
       assert(temp);
       autocomplete_words = temp;
 
-      autocomplete_words[nof_autocomplete_words-1] = convert_to_lower_case(strdup(get_symbol_name(top_level_symbols[i].sym)));
+      autocomplete_words[nof_autocomplete_words-1] = convert_to_lower_case(GC_strdup(get_symbol_name(top_level_symbols[i].sym)));
     }
   }
 }
@@ -2772,7 +2772,7 @@ void build_autocomplete_words()
   assert(autocomplete_words);
 
   for(i=0; i<nof_autocomplete_words; i++)
-    autocomplete_words[i] = strdup(keywords_and_special_ops[i]);
+    autocomplete_words[i] = GC_strdup(keywords_and_special_ops[i]);
 
   //top-level symbols from core package
   add_auto_complete_words(CORE_PACKAGE_INDEX);
@@ -2809,7 +2809,7 @@ void do_auto_complete(GtkTextBuffer *buffer)
         matches = temp;
       }
 
-      matches[nof_matches-1] = strdup(autocomplete_words[i]);
+      matches[nof_matches-1] = GC_strdup(autocomplete_words[i]);
     }
   }
 
@@ -2926,7 +2926,7 @@ char *get_common_prefix(unsigned int count, char **word_list)
   }
 
   if(idx)
-    return strndup(word_list[0], idx);
+    return GC_strndup(word_list[0], idx);
   else
     return NULL;
 
@@ -3011,9 +3011,9 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
     unsigned int package_index = extract_package_index(callers_sym);
 
     if(package_index != CORE_PACKAGE_INDEX && package_index != print_context_pkg_index)
-      text = strdup(get_qualified_symbol_name(callers_sym));
+      text = GC_strdup(get_qualified_symbol_name(callers_sym));
     else
-      text = strdup(get_symbol_name(callers_sym));
+      text = GC_strdup(get_symbol_name(callers_sym));
 
     highlight_text(callers_source_buffer, convert_to_lower_case(text));
     //free(text);
@@ -3065,7 +3065,7 @@ void callers_window_accept()
     char buf1[MAX_STRING_LENGTH];
     memset(buf1, '\0', MAX_STRING_LENGTH);
 
-    char *temp = strdup(symbol_name);
+    char *temp = GC_strdup(symbol_name);
     char *res = strtok(temp, ":");
 
     sprintf(buf1, "(in-package \"%s\")", res);

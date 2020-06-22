@@ -817,7 +817,7 @@ OBJECT_PTR primitive_symbol(OBJECT_PTR str)
 
   if(IS_STRING_LITERAL_OBJECT(str))
   {
-    return get_symbol_object((char *)convert_to_upper_case(strdup(strings[(int)str >> OBJECT_SHIFT])));
+    return get_symbol_object((char *)convert_to_upper_case(GC_strdup(strings[(int)str >> OBJECT_SHIFT])));
   }
   else if(is_string_object(str))
   {
@@ -1358,7 +1358,7 @@ OBJECT_PTR prim_load_fgn_lib(OBJECT_PTR file_name)
 
   dl_handles[nof_dl_handles - 1] = ret;
 
-  foreign_library_names[nof_dl_handles - 1] = strdup(fname);
+  foreign_library_names[nof_dl_handles - 1] = GC_strdup(fname);
 
   return NIL;
 }
@@ -1622,9 +1622,9 @@ OBJECT_PTR prim_export_pkg(OBJECT_PTR package, OBJECT_PTR file)
 
     if(pkg_import_entries[i].pkg_index == index)
     {
-      char *pkg_name = convert_to_lower_case(strdup(packages[pkg_import_entries[i].imported_pkg_index].name));
+      char *pkg_name = convert_to_lower_case(GC_strdup(packages[pkg_import_entries[i].imported_pkg_index].name));
       fprintf(fp, "(import-package \"%s\")\n\n", pkg_name);
-      free(pkg_name);
+      //free(pkg_name);
     }
   }
   //end of code for import-package statements

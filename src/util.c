@@ -88,7 +88,7 @@ char* substring(const char* str, size_t begin, size_t len)
   if (str == 0 || strlen(str) == 0 || strlen(str) < begin || strlen(str) < (begin+len)) 
     return 0; 
 
-  return strndup(str + begin, len); 
+  return GC_strndup(str + begin, len); 
 }
 
 //http://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
@@ -438,7 +438,7 @@ void insert_doc_string(char *str, unsigned int pos, char *inserted_str)
   if(!inserted_len)
     return;
   
-  char *temp = strndup(str+pos, len);
+  char *temp = GC_strndup(str+pos, len);
 
   unsigned int i;
 

@@ -74,11 +74,11 @@ int build_help_entries(char *file_name)
     }
     
     help_entries[i].type       = type;
-    help_entries[i].name       = strdup(JSON_get_object_item(entry, "name")->strvalue);
-    help_entries[i].syntax     = strdup(JSON_get_object_item(entry, "syntax")->strvalue);
-    help_entries[i].args       = strdup(JSON_get_object_item(entry, "args")->strvalue);
-    help_entries[i].desc       = strdup(JSON_get_object_item(entry, "desc")->strvalue);
-    help_entries[i].exceptions = strdup(JSON_get_object_item(entry, "exceptions")->strvalue);
+    help_entries[i].name       = GC_strdup(JSON_get_object_item(entry, "name")->strvalue);
+    help_entries[i].syntax     = GC_strdup(JSON_get_object_item(entry, "syntax")->strvalue);
+    help_entries[i].args       = GC_strdup(JSON_get_object_item(entry, "args")->strvalue);
+    help_entries[i].desc       = GC_strdup(JSON_get_object_item(entry, "desc")->strvalue);
+    help_entries[i].exceptions = GC_strdup(JSON_get_object_item(entry, "exceptions")->strvalue);
 
 
     help_entries[i].examples_count = JSON_get_array_size(JSON_get_object_item(entry, "examples"));
@@ -97,7 +97,7 @@ int build_help_entries(char *file_name)
     }
 
     for(j=0; j<help_entries[i].examples_count; j++)
-      help_entries[i].examples[j] = strdup(JSON_get_array_item(JSON_get_object_item(entry, "examples"), j)->strvalue);
+      help_entries[i].examples[j] = GC_strdup(JSON_get_array_item(JSON_get_object_item(entry, "examples"), j)->strvalue);
 
     help_entries[i].see_also_count = JSON_get_array_size(JSON_get_object_item(entry, "see-also"));
 
@@ -115,7 +115,7 @@ int build_help_entries(char *file_name)
     }
 
     for(j=0; j<help_entries[i].see_also_count; j++)
-      help_entries[i].see_also[j] = strdup(JSON_get_array_item(JSON_get_object_item(entry, "see-also"), j)->strvalue);
+      help_entries[i].see_also[j] = GC_strdup(JSON_get_array_item(JSON_get_object_item(entry, "see-also"), j)->strvalue);
   }
 
   JSON_delete_object(root);

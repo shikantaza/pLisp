@@ -740,7 +740,7 @@ void create_image(char *file_name)
 
     int i=0, j=0;
 
-    workspace_text = strdup(gtk_text_buffer_get_text(workspace_buffer, &start, &end, FALSE));
+    workspace_text = GC_strdup(gtk_text_buffer_get_text(workspace_buffer, &start, &end, FALSE));
 
     len = strlen(workspace_text);
 
@@ -804,7 +804,7 @@ void create_image(char *file_name)
 
     int ii=0, jj=0;
 
-    transcript_text = strdup(gtk_text_buffer_get_text(transcript_buffer, &start, &end, FALSE));
+    transcript_text = GC_strdup(gtk_text_buffer_get_text(transcript_buffer, &start, &end, FALSE));
 
     len = strlen(transcript_text);
 
@@ -1010,7 +1010,7 @@ void deserialize_full_monty_global_vars(struct JSONObject *root,
     struct JSONObject *doc_str_obj = JSON_get_object_item(obj, "docstr");
 
     if(doc_str_obj)
-      top_level_symbols[i].doc_str = strdup(doc_str_obj->strvalue);
+      top_level_symbols[i].doc_str = GC_strdup(doc_str_obj->strvalue);
 
   }
   //end of top level symbols
@@ -1115,7 +1115,7 @@ int load_from_image(char *file_name)
   for(i=0; i<nof_strings; i++)
   {
     struct JSONObject *strobj = JSON_get_array_item(temp, i);
-    strings[i] = strdup(strobj->strvalue);
+    strings[i] = GC_strdup(strobj->strvalue);
   }
 
   temp = JSON_get_object_item(root, "foreign_libraries");
@@ -1130,7 +1130,7 @@ int load_from_image(char *file_name)
   for(i=0; i<nof_dl_handles; i++)
   {
     struct JSONObject *strobj = JSON_get_array_item(temp, i);
-    foreign_library_names[i] = strdup(strobj->strvalue);
+    foreign_library_names[i] = GC_strdup(strobj->strvalue);
 
     dl_handles[i] = open_library(strobj->strvalue);
     
@@ -1150,7 +1150,7 @@ int load_from_image(char *file_name)
 
     int nof_symbols = JSON_get_array_size(symbols);
 
-    packages[i].name = strdup(pkg_name->strvalue);
+    packages[i].name = GC_strdup(pkg_name->strvalue);
     packages[i].nof_symbols = nof_symbols;
 
     packages[i].symbols = (char **)GC_MALLOC(packages[i].nof_symbols * sizeof(char *));
@@ -1158,7 +1158,7 @@ int load_from_image(char *file_name)
     for(j=0; j<nof_symbols; j++)
     {
       struct JSONObject *symbol_obj = JSON_get_array_item(symbols, j);
-      packages[i].symbols[j] = strdup(symbol_obj->strvalue);
+      packages[i].symbols[j] = GC_strdup(symbol_obj->strvalue);
     }
   }
 
@@ -1717,7 +1717,7 @@ OBJECT_PTR deserialize_internal(struct JSONObject *heap, OBJECT_PTR ref, hashtab
             create_package(package_name);
             packages[nof_packages-1].nof_symbols = 1;
             packages[nof_packages-1].symbols = (char **)GC_MALLOC(sizeof(char *));
-            packages[nof_packages-1].symbols[0] = strdup(sym_name);
+            packages[nof_packages-1].symbols[0] = GC_strdup(sym_name);
           }            
             
           return cdr(get_qualified_symbol_object(package_name, sym_name));
@@ -2113,7 +2113,7 @@ void json_add_native_fn_source(OBJECT_PTR nativefn_obj, char *source)
 
   json_native_fns[nof_json_native_fns-1].nativefn_obj = nativefn_obj;
   json_native_fns[nof_json_native_fns-1].orig_obj_index = -1;
-  json_native_fns[nof_json_native_fns-1].source = strdup(source);
+  json_native_fns[nof_json_native_fns-1].source = GC_strdup(source);
 }
 
 char *get_json_native_fn_source(OBJECT_PTR nativefn_obj)
