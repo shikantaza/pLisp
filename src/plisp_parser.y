@@ -237,7 +237,7 @@ expressions:
     {
       $1->nof_elements++;
 
-      $1->elements = (expression_t**)realloc($1->elements, $1->nof_elements * sizeof(expression_t *));
+      $1->elements = (expression_t**)GC_REALLOC($1->elements, $1->nof_elements * sizeof(expression_t *));
 
       $1->elements[$1->nof_elements - 1] = $2;
 

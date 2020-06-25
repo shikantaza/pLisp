@@ -943,6 +943,10 @@ void system_browser_accept()
       if(sys_browser_accept_error)
         return;
 
+      //to prevent the 'Unsaved changes ...' check that gets
+      //indiectly triggered by refresh_sysem_browawe()
+      gtk_text_buffer_set_modified(system_browser_buffer, FALSE);
+        
       refresh_system_browser();
 
       gboolean valid;
@@ -1774,8 +1778,11 @@ void revert_to_prev_pkg_sym()
   int package_index, symbol_index;
 
   if(!IS_SYMBOL_OBJECT(selected_symbol))
-    assert(false);
-
+  {
+    printf("Warning: revert_to_prev_pkg_sym(): invalid symbol object\n");
+    return;
+  }
+  
   package_index = extract_package_index(selected_symbol);
   symbol_index = extract_symbol_index(selected_symbol);
   

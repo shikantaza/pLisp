@@ -455,5 +455,5 @@ void insert_doc_string(char *str, unsigned int pos, char *inserted_str)
   for(i=0; i<temp_len; i++)
     str[pos+inserted_len + i + 3] = temp[i];
 
-  free(temp);
+  //free(temp);
 }

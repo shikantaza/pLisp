@@ -63,7 +63,7 @@ gboolean handle_obj_insp_key_press_events(GtkWidget *widget, GdkEventKey *event,
     char *str = get_current_word(buffer);
     char *ptr_str = substring(str, 1, strlen(str)-2);
     OBJECT_PTR obj = (OBJECT_PTR)strtol(ptr_str, NULL, 16);
-    free(ptr_str);
+    //free(ptr_str);
 
     if(is_valid_object(obj))
       create_object_inspector_window(obj);
