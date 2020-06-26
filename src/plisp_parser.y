@@ -26,6 +26,8 @@
 
 int yyerror(char *s);
 
+int yylex();
+
 extern expression_t *g_expr;
 
 int parens = 0;

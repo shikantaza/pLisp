@@ -34,6 +34,8 @@ commands to build .so file:
 #include <math.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <time.h>
+#include <unistd.h>
 
 void init_random_seed()
 {
@@ -73,7 +75,7 @@ int plisp_floor(float x)
   if(x >= 0)
     return (int)x;
   else
-    return (-1) * (int)round(abs(x) + 0.5 );
+    return (-1) * (int)round(fabsf(x) + 0.5 );
 }
 
 void plisp_system(char *cmd)

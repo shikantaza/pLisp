@@ -24,6 +24,8 @@
 
 enum {FUNCTION, MACRO, SPECIAL_OPERATOR};
 
+extern void throw_exception1(char *, char *);
+
 help_entry_t *help_entries = NULL;
 unsigned int nof_help_entries = 0;
 

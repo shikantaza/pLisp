@@ -37,6 +37,21 @@ extern char *get_current_word(GtkTextBuffer *);
 extern BOOLEAN is_valid_object(OBJECT_PTR);
 extern void print_object(OBJECT_PTR);
 
+extern BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x);
+
+extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x);
+
 extern OBJECT_PTR NIL;
 
 #ifdef __OSX_BUNDLE__
@@ -52,6 +67,7 @@ gboolean delete_obj_inspector( GtkWidget *widget,
                                gpointer   data )
 {
   close_application_window(&widget);
+  return TRUE;
 }
 
 gboolean handle_obj_insp_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
@@ -93,7 +109,7 @@ int print_array_object_to_string_for_insp(OBJECT_PTR array, char *buf, int fille
     if(is_atom(obj))
       len += print_object_to_string(obj, buf, filled_buf_len+len);
     else
-      len += sprintf(buf+filled_buf_len+len, "<%p>", obj);
+      len += sprintf(buf+filled_buf_len+len, "<%p>", (void *)obj);
     
     len += sprintf(buf+filled_buf_len+len, " ");
   }
@@ -126,7 +142,7 @@ int print_cons_object_to_string_for_insp(OBJECT_PTR obj, char *buf, int filled_b
     if(is_atom(car(rest)))
       len += print_object_to_string(car(rest), buf, filled_buf_len+len);
     else
-      len += sprintf(buf+filled_buf_len+len, "<%p>", car(rest));
+      len += sprintf(buf+filled_buf_len+len, "<%p>", (void *)car(rest));
     len += sprintf(buf+filled_buf_len+len, " ");
     rest = cdr(rest);
   }
@@ -144,7 +160,7 @@ int print_cons_object_to_string_for_insp(OBJECT_PTR obj, char *buf, int filled_b
     if(is_atom(rest))
       len += print_object_to_string(rest, buf, filled_buf_len+len);
     else
-      len += sprintf(buf+filled_buf_len+len, "<%p>", rest);
+      len += sprintf(buf+filled_buf_len+len, "<%p>", (void *)rest);
     len += sprintf(buf+filled_buf_len+len, ")");
   }
   else
@@ -276,9 +292,9 @@ void create_object_inspector_window(OBJECT_PTR obj)
   gtk_window_set_icon_from_file(win, "../share/icons/evaluate.png", NULL);
 #else
 #ifdef __OSX_BUNDLE__
-  gtk_window_set_icon_from_file(win, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
+  gtk_window_set_icon_from_file((GtkWindow *)win, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
 #else
-  gtk_window_set_icon_from_file(win, PLISPDATADIR "/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file((GtkWindow *)win, PLISPDATADIR "/icons/evaluate.png", NULL);
 #endif
 #endif  
 

@@ -74,6 +74,26 @@ extern uintptr_t POINTER_MASK;
 
 extern nativefn extract_native_fn(OBJECT_PTR);
 
+extern BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x);
+
+extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x);
+
+extern int cons_length(OBJECT_PTR);
+extern void print_to_transcript(char *);
+extern void throw_exception1(char *, char *);
+extern int get_top_level_sym_value(OBJECT_PTR, OBJECT_PTR *);
+
 void free_arg_values(ffi_type **, void **, OBJECT_PTR, int);
 void free_arg_values_for_format(ffi_type **, void **, OBJECT_PTR, int);
 
@@ -307,7 +327,7 @@ OBJECT_PTR call_foreign_function(OBJECT_PTR fn_name, OBJECT_PTR ret_type, OBJECT
       *((int *)extract_ptr(sym)) = *((int *)*(int **)arg_values[i]);
     }
     //else if(type == FLOAT_POINTER)
-    else if(s, !strcmp(s, "FLOAT-POINTER"))
+    else if(s && !strcmp(s, "FLOAT-POINTER"))
     {
       //*((float *)extract_ptr(sym)) = *((float *)*(float **)arg_values[i]);
       *((double *)extract_ptr(sym)) = *((double *)*(double **)arg_values[i]);
@@ -516,10 +536,10 @@ int format(OBJECT_PTR args)
   arg_values[i] = (int *)GC_MALLOC(sizeof(int));
 
   if(car(args) == NIL)
-    i_val = stdout;
+    i_val = (int)stdout;
   else
     //i_val = get_int_value(car(args));
-    i_val = fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
+    i_val = (int)fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
 
   *(int *)arg_values[i] = i_val;
 
@@ -656,7 +676,7 @@ int format_for_gui(OBJECT_PTR args)
     arg_values[0] = (int *)GC_MALLOC(sizeof(int));
 
     //i_val = get_int_value(car(args));
-    i_val = fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
+    i_val = (int)fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
     *(int *)arg_values[0] = i_val;
   }
 

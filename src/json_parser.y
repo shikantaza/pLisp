@@ -28,6 +28,8 @@
 
 int yyerror(char *s);
 
+int jsonlex();
+
 extern struct JSONObject *root_obj;
 
 %}

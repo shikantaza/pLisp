@@ -32,6 +32,9 @@ int include_stack_ptr = 0;
 
 extern BOOLEAN console_mode;
 
+extern int yyparse();
+extern int repl2();
+
 int call_repl(char *expression)
 {
   YY_BUFFER_STATE buf = yy_scan_string(expression);

@@ -170,16 +170,19 @@ extern char path_buf[1024];
 
 void close_application_window(GtkWidget **);
 
+extern void update_transcript_title();
+extern void fetch_package_symbols();
+
 void set_up_system_browser_source_buffer()
 {
   system_browser_source_buffer = gtk_source_buffer_new_with_language(source_language);
-  system_browser_source_view = gtk_source_view_new_with_buffer(system_browser_source_buffer);
+  system_browser_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(system_browser_source_buffer);
 }
 
 void set_up_workspace_source_buffer()
 {
   workspace_source_buffer = gtk_source_buffer_new_with_language(source_language);
-  workspace_source_view = gtk_source_view_new_with_buffer(workspace_source_buffer);
+  workspace_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(workspace_source_buffer);
 }
 
 typedef struct
@@ -365,12 +368,12 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   set_up_workspace_source_buffer();
 
   //GtkWidget *textview = gtk_text_view_new ();
-  GtkWidget *textview = workspace_source_view;
+  GtkWidget *textview = (GtkWidget *)workspace_source_view;
 
   gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
 
   //workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
-  workspace_buffer = workspace_source_buffer;
+  workspace_buffer = (GtkTextBuffer *)workspace_source_buffer;
 
   g_signal_connect(G_OBJECT(workspace_buffer), 
                    "notify::cursor-position", 
@@ -413,6 +416,7 @@ void show_error_dialog_for_window(char *msg, GtkWindow *win)
                                               GTK_DIALOG_DESTROY_WITH_PARENT,
                                               GTK_MESSAGE_ERROR,
                                               GTK_BUTTONS_CLOSE,
+                                              "%s",
                                               msg);
   gtk_dialog_run(GTK_DIALOG (dialog));
   gtk_widget_destroy((GtkWidget *)dialog);
@@ -719,7 +723,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
   set_up_system_browser_source_buffer();
 
   //GtkWidget *textview = gtk_text_view_new ();
-  GtkWidget *textview = system_browser_source_view;
+  GtkWidget *textview = (GtkWidget *)system_browser_source_view;
 
   system_browser_textview = (GtkTextView *)textview;
 
@@ -727,7 +731,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
   //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
 
   //system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
-  system_browser_buffer = system_browser_source_buffer;
+  system_browser_buffer = (GtkTextBuffer *)system_browser_source_buffer;
 
   g_signal_connect(G_OBJECT(system_browser_buffer), 
                    "notify::cursor-position", 
@@ -875,7 +879,7 @@ void setup_language_manager_path(GtkSourceLanguageManager *lm)
   int i, lang_files_count;
   char **new_langs;
  
-  lang_files = g_strdupv (gtk_source_language_manager_get_search_path (lm));
+  lang_files = g_strdupv ((gchar **)gtk_source_language_manager_get_search_path (lm));
  
   lang_files_count = g_strv_length (lang_files);
   new_langs = g_new (char*, lang_files_count + 2);
@@ -987,6 +991,7 @@ void show_error_dialog(char *msg)
                                               GTK_DIALOG_DESTROY_WITH_PARENT,
                                               GTK_MESSAGE_ERROR,
                                               GTK_BUTTONS_CLOSE,
+                                              "%s",
                                               msg);
   gtk_dialog_run(GTK_DIALOG (dialog));
   gtk_widget_destroy((GtkWidget *)dialog);
@@ -998,6 +1003,7 @@ void show_warning_dialog(char *msg)
                                               GTK_DIALOG_DESTROY_WITH_PARENT,
                                               GTK_MESSAGE_WARNING,
                                               GTK_BUTTONS_CLOSE,
+                                              "%s",
                                               msg);
   gtk_dialog_run(GTK_DIALOG (dialog));
   gtk_widget_destroy((GtkWidget *)dialog);
@@ -1015,9 +1021,9 @@ void error_window(char *msg)
   gtk_window_set_icon_from_file(window, "../share/icons/evaluate.png", NULL);
 #else
 #ifdef __OSX_BUNDLE__
-  gtk_window_set_icon_from_file(window, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
+  gtk_window_set_icon_from_file((GtkWindow *)window, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
 #else
-  gtk_window_set_icon_from_file(window, PLISPDATADIR "/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file((GtkWindow *)window, PLISPDATADIR "/icons/evaluate.png", NULL);
 #endif
 #endif  
 
@@ -1462,7 +1468,7 @@ void create_help_window()
 
   gtk_window_set_title((GtkWindow *)win, "pLisp Symbol Help");
 
-  help_window = win;
+  help_window = (GtkWindow *)win;
 
 #ifdef WIN_BUILD
   gtk_window_set_icon_from_file(help_window, "../share/icons/evaluate.png", NULL);
@@ -1640,9 +1646,9 @@ void create_callers_window(int posx, int posy, int width, int height)
   gtk_window_set_icon_from_file(win, "../share/icons/evaluate.png", NULL);
 #else
 #ifdef __OSX_BUNDLE__
-  gtk_window_set_icon_from_file(win, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
+  gtk_window_set_icon_from_file((GtkWindow *)win, concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/evaluate.png"), NULL);
 #else
-  gtk_window_set_icon_from_file(win, PLISPDATADIR "/icons/evaluate.png", NULL);
+  gtk_window_set_icon_from_file((GtkWindow *)win, PLISPDATADIR "/icons/evaluate.png", NULL);
 #endif
 #endif  
 
@@ -1655,8 +1661,8 @@ void create_callers_window(int posx, int posy, int width, int height)
   
   gtk_window_set_title((GtkWindow *)win, buf2);
 
-  gtk_window_set_default_size(win, width, height);
-  gtk_window_move(win, posx, posy); 
+  gtk_window_set_default_size((GtkWindow *)win, width, height);
+  gtk_window_move((GtkWindow *)win, posx, posy); 
 
   g_signal_connect (win, "delete-event",
                     G_CALLBACK (delete_event), NULL);
@@ -1700,9 +1706,9 @@ void create_callers_window(int posx, int posy, int width, int height)
   GtkWidget *scrolled_win;
 
   callers_source_buffer = gtk_source_buffer_new_with_language(source_language);
-  callers_source_view = gtk_source_view_new_with_buffer(callers_source_buffer);
+  callers_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(callers_source_buffer);
 
-  gtk_text_buffer_create_tag(callers_source_buffer, "gray_bg", 
+  gtk_text_buffer_create_tag((GtkTextBuffer *)callers_source_buffer, "gray_bg", 
                              "background", "lightgray", NULL); 
 
   gtk_widget_override_font(GTK_WIDGET(callers_source_view), pango_font_description_from_string(FONT));
@@ -1714,7 +1720,7 @@ void create_callers_window(int posx, int posy, int width, int height)
                    NULL);
 
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (scrolled_win), callers_source_view);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), (GtkWidget *)callers_source_view);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
@@ -1725,7 +1731,7 @@ void create_callers_window(int posx, int posy, int width, int height)
 
   gtk_container_add (GTK_CONTAINER (win), vbox);
 
-  callers_window = win;
+  callers_window = (GtkWindow *)win;
 
   gtk_widget_show_all(win);
 }
@@ -1793,13 +1799,13 @@ GtkWindow *splash_window;
 
 void close_splash_screen()
 {
-  close_application_window(&splash_window);
+  close_application_window((GtkWidget **)&splash_window);
 }
 
 void show_splash_screen()
 {
   GtkWidget  *image;
-  splash_window = gtk_window_new (GTK_WINDOW_POPUP);
+  splash_window = (GtkWindow *)gtk_window_new (GTK_WINDOW_POPUP);
 
   gtk_window_set_default_size(splash_window, 620, 300);
   gtk_window_set_decorated(GTK_WINDOW (splash_window), FALSE);
@@ -1818,7 +1824,7 @@ void show_splash_screen()
 
   gtk_container_add(GTK_CONTAINER(splash_window), image);
   gtk_window_set_auto_startup_notification(FALSE);
-  gtk_widget_show_all(splash_window);
+  gtk_widget_show_all((GtkWidget *)splash_window);
   gtk_window_set_auto_startup_notification(TRUE);
 
   while (gtk_events_pending())

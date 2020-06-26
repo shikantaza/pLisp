@@ -70,6 +70,11 @@ extern GtkSourceLanguage *source_language;
 
 extern GtkWindow *action_triggering_window;
 
+extern void close_application_window(GtkWidget **);
+
+extern void indent(GtkTextBuffer *);
+extern void do_auto_complete(GtkTextBuffer *);
+
 unsigned int nof_open_files;
 char *current_file_name;
 GtkWidget *current_scrolled_win;
@@ -89,6 +94,8 @@ GtkTextIter last_find_iter;
 extern char exec_path[512];
 extern char path_buf[1024];
 #endif
+
+BOOLEAN any_buffers_modified();
 
 void cleanup_file_name_widgets()
 {
@@ -137,7 +144,7 @@ BOOLEAN quit_file_browser()
 
       cleanup_file_name_widgets();
 
-      close_application_window(&file_browser_window);
+      close_application_window((GtkWidget **)&file_browser_window);
       return true;
     }
     else
@@ -148,7 +155,7 @@ BOOLEAN quit_file_browser()
   }
   else
   {
-    close_application_window(&file_browser_window);
+    close_application_window((GtkWidget **)&file_browser_window);
     return true;
   }
 }
@@ -224,7 +231,7 @@ void find_next_occurrence()
 
     gtk_text_buffer_create_mark (buffer, "last_pos", &end_match, FALSE);
 
-    gtk_widget_grab_focus(curr_file_browser_text_view);
+    gtk_widget_grab_focus((GtkWidget *)curr_file_browser_text_view);
 
   }
   else
@@ -258,7 +265,7 @@ void new_source_file()
   GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
   //for search functionality
-  gtk_text_buffer_create_tag(buffer, "gray_bg", 
+  gtk_text_buffer_create_tag((GtkTextBuffer *)buffer, "gray_bg", 
                              "background", "lightgray", NULL);
 
   g_signal_connect(G_OBJECT(buffer), 
@@ -280,8 +287,8 @@ void new_source_file()
   file_name_and_widget_t *fnw = (file_name_and_widget_t *)GC_MALLOC(sizeof(file_name_and_widget_t));
   fnw->widget = scrolled_win;
   fnw->file_name = opened_source_file_name;
-  fnw->buffer = buffer;
-  fnw->view = view;
+  fnw->buffer = (GtkTextBuffer *)buffer;
+  fnw->view = (GtkTextView *)view;
 
   add_file_name_and_widget(fnw);
 
@@ -292,14 +299,14 @@ void new_source_file()
   strcpy(current_file_name, fnw->file_name);
   current_scrolled_win = fnw->widget;    
   curr_file_browser_buffer = fnw->buffer;
-  curr_file_browser_text_view = view;
+  curr_file_browser_text_view = (GtkTextView *)view;
 
   g_signal_connect(view, "grab-focus", G_CALLBACK(fb_select_file), (void *)fnw);
 
-  gtk_text_buffer_set_text(buffer, "", -1);
+  gtk_text_buffer_set_text((GtkTextBuffer *)buffer, "", -1);
 
-  gtk_notebook_append_page(fb_notebook, scrolled_win, label);
-  gtk_widget_show_all(file_browser_window);
+  gtk_notebook_append_page((GtkNotebook *)fb_notebook, scrolled_win, label);
+  gtk_widget_show_all((GtkWidget *)file_browser_window);
 
   gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);
 }
@@ -334,7 +341,7 @@ void fb_load_source_file()
     GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
     //for search functionality
-    gtk_text_buffer_create_tag(buffer, "gray_bg", 
+    gtk_text_buffer_create_tag((GtkTextBuffer *)buffer, "gray_bg", 
                                "background", "lightgray", NULL);
 
     g_signal_connect(G_OBJECT(buffer), 
@@ -356,8 +363,8 @@ void fb_load_source_file()
     file_name_and_widget_t *fnw = (file_name_and_widget_t *)GC_MALLOC(sizeof(file_name_and_widget_t));
     fnw->widget = scrolled_win;
     fnw->file_name = opened_source_file_name;
-    fnw->buffer = buffer;
-    fnw->view = view;
+    fnw->buffer = (GtkTextBuffer *)buffer;
+    fnw->view = (GtkTextView *)view;
 
     add_file_name_and_widget(fnw);
 
@@ -368,7 +375,7 @@ void fb_load_source_file()
     strcpy(current_file_name, fnw->file_name);
     current_scrolled_win = fnw->widget;    
     curr_file_browser_buffer = fnw->buffer;
-    curr_file_browser_text_view = view;
+    curr_file_browser_text_view = (GtkTextView *)view;
 
     g_signal_connect(view, "grab-focus", G_CALLBACK(fb_select_file), (void *)fnw);
 
@@ -380,12 +387,12 @@ void fb_load_source_file()
       return;
     }
 
-    gtk_text_buffer_set_text(buffer, file_contents == -1 ? "" : file_contents, -1);
+    gtk_text_buffer_set_text((GtkTextBuffer *)buffer, file_contents == (char *)-1 ? "" : file_contents, -1);
     /* if(file_contents && file_contents != -1) */
     /*   free(file_contents); */
 
-    gtk_notebook_append_page(fb_notebook, scrolled_win, label);
-    gtk_widget_show_all(file_browser_window);
+    gtk_notebook_append_page((GtkNotebook *)fb_notebook, scrolled_win, label);
+    gtk_widget_show_all((GtkWidget *)file_browser_window);
 
     gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);
 
@@ -451,7 +458,7 @@ void save_file()
       }
 
       //gint page_no = gtk_notebook_get_current_page(fb_notebook);
-      gtk_notebook_set_tab_label_text(fb_notebook, gtk_container_get_focus_child(fb_notebook), current_file_name);
+      gtk_notebook_set_tab_label_text((GtkNotebook *)fb_notebook, gtk_container_get_focus_child((GtkContainer *)fb_notebook), current_file_name);
     }
     else
       return;
@@ -504,7 +511,7 @@ void fb_save_source_file(GtkWidget *widget, gpointer data)
 
 void close_file()
 {
-  if(gtk_notebook_get_n_pages(fb_notebook) == 0)
+  if(gtk_notebook_get_n_pages((GtkNotebook *)fb_notebook) == 0)
     return;
 
   if(gtk_text_buffer_get_modified(curr_file_browser_buffer) == TRUE)
@@ -523,10 +530,10 @@ void close_file()
       gtk_widget_destroy((GtkWidget *)dialog1);
   }
 
-  gtk_container_remove(fb_notebook, current_scrolled_win);
+  gtk_container_remove((GtkContainer *)fb_notebook, current_scrolled_win);
 
-  if(gtk_notebook_get_n_pages(fb_notebook) > 0)
-    current_scrolled_win = gtk_notebook_get_nth_page(fb_notebook, gtk_notebook_get_current_page(fb_notebook));
+  if(gtk_notebook_get_n_pages((GtkNotebook *)fb_notebook) > 0)
+    current_scrolled_win = gtk_notebook_get_nth_page((GtkNotebook *)fb_notebook, gtk_notebook_get_current_page((GtkNotebook *)fb_notebook));
 }
 
 void fb_close_source_file(GtkWidget *widget, gpointer data)
@@ -601,11 +608,11 @@ int get_text_to_find(char *buf)
 
   //gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
 
-  gtk_dialog_set_default_response(dialog, GTK_RESPONSE_ACCEPT);
+  gtk_dialog_set_default_response((GtkDialog *)dialog, GTK_RESPONSE_ACCEPT);
 
   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   entry = gtk_entry_new();
-  gtk_entry_set_activates_default(entry, TRUE);
+  gtk_entry_set_activates_default((GtkEntry *)entry, TRUE);
   gtk_container_add(GTK_CONTAINER(content_area), entry);
 
   gtk_widget_show_all(dialog);
@@ -675,7 +682,7 @@ void find_text()
 
       gtk_text_buffer_create_mark (buffer, "last_pos", &end_match, FALSE);
 
-      gtk_widget_grab_focus(curr_file_browser_text_view);
+      gtk_widget_grab_focus((GtkWidget *)curr_file_browser_text_view);
     }
     else
       show_error_dialog("No matches found");
@@ -841,18 +848,18 @@ void serialize_file_browser_window(FILE *fp)
           ", \"file-browser\" : [ %d, %d, %d, %d, [", 
           posx, posy, width, height);
   
-  gint nof_pages = gtk_notebook_get_n_pages(fb_notebook);
+  gint nof_pages = gtk_notebook_get_n_pages((GtkNotebook *)fb_notebook);
 
   int i=0;
 
   for(i=0; i<nof_pages; i++)
   {
-    GtkWidget *page = gtk_notebook_get_nth_page(fb_notebook, i);
+    GtkWidget *page = gtk_notebook_get_nth_page((GtkNotebook *)fb_notebook, i);
 
     if(i != 0)
       fprintf(fp, ", ");
 
-    fprintf(fp, "\"%s\"", gtk_notebook_get_tab_label_text(fb_notebook, page));
+    fprintf(fp, "\"%s\"", gtk_notebook_get_tab_label_text((GtkNotebook *)fb_notebook, page));
   }
 
   fprintf(fp, "]]");
@@ -883,8 +890,8 @@ void add_file_to_file_browser(char *file_name)
   file_name_and_widget_t *fnw = (file_name_and_widget_t *)GC_MALLOC(sizeof(file_name_and_widget_t));
   fnw->widget = scrolled_win;
   fnw->file_name = file_name;
-  fnw->buffer = buffer;
-  fnw->view = view;
+  fnw->buffer = (GtkTextBuffer *)buffer;
+  fnw->view = (GtkTextView *)view;
 
   add_file_name_and_widget(fnw);
 
@@ -895,7 +902,7 @@ void add_file_to_file_browser(char *file_name)
   strcpy(current_file_name, fnw->file_name);
   current_scrolled_win = fnw->widget;    
   curr_file_browser_buffer = fnw->buffer;
-  curr_file_browser_text_view = view;
+  curr_file_browser_text_view = (GtkTextView *)view;
 
   g_signal_connect(view, "grab-focus", G_CALLBACK(fb_select_file), (void *)fnw);
 
@@ -910,11 +917,11 @@ void add_file_to_file_browser(char *file_name)
     return;
   }
 
-  gtk_text_buffer_set_text(buffer, file_contents == -1 ? "" : file_contents, -1);
+  gtk_text_buffer_set_text((GtkTextBuffer *)buffer, file_contents == (char *)-1 ? "" : file_contents, -1);
   /* if(file_contents && file_contents != -1) */
   /*   free(file_contents); */
 
-  gtk_notebook_append_page(fb_notebook, scrolled_win, label);
+  gtk_notebook_append_page((GtkNotebook *)fb_notebook, scrolled_win, label);
   gtk_text_buffer_set_modified(curr_file_browser_buffer, FALSE);  
 }
 
@@ -923,7 +930,7 @@ void deserialize_file_browser_window(struct JSONObject *root)
   struct JSONObject *file_browser = JSON_get_object_item(root, "file-browser");
 
   if(file_browser_window)
-    close_application_window(&file_browser_window);
+    close_application_window((GtkWidget **)&file_browser_window);
 
   if(file_browser)
   {
@@ -942,19 +949,19 @@ void deserialize_file_browser_window(struct JSONObject *root)
     for(i=0; i < nof_files; i++)
       add_file_to_file_browser(JSON_get_array_item(file_names, i)->strvalue);
 
-    gtk_widget_show_all(file_browser_window);
+    gtk_widget_show_all((GtkWidget *)file_browser_window);
   }
 }
 
 BOOLEAN any_buffers_modified()
 {
-  gint nof_pages = gtk_notebook_get_n_pages(fb_notebook);
+  gint nof_pages = gtk_notebook_get_n_pages((GtkNotebook *)fb_notebook);
 
   int i=0;
 
   for(i=0; i<nof_pages; i++)
   {
-    GtkWidget *page = gtk_notebook_get_nth_page(fb_notebook, i);
+    GtkWidget *page = gtk_notebook_get_nth_page((GtkNotebook *)fb_notebook, i);
 
     GList *children = gtk_container_get_children((GtkContainer *)page);
 

@@ -24,6 +24,16 @@
 
 #include <unistd.h>
 
+/* Commented out because it causes
+   conflicts with our definition of TRUE.
+   Needed for declaration of proc_pidpath()
+*/
+/*
+#ifdef __OSX_BUNDLE__
+#include <libproc.h>
+#endif
+*/
+
 #include "plisp.h"
 
 #include "util.h"
@@ -375,6 +385,30 @@ extern void show_warning_dialog(char *);
 
 extern void show_splash_screen();
 extern void close_splash_screen();
+
+extern int yy_scan_string(char *);
+extern int repl2();
+extern void gtk_main();
+extern OBJECT_PTR full_monty_eval(OBJECT_PTR);
+extern OBJECT_PTR handle_exception();
+extern void build_autocomplete_words();
+extern void create_transcript_window(int, int, int, int, char *);
+extern void gtk_init(int *, char ***);
+extern void print_to_transcript(char *);
+extern void transcript_backspace();
+extern void throw_exception1(char *, char *);
+extern int cons_length(OBJECT_PTR);
+extern BOOLEAN is_valid_macro_exp(OBJECT_PTR);
+extern int print_string_to_string(OBJECT_PTR, char *, int);
+extern void cleanup_full_monty_global_vars();
+extern void set_workspace_window_title(char *);
+
+#ifdef __OSX_BUNDLE__
+// declared here because we're unable to #include
+// libproc.h owing to conflicts with our definition
+// of TRUE
+extern int proc_pidpath(int, void *, size_t);
+#endif
 
 void initialize()
 {
@@ -768,7 +802,7 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
   else if(IS_CLOSURE_OBJECT(obj_ptr))
     length += print_closure_object_to_string(obj_ptr, buf, filled_buf_len + length);
   else if(IS_CONTINUATION_OBJECT(obj_ptr))
-    length += sprintf(buf+filled_buf_len+length, "#<CONTINUATION #x%08x> ", obj_ptr);
+    length += sprintf(buf+filled_buf_len+length, "#<CONTINUATION #x%08x> ", (unsigned int)obj_ptr);
   else if(IS_MACRO_OBJECT(obj_ptr))
     length += print_macro_object_to_string(obj_ptr, buf, filled_buf_len+length);
   else if(IS_INTEGER_OBJECT(obj_ptr))
@@ -799,11 +833,11 @@ int print_object_to_string(OBJECT_PTR obj_ptr, char *buf, int filled_buf_len)
       length += print_array_object_to_string(obj_ptr, buf, filled_buf_len+length);
   }
   else if(IS_FUNCTION2_OBJECT(obj_ptr))
-    length += sprintf(buf+filled_buf_len+length, "#<FUNCTION2 #x%08x> ", obj_ptr);
+    length += sprintf(buf+filled_buf_len+length, "#<FUNCTION2 #x%08x> ", (unsigned int)obj_ptr);
   else if(IS_MACRO2_OBJECT(obj_ptr))
-    length += sprintf(buf+filled_buf_len+length, "#<MACRO2 #x%08x> ", obj_ptr);
+    length += sprintf(buf+filled_buf_len+length, "#<MACRO2 #x%08x> ", (unsigned int)obj_ptr);
   else if(IS_NATIVE_FN_OBJECT(obj_ptr))
-    length += sprintf(buf+filled_buf_len+length, "#<NATIVEFN #x%08x> ", obj_ptr);
+    length += sprintf(buf+filled_buf_len+length, "#<NATIVEFN #x%08x> ", (unsigned int)obj_ptr);
   else
     assert(false);
 
@@ -838,7 +872,7 @@ void print_object(OBJECT_PTR obj_ptr)
     else if(IS_CLOSURE_OBJECT(obj_ptr))
       print_closure_object(obj_ptr);
     else if(IS_CONTINUATION_OBJECT(obj_ptr))
-      length = sprintf(buf+length, "#<CONTINUATION #x%08x> ", obj_ptr);
+      length = sprintf(buf+length, "#<CONTINUATION #x%08x> ", (unsigned int)obj_ptr);
     else if(IS_MACRO_OBJECT(obj_ptr))
       print_macro_object(obj_ptr);
     else if(IS_INTEGER_OBJECT(obj_ptr))
@@ -869,11 +903,11 @@ void print_object(OBJECT_PTR obj_ptr)
 	print_array_object(obj_ptr);
     }
     else if(IS_FUNCTION2_OBJECT(obj_ptr))
-      length += sprintf(buf+length, "#<FUNCTION2 #x%08x> ", obj_ptr);
+      length += sprintf(buf+length, "#<FUNCTION2 #x%08x> ", (unsigned int)obj_ptr);
     else if(IS_MACRO2_OBJECT(obj_ptr))
-      length += sprintf(buf+length, "#<MACRO2 #x%08x> ", obj_ptr);
+      length += sprintf(buf+length, "#<MACRO2 #x%08x> ", (unsigned int)obj_ptr);
     else if(IS_NATIVE_FN_OBJECT(obj_ptr))
-      length += sprintf(buf+length, "#<NATIVEFN #x%08x> ", obj_ptr);
+      length += sprintf(buf+length, "#<NATIVEFN #x%08x> ", (unsigned int)obj_ptr);
     else
       assert(false);
 
@@ -900,7 +934,7 @@ void print_object(OBJECT_PTR obj_ptr)
     else if(IS_CLOSURE_OBJECT(obj_ptr))
       print_closure_object(obj_ptr);
     else if(IS_CONTINUATION_OBJECT(obj_ptr))
-      fprintf(stdout, "#<CONTINUATION #x%08x> ", obj_ptr);
+      fprintf(stdout, "#<CONTINUATION #x%08x> ", (unsigned int)obj_ptr);
     else if(IS_MACRO_OBJECT(obj_ptr))
       print_macro_object(obj_ptr);
     else if(IS_INTEGER_OBJECT(obj_ptr))
@@ -919,11 +953,11 @@ void print_object(OBJECT_PTR obj_ptr)
 	print_array_object(obj_ptr);
     }
     else if(IS_FUNCTION2_OBJECT(obj_ptr))
-      fprintf(stdout, "#<FUNCTION2 #x%08x> ", obj_ptr);
+      fprintf(stdout, "#<FUNCTION2 #x%08x> ", (unsigned int)obj_ptr);
     else if(IS_MACRO2_OBJECT(obj_ptr))
-      fprintf(stdout, "#<MACRO2 #x%08x> ", obj_ptr);
+      fprintf(stdout, "#<MACRO2 #x%08x> ", (unsigned int)obj_ptr);
     else if(IS_NATIVE_FN_OBJECT(obj_ptr))
-      fprintf(stdout, "#<NATIVEFN #x%08x> ", obj_ptr);
+      fprintf(stdout, "#<NATIVEFN #x%08x> ", (unsigned int)obj_ptr);
     else
       assert(false);
 
@@ -1185,7 +1219,7 @@ OBJECT_PTR car_for_print(OBJECT_PTR cons_obj)
   {
      if(!IS_CONS_OBJECT(cons_obj))
      {
-       printf("Error obtaining CAR of object %p\n", cons_obj);
+       printf("Error obtaining CAR of object %p\n", (void *)cons_obj);
 #ifdef WIN32       
        return ERROR1;
 #else
@@ -1205,7 +1239,7 @@ OBJECT_PTR cdr_for_print(OBJECT_PTR cons_obj)
   {
      if(!IS_CONS_OBJECT(cons_obj))
      {
-       printf("Error obtaining CDR of object %p\n", cons_obj);
+       printf("Error obtaining CDR of object %p\n", (void *)cons_obj);
 #ifdef WIN32       
        return ERROR1;
 #else
@@ -2262,7 +2296,7 @@ OBJECT_PTR get_source_object(OBJECT_PTR obj)
 
 int print_closure_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 {
-  return sprintf(buf+filled_buf_len, "#<CLOSURE #x%08x> ", obj);
+  return sprintf(buf+filled_buf_len, "#<CLOSURE #x%08x> ", (unsigned int)obj);
 }
 
 void print_closure_object(OBJECT_PTR obj)
@@ -2271,11 +2305,11 @@ void print_closure_object(OBJECT_PTR obj)
   {
     char buf[500];
     memset(buf, '\0', 500);
-    sprintf(buf, "#<CLOSURE #x%08x> ", obj);
+    sprintf(buf, "#<CLOSURE #x%08x> ", (unsigned int)obj);
     print_to_transcript(buf);
   }
   else
-    fprintf(stdout, "#<CLOSURE #x%08x> ", obj);
+    fprintf(stdout, "#<CLOSURE #x%08x> ", (unsigned int)obj);
 
 #ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
@@ -2480,7 +2514,7 @@ OBJECT_PTR create_macro_object(OBJECT_PTR env_list, OBJECT_PTR params, OBJECT_PT
 
 int print_macro_object_to_string(OBJECT_PTR macro_obj, char *buf, int filled_buf_len)
 {
-  return sprintf(buf+filled_buf_len, "#<MACRO #x%08x> ", macro_obj);
+  return sprintf(buf+filled_buf_len, "#<MACRO #x%08x> ", (unsigned int)macro_obj);
 }
 
 void print_macro_object(OBJECT_PTR macro_obj)
@@ -2489,11 +2523,11 @@ void print_macro_object(OBJECT_PTR macro_obj)
   {
     char buf[500];
     memset(buf, '\0', 500);
-    sprintf(buf, "#<MACRO #x%08x> ", macro_obj);
+    sprintf(buf, "#<MACRO #x%08x> ", (unsigned int)macro_obj);
     print_to_transcript(buf);
   }
   else
-    fprintf(stdout, "#<MACRO #x%08x> ", macro_obj);
+    fprintf(stdout, "#<MACRO #x%08x> ", (unsigned int)macro_obj);
 
 #ifdef DEBUG
   fprintf(stdout, "\nPARAMETERS: ");
@@ -3784,9 +3818,9 @@ int main(int argc, char **argv)
     }
   }
 
-  if(console_mode && single_expression_mode ||
-    console_mode && pipe_mode               ||
-    single_expression_mode && pipe_mode)
+  if((console_mode && single_expression_mode) ||
+     (console_mode && pipe_mode)              ||
+     (single_expression_mode && pipe_mode))
   {
     fprintf(stderr, "-c, -p or -e options cannot be combined with each other\n");
     exit(EXIT_FAILURE);
@@ -3892,7 +3926,7 @@ int main(int argc, char **argv)
       //  ifree(cmd);
 
       cmd = (char *)GC_MALLOC((nbytes + 1) * sizeof(char));
-      getline(&cmd, &nbytes, stdin);
+      getline(&cmd, (size_t *)&nbytes, stdin);
 
       if(!strcmp(cmd, "(quit)\n"))
 	 break;

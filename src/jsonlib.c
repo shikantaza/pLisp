@@ -25,6 +25,8 @@
 
 #include "json.h"
 
+extern void jsonparse();
+
 struct JSONObject *root_obj;
 
 struct JSONObject *JSON_create_string_object(char *str)
@@ -99,7 +101,7 @@ void JSON_print_object(struct JSONObject *obj)
   switch(obj->type)
   {
     case JSON_INT:
-      printf("Type: INTEGER; value: %d\n", obj->ivalue);
+      printf("Type: INTEGER; value: %d\n", (int)obj->ivalue);
       break;
     case JSON_FLOAT:
       printf("Type: FLOAT; value: %lf\n", obj->fvalue);

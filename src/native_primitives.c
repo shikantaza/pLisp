@@ -145,6 +145,16 @@ extern unsigned int print_context_pkg_index;
 extern OBJECT_PTR get_source_object(OBJECT_PTR);
 extern OBJECT_PTR get_params_object(OBJECT_PTR);
 
+extern void print_to_transcript(char *);
+
+extern int set_up_new_yyin(FILE *);
+extern int yyparse();
+extern int repl2();
+extern void pop_yyin();
+extern OBJECT_PTR second(OBJECT_PTR);
+extern void show_error_dialog(char *);
+extern OBJECT_PTR get_string_object(char *);
+
 OBJECT_PTR quote(OBJECT_PTR count, OBJECT_PTR exp)
 {
   return exp;
@@ -835,7 +845,12 @@ OBJECT_PTR primitive_symbol(OBJECT_PTR str)
       msg[i-1] = (int)get_heap(ptr, i) >> OBJECT_SHIFT;
 
     return get_symbol_object((char *)convert_to_upper_case(msg));
-  }  
+  }
+  else
+  {
+    printf("Warning: invalid object passed to primitive_symbol()\n");
+    return NIL;
+  }
 }
 
 OBJECT_PTR prim_symbol_name(OBJECT_PTR sym)
@@ -1730,7 +1745,7 @@ OBJECT_PTR prim_import_package(OBJECT_PTR package)
           continue;
         
         //the to-be-imported package has already been imported earlier
-        if(pkg_import_entries[i].pkg_index = current_package && pkg_import_entries[i].imported_pkg_index == index)
+        if(pkg_import_entries[i].pkg_index == current_package && pkg_import_entries[i].imported_pkg_index == index)
           return NIL;
       }
        

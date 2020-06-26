@@ -137,6 +137,8 @@ OBJECT_PTR reverse_sym_lookup(OBJECT_PTR);
 
 void create_stepper_window();
 void close_stepper_window();
+
+void show_stepper_window(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 //end of external functions
 
 //external variables
@@ -1319,7 +1321,7 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
     else if(obj == CALL_CC)
     {
       stepper_error("EXCEPTION", "CALL/CC not implemented in stepper");
-      resume_cont(k, NIL);
+      return resume_cont(k, NIL);
     }
     else if(obj == QUOTE)
       return resume_cont(k, second(exp));
@@ -1371,6 +1373,11 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
     {
       return step_cont(first(exp), env, make_fn_app_cont(NIL, cdr(exp), NIL, env, k, fn_source));
     }
+  }
+  else
+  {
+    printf("Warning: invalid object type passed to step_cont()\n");
+    return NIL;
   }
 }
 

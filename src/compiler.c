@@ -371,6 +371,12 @@ extern OBJECT_PTR mcps_transform(OBJECT_PTR);
 extern char *get_qualified_symbol_name(OBJECT_PTR);
 
 extern char *get_json_native_fn_source(OBJECT_PTR);
+
+extern void create_debug_window(int, int, int, int);
+extern void show_error_dialog(char *);
+extern void print_to_transcript(char *);
+extern void quit_application();
+extern void show_warning_dialog(char *);
 //end of external functions
 
 //forward declarations
@@ -3111,9 +3117,9 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
         sprintf(s, "conv_float_to_obj_for_fm(%lld)", wrap_float(var));
       else
 #if __x86_64__
-        sprintf(s, "%lld", var);
+        sprintf(s, "%lld", (long long)var);
 #else
-        sprintf(s, "%d", var);
+        sprintf(s, "%d", (int)var);
 #endif
 
       return s;
@@ -3358,9 +3364,9 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       else
       {
 #if __x86_64__
-	len += sprintf(buf+len, "%lld", second(exp));
+	len += sprintf(buf+len, "%lld", (long long)second(exp));
 #else
-        len += sprintf(buf+len, "%d", second(exp));
+        len += sprintf(buf+len, "%d", (long long)second(exp));
 #endif
       }
     }
@@ -5740,7 +5746,7 @@ void add_native_fn_source(nativefn fn, char *source)
 
 char *get_native_fn_source(nativefn fn)
 {
-  if(fn == (nativefn)identity_function || fn == 0xbaadf00d)
+  if(fn == (nativefn)identity_function || fn == (nativefn)0xbaadf00d)
     return "uintptr_t identity_function(uintptr_t closure, uintptr_t x) {  return x; }";
   int i;
   for(i=0; i<nof_native_fns; i++)
@@ -5982,9 +5988,9 @@ char *generate_lst_construct(OBJECT_PTR exp)
       }
       else
 #if __x86_64__
-	len += sprintf(buf+len, "%lld", obj);
+	len += sprintf(buf+len, "%lld", (long long)obj);
 #else
-        len += sprintf(buf+len, "%d", obj);
+        len += sprintf(buf+len, "%d", (long long)obj);
 #endif
     }
     else

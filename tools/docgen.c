@@ -58,7 +58,7 @@ int build_help_entries(char *file_name)
 
   if(!entries)
   {
-    printf("EXCEPTION", "No entries found in file");
+    printf("Docgen: no entries found in file\n");
     JSON_delete_object(root);
     return 1;
   }
@@ -69,7 +69,7 @@ int build_help_entries(char *file_name)
 
   if(!help_entries)
   {
-    printf("EXCEPTION", "Unable to allocate memory for help entries");
+    printf("Docgen: unable to allocate memory for help entries");
     JSON_delete_object(root);
     return 1;
   }
@@ -84,7 +84,7 @@ int build_help_entries(char *file_name)
 
     if(type != FUNCTION && type != MACRO && type != SPECIAL_OPERATOR)
     {
-      printf("EXCEPTION", "Invalid help entry type");
+      printf("Docgen: invalid help entry type");
       JSON_delete_object(root);
       //free(help_entries);
       return 1;      
@@ -106,7 +106,7 @@ int build_help_entries(char *file_name)
 
       if(!help_entries[i].examples)
       {
-        printf("EXCEPTION", "Unable to allocate memory for examples");
+        printf("Docgen: unable to allocate memory for examples");
         JSON_delete_object(root);
         //free(help_entries);
         return 1;      
@@ -124,7 +124,7 @@ int build_help_entries(char *file_name)
 
       if(!help_entries[i].see_also)
       {
-        printf("EXCEPTION", "Unable to allocate memory for see-also-count");
+        printf("Docgen: unable to allocate memory for see-also-count");
         JSON_delete_object(root);
         //free(help_entries);
         return 1;      

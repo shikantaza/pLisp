@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <assert.h>
+#include <ctype.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -177,7 +178,7 @@ char *get_file_contents(char *file_name)
   if(!lSize)
   {
     fclose(fp);
-    return -1;
+    return (char *)-1;
   }
 
   rewind(fp);

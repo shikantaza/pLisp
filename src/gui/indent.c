@@ -54,6 +54,9 @@ typedef struct form_position
 
 extern BOOLEAN in_code(GtkTextBuffer *, GtkTextIter *);
 
+extern void convert_to_upper_case(char *);
+extern BOOLEAN no_unmatched_left_parens(char *);
+
 form_position_t *convert_to_form_position(char *str, unsigned int *count)
 {
   form_position_t *fp = NULL, *temp;
@@ -326,7 +329,7 @@ form_position_t *convert_to_form_position_old(char *str, unsigned int *count)
 
       if(newline_encountered_before_id_start == true)
       {
-        if((*count == 0))
+        if(*count == 0)
           i = 1;
         else
           i = fp[(*count)-1].pos;
@@ -440,6 +443,11 @@ unsigned int get_indent_count(form_position_t *fp, unsigned int count)
       return 2;
     /* else */
     /*   return fp[1].pos; */
+    else //added to remove compiler warning
+    {
+      printf("get_indent_count(): execution should not have reached here\n");
+      return 2;
+    }
   }
   else if(fp[0].form_type == DEFUN    || 
           fp[0].form_type == DEFMACRO ||

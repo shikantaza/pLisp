@@ -172,6 +172,19 @@ extern void recreate_native_fn_objects();
 extern unsigned int nof_pkg_import_entries;
 extern pkg_import_t *pkg_import_entries;
 
+extern void create_transcript_window(int, int, int, int, char *);
+extern void print_to_transcript(char *);
+extern void create_callers_window(int, int, int, int);
+extern void update_transcript_title();
+extern void hashtable_delete(hashtable_t *);
+extern void create_debug_window(int, int, int, int);
+extern void create_workspace_window(int, int, int, int, char *);
+extern void create_profiler_window(int, int, int, int);
+extern void remove_all_from_list(GtkTreeView *);
+extern void setup_language_manager_path(GtkSourceLanguageManager *);
+extern void close_application_window(GtkWidget **);
+extern void create_system_browser_window(int, int, int, int);
+
 struct slot
 {
   OBJECT_PTR ref;
@@ -213,7 +226,7 @@ void print_json_object(FILE *fp,
       fprintf(fp, "%d", (int)e->value);
     else
     {
-      fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
+      fprintf(fp, "%lu",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
       hashtable_put(hashtable, (void *)obj, (void *)  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK) );
       (*obj_count)++;
     }
@@ -224,7 +237,7 @@ void print_json_object(FILE *fp,
   {
     if(single_object)
     {
-      fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
+      fprintf(fp, "%lu",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
       (*obj_count)++;
 
       add_obj_to_print_list(print_queue, obj, printed_objects);
@@ -254,7 +267,7 @@ void print_heap_representation(FILE *fp,
     else if(IS_STRING_LITERAL_OBJECT(obj))
       fprintf(fp, "\"%s\"", strings[obj >> OBJECT_SHIFT]);
     else if(IS_CHAR_OBJECT(obj))
-      fprintf(fp, "%d ", obj >> OBJECT_SHIFT);
+      fprintf(fp, "%d ", (int)(obj >> OBJECT_SHIFT));
   }
 
   if(!single_object && !is_dynamic_memory_object(obj))
@@ -1261,7 +1274,7 @@ int load_from_image(char *file_name)
   recreate_native_fn_objects();
 
   if(system_browser_window)
-    close_application_window(&system_browser_window);
+    close_application_window((GtkWidget **)&system_browser_window);
 
   if(system_browser)
   {
@@ -1396,7 +1409,7 @@ int load_from_image(char *file_name)
   }
 
   if(profiler_window)
-    close_application_window(&profiler_window);
+    close_application_window((GtkWidget **)&profiler_window);
 
   if(profiler)
     create_profiler_window(JSON_get_array_item(profiler, 0)->ivalue,
@@ -1410,7 +1423,7 @@ int load_from_image(char *file_name)
   struct JSONObject *workspace = JSON_get_object_item(root, "workspace");
 
   if(workspace_window)
-    close_application_window(&workspace_window);
+    close_application_window((GtkWidget **)&workspace_window);
 
   if(workspace)
   {
@@ -1442,7 +1455,7 @@ int load_from_image(char *file_name)
   struct JSONObject *debugger = JSON_get_object_item(root, "debugger");
 
   if(debugger_window)
-    close_application_window(&debugger_window);
+    close_application_window((GtkWidget **)&debugger_window);
 
   if(debugger)
     create_debug_window(JSON_get_array_item(debugger, 0)->ivalue,
@@ -1523,7 +1536,7 @@ int load_from_image(char *file_name)
   struct JSONObject *callers = JSON_get_object_item(root, "callers");
 
   if(callers_window)
-    close_application_window(&callers_window);
+    close_application_window((GtkWidget **)&callers_window);
 
   if(callers)
     create_callers_window(JSON_get_array_item(callers, 0)->ivalue,
@@ -1974,7 +1987,7 @@ int serialize(OBJECT_PTR obj, char *file_name)
   {
     OBJECT_PTR cons_equiv = cons_equivalent(obj);
 
-    fprintf(fp, "%d",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
+    fprintf(fp, "%lu",  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK));
     hashtable_put(hashtable, (void *)obj, (void *)  ((*obj_count) << OBJECT_SHIFT) + (obj & BIT_MASK) );
     (*obj_count)++;
     add_obj_to_print_list(print_queue, last_cell(cons_equiv), printed_objects);

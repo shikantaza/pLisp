@@ -73,6 +73,8 @@ extern char path_buf[1024];
 
 extern OBJECT_PTR NIL;
 
+extern void close_application_window(GtkWidget **);
+
 void close_stepper_window()
 {
   close_application_window((GtkWidget **)&stepper_window);
@@ -81,7 +83,7 @@ void close_stepper_window()
 void continue_stepper(GtkWidget *widget,
                       gpointer data)
 {
-  gtk_widget_hide(stepper_window);
+  gtk_widget_hide((GtkWidget *)stepper_window);
   run_to_completion = false;
   gtk_main_quit();
 }
@@ -89,7 +91,7 @@ void continue_stepper(GtkWidget *widget,
 void run_complete(GtkWidget *widget,
                   gpointer data)
 {
-  gtk_widget_hide(stepper_window);
+  gtk_widget_hide((GtkWidget *)stepper_window);
   gtk_main_quit();
   run_to_completion = true;
 }
@@ -97,7 +99,7 @@ void run_complete(GtkWidget *widget,
 void abort_stepper(GtkWidget *widget,
                    gpointer data)
 {
-  gtk_widget_hide(stepper_window);  
+  gtk_widget_hide((GtkWidget *)stepper_window);  
   gtk_main_quit();
   abrt_stepper = true;
 }
@@ -256,13 +258,13 @@ void populate_stepper_fn_source(OBJECT_PTR fn_source, OBJECT_PTR exp)
 
   print_object_to_string(fn_source, buf, 0);
 
-  gtk_text_buffer_set_text(fn_source_buffer, convert_to_lower_case(buf), -1);
+  gtk_text_buffer_set_text((GtkTextBuffer *)fn_source_buffer, convert_to_lower_case(buf), -1);
 
   memset(buf, '\0', MAX_STRING_LENGTH);
 
   print_object_to_string(exp, buf, 0);  
 
-  highlight_text_stepper(fn_source_buffer, convert_to_lower_case(buf));
+  highlight_text_stepper((GtkTextBuffer *)fn_source_buffer, convert_to_lower_case(buf));
 }
 
 //experimental code to see if we can
@@ -430,16 +432,16 @@ void create_stepper_window()
   GtkWidget *scrolled_win;
 
   fn_source_buffer = gtk_source_buffer_new_with_language(source_language);
-  GtkSourceView *fn_source_view = gtk_source_view_new_with_buffer(fn_source_buffer);
+  GtkSourceView *fn_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(fn_source_buffer);
 
   gtk_widget_override_font(GTK_WIDGET(fn_source_view), pango_font_description_from_string(FONT));
   gtk_text_view_set_editable((GtkTextView *)fn_source_view, FALSE);
 
-  gtk_text_buffer_create_tag(fn_source_buffer, "gray_bg", 
+  gtk_text_buffer_create_tag((GtkTextBuffer *)fn_source_buffer, "gray_bg", 
                              "background", "lightgray", NULL); 
   
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
-  gtk_container_add (GTK_CONTAINER (scrolled_win), fn_source_view);
+  gtk_container_add (GTK_CONTAINER (scrolled_win), (GtkWidget *)fn_source_view);
 
   //end function source
 
@@ -451,12 +453,12 @@ void create_stepper_window()
   //gtk_widget_grab_focus((GtkWidget *)env_symbols_list);
 }
 
-show_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
+void show_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
 {
   populate_env_symbols_list((GtkTreeView *)env_symbols_list, env);
   populate_stepper_fn_source(fn_source, exp);
 
-  gtk_widget_show_all(stepper_window);
+  gtk_widget_show_all((GtkWidget *)stepper_window);
 
   gtk_main();
 

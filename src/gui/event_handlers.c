@@ -29,6 +29,8 @@
 
 #include "../hashtable.h"
 
+#include "../memory.h"
+
 #ifdef __APPLE__
 #define FONT "Menlo Bold 12"
 #else
@@ -140,6 +142,44 @@ extern void refresh_system_browser();
 
 extern BOOLEAN system_changed;
 
+extern void show_error_dialog(char *);
+extern int get_top_level_sym_value(OBJECT_PTR, OBJECT_PTR *);
+extern char *get_qualified_symbol_name(OBJECT_PTR);
+
+extern BOOLEAN IS_SYMBOL_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_STRING_LITERAL_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CHAR_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_INTEGER_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_FLOAT_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CONS_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_ARRAY_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_CONTINUATION_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_NATIVE_FN_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_FUNCTION2_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_MACRO2_OBJECT(OBJECT_PTR x);
+
+extern BOOLEAN IS_CLOSURE_OBJECT(OBJECT_PTR x);
+extern BOOLEAN IS_MACRO_OBJECT(OBJECT_PTR x);
+
+extern void create_callers_window(int, int, int, int);
+extern void remove_all_from_list(GtkTreeView *);
+extern void print_to_transcript(char *);
+
+extern void create_workspace_window(int, int, int, int, char *);
+extern void create_file_browser_window(int, int, int, int);
+extern void create_system_browser_window(int, int, int, int);
+extern void create_help_window();
+
+extern void indent(GtkTextBuffer *);
+
+extern void reload_file();
+extern void save_file();
+extern void close_file();
+extern void fb_load_source_file();
+extern void new_source_file();
+
+extern BOOLEAN is_core_symbol(char *);
+
 //extern hashtable_t *profiling_tab;
 
 void evaluate();
@@ -224,6 +264,9 @@ BOOLEAN sys_browser_accept_error;
 OBJECT_PTR selected_symbol;
 
 void revert_to_prev_pkg_sym();
+
+BOOLEAN in_code_or_string_literal_or_comment(GtkTextBuffer *, GtkTextIter *, cursor_pos_t);
+BOOLEAN in_code(GtkTextBuffer *, GtkTextIter *);
 
 BOOLEAN check_for_sys_browser_changes()
 {
@@ -395,9 +438,9 @@ gboolean delete_event( GtkWidget *widget,
   /*   profiling_tab = NULL; */
   /* } */
   else if(widget == (GtkWidget *)help_window)
-    close_application_window(&help_window);
+    close_application_window((GtkWidget **)&help_window);
   else if(widget == (GtkWidget *)callers_window)
-    close_application_window(&callers_window);
+    close_application_window((GtkWidget **)&callers_window);
 
   return FALSE;
 }
@@ -880,7 +923,7 @@ void rename_sym()
       build_autocomplete_words();
 
       //update the code panel with new symbol value
-      fetch_symbol_value(symbols_list, system_browser_window);
+      fetch_symbol_value((GtkWidget *)symbols_list, system_browser_window);
       
       gtk_statusbar_push(system_browser_statusbar, 0, "Symbol renamed");
     }
@@ -1332,11 +1375,11 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
     GtkTextBuffer *buffer;
 
     if(widget == (GtkWidget *)workspace_window)
-      buffer = workspace_buffer;
+      buffer = (GtkTextBuffer *)workspace_buffer;
     else if(widget == (GtkWidget *)system_browser_window)
       buffer = system_browser_buffer;
     else if(widget == (GtkWidget *)callers_window)
-      buffer = callers_source_buffer;
+      buffer = (GtkTextBuffer *)callers_source_buffer;
     else if(widget == (GtkWidget *)file_browser_window)
       buffer = curr_file_browser_buffer;
     else
@@ -2981,7 +3024,7 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
     assert(retval == 0);
     OBJECT_PTR obj = car(out);
 
-    gtk_text_buffer_set_text(callers_source_buffer, buf, -1);
+    gtk_text_buffer_set_text((GtkTextBuffer *)callers_source_buffer, buf, -1);
 
     if(IS_CLOSURE_OBJECT(obj) || IS_FUNCTION2_OBJECT(obj))
     {
@@ -2993,7 +3036,7 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
 
       print_object_to_string(temp, buf, 0);
 
-      gtk_text_buffer_insert_at_cursor(callers_source_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
+      gtk_text_buffer_insert_at_cursor((GtkTextBuffer *)callers_source_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
     }
     else if(IS_MACRO_OBJECT(obj) || IS_MACRO2_OBJECT(obj))
     {
@@ -3006,12 +3049,12 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
       print_object_to_string(temp, buf, 0);
 
 
-      gtk_text_buffer_insert_at_cursor(callers_source_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
+      gtk_text_buffer_insert_at_cursor((GtkTextBuffer *)callers_source_buffer, (char *)conv_to_lower_case_preserve_strings(buf), -1);
     }
     else
       printf("Warning: invalid object type for caller window\n");
 
-    gtk_text_buffer_insert_at_cursor(callers_source_buffer, "\n", -1);
+    gtk_text_buffer_insert_at_cursor((GtkTextBuffer *)callers_source_buffer, "\n", -1);
 
     char *text;
 
@@ -3022,7 +3065,7 @@ void fetch_symbol_value_for_caller(GtkWidget *lst, gpointer data)
     else
       text = GC_strdup(get_symbol_name(callers_sym));
 
-    highlight_text(callers_source_buffer, convert_to_lower_case(text));
+    highlight_text((GtkTextBuffer *)callers_source_buffer, convert_to_lower_case(text));
     //free(text);
   }
 }
@@ -3087,10 +3130,10 @@ void callers_window_accept()
 
     GtkTextIter start, end;
 
-    gtk_text_buffer_get_start_iter(callers_source_buffer, &start);
-    gtk_text_buffer_get_end_iter(callers_source_buffer, &end);
+    gtk_text_buffer_get_start_iter((GtkTextBuffer *)callers_source_buffer, &start);
+    gtk_text_buffer_get_end_iter((GtkTextBuffer *)callers_source_buffer, &end);
 
-    if(call_repl(gtk_text_buffer_get_text(callers_source_buffer, &start, &end, FALSE)))
+    if(call_repl(gtk_text_buffer_get_text((GtkTextBuffer *)callers_source_buffer, &start, &end, FALSE)))
     {
       show_error_dialog("Evaluation failed\n");
       current_package = current_package_backup;

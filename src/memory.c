@@ -57,6 +57,8 @@ extern OBJECT_PTR continuation_to_resume;
 
 extern OBJECT_PTR exception_handlers;
 
+extern void show_error_dialog(char *);
+
 //forward declarations
 
 void gc(BOOLEAN, BOOLEAN);
