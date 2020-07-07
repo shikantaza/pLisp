@@ -1457,6 +1457,8 @@ int print_cons_object_to_string(OBJECT_PTR obj, char *buf, int filled_buf_len)
 
     if(CADR1(obj) == NIL)
       length += sprintf(buf+filled_buf_len+length, "()");
+    else if(!IS_CONS_OBJECT(CADR1(obj)))
+      length += print_object_to_string(CADR1(obj), buf, filled_buf_len+length);
     else
     {
       if(car_obj != LET && car_obj != LET1 && car_obj != LETREC && !let_star)
