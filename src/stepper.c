@@ -138,7 +138,7 @@ OBJECT_PTR reverse_sym_lookup(OBJECT_PTR);
 void create_stepper_window();
 void close_stepper_window();
 
-void show_stepper_window(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
+void show_stepper_window(OBJECT_PTR, OBJECT_PTR, continuation_t *, OBJECT_PTR);
 //end of external functions
 
 //external variables
@@ -179,6 +179,8 @@ extern BOOLEAN in_error;
 
 extern BOOLEAN run_to_completion;
 extern BOOLEAN abrt_stepper;
+extern BOOLEAN step_over;
+continuation_t *step_over_continuation;
 //end of external variables
 
 //globals
@@ -1270,7 +1272,7 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
 
   if(abrt_stepper)
     return NIL;
-  
+
   if(is_atom(exp))
   {
     if(exp == NIL)
@@ -1295,8 +1297,8 @@ OBJECT_PTR step_cont(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k)
   {
     OBJECT_PTR obj = car(exp);
 
-    if(!run_to_completion || obj == BREAK)
-      show_stepper_window(exp, env, fn_source);
+    if((!run_to_completion && !step_over) || obj == BREAK)
+      show_stepper_window(exp, env, k, fn_source);
 
     if(obj == BREAK)
       return resume_cont(k, NIL);
@@ -1389,6 +1391,9 @@ OBJECT_PTR resume_cont(continuation_t *k, OBJECT_PTR v)
   /* print_object(v); */
   /* printf("\n"); */
 
+  if(step_over && k->k == step_over_continuation)
+    step_over = false;
+  
   fn_source = k->fn_source;
   
   if(in_stepper_error && k->type != FINALLY_CONT)
@@ -1742,6 +1747,7 @@ OBJECT_PTR step(OBJECT_PTR exp)
   cleanup_stepper_env();
 
   run_to_completion = false;
+  step_over = false;
   
   continuation_t *id_continuation = make_id_cont(exp);
 

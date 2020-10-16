@@ -101,7 +101,7 @@ icons_DATA  = icons/abort.png icons/clear.png icons/export_package.png icons/ref
               icons/save_image.png icons/callers.png icons/exit32x32.png icons/new_package.png icons/workspace.png \
               icons/clear32x32.png icons/exit.png icons/new_symbol.png icons/close_file.png icons/file_browser.png \
               icons/new_file.png icons/open_file.png icons/save_file.png icons/find.png icons/rename.png icons/splash.png \
-              icons/step.png
+              icons/step.png icons/step_over.png
 
 dist_icons_DATA = ${icons_DATA}
 

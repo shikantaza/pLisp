@@ -65,6 +65,9 @@ GtkTreeView *env_symbols_list;
 
 BOOLEAN abrt_stepper;
 BOOLEAN run_to_completion;
+BOOLEAN step_over;
+extern continuation_t *step_over_continuation;
+continuation_t *dummy;
 
 #ifdef __OSX_BUNDLE__
 extern char exec_path[512];
@@ -85,6 +88,7 @@ void continue_stepper(GtkWidget *widget,
 {
   gtk_widget_hide((GtkWidget *)stepper_window);
   run_to_completion = false;
+  step_over = false;
   gtk_main_quit();
 }
 
@@ -104,21 +108,33 @@ void abort_stepper(GtkWidget *widget,
   abrt_stepper = true;
 }
 
+void step_over_cb(GtkWidget *widget,
+                  gpointer data)
+{
+  gtk_widget_hide((GtkWidget *)stepper_window);  
+  gtk_main_quit();
+  step_over = true;
+  step_over_continuation = dummy;
+}
+
 GtkToolbar *create_stepper_toolbar()
 {
   GtkWidget *toolbar;
 
 #ifdef WIN_BUILD
   GtkWidget *step_icon = gtk_image_new_from_file ("../share/icons/step.png");
+  GtkWidget *step_over_icon = gtk_image_new_from_file ("../share/icons/step_over.png");
   GtkWidget *resume_icon = gtk_image_new_from_file ("../share/icons/resume.png");  
   GtkWidget *abort_icon = gtk_image_new_from_file ("../share/icons/abort.png");
 #else
 #ifdef __OSX_BUNDLE__
   GtkWidget *step_icon = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/step.png"));
+  GtkWidget *step_over_icon = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/step_over.png"));
   GtkWidget *resume_icon = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/resume.png"));
   GtkWidget *abort_icon = gtk_image_new_from_file (concat_strings(path_buf, exec_path, "../Resources/share/plisp/icons/abort.png"));
 #else
   GtkWidget *step_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/step.png");
+  GtkWidget *step_over_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/step_over.png");
   GtkWidget *resume_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/resume.png");
   GtkWidget *abort_icon = gtk_image_new_from_file (PLISPDATADIR "/icons/abort.png");
 #endif
@@ -135,16 +151,21 @@ GtkToolbar *create_stepper_toolbar()
   //gtk_tool_item_set_tooltip_text(step_button, "Step");
   g_signal_connect (step_button, "clicked", G_CALLBACK (continue_stepper), stepper_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, step_button, 0);
+
+  GtkToolItem *step_over_button = gtk_tool_button_new(step_over_icon, NULL);
+  gtk_tool_item_set_tooltip_text(step_over_button, "Step over");
+  g_signal_connect (step_over_button, "clicked", G_CALLBACK (step_over_cb), stepper_window);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, step_over_button, 1);
   
   GtkToolItem *resume_button = gtk_tool_button_new(resume_icon, NULL);
   gtk_tool_item_set_tooltip_text(resume_button, "Run to completion");
   g_signal_connect (resume_button, "clicked", G_CALLBACK (run_complete), stepper_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, resume_button, 1);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, resume_button, 2);
   
   GtkToolItem *abort_button = gtk_tool_button_new(abort_icon, NULL);
   gtk_tool_item_set_tooltip_text(abort_button, "Abort");
   g_signal_connect (abort_button, "clicked", G_CALLBACK (abort_stepper), stepper_window);
-  gtk_toolbar_insert((GtkToolbar *)toolbar, abort_button, 2);
+  gtk_toolbar_insert((GtkToolbar *)toolbar, abort_button, 3);
 
   
   return (GtkToolbar *)toolbar;
@@ -453,7 +474,7 @@ void create_stepper_window()
   //gtk_widget_grab_focus((GtkWidget *)env_symbols_list);
 }
 
-void show_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
+void show_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, continuation_t *k, OBJECT_PTR fn_source)
 {
   populate_env_symbols_list((GtkTreeView *)env_symbols_list, env);
   populate_stepper_fn_source(fn_source, exp);
@@ -468,4 +489,6 @@ void show_stepper_window(OBJECT_PTR exp, OBJECT_PTR env, OBJECT_PTR fn_source)
   //(the '(step ..)' expression might have been evaluated
   //from the workspace, file browser, etc.).
   action_triggering_window = transcript_window;
+
+  dummy = k;
 }
