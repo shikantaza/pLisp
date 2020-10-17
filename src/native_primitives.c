@@ -536,6 +536,8 @@ OBJECT_PTR primitive_equal(OBJECT_PTR obj1, OBJECT_PTR obj2)
       else if(IS_STRING_LITERAL_OBJECT(obj2))
         ret = !strcmp(str1, strings[(int)obj2 >> OBJECT_SHIFT]);
     }    
+    else if(IS_SYMBOL_OBJECT(obj1) && IS_SYMBOL_OBJECT(obj2))
+      ret = !strcmp(get_symbol_name(obj1), get_symbol_name(obj2));
   }
   
   return ret ? TRUE : NIL;
