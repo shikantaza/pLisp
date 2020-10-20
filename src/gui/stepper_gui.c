@@ -230,9 +230,100 @@ void populate_env_symbols_list(GtkTreeView *list, OBJECT_PTR env)
   }
 }
 
+unsigned int is_space_char(char c)
+{
+  return c == ' ' || c == '\n';
+}
+
+//TODO: handle strings (double quotes)
+int find_substring(char *str, char *substr, unsigned int *end)
+{
+  unsigned int str_ptr, substr_ptr, saved_str_ptr;
+
+  unsigned int str_len = strlen(str);
+  unsigned int substr_len = strlen(substr);
+
+  unsigned int i = 0;
+
+  if(str_len < substr_len)
+    return -1;
+
+  if(!strcmp(str, substr))
+  {
+    *end = str_len;
+    return 0;
+  }
+  
+label1:
+
+  str_ptr = i;
+  i++;
+
+  if(i > str_len - substr_len + 1)
+    return -1;
+    
+  substr_ptr = 0;
+
+  saved_str_ptr = str_ptr;
+  
+label2:
+
+  while((str[str_ptr] == substr[substr_ptr]) && !is_space_char(str[str_ptr]) && !is_space_char(substr[substr_ptr]))
+  {
+    str_ptr++;
+    substr_ptr++;
+
+    if(substr_ptr == substr_len)
+    {
+      *end = str_ptr;
+      return saved_str_ptr;
+    }
+  }
+    
+  if(!is_space_char(str[str_ptr]) || !is_space_char(substr[substr_ptr]))
+    goto label1;
+
+  if(is_space_char(str[str_ptr]))
+  {
+    while(is_space_char(str[str_ptr]))
+      str_ptr++;
+  }
+
+  if(is_space_char(substr[substr_ptr]))
+  {
+    while(is_space_char(substr[substr_ptr]))
+      substr_ptr++;
+  }
+
+  goto label2;    
+}
+
+void highlight_text_stepper(GtkTextBuffer *buffer, char *text)
+{
+  GtkTextIter start_buffer, end_buffer, start_highlight, end_highlight;
+
+  unsigned int end;
+  
+  gtk_text_buffer_get_start_iter(buffer, &start_buffer);
+  gtk_text_buffer_get_end_iter(buffer, &end_buffer);
+  
+  gchar *s = gtk_text_buffer_get_text(buffer, &start_buffer, &end_buffer, FALSE);
+
+  unsigned int offset = find_substring(s, text, &end);
+
+  if(offset == -1)
+    return;
+  
+  gtk_text_buffer_get_iter_at_offset(buffer, &start_highlight, offset);
+  gtk_text_buffer_get_iter_at_offset(buffer, &end_highlight, end);
+
+  gtk_text_buffer_apply_tag_by_name(buffer, "gray_bg", &start_highlight, &end_highlight);
+  
+}
+
 //not using the already-available highlight_text() because
 //that version skips the first line
-void highlight_text_stepper(GtkTextBuffer *buffer, char *text)
+void highlight_text_stepper2(GtkTextBuffer *buffer, char *text)
 {
   GtkTextIter start_sel, end_sel;
   GtkTextIter start_find, end_find;
