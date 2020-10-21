@@ -553,6 +553,10 @@ void create_stepper_window()
                              "background", "lightgray", NULL); 
   
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
+
+  //to provide sufficient height to avoid scrolling through the code where possible
+  gtk_widget_set_size_request(scrolled_win, DEFAULT_STEPPER_WINDOW_WIDTH, 200);
+
   gtk_container_add (GTK_CONTAINER (scrolled_win), (GtkWidget *)fn_source_view);
 
   //end function source
