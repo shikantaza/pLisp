@@ -1751,7 +1751,7 @@ OBJECT_PTR step(OBJECT_PTR exp)
   
   continuation_t *id_continuation = make_id_cont(exp);
 
-  fn_source = exp;
+  fn_source = exp2;
 
   create_stepper_window();
   
