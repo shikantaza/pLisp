@@ -459,13 +459,7 @@ void quit_application()
   {
     gtk_widget_destroy((GtkWidget *)dialog);
 
-    if(check_for_sys_browser_changes())
-    {
-      cleanup();
-      gtk_main_quit();
-      exit(0);
-    }
-    else
+    if(!check_for_sys_browser_changes())
       return;
     
     //uncomment this if we want to
@@ -488,8 +482,6 @@ void quit_application()
         save_image();
       }
     }
-
-    g_free(loaded_image_file_name);
 
     cleanup();
 
