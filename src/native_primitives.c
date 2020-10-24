@@ -100,6 +100,7 @@ extern BOOLEAN system_changed;
 extern void throw_exception1(char *, char *);
 
 extern void build_autocomplete_words();
+extern void set_up_autocomplete_words();
 
 extern BOOLEAN is_continuation_object(OBJECT_PTR);
 
@@ -1025,6 +1026,8 @@ OBJECT_PTR primitive_unbind(OBJECT_PTR sym)
 
   system_changed = true;
 
+  set_up_autocomplete_words();
+  
   return NIL;
 }
 
@@ -1581,6 +1584,7 @@ OBJECT_PTR prim_in_package(OBJECT_PTR package)
     {
       current_package = index;
       build_autocomplete_words();
+      set_up_autocomplete_words();
       return NIL;
     }
   }

@@ -23,6 +23,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <gtksourceview/gtksource.h>
+#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 #include "../plisp.h"
 #include "../util.h"
@@ -74,6 +75,8 @@ extern void close_application_window(GtkWidget **);
 
 extern void indent(GtkTextBuffer *);
 extern void do_auto_complete(GtkTextBuffer *);
+
+extern GtkSourceCompletionProvider *provider;
 
 unsigned int nof_open_files;
 char *current_file_name;
@@ -264,6 +267,9 @@ void new_source_file()
   GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
   GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(view);
+  gtk_source_completion_add_provider(sc1, provider, NULL);
+  
   //for search functionality
   gtk_text_buffer_create_tag((GtkTextBuffer *)buffer, "gray_bg", 
                              "background", "lightgray", NULL);
@@ -340,6 +346,10 @@ void fb_load_source_file()
     GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
     GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
+    GtkSourceCompletion *sc1 = gtk_source_view_get_completion(view);
+    gtk_source_completion_add_provider(sc1, provider, NULL);
+
+    
     //for search functionality
     gtk_text_buffer_create_tag((GtkTextBuffer *)buffer, "gray_bg", 
                                "background", "lightgray", NULL);
@@ -871,6 +881,9 @@ void add_file_to_file_browser(char *file_name)
   GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
   GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(view);
+  gtk_source_completion_add_provider(sc1, provider, NULL);
+  
   g_signal_connect(G_OBJECT(buffer), 
                    "notify::cursor-position", 
                    G_CALLBACK (handle_cursor_move), 

@@ -403,6 +403,8 @@ extern int print_string_to_string(OBJECT_PTR, char *, int);
 extern void cleanup_full_monty_global_vars();
 extern void set_workspace_window_title(char *);
 
+extern void set_up_autocomplete_words();
+
 #ifdef __OSX_BUNDLE__
 // declared here because we're unable to #include
 // libproc.h owing to conflicts with our definition
@@ -3898,6 +3900,7 @@ int main(int argc, char **argv)
   }
 
   build_autocomplete_words();
+  set_up_autocomplete_words();
 
   if(!console_mode && !single_expression_mode && !pipe_mode)
   {

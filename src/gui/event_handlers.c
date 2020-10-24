@@ -913,6 +913,7 @@ void rename_sym()
 
       //to replace reference to the old symbol name
       build_autocomplete_words();
+      set_up_autocomplete_words();
 
       //update the code panel with new symbol value
       fetch_symbol_value((GtkWidget *)symbols_list, system_browser_window);

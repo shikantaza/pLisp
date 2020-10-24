@@ -377,6 +377,8 @@ extern void show_error_dialog(char *);
 extern void print_to_transcript(char *);
 extern void quit_application();
 extern void show_warning_dialog(char *);
+
+extern void set_up_autocomplete_words();
 //end of external functions
 
 //forward declarations
@@ -5512,6 +5514,8 @@ OBJECT_PTR process_define(OBJECT_PTR exp, OBJECT_PTR src)
 
   system_changed = true;
 
+  set_up_autocomplete_words();
+  
   return res;
 }
 

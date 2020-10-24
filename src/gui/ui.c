@@ -21,6 +21,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <gtksourceview/gtksource.h>
+#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 #include "../plisp.h"
 #include "../memory.h"
@@ -149,6 +150,9 @@ GtkSourceBuffer *workspace_source_buffer;
 GtkSourceView *system_browser_source_view;
 GtkSourceBuffer *system_browser_source_buffer;
 
+GtkSourceBuffer *keywords_buffer = NULL;
+GtkSourceCompletionProvider *provider = NULL;
+
 extern unsigned nof_global_vars;
 extern global_var_mapping_t *top_level_symbols;
 
@@ -172,6 +176,67 @@ void close_application_window(GtkWidget **);
 
 extern void update_transcript_title();
 extern void fetch_package_symbols();
+
+extern unsigned int current_package;
+
+void add_package_keywords(int package_index)
+{
+  int i;
+
+  for(i=0; i<nof_global_vars; i++)
+  {
+    if(top_level_symbols[i].delete_flag || IS_NATIVE_FN_OBJECT(top_level_symbols[i].val))
+      continue;
+
+    if(extract_package_index(top_level_symbols[i].sym) == package_index)
+    {
+      gtk_text_buffer_insert_at_cursor(keywords_buffer,
+                                       convert_to_lower_case(GC_strdup(get_symbol_name(top_level_symbols[i].sym))),
+                                       -1);
+      gtk_text_buffer_insert_at_cursor(keywords_buffer,
+                                       "\n",
+                                       -1);
+    }
+  }
+}
+
+void set_up_autocomplete_words()
+{
+  if(!keywords_buffer)
+    keywords_buffer = gtk_source_buffer_new_with_language(source_language);
+
+  //clear the buffer first (to replace symbols from previous package)
+  gtk_text_buffer_set_text((GtkTextBuffer *)keywords_buffer, "", -1);
+  
+  char *keywords_and_special_ops = "let\nletrec\nif\nset\nlambda\nmacro\nerror\ncall/cc\ndefine\nnil\natom\n \
+                                    concat\nquote\neq\nlist\ncar\ncdr\nprint\nsymbol-value\ngensym\nsetcar\n \
+                                    setcdr\napply\nsymbol\nsymbol-name\nformat\nclone\nunbind\nnewline\nnot\n \
+                                    return-from\nthrow\nstring\nmake-array\narray-get\narray-set\nsub-array\narray-length\n \
+                                    print-string\nconsp\nlistp\nintegerp\nfloatp\ncharacterp\nsymbolp\nstringp\n \
+                                    arrayp\nclosurep\nmacrop\ncontinuationp\nload-foreign-library\ncreate-package\n \
+                                    in-package\nexport-package\nimport-package\ncreate-image\nsave-object\nload-object\nload-file\nprofile\n \
+                                    time\nenv\nexpand-macro\neval\nbreak\nresume\nabort\ninspect-object\n";
+
+  gtk_text_buffer_set_text((GtkTextBuffer *)keywords_buffer, keywords_and_special_ops, -1);
+
+  add_package_keywords(CORE_PACKAGE_INDEX);
+
+  if(current_package != CORE_PACKAGE_INDEX)
+    add_package_keywords(current_package);
+
+  if(!provider)
+    provider = (GtkSourceCompletionProvider *)gtk_source_completion_words_new("Symbols", NULL);
+  
+  gtk_source_completion_words_register((GtkSourceCompletionWords *)provider, (GtkTextBuffer *)keywords_buffer);
+
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(workspace_source_view);
+  gtk_source_completion_add_provider(sc1, provider, NULL);
+
+  GtkSourceCompletion *sc2 = gtk_source_view_get_completion(system_browser_source_view);
+  gtk_source_completion_add_provider(sc2, provider, NULL);
+  
+  //TODO: repeat for File Browser, Callers Window, and anywhere else code is edited
+}
 
 void set_up_system_browser_source_buffer()
 {
@@ -1708,6 +1773,9 @@ void create_callers_window(int posx, int posy, int width, int height)
   callers_source_buffer = gtk_source_buffer_new_with_language(source_language);
   callers_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(callers_source_buffer);
 
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(callers_source_view);
+  gtk_source_completion_add_provider(sc1, provider, NULL);
+  
   gtk_text_buffer_create_tag((GtkTextBuffer *)callers_source_buffer, "gray_bg", 
                              "background", "lightgray", NULL); 
 
