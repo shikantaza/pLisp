@@ -2830,6 +2830,19 @@ void do_auto_complete(GtkTextBuffer *buffer)
   if(strlen(s) == 0)
     return;
 
+  //don't do autocomplete if cursor is in the middle of a word
+  //begin
+  GtkTextIter curr_iter1;
+
+  gtk_text_buffer_get_iter_at_mark(buffer, &curr_iter1, gtk_text_buffer_get_insert(buffer));
+  
+  gunichar ret = gtk_text_iter_get_char(&curr_iter1);
+
+  //next character not space, newline, or end of buffer
+  if(!g_unichar_isspace(ret) && ret)
+    return;
+  //end
+  
   int i;
   unsigned int nof_matches = 0;
   unsigned int len = strlen(s);
