@@ -230,12 +230,15 @@ void set_up_autocomplete_words()
   gtk_source_completion_words_register((GtkSourceCompletionWords *)provider, (GtkTextBuffer *)keywords_buffer);
 
   GtkSourceCompletion *sc1 = gtk_source_view_get_completion(workspace_source_view);
+  GValue gv = G_VALUE_INIT;
+  g_value_init(&gv, G_TYPE_BOOLEAN);
+  g_value_set_boolean(&gv, FALSE);
+  g_object_set_property(sc1, "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
 
   GtkSourceCompletion *sc2 = gtk_source_view_get_completion(system_browser_source_view);
+  g_object_set_property(sc2, "show-headers", &gv);
   gtk_source_completion_add_provider(sc2, provider, NULL);
-  
-  //TODO: repeat for File Browser, Callers Window, and anywhere else code is edited
 }
 
 void set_up_system_browser_source_buffer()
@@ -1774,6 +1777,10 @@ void create_callers_window(int posx, int posy, int width, int height)
   callers_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(callers_source_buffer);
 
   GtkSourceCompletion *sc1 = gtk_source_view_get_completion(callers_source_view);
+  GValue gv = G_VALUE_INIT;
+  g_value_init(&gv, G_TYPE_BOOLEAN);
+  g_value_set_boolean(&gv, FALSE);
+  g_object_set_property(sc1, "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
   
   gtk_text_buffer_create_tag((GtkTextBuffer *)callers_source_buffer, "gray_bg", 
