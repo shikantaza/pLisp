@@ -228,6 +228,27 @@ void set_up_autocomplete_words()
     provider = (GtkSourceCompletionProvider *)gtk_source_completion_words_new("Symbols", NULL);
   
   gtk_source_completion_words_register((GtkSourceCompletionWords *)provider, (GtkTextBuffer *)keywords_buffer);
+}
+
+void set_up_system_browser_source_buffer()
+{
+  system_browser_source_buffer = gtk_source_buffer_new_with_language(source_language);
+  system_browser_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(system_browser_source_buffer);
+
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(system_browser_source_view);
+  GValue gv = G_VALUE_INIT;
+  g_value_init(&gv, G_TYPE_BOOLEAN);
+  g_value_set_boolean(&gv, FALSE);
+  g_object_set_property(sc1, "show-headers", &gv);
+  gtk_source_completion_add_provider(sc1, provider, NULL);
+
+  
+}
+
+void set_up_workspace_source_buffer()
+{
+  workspace_source_buffer = gtk_source_buffer_new_with_language(source_language);
+  workspace_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(workspace_source_buffer);
 
   GtkSourceCompletion *sc1 = gtk_source_view_get_completion(workspace_source_view);
   GValue gv = G_VALUE_INIT;
@@ -236,21 +257,6 @@ void set_up_autocomplete_words()
   g_object_set_property(sc1, "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
 
-  GtkSourceCompletion *sc2 = gtk_source_view_get_completion(system_browser_source_view);
-  g_object_set_property(sc2, "show-headers", &gv);
-  gtk_source_completion_add_provider(sc2, provider, NULL);
-}
-
-void set_up_system_browser_source_buffer()
-{
-  system_browser_source_buffer = gtk_source_buffer_new_with_language(source_language);
-  system_browser_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(system_browser_source_buffer);
-}
-
-void set_up_workspace_source_buffer()
-{
-  workspace_source_buffer = gtk_source_buffer_new_with_language(source_language);
-  workspace_source_view = (GtkSourceView *)gtk_source_view_new_with_buffer(workspace_source_buffer);
 }
 
 typedef struct
@@ -1043,12 +1049,12 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
   //print_ui_copyright_notice();
   print_to_transcript(text);
 
-  if(!image_mode)
-  {
-    lm = gtk_source_language_manager_get_default();
-    setup_language_manager_path(lm);
-    source_language = gtk_source_language_manager_get_language(lm, "plisp");
-  }
+  /* if(!image_mode) */
+  /* { */
+  /*   lm = gtk_source_language_manager_get_default(); */
+  /*   setup_language_manager_path(lm); */
+  /*   source_language = gtk_source_language_manager_get_language(lm, "plisp"); */
+  /* } */
 
   //gtk_window_set_keep_above(transcript_window, TRUE);
 }
@@ -1902,6 +1908,10 @@ void show_splash_screen()
   gtk_widget_show_all((GtkWidget *)splash_window);
   gtk_window_set_auto_startup_notification(TRUE);
 
+  lm = gtk_source_language_manager_get_default();
+  setup_language_manager_path(lm);
+  source_language = gtk_source_language_manager_get_language(lm, "plisp");
+  
   while (gtk_events_pending())
     gtk_main_iteration();
 
