@@ -105,7 +105,7 @@ Where is the documentation?
 ---------------------------
 Online help is available within pLisp, a link:https://github.com/shikantaza/pLisp/raw/master/doc/pLisp_User_Manual.pdf[user manual] and a link:http://htmlpreview.github.com/?https://github.com/shikantaza/pLisp/blob/master/doc/help.html[language reference] document are also available. I have link:http://shikantaza.blogspot.com/2013/04/building-lisp-interpreter-from-scratch.html[some blog posts] that talk about pLisp internals. I may expand these posts into a developers' manual in the future.
 
-link:https://european-lisp-symposium.org/static/2018/jayaprakash.pdf[Here] is a short paper on pLisp from ELS 2018.
+link:https://european-lisp-symposium.org/static/2018/jayaprakash.pdf[Here] is a short paper on pLisp in ELS 2018, and a link:https://doi.org/10.5281/zenodo.3740941[paper] on the pLisp compiler in ELS 2020.
 
 Installing pLisp From Source
 ----------------------------
