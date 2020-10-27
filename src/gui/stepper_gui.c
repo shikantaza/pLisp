@@ -86,7 +86,7 @@ void close_stepper_window()
 void continue_stepper(GtkWidget *widget,
                       gpointer data)
 {
-  gtk_widget_hide((GtkWidget *)stepper_window);
+  //gtk_widget_hide((GtkWidget *)stepper_window);
   run_to_completion = false;
   step_over = false;
   gtk_main_quit();
@@ -95,7 +95,7 @@ void continue_stepper(GtkWidget *widget,
 void run_complete(GtkWidget *widget,
                   gpointer data)
 {
-  gtk_widget_hide((GtkWidget *)stepper_window);
+  //gtk_widget_hide((GtkWidget *)stepper_window);
   gtk_main_quit();
   run_to_completion = true;
 }
@@ -103,7 +103,7 @@ void run_complete(GtkWidget *widget,
 void abort_stepper(GtkWidget *widget,
                    gpointer data)
 {
-  gtk_widget_hide((GtkWidget *)stepper_window);  
+  //gtk_widget_hide((GtkWidget *)stepper_window);  
   gtk_main_quit();
   abrt_stepper = true;
 }
@@ -111,7 +111,7 @@ void abort_stepper(GtkWidget *widget,
 void step_over_cb(GtkWidget *widget,
                   gpointer data)
 {
-  gtk_widget_hide((GtkWidget *)stepper_window);  
+  //gtk_widget_hide((GtkWidget *)stepper_window);  
   gtk_main_quit();
   step_over = true;
   step_over_continuation = dummy;

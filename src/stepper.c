@@ -1761,15 +1761,15 @@ OBJECT_PTR step(OBJECT_PTR exp)
   {
     handle_stepper_exception();
     stepper_mode = false;
+    close_stepper_window();
     return NIL;
   }
   else
   {
-    return res;
     stepper_mode = false;
+    close_stepper_window();
+    return res;
   }
-
-  close_stepper_window();
 }
 
 
