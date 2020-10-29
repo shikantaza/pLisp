@@ -129,7 +129,7 @@ You will need autoconf, automate, libtool, GCC, and g++ to install pLisp. In add
 * Flex and Bison
 * The GTK+ 3.0 (http://www.gtk.org/) development package (libgtk-3-dev)
 * The GtkSourceview3 (https://wiki.gnome.org/Projects/GtkSourceView) development package (libgtksourceview-3.0-dev)
-* link:http://releases.llvm.org/download.html#8.0.0[LLVM/Clang]
+* link:http://releases.llvm.org/download.html#8.0.0[LLVM/Clang] (*Note:* pLisp needs LLVM 8.0; yet to  port to and test with later versions)
 * The libffi (https://sourceware.org/libffi/) package (libffi6)
 * The Boehm Garbage Collector (https://www.hboehm.info/gc/gc_source/)
 
