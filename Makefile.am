@@ -84,7 +84,7 @@ if !WINDOWS
 if !LINUXI686
 clang_LIBS = -lclangCodeGen  -lclangFrontend -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangEdit -lclangAST -lclangLex -lclangBasic
 libplispjitllvm_la_SOURCES = src/jit_llvm.cpp
-libplispjitllvm_la_CXXFLAGS = -std=c++11 -fPIC -fno-rtti `$(LLVMDIR)/bin/llvm-config --cflags` 
+libplispjitllvm_la_CXXFLAGS = -std=c++14 -fPIC -fno-rtti `$(LLVMDIR)/bin/llvm-config --cflags` 
 libplispjitllvm_la_LDFLAGS = `$(LLVMDIR)/bin/llvm-config --ldflags` -no-undefined -avoid-version $(clang_LIBS) `$(LLVMDIR)/bin/llvm-config --libs` -lz -lncurses -pthread -ldl
 endif
 endif

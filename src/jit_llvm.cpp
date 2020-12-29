@@ -36,7 +36,7 @@
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 //#include "llvm/Support/FileSystem.h"
-//#include "llvm/Support/Host.h"
+#include "llvm/Support/Host.h"
 //#include "llvm/Support/ManagedStatic.h"
 //#include "llvm/Support/Path.h"
 #include "llvm/Support/TargetSelect.h"
@@ -78,13 +78,14 @@ public:
   SimpleJIT()
       : Resolver(createLegacyLookupResolver(
             ES,
-            [this](const std::string &Name) -> JITSymbol {
-              if (auto Sym = CompileLayer.findSymbol(Name, false))
+            //[this](const std::string &Name) -> JITSymbol {
+            [this](const llvm::StringRef Name) -> JITSymbol {
+              if (auto Sym = CompileLayer.findSymbol(Name.data(), false))
                 return Sym;
               else if (auto Err = Sym.takeError())
                 return std::move(Err);
               if (auto SymAddr =
-                      RTDyldMemoryManager::getSymbolAddressInProcess(Name))
+                  RTDyldMemoryManager::getSymbolAddressInProcess(Name.data()))
                 return JITSymbol(SymAddr, JITSymbolFlags::Exported);
               return nullptr;
             },
@@ -201,12 +202,19 @@ std::unique_ptr<llvm::Module> convert_file_to_module(const char * c_file_name) {
   // Initialize a compiler invocation object from the clang (-cc1) arguments.
   const llvm::opt::ArgStringList &CCArgs = Cmd.getArguments();
   std::unique_ptr<CompilerInvocation> CI(new CompilerInvocation);
+
+  llvm::ArrayRef<const char *> ar(CCArgs.data(), CCArgs.size());
+  
+  // CompilerInvocation::CreateFromArgs(*CI,
+  //                                    const_cast<const char **>(CCArgs.data()),
+  //                                    const_cast<const char **>(CCArgs.data()) +
+  //                                      CCArgs.size(),
+  //                                    Diags);
   CompilerInvocation::CreateFromArgs(*CI,
-                                     const_cast<const char **>(CCArgs.data()),
-                                     const_cast<const char **>(CCArgs.data()) +
-                                       CCArgs.size(),
+                                     ar,
                                      Diags);
-    
+
+  
   // Create a compiler instance to handle the actual work.
   CompilerInstance Clang;
   Clang.setInvocation(std::move(CI));
