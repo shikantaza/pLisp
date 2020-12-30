@@ -1,0 +1,5 @@
+32-bit Linux debs are being discontinued as there seems to be some issue with code autocompletion, causing pLisp to crash.
+
+0.1.29 is the most recent (and probably the last) 32-bit Linux version.
+
+Since x86_64/amd64 is the dominant architecture, this should not have much of an impact anyway. 
