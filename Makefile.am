@@ -29,7 +29,7 @@ noinst_PROGRAMS = docgen
 
 docgen_SOURCES = tools/docgen.c src/util.c src/util.h src/json.h src/jsonlib.c src/json.l src/json_parser.y
 
-docgen_LDADD = -lgc $(LIBS)
+docgen_LDADD = -lgc $(LIBS) -ldl
 
 AM_CFLAGS = -DPLISPDATADIR=\"$(pkgdatadir)\" ${gtk_CFLAGS} ${gtksourceview_CFLAGS} ${libffi_CFLAGS}
 
@@ -50,7 +50,7 @@ ACLOCAL_AMFLAGS = -I m4 --install
 if WINDOWS
 plisp_LDADD = ${AM_LIBS} -lgc $(LIBS) libplispjitllvm.la -lversion -lstdc++ -ldl
 else
-plisp_LDADD = ${AM_LIBS} -lgc $(LIBS) libplispjitllvm.la
+plisp_LDADD = ${AM_LIBS} -lgc $(LIBS) libplispjitllvm.la -ldl
 endif
 
 lib_LTLIBRARIES = libplisp.la libtest.la libplispjitllvm.la

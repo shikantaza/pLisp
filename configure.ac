@@ -36,7 +36,7 @@ AM_PROG_CC_C_O
 
 AC_PROG_CXX
 
-AC_SEARCH_LIBS([dlopen], [dl], [], [])
+#AC_SEARCH_LIBS([dlopen], [dl], [], [])
 
 PKG_CHECK_MODULES([gtk], [gtk+-3.0 >= 3.4.2])
 PKG_CHECK_MODULES([gtksourceview], [gtksourceview-3.0 >= 3.4.2])
