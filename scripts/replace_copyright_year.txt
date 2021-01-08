@@ -1,0 +1,5 @@
+1. Use this command to replace the copyright year in all the text/source files
+2. Run it from the root of the repository ('pLisp' directory)
+3. Replace the years as needed
+
+for i in `find . -type f -exec grep -lI "2011-2021 Rajesh" {} \;`; do sed -i 's/2021 Rajesh/2021 Rajesh/g' $i; done
