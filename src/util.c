@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <ctype.h>
 
-#ifdef WIN32
+#ifdef _WIN64
 #include <windows.h>
 #else
 #include <dlfcn.h>
@@ -297,7 +297,7 @@ void *open_library(char *fname)
 {
   void *ret;
   
-#ifdef WIN32
+#ifdef _WIN64
   unsigned int len = strlen(fname) + 5; //four characters for ".dll"
 
   char *buf = (char *)GC_MALLOC(len); 
@@ -306,7 +306,7 @@ void *open_library(char *fname)
   strcat(buf, fname);
   strcat(buf, ".dll");
 
-  ret= LoadLibrary(fname);
+  ret= LoadLibrary(buf);
 
   //free(buf);
 #else

@@ -190,7 +190,7 @@ std::unique_ptr<llvm::Module> convert_file_to_module(const char * c_file_name) {
   Args.push_back("a.out");
   Args.push_back(c_file_name);
   Args.push_back("-O2");
-  Args.push_back("-Wno-everything"); //to disable warnings, specifically 'missing return statement in function'
+  Args.push_back("-Wno-return-type"); //to disable 'non-void function does not return a value' warning
   std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(Args));
   if (!C)
     return 0;
@@ -243,8 +243,12 @@ std::unique_ptr<llvm::Module> compile_fns_internal(const char * c_source) {
 
   std::unique_ptr<llvm::Module> module = convert_file_to_module("plisp_jit_temp.c");
 
+#ifdef _WIN64
+  system("del plisp_jit_temp.c");
+#else
   system("rm plisp_jit_temp.c");
-
+#endif
+  
   return module;
 }
 
