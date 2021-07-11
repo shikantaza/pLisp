@@ -858,7 +858,7 @@ void rename_sym()
 
       int package_index = extract_package_index((OBJECT_PTR)ptr);
 
-      int index = find_symbol(trimmed_buf, package_index);
+      int index = find_symbol(convert_to_upper_case(trimmed_buf), package_index);
 
       OBJECT_PTR new_sym_obj;
       
