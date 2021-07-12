@@ -1664,15 +1664,15 @@ gboolean handle_key_press_events(GtkWidget *widget, GdkEventKey *event, gpointer
 
     delete_package_or_symbol();
   }
-  else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_KEY_F2)
-  {
-    action_triggering_window = system_browser_window;
+  /* else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_KEY_F2) */
+  /* { */
+  /*   action_triggering_window = system_browser_window; */
     
-    if(!check_for_sys_browser_changes())
-      return TRUE;
+  /*   if(!check_for_sys_browser_changes()) */
+  /*     return TRUE; */
 
-    rename_sym();
-  }
+  /*   rename_sym(); */
+  /* } */
   else if(widget == (GtkWidget *)system_browser_window && event->keyval == GDK_KEY_F5)
   {
     action_triggering_window = system_browser_window;

@@ -654,7 +654,7 @@ GtkToolbar *create_system_browser_toolbar()
   gtk_toolbar_insert((GtkToolbar *)toolbar, new_symbol_button, 1);
 
   GtkToolItem *rename_button = gtk_tool_button_new(rename_icon, NULL);
-  gtk_tool_item_set_tooltip_text(rename_button, "Rename symbol (F2)");
+  gtk_tool_item_set_tooltip_text(rename_button, "Rename symbol");
   g_signal_connect (rename_button, "clicked", G_CALLBACK (rename_symbol), system_browser_window);
   gtk_toolbar_insert((GtkToolbar *)toolbar, rename_button, 2);
   
