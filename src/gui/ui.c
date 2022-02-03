@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2021 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>
+  Copyright 2011-2022 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>
 
   This file is part of pLisp.
 
@@ -308,7 +308,7 @@ void print_to_workspace(char * str)
 void print_ui_copyright_notice()
 {
   //print_to_transcript("pLisp is an interpreter for a Lisp-1 dialect.\n\n");
-  print_to_transcript("Copyright 2011-2021 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>\n\n");
+  print_to_transcript("Copyright 2011-2022 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>\n\n");
   print_to_transcript("pLisp is free software: you can redistribute it and/or modify\n");
   print_to_transcript("it under the terms of the GNU General Public License as published by\n");
   print_to_transcript("the Free Software Foundation, either version 3 of the License, or\n");

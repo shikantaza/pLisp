@@ -2,4 +2,4 @@
 2. Run it from the root of the repository ('pLisp' directory)
 3. Replace the years as needed
 
-for i in `find . -type f -exec grep -lI "2011-2021 Rajesh" {} \;`; do sed -i 's/2021 Rajesh/2021 Rajesh/g' $i; done
+for i in `find . -type f -exec grep -lI "2011-2022 Rajesh" {} \;`; do sed -i 's/2022 Rajesh/2022 Rajesh/g' $i; done
