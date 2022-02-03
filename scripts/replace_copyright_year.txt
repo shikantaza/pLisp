@@ -3,3 +3,7 @@
 3. Replace the years as needed
 
 for i in `find . -type f -exec grep -lI "2011-2022 Rajesh" {} \;`; do sed -i 's/2022 Rajesh/2022 Rajesh/g' $i; done
+
+To change the year in the splash screen, edit the PPTX file in LibreOffice, take screenshot in slide show mode,
+and use the command 'convert -resize 529x296 splash.png splash1.png' (rename splash1.png to splash.png
+after running the command)
