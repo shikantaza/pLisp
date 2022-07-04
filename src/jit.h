@@ -24,7 +24,11 @@
 
 typedef uintptr_t OBJECT_PTR;
 
+#if __aarch64__
+typedef OBJECT_PTR (*nativefn)();
+#else
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
+#endif
 
 void initializeJIT();
 nativefn get_function(void *, const char *);

@@ -180,6 +180,8 @@ extern void new_source_file();
 
 extern BOOLEAN is_core_symbol(char *);
 
+extern void set_up_autocomplete_words();
+
 //extern hashtable_t *profiling_tab;
 
 void evaluate();

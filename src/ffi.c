@@ -32,7 +32,11 @@
 
 #include "memory.h"
 
+#if __aarch64__
+typedef OBJECT_PTR (*nativefn)();
+#else
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
+#endif
 
 extern OBJECT_PTR CAAR(OBJECT_PTR);
 extern OBJECT_PTR CADAR(OBJECT_PTR);
@@ -522,27 +526,34 @@ int format(OBJECT_PTR args)
     return -1;
   }
 
+  FILE *fp;
+  
   int    i_val, *i_val_ptr;
   double d_val, *d_val_ptr;
   char   c_val, *c_val_ptr;
 
   i=0;
 
-#if __x86_64__
-  arg_types[i] = &ffi_type_ulong;
-#else
-  arg_types[i] = &ffi_type_sint;
-#endif
-  arg_values[i] = (int *)GC_MALLOC(sizeof(int));
+/* #if __x86_64__ */
+/*   arg_types[i] = &ffi_type_ulong; */
+/* #else */
+/*   arg_types[i] = &ffi_type_sint; */
+/* #endif */
+  arg_types[i] = &ffi_type_pointer;
+  //arg_values[i] = (int *)GC_MALLOC(sizeof(int));
+  arg_values[i] = (FILE  **)GC_MALLOC(sizeof(FILE *));
 
   if(car(args) == NIL)
-    i_val = (int)stdout;
+    //i_val = (int)stdout;
+    fp = stdout;
   else
     //i_val = get_int_value(car(args));
-    i_val = (int)fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
-
-  *(int *)arg_values[i] = i_val;
-
+    //i_val = (int)fdopen(get_int_value(car(args)), "w"); //append mode node supported for format
+    fp = fdopen(get_int_value(car(args)), "w");
+    
+  //*(int *)arg_values[i] = i_val;
+  *(FILE **)arg_values[i] = fp;
+  
   i++;
 
   OBJECT_PTR rest_args = cdr(args);
@@ -780,6 +791,8 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
 #if __x86_64__
   arg_types[i] = &ffi_type_uint64;
+#elif __aarch64__
+  arg_types[i] = &ffi_type_uint64;
 #else
   arg_types[i] = &ffi_type_uint;
 #endif
@@ -797,6 +810,8 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
   {
 #if __x86_64__
     arg_types[i] = &ffi_type_uint64;
+#elif __aarch64__
+    arg_types[i] = &ffi_type_uint64;
 #else
     arg_types[i] = &ffi_type_uint;
 #endif
@@ -809,6 +824,8 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
 #if __x86_64__
   arg_types[i] = &ffi_type_uint64;
+#elif __aarch64__
+  arg_types[i] = &ffi_type_uint64;
 #else
   arg_types[i] = &ffi_type_uint;
 #endif
@@ -820,6 +837,8 @@ OBJECT_PTR apply_macro_or_fn(OBJECT_PTR macro_or_fn_obj, OBJECT_PTR args)
 
 #if __x86_64__
   status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_uint64, arg_types);
+#elif __aarch64__
+  status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_uint64, arg_types);  
 #else
   status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nof_args, &ffi_type_uint, arg_types);
 #endif

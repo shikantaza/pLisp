@@ -300,7 +300,11 @@ extern OBJECT_PTR primitive_macrop(OBJECT_PTR);
 extern OBJECT_PTR primitive_contp(OBJECT_PTR);
 
 extern OBJECT_PTR primitive_string(OBJECT_PTR);
+#if __aarch64__
+extern OBJECT_PTR prim_make_array();
+#else
 extern OBJECT_PTR prim_make_array(OBJECT_PTR, ...);
+#endif
 extern OBJECT_PTR prim_array_set(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR prim_array_get(OBJECT_PTR, OBJECT_PTR);
 extern OBJECT_PTR prim_sub_array(OBJECT_PTR, OBJECT_PTR, OBJECT_PTR);
@@ -3120,6 +3124,8 @@ char *extract_variable_string(OBJECT_PTR var, BOOLEAN serialize_flag)
       else
 #if __x86_64__
         sprintf(s, "%lld", (long long)var);
+#elif __aarch64__
+        sprintf(s, "%lld", (long long)var);      
 #else
         sprintf(s, "%d", (int)var);
 #endif
@@ -3367,6 +3373,8 @@ unsigned int build_c_fragment(OBJECT_PTR exp, char *buf, BOOLEAN nested_call, BO
       {
 #if __x86_64__
 	len += sprintf(buf+len, "%lld", (long long)second(exp));
+#elif __aarch64__
+        len += sprintf(buf+len, "%lld", (long long)second(exp));
 #else
         len += sprintf(buf+len, "%d", (long long)second(exp));
 #endif
@@ -5993,6 +6001,8 @@ char *generate_lst_construct(OBJECT_PTR exp)
       else
 #if __x86_64__
 	len += sprintf(buf+len, "%lld", (long long)obj);
+#elif __aarch64__
+	len += sprintf(buf+len, "%lld", (long long)obj);      
 #else
         len += sprintf(buf+len, "%d", (long long)obj);
 #endif
@@ -6585,7 +6595,11 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
   len += sprintf(buf+len, "#include <stdint.h>\n");
 #endif
   
+#if __aarch64__
+  len += sprintf(buf+len, "typedef uintptr_t (*nativefn)();\n");
+#else  
   len += sprintf(buf+len, "typedef uintptr_t (*nativefn)(uintptr_t, ...);\n");
+#endif
   
   len += sprintf(buf+len, "uintptr_t nth1(uintptr_t, uintptr_t);\n");
   len += sprintf(buf+len, "void save_continuation(uintptr_t);\n");
@@ -6641,7 +6655,11 @@ unsigned int build_fn_prototypes(char *buf, unsigned int offset)
   len += sprintf(buf+len, "uintptr_t primitive_contp(uintptr_t);\n");
 
   len += sprintf(buf+len, "uintptr_t primitive_string(uintptr_t);\n");
+#if __aarch64__
+  len += sprintf(buf+len, "uintptr_t prim_make_array(uintptr_t, uintptr_t, uintptr_t);\n");
+#else  
   len += sprintf(buf+len, "uintptr_t prim_make_array(uintptr_t, ...);\n");
+#endif  
   len += sprintf(buf+len, "uintptr_t prim_array_set(uintptr_t, uintptr_t, uintptr_t);\n");
   len += sprintf(buf+len, "uintptr_t prim_array_get(uintptr_t, uintptr_t);\n");
   len += sprintf(buf+len, "uintptr_t prim_sub_array(uintptr_t, uintptr_t, uintptr_t);\n");

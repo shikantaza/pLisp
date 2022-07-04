@@ -1143,6 +1143,24 @@ OBJECT_PTR primitive_string(OBJECT_PTR string_literal)
   return eval_string(string_literal);
 }
 
+#if __aarch64__
+OBJECT_PTR prim_make_array(OBJECT_PTR count1, OBJECT_PTR size, OBJECT_PTR default_value, ...)
+{
+  va_list ap;
+
+  unsigned int count = get_int_value(count1);
+
+  va_start(ap, default_value);
+
+  if((!(IS_INTEGER_OBJECT(size))))
+  {
+    throw_exception1("INVALID-ARGUMENT", "First argument to MAKE-ARRAY should be the size of the array (integer)");
+    return NIL;
+  }        
+
+  return eval_make_array(size, default_value);
+}
+#else
 OBJECT_PTR prim_make_array(OBJECT_PTR count1, OBJECT_PTR size, ...)
 {
   va_list ap;
@@ -1161,6 +1179,7 @@ OBJECT_PTR prim_make_array(OBJECT_PTR count1, OBJECT_PTR size, ...)
 
   return eval_make_array(size, default_value);
 }
+#endif
 
 OBJECT_PTR prim_array_set(OBJECT_PTR array_obj, OBJECT_PTR idx, OBJECT_PTR val)
 {

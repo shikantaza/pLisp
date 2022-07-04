@@ -176,7 +176,11 @@ typedef unsigned int (*cmpfn)();
 
 typedef enum {IN_CODE, IN_STRING_LITERAL, IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT} cursor_pos_t;
 
+#if __aarch64__
+typedef OBJECT_PTR (*nativefn)();
+#else
 typedef OBJECT_PTR (*nativefn)(OBJECT_PTR, ...);
+#endif
 
 //see definition of global_var_ref_t
 typedef struct global_var_ref_detail
