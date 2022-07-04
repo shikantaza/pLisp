@@ -467,11 +467,22 @@
 
 (in-package "unit-tests-core")
 
-(format nil 
-          "%d of %d test cases passed (%.2f%%)" 
-          passed-cases 
-          (+ passed-cases failed-cases) 
-          (/ (* 100.0 passed-cases) (* 1.0 (+ passed-cases failed-cases))))
+;;(format nil 
+;;          "%d of %d test cases passed (%.2f%%)" 
+;;          passed-cases 
+;;          (+ passed-cases failed-cases) 
+;;          (/ (* 100.0 passed-cases) (* 1.0 (+ passed-cases failed-cases))))
 
-(if (not (eq failed-cases 0))
-    (format nil "ATTENTION! Some unit test cases have failed."))
+;;(if (not (eq failed-cases 0))
+;;    (format nil "ATTENTION! Some unit test cases have failed."))
+
+(progn (print "Passed test cases")
+       (print passed-cases)
+
+       (print "Total test cases")
+       (print (+ passed-cases failed-cases))
+
+       (if (not (eq failed-cases 0))
+           (print "ATTENTION! Some unit test cases have failed."))
+
+       nil)
