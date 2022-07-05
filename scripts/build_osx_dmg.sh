@@ -1,31 +1,64 @@
 #!/bin/sh
 
-ver=$1
+# This script updates the pLisp.App directory structure
+# with the latest version of the pLisp artifacts. The
+# updated pLisp.App directory can then be packaged
+# as a DMG file for deployment and distribution.
+
+# Prerequisites:
+# 1. Existing pLisp.App directory (extracted from the
+#    most recent version of the DMG file)
+# 2. Info.plist (in the osx_bundle directory) has been
+#    updated with the latest version information
+
+# Location of pLisp.App directory
+# E.g., $HOME/temp/pLisp.App
+appdir=$1
+
+if [ ! -d "$appdir" ]; then
+    echo "appdir does not exist"
+    exit
+fi
+
+# Location where plisp artifacts are to be generated
+# E.g., $HOME/temp/plisp
+builddir=$2
+
+if [ ! -d "$builddir" ]; then
+    mkdir "$builddir"
+fi
+
+sudo rm -rf $builddir/*
 
 cd ../
 
 export PATH=$PREFIX/bin:~/.local/bin:$PATH
 
-CFLAGS="-I/usr/local/include -D__OSX_BUNDLE__"
+export CFLAGS="-I/opt/homebrew/include -L/opt/homebrew/lib -D__OSX_BUNDLE__"
 
-make distclean
+sudo make distclean
 
-./configure LLVMDIR=/Users/a103035/clang+llvm-11.0.0-x86_64-apple-darwin/
+./configure --prefix=$builddir LLVMDIR=/opt/homebrew/opt/llvm@11
 
 sudo make install
 
-cd osx_bundle
+cp $builddir/bin/plisp $appdir/Contents/MacOS/pLisp-bin
 
-gtk-mac-bundler plisp.bundle
+cp osx_bundle/Info-plisp.plist $appdir/Contents/Info.plist
+cp osx_bundle/plisp.icns $appdir/Contents/Resources
 
-cp /usr/lib/libz.1.dylib ~/Desktop/pLisp.app/Contents/Resources/lib
+cp $builddir/lib/libplisp.dylib $appdir/Contents/Resources/lib
+cp $builddir/lib/libplispjitllvm.dylib $appdir/Contents/Resources/lib
 
-cd ~/Desktop/pLisp.app/Contents/MacOS
+cp $builddir/share/doc/plisp/help.html $appdir/Contents/Resources/share/doc/plisp
+cp $builddir/share/doc/plisp/pLisp_User_Manual.pdf $appdir/Contents/Resources/share/doc/plisp
+cp $builddir/share/doc/plisp/tutorial.lisp $appdir/Contents/Resources/share/doc/plisp
 
-sed -i -e 's/gtk-2.0/gtk-3.0/g' pLisp
+cp $builddir/share/plisp/help.json $appdir/Contents/Resources/share/plisp
+cp $builddir/share/plisp/plisp.lang $appdir/Contents/Resources/share/plisp
+cp $builddir/share/plisp/plisp_full_monty_compiler.lisp $appdir/Contents/Resources/share/plisp
+cp $builddir/share/plisp/icons/* $appdir/Contents/Resources/share/plisp/icons
 
-cd ~/Desktop/pLisp.app/Contents/Resources/etc/gtk-3.0
-
-sed -i -e 's/\/Users\/a103035\/gtk\/inst/@executable_path\/\.\.\/Resources/g' gdk-pixbuf.loaders
+sudo rm -rf $builddir
 
 exit

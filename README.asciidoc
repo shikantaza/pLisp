@@ -91,11 +91,7 @@ Before running pLisp, ensure that the PATH environment variable has been updated
 OS X
 ~~~~
 
-Double-click the downloaded .DMG file and drag the pLisp application to the directory of your choice (typically 'Applications'). You can then run pLisp as you w
-ould any other OS X application (from the Launcher, Spotlight, and so on). Pleas
-e note that this will launch pLisp in the current user's home directory, so if y
-ou would like automatic opening of an image on startup, you should create/save t
-he image as 'plisp.image' in your home directory.
+Unzip the downloaded zip file and move the pLisp application (pLisp.app) to the directory of your choice (typically 'Applications'). You can then run pLisp as you w ould any other OS X application (from the Launcher, Spotlight, and so on). Please note that this will launch pLisp in the current user's home directory, so if you would like automatic opening of an image on startup, you should create/save the image as 'plisp.image' in your home directory.
 
 How do I report bugs and other issues?
 --------------------------------------
@@ -129,7 +125,7 @@ You will need autoconf, automate, libtool, GCC, and g++ to install pLisp. In add
 * Flex and Bison
 * The GTK+ 3.0 (http://www.gtk.org/) development package (libgtk-3-dev)
 * The GtkSourceview3 (https://wiki.gnome.org/Projects/GtkSourceView) development package (libgtksourceview-3.0-dev)
-* link:https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz[LLVM/Clang] (pLisp has been ported to use LLVM 11.0.0; may not compile with earlier versions of LLVM)
+* link:https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.0/clang+llvm-11.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz[LLVM/Clang] (pLisp has been ported to use LLVM 11.0.0; may not compile with earlier or later versions of LLVM)
 * The libffi (https://sourceware.org/libffi/) package (libffi6)
 * The Boehm Garbage Collector (https://www.hboehm.info/gc/gc_source/)
 
@@ -140,26 +136,29 @@ To build and install pLisp, type './configure LLVMDIR=<llvmdir>' (where <llvmdir
 OS X
 ~~~~
 
-* Install pkg-config using link:http://brew.sh[Homebrew]
+(Note: due to issues with the app bundling process for OS X, we need to start with an existing app bundle for building/deploying pLisp in OS X)
 
-* Install GTK3 using the link:https://wiki.gnome.org/Projects/GTK+/OSX/Building[jhbuild] system:
+You will need Homebrew link:http://brew.sh[Homebrew] to install pLisp's dependencies. Install the toolchain and packages mentioned above for Linux (64 bit) using Homebrew.
 
-    ./gtk-osx-build-setup.sh
-    jhbuild bootstrap
-    jhbuild build meta-gtk-osx-bootstrap meta-gtk-osx-gtk3
+Once these dependencies have been installed, install pLisp by following these steps:
 
-* Install GtkSourceView3, again using jhbuild:
+* Download the latest zip file (e.g., pLisp-0.1.30.zip) from the 'pLisp/downloads/osx' directory.
 
-    jhbuild build gtksourceview3
+* Copy/Move the pLisp.app directory from the above zip file to a directory of your choice (say, TEMP; e.g., ~/temp).
 
-* Install link:http://releases.llvm.org/download.html#8.0.0[LLVM/Clang] using the DMG file from the LLVM website
+* Open a Terminal and navigate to the 'pLisp/scripts' directory.
 
-* Install the link:https://www.hboehm.info/gc/gc_source/[Boehm Garbage Collector]  using './configure; make; sudo make install'.
+* Update the PATH, CFLAGS, and LLVMDIR in the build_osx_dmg.sh script in this directory to match your setup.
 
-* Install pLisp by entering into a jhbuild shell and typing './configure LLVMDIR=<llvmdir>' (where <llvmdir> is the directory where LLVM/Clang is installed), 'make', and 'sudo make install' at the command line after navigating to the directory to which you downloaded/extracted the pLisp files.
+* run 'sh ./build_osx_dmg.sh TEMP/pLisp.app TEMP/plisp'. This will build pLisp and update the pLisp.app directory with the latest version.
+
+* Drag/Move the updated pLisp.app directory to the Applications directory.
+
+Once thus installed, pLisp can be invoked by the usual means (Launcher, Spotlight, etc.).
 
 Windows
 ~~~~~~~
+
 * Install link:http://www.msys2.org[MSYS2]
 
 * Install gcc, make, flex, bison, pkg-config, GTK3, GtkSourceView3 using the pacman utility from an MSYS2 shell:
