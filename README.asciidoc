@@ -136,6 +136,12 @@ To build and install pLisp, type './configure LLVMDIR=<llvmdir>' (where <llvmdir
 OS X
 ~~~~
 
+**Option #1: The conventional route**
+
+The same steps to be followed for Linux 64-bit can be followed, with the dependencies to be installed using Homebrew. pLisp will be installed in /usr/local/bin, and you can invoke it from a Terminal session (or create a OS X command script).
+
+**Option #2: Building and Deploywing pLisp as an OS X application**
+
 (Note: due to issues with the app bundling process for OS X, we need to start with an existing app bundle for building/deploying pLisp in OS X)
 
 You will need Homebrew link:http://brew.sh[Homebrew] to install pLisp's dependencies. Install the toolchain and packages mentioned above for Linux (64 bit) using Homebrew.
