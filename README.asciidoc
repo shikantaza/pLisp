@@ -138,7 +138,7 @@ OS X
 
 **Option #1: The conventional route**
 
-The same steps to be followed for Linux 64-bit can be followed, with the dependencies to be installed using Homebrew. pLisp will be installed in /usr/local/bin, and you can invoke it from a Terminal session (or create a OS X command script).
+The same steps to be followed for Linux 64-bit can be followed, with the dependencies to be installed using Homebrew. pLisp will be installed in /usr/local/bin, and you can invoke it from a Terminal session (or create an OS X command script).
 
 **Option #2: Building and Deploywing pLisp as an OS X application**
 
