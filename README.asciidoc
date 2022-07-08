@@ -24,6 +24,8 @@ _The only thing left to do is to add whatever is needed to open a lot of little 
 
 <<where-is-the-documentation, Where is the documentation?>>
 
+<<installing-plisp-from-source, Installing pLisp From Source>>
+
 What is pLisp?
 --------------
 
