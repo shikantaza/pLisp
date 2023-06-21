@@ -1,5 +1,5 @@
 /**
-  Copyright 2011-2022 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>
+  Copyright 2011-2023 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>
 
   This file is part of pLisp.
 
@@ -32,7 +32,7 @@
 
 extern GtkWindow *transcript_window;
 
-char *default_transcript_text =  "Copyright 2011-2022 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>\n\n"
+char *default_transcript_text =  "Copyright 2011-2023 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>\n\n"
                                  "pLisp is free software: you can redistribute it and/or modify\n"
                                  "it under the terms of the GNU General Public License as published by\n"
                                  "the Free Software Foundation, either version 3 of the License, or\n"
