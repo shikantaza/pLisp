@@ -95,7 +95,7 @@ Unzip the downloaded zip file and move the pLisp application (pLisp.app) to the 
 
 How do I report bugs and other issues?
 --------------------------------------
-You can email me at rajesh dot jayaprakash at gmail dot com, or use the ‘Issues’ feature in Github.
+You can email me at rajesh dot jayaprakash at pm dot me, or use the ‘Issues’ feature in Github.
 
 Where is the documentation?
 ---------------------------
