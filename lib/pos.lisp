@@ -1,4 +1,4 @@
-;;  Copyright 2011-2023 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>
+;;  Copyright 2011-2024 Rajesh Jayaprakash <rajesh.jayaprakash@pm.me>
 
 ;;  This file is part of pLisp.
 
