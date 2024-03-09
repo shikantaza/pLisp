@@ -107,7 +107,7 @@ Installing pLisp From Source
 ----------------------------
 Linux - 32-bit
 ~~~~~~~~~~~~~~
-You will need autoconf, automate, libtool, and GCC to install pLisp. In addition, the following dependencies need to be taken care of:
+You will need autoconf, automake, libtool, and GCC to install pLisp. In addition, the following dependencies need to be taken care of:
 
 * Flex and Bison
 * The link:http://www.gtk.org/[GTK+] 3.0 development package (libgtk-3-dev)
@@ -120,7 +120,7 @@ All these packages can be installed using the package manager that comes with yo
 
 Linux - 64-bit
 ~~~~~~~~~~~~~~
-You will need autoconf, automate, libtool, GCC, and g++ to install pLisp. In addition, the following dependencies need to be taken care of:
+You will need autoconf, automake, libtool, GCC, and g++ to install pLisp. In addition, the following dependencies need to be taken care of:
 
 * Flex and Bison
 * The GTK+ 3.0 (http://www.gtk.org/) development package (libgtk-3-dev)
