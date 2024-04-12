@@ -1674,7 +1674,7 @@ OBJECT_PTR simplify_il_copy_prop(OBJECT_PTR exp)
           IS_SYMBOL_OBJECT(second(first(second(exp)))))  //   symbols
     return subst(second(first(second(exp))),
                  first(first(second(exp))),
-                 third(exp));
+                 simplify_il_copy_prop(third(exp)));
   else
     return cons(simplify_il_copy_prop(car(exp)),
                 simplify_il_copy_prop(cdr(exp)));
