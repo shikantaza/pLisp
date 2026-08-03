@@ -190,10 +190,10 @@ void add_package_keywords(int package_index)
 
     if(extract_package_index(top_level_symbols[i].sym) == package_index)
     {
-      gtk_text_buffer_insert_at_cursor(keywords_buffer,
+      gtk_text_buffer_insert_at_cursor(GTK_TEXT_BUFFER(keywords_buffer),
                                        convert_to_lower_case(GC_strdup(get_symbol_name(top_level_symbols[i].sym))),
                                        -1);
-      gtk_text_buffer_insert_at_cursor(keywords_buffer,
+      gtk_text_buffer_insert_at_cursor(GTK_TEXT_BUFFER(keywords_buffer),
                                        "\n",
                                        -1);
     }
@@ -239,7 +239,7 @@ void set_up_system_browser_source_buffer()
   GValue gv = G_VALUE_INIT;
   g_value_init(&gv, G_TYPE_BOOLEAN);
   g_value_set_boolean(&gv, FALSE);
-  g_object_set_property(sc1, "show-headers", &gv);
+  g_object_set_property(G_OBJECT(sc1), "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
 
   
@@ -254,7 +254,7 @@ void set_up_workspace_source_buffer()
   GValue gv = G_VALUE_INIT;
   g_value_init(&gv, G_TYPE_BOOLEAN);
   g_value_set_boolean(&gv, FALSE);
-  g_object_set_property(sc1, "show-headers", &gv);
+  g_object_set_property(G_OBJECT(sc1), "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
 
 }
@@ -413,6 +413,9 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   workspace_window = (GtkWindow *)win;
 
 #ifdef WIN_BUILD
@@ -444,7 +447,8 @@ void create_workspace_window(int posx, int posy, int width, int height, char *te
   //GtkWidget *textview = gtk_text_view_new ();
   GtkWidget *textview = (GtkWidget *)workspace_source_view;
 
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), font);
+  pango_font_description_free(font);
 
   //workspace_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
   workspace_buffer = (GtkTextBuffer *)workspace_source_buffer;
@@ -724,6 +728,9 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   system_browser_window = (GtkWindow *)win;
 
 #ifdef WIN_BUILD
@@ -764,7 +771,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   packages_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(packages_list), TRUE);
-  gtk_widget_override_font(GTK_WIDGET(packages_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(packages_list), font);
 
   initialize_packages_list((GtkTreeView *)packages_list);
 
@@ -772,7 +779,7 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   symbols_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(symbols_list), TRUE);
-  gtk_widget_override_font(GTK_WIDGET(symbols_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(symbols_list), font);
 
   initialize_symbols_list((GtkTreeView *)symbols_list);
   gtk_tree_view_column_set_sort_column_id(gtk_tree_view_get_column(symbols_list, 0), 0);
@@ -801,7 +808,8 @@ void create_system_browser_window(int posx, int posy, int width, int height)
 
   system_browser_textview = (GtkTextView *)textview;
 
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), font);
+  pango_font_description_free(font);
   //gtk_text_view_set_editable((GtkTextView *)textview, FALSE);
 
   //system_browser_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
@@ -984,6 +992,9 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
 {
   GtkWidget *scrolled_win, *vbox;
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   transcript_window = (GtkWindow *)gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
 #ifdef WIN_BUILD
@@ -1030,7 +1041,8 @@ void create_transcript_window(int posx, int posy, int width, int height, char *t
   gtk_text_view_set_cursor_visible((GtkTextView *)textview, FALSE);
   //gtk_widget_set_sensitive(textview, FALSE);
 
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), font);
+  pango_font_description_free(font);
 
   transcript_buffer = gtk_text_view_get_buffer((GtkTextView *)textview);
 
@@ -1089,6 +1101,9 @@ void error_window(char *msg)
 {
   GtkWidget *window, *scrolled_win, *hbox, *vbox, *ok;
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
 #ifdef WIN_BUILD
@@ -1108,7 +1123,9 @@ void error_window(char *msg)
 
   GtkWidget *textview = gtk_text_view_new ();
 
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(textview), font);
+  pango_font_description_free(font);
+
   gtk_text_buffer_insert_at_cursor(gtk_text_view_get_buffer((GtkTextView *)textview), msg, -1);
 
   ok = gtk_button_new_with_label("OK");
@@ -1261,6 +1278,9 @@ void create_debug_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   debugger_window = (GtkWindow *)win;
 
 #ifdef WIN_BUILD
@@ -1300,7 +1320,8 @@ void create_debug_window(int posx, int posy, int width, int height)
 
   frames_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(frames_list), TRUE);
-  gtk_widget_override_font(GTK_WIDGET(frames_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(frames_list), font);
+  pango_font_description_free(font);
 
   initialize_frames_list((GtkTreeView *)frames_list);
 
@@ -1472,6 +1493,9 @@ void create_profiler_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   profiler_window = (GtkWindow *)win;
 
 #ifdef WIN_BUILD
@@ -1511,7 +1535,8 @@ void create_profiler_window(int posx, int posy, int width, int height)
 
   operators_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(operators_list), TRUE);
-  gtk_widget_override_font(GTK_WIDGET(operators_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(operators_list), font);
+  pango_font_description_free(font);
 
   initialize_operators_list((GtkTreeView *)operators_list);
 
@@ -1576,11 +1601,17 @@ void create_help_window()
                              "weight", PANGO_WEIGHT_BOLD, "foreground", "blue", "underline", PANGO_UNDERLINE_SINGLE, NULL);  
 
 #ifndef __APPLE__  
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Monospace Normal 9"));
+  PangoFontDescription *font =
+    pango_font_description_from_string("Monospace Normal 9");
+  gtk_widget_override_font(GTK_WIDGET(textview), font);
 #else
-  gtk_widget_override_font(GTK_WIDGET(textview), pango_font_description_from_string("Menlo Regular 11"));
+  PangoFontDescription *font =
+    pango_font_description_from_string("Menlo Regular 11");
+  gtk_widget_override_font(GTK_WIDGET(textview), font);
 #endif  
-  
+
+  pango_font_description_free(font);
+
   scrolled_win = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
@@ -1713,6 +1744,9 @@ void create_callers_window(int posx, int posy, int width, int height)
 {
   GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
+  PangoFontDescription *font =
+    pango_font_description_from_string(FONT);
+
   GtkWidget *scrolled_win1, *scrolled_win2;
   GtkWidget *vbox, *hbox;
 
@@ -1751,7 +1785,7 @@ void create_callers_window(int posx, int posy, int width, int height)
 
   callers_symbols_list = (GtkTreeView *)gtk_tree_view_new();
   gtk_tree_view_set_headers_visible(callers_symbols_list, TRUE);
-  gtk_widget_override_font(GTK_WIDGET(callers_symbols_list), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(callers_symbols_list), font);
 
   initialize_callers_symbols_list(callers_symbols_list);
 
@@ -1786,13 +1820,14 @@ void create_callers_window(int posx, int posy, int width, int height)
   GValue gv = G_VALUE_INIT;
   g_value_init(&gv, G_TYPE_BOOLEAN);
   g_value_set_boolean(&gv, FALSE);
-  g_object_set_property(sc1, "show-headers", &gv);
+  g_object_set_property(G_OBJECT(sc1), "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
   
   gtk_text_buffer_create_tag((GtkTextBuffer *)callers_source_buffer, "gray_bg", 
                              "background", "lightgray", NULL); 
 
-  gtk_widget_override_font(GTK_WIDGET(callers_source_view), pango_font_description_from_string(FONT));
+  gtk_widget_override_font(GTK_WIDGET(callers_source_view), font);
+  pango_font_description_free(font);
   //gtk_text_view_set_editable((GtkTextView *)callers_source_view, FALSE);
 
   g_signal_connect(G_OBJECT(callers_source_buffer), 

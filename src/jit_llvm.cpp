@@ -131,6 +131,8 @@ public:
 
 llvm::orc::SimpleJIT *theJITObject;
 
+std::vector<llvm::orc::VModuleKey> moduleKeys;
+
 extern "C" void initializeJIT()
 {
   theJITObject = new llvm::orc::SimpleJIT();
@@ -142,7 +144,7 @@ llvm::orc::VModuleKey addModuleToJIT(std::unique_ptr<llvm::Module> module)
     initializeJIT();
 
   auto K = theJITObject->addModule(std::move(module));
-
+  moduleKeys.push_back(K);
   return K;
 }
 
@@ -153,7 +155,13 @@ extern "C" nativefn get_function(void *state, const char *fn_name)
 
 extern "C" void cleanupJIT(void *state)
 {
-  //TODO: code to remove modules from JIT object
+  for (auto it = moduleKeys.rbegin(); it != moduleKeys.rend(); ++it)
+    theJITObject->removeModule(*it);
+
+  moduleKeys.clear();
+
+  delete theJITObject;
+  theJITObject = nullptr;
   llvm::llvm_shutdown();
 }
 

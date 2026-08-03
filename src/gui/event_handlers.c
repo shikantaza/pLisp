@@ -1175,6 +1175,8 @@ void load_source()
     }
     else
       print_to_transcript("Error loading source file\n");
+
+    g_free(loaded_source_file_name);
   }
   else
     gtk_widget_destroy (dialog);

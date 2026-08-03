@@ -2758,7 +2758,7 @@ OBJECT_PTR butlast(OBJECT_PTR lst)
   return ret;
 }
 
-OBJECT_PTR backquote2_internal(exp)
+OBJECT_PTR backquote2_internal(OBJECT_PTR exp)
 {
   if(is_atom(exp))
     return list(2, LST, list(2, QUOTE, exp));

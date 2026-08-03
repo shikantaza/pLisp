@@ -267,11 +267,11 @@ void new_source_file()
   GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
   GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
-  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(view);
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view));
   GValue gv = G_VALUE_INIT;
   g_value_init(&gv, G_TYPE_BOOLEAN);
   g_value_set_boolean(&gv, FALSE);
-  g_object_set_property(sc1, "show-headers", &gv);
+  g_object_set_property(G_OBJECT(sc1), "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
   
   //for search functionality
@@ -350,11 +350,11 @@ void fb_load_source_file()
     GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
     GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
-    GtkSourceCompletion *sc1 = gtk_source_view_get_completion(view);
+    GtkSourceCompletion *sc1 = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view));
     GValue gv = G_VALUE_INIT;
     g_value_init(&gv, G_TYPE_BOOLEAN);
     g_value_set_boolean(&gv, FALSE);
-    g_object_set_property(sc1, "show-headers", &gv);
+    g_object_set_property(G_OBJECT(sc1), "show-headers", &gv);
     gtk_source_completion_add_provider(sc1, provider, NULL);
 
     
@@ -889,11 +889,11 @@ void add_file_to_file_browser(char *file_name)
   GtkSourceBuffer *buffer = gtk_source_buffer_new_with_language(source_language);
   GtkWidget *view = gtk_source_view_new_with_buffer(buffer);
 
-  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(view);
+  GtkSourceCompletion *sc1 = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view));
   GValue gv = G_VALUE_INIT;
   g_value_init(&gv, G_TYPE_BOOLEAN);
   g_value_set_boolean(&gv, FALSE);
-  g_object_set_property(sc1, "show-headers", &gv);
+  g_object_set_property(G_OBJECT(sc1), "show-headers", &gv);
   gtk_source_completion_add_provider(sc1, provider, NULL);
   
   g_signal_connect(G_OBJECT(buffer), 
